@@ -121,6 +121,39 @@ def get_custom_css() -> str:
         background-color: {COLOR_TEAL} !important;
         color: {COLOR_WHITE} !important;
     }}
+
+    /* Rich lesson content: vocabulary cards, colored boxes, diagrams */
+    .main svg {{
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1rem auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(11, 46, 89, 0.12);
+    }}
+
+    .main table {{
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }}
+
+    .main th {{
+        background: {COLOR_DARK_BLUE};
+        color: {COLOR_WHITE};
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+    }}
+
+    .main td {{
+        border: 1px solid {COLOR_SILVER};
+        padding: 0.5rem 0.75rem;
+    }}
+
+    .main h2, .main h3 {{
+        color: {COLOR_DARK_BLUE};
+        margin-top: 1.25rem;
+    }}
     </style>
     """
 

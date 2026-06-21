@@ -7,7 +7,14 @@ import os
 
 from openai import APIStatusError, OpenAI, RateLimitError
 
-from adaptation_specs import ADAPTATION_SPECS, OUTPUT_KEYS
+from adaptation_specs import (
+    ADAPTATION_SPECS,
+    LESSON_ADAPTATION_IDS,
+    LESSON_VISUAL_FORMAT,
+    OUTPUT_KEYS,
+    VOCABULARY_FORMAT,
+    WORKSHEET_FORMAT,
+)
 from config import MAX_LESSON_CHARS, ENV_PATH
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file, reload_env
 
@@ -33,16 +40,29 @@ def _spec_hints(keys: list) -> str:
 
 
 def _build_system_prompt(keys: list) -> str:
+    extra_blocks = []
+    if "vocabulary" in keys:
+        extra_blocks.append(VOCABULARY_FORMAT)
+    if "worksheet" in keys:
+        extra_blocks.append(WORKSHEET_FORMAT)
+    if any(k in LESSON_ADAPTATION_IDS for k in keys):
+        extra_blocks.append(LESSON_VISUAL_FORMAT)
+
+    extras = "\n\n".join(extra_blocks)
+
     return f"""You are AdaptEd AI (EduAdapt backend), an expert instructional designer for neurodiverse learners.
 
 Given a lesson, produce differentiated versions aligned with the AdaptEd AI platform.
-Preserve all learning objectives and curriculum accuracy. Each version must be classroom-ready markdown.
+Preserve all learning objectives and curriculum accuracy. Each version must be classroom-ready.
 
 Adaptation types to generate in this request:
 {_spec_hints(keys)}
 
+{extras}
+
 Return ONLY valid JSON with exactly these keys: {", ".join(keys)}
-Each value must be a single markdown-formatted string with headings, bullets, and clear structure.
+Each value must be a single string mixing markdown AND HTML (colored boxes, SVG diagrams, tables).
+Embed Mermaid diagrams inside ```mermaid fenced blocks where requested.
 Do not omit any key."""
 
 
@@ -100,7 +120,7 @@ def _call_openai(client: OpenAI, keys: list, lesson_text: str) -> dict:
             {"role": "user", "content": _build_user_prompt(lesson_text)},
         ],
         temperature=0.7,
-        max_tokens=8000,
+        max_tokens=10000,
     )
     raw_content = response.choices[0].message.content
     if not raw_content:

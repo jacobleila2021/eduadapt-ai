@@ -9,6 +9,7 @@ from config import (
     MANUAL_TIME_HOURS,
     TIME_SAVED_PERCENT,
 )
+from content_renderer import render_rich_content, strip_mermaid_for_export
 
 
 def render_sidebar() -> None:
@@ -41,8 +42,8 @@ def render_sidebar() -> None:
 
     st.sidebar.markdown("---")
     st.sidebar.info(
-        "**Tip:** Upload a PDF or DOCX lesson plan. "
-        "Review analytics, then click **Generate Adaptations**."
+        "**Tip:** Upload a lesson, generate adaptations, then study **Vocabulary** "
+        "separately before the **Worksheet** exam practice tab."
     )
 
 
@@ -119,9 +120,10 @@ def render_content_tab(title: str, content: str, download_filename: str) -> None
         download_filename: Filename for the download button.
     """
     with st.container(border=True):
-        st.markdown(content)
+        render_rich_content(content)
 
-    full_export = f"# {title}\n\n{content}"
+    export_body = strip_mermaid_for_export(content)
+    full_export = f"# {title}\n\n{export_body}"
     render_download_button(
         label=f"Download {title}",
         content=full_export,
