@@ -2,17 +2,18 @@
 EduAdapt AI — Main Streamlit application.
 
 Teachers upload a lesson (PDF/DOCX), review analytics, and generate
-differentiated versions for diverse learners in under 2 minutes.
+AdaptEd AI–aligned differentiated versions (19 tabs: original, vocabulary,
+16 learner adaptations, exam worksheet).
 """
 
 import streamlit as st
 from pathlib import Path
 
+from adaptation_specs import ADAPTATION_SPECS, OUTPUT_TAB_LABELS
 from ai_generator import generate_adaptations, get_effective_api_key, validate_api_key
 from analytics_engine import build_analytics_report
-from config import OUTPUT_TAB_LABELS
-from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
 from document_parser import extract_lesson_text
+from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
 from styles import get_custom_css, render_header
 from ui_helpers import render_analytics_panel, render_content_tab, render_sidebar
 
@@ -43,13 +44,8 @@ if "last_saved_api_key" not in st.session_state:
 
 
 def save_api_key_to_env(api_key: str) -> None:
-    """
-    Persist the OpenAI API key to a clean .env file (two lines only).
-
-    Args:
-        api_key: OpenAI API key provided by the user.
-    """
-    env_path = Path(__file__).resolve().parent / ".env"
+    """Persist the OpenAI API key to a clean .env file (two lines only)."""
+    env_path = PROJECT_ROOT / ".env"
     env_path.write_text(
         f"OPENAI_API_KEY={api_key}\nOPENAI_MODEL=gpt-4o-mini\n",
         encoding="utf-8",
@@ -57,9 +53,7 @@ def save_api_key_to_env(api_key: str) -> None:
 
 
 def load_api_key_from_env_file() -> None:
-    """
-    Load API key from .env every run (replaces stale placeholder session keys).
-    """
+    """Load API key from .env every run (replaces stale placeholder session keys)."""
     env_key = read_api_key_from_env_file()
     if env_key:
         st.session_state.runtime_api_key = env_key
@@ -67,13 +61,7 @@ def load_api_key_from_env_file() -> None:
 
 
 def apply_lesson(name: str, text: str) -> None:
-    """
-    Store extracted lesson text and refresh analytics in session state.
-
-    Args:
-        name: Display name for the loaded lesson file.
-        text: Extracted plain text from the lesson.
-    """
+    """Store extracted lesson text and refresh analytics in session state."""
     st.session_state.lesson_text = text
     st.session_state.upload_name = name
     st.session_state.adaptations = None
@@ -82,12 +70,7 @@ def apply_lesson(name: str, text: str) -> None:
 
 
 def ensure_sample_lesson_exists() -> bool:
-    """
-    Create sample_lesson.docx if run.bat has not created it yet.
-
-    Returns:
-        True when the sample file exists or was created successfully.
-    """
+    """Create sample_lesson.docx if run.bat has not created it yet."""
     if SAMPLE_LESSON_PATH.exists():
         return True
 
@@ -121,12 +104,7 @@ def load_sample_lesson() -> None:
 
 
 def handle_file_upload(uploaded_file) -> None:
-    """
-    Process an uploaded PDF or DOCX and store text in session state.
-
-    Args:
-        uploaded_file: Streamlit UploadedFile object or None.
-    """
+    """Process an uploaded PDF or DOCX and store text in session state."""
     if uploaded_file is None:
         return
 
@@ -160,7 +138,10 @@ def run_generation() -> None:
         )
         return
 
-    with st.spinner("EduAdapt AI is generating differentiated lessons… (~1–2 min)"):
+    with st.spinner(
+        "EduAdapt AI is generating 18 versions (adaptations, vocabulary, worksheet)… "
+        "(~3–5 min)"
+    ):
         try:
             st.session_state.adaptations = generate_adaptations(
                 st.session_state.lesson_text,
@@ -170,11 +151,18 @@ def run_generation() -> None:
             st.error(str(error))
             return
 
-    st.success("All adaptations ready! Browse the tabs below.")
+    st.success("All 19 tabs ready! Browse vocabulary, adaptations, and the exam worksheet below.")
+
+
+def _content_for_spec(spec: dict, adaptations: dict, lesson: str) -> str:
+    """Return tab body: uploaded original or AI-generated markdown."""
+    if not spec["generate"]:
+        return lesson
+    return adaptations.get(spec["id"], "_No content generated for this section._")
 
 
 def render_output_tabs() -> None:
-    """Show original lesson and all AI outputs in separate tabs."""
+    """Show original lesson, vocabulary, adaptations, and worksheet in separate tabs."""
     adaptations = st.session_state.adaptations
     lesson = st.session_state.lesson_text
     base_name = (
@@ -183,16 +171,11 @@ def render_output_tabs() -> None:
         else "lesson"
     )
 
-    tab_contents = [
-        ("Original Lesson", lesson, f"{base_name}_original.txt"),
-        ("Dyslexia-Friendly Version", adaptations["dyslexia_friendly"], f"{base_name}_dyslexia.txt"),
-        ("ADHD-Friendly Version", adaptations["adhd_friendly"], f"{base_name}_adhd.txt"),
-        ("Simplified Version", adaptations["simplified"], f"{base_name}_simplified.txt"),
-        ("Advanced Learner Version", adaptations["advanced_learner"], f"{base_name}_advanced.txt"),
-        ("English Language Learner Version", adaptations["english_language_learner"], f"{base_name}_ell.txt"),
-        ("Interactive Classroom Activities", adaptations["classroom_activities"], f"{base_name}_activities.txt"),
-        ("Teacher Differentiation Notes", adaptations["teacher_notes"], f"{base_name}_teacher_notes.txt"),
-    ]
+    tab_contents = []
+    for spec in ADAPTATION_SPECS:
+        content = _content_for_spec(spec, adaptations, lesson)
+        filename = f"{base_name}_{spec['id']}.txt"
+        tab_contents.append((spec["title"], content, filename))
 
     tabs = st.tabs(OUTPUT_TAB_LABELS)
 
@@ -210,7 +193,6 @@ def main() -> None:
 
     render_sidebar()
 
-    # --- API setup block (seamless fallback if .env is missing) ---
     with st.sidebar.expander("OpenAI Setup", expanded=True):
         st.caption("Paste once. EduAdapt auto-saves it to `.env`.")
         session_key = st.text_input(
@@ -218,11 +200,10 @@ def main() -> None:
             value=st.session_state.runtime_api_key,
             type="password",
             placeholder="sk-...",
-            help="Stored only in this app session.",
+            help="Stored in .env on your machine; on Streamlit Cloud use Secrets.",
         )
         st.session_state.runtime_api_key = session_key.strip()
 
-        # Auto-save key when it changes, so teachers do not need extra clicks.
         if (
             is_valid_openai_key(st.session_state.runtime_api_key)
             and st.session_state.runtime_api_key != st.session_state.last_saved_api_key
@@ -232,7 +213,7 @@ def main() -> None:
                 st.session_state.last_saved_api_key = st.session_state.runtime_api_key
                 st.success("API key auto-saved to .env")
             except Exception as error:
-                st.error(f"Could not save .env: {error}")
+                st.warning(f"Could not save .env locally: {error}")
 
         active_key = get_effective_api_key(st.session_state.runtime_api_key)
         if active_key:
@@ -245,7 +226,6 @@ def main() -> None:
             load_api_key_from_env_file()
             st.rerun()
 
-    # --- Upload section ---
     st.subheader("1. Upload Your Lesson")
 
     col_upload, col_sample = st.columns([3, 1])
@@ -267,13 +247,11 @@ def main() -> None:
     if uploaded is not None:
         handle_file_upload(uploaded)
 
-    # --- Analytics (after upload) ---
     if st.session_state.analytics:
         st.markdown("---")
         st.subheader("2. Lesson Insights")
         render_analytics_panel(st.session_state.analytics)
 
-    # --- Generate button ---
     if st.session_state.lesson_text:
         st.markdown("---")
         st.subheader("3. Generate Adaptations")
@@ -301,13 +279,14 @@ def main() -> None:
                 st.session_state.upload_name = ""
                 st.rerun()
 
-    # --- Output tabs ---
     if st.session_state.adaptations:
         st.markdown("---")
-        st.subheader("4. Your Differentiated Lessons")
+        st.subheader(
+            "4. Your Differentiated Lessons "
+            "(Original → Vocabulary → 16 AdaptEd versions → Exam Worksheet)"
+        )
         render_output_tabs()
 
-        # --- Bundle download ---
         st.markdown("---")
         bundle = _build_bundle_download()
         st.download_button(
@@ -320,27 +299,14 @@ def main() -> None:
 
 
 def _build_bundle_download() -> str:
-    """
-    Combine every output into one text file for easy sharing.
-
-    Returns:
-        Full text bundle with section headers.
-    """
+    """Combine every output into one text file for easy sharing."""
     adaptations = st.session_state.adaptations
-    sections = [
-        ("ORIGINAL LESSON", st.session_state.lesson_text),
-        ("DYSLEXIA-FRIENDLY", adaptations["dyslexia_friendly"]),
-        ("ADHD-FRIENDLY", adaptations["adhd_friendly"]),
-        ("SIMPLIFIED", adaptations["simplified"]),
-        ("ADVANCED LEARNER", adaptations["advanced_learner"]),
-        ("ENGLISH LANGUAGE LEARNER", adaptations["english_language_learner"]),
-        ("CLASSROOM ACTIVITIES", adaptations["classroom_activities"]),
-        ("TEACHER NOTES", adaptations["teacher_notes"]),
-    ]
+    lesson = st.session_state.lesson_text
 
-    parts = ["EduAdapt AI — Complete Lesson Package\n" + "=" * 50 + "\n"]
-    for title, body in sections:
-        parts.append(f"\n\n{'=' * 50}\n{title}\n{'=' * 50}\n\n{body}")
+    parts = ["EduAdapt AI — AdaptEd-Aligned Lesson Package\n" + "=" * 50 + "\n"]
+    for spec in ADAPTATION_SPECS:
+        body = _content_for_spec(spec, adaptations, lesson)
+        parts.append(f"\n\n{'=' * 50}\n{spec['title'].upper()}\n{'=' * 50}\n\n{body}")
 
     return "".join(parts)
 
