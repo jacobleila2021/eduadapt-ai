@@ -22,17 +22,31 @@ _BOX_RENDERERS = {
 }
 
 
-def _as_dict(content: Any) -> dict | None:
+def _coerce_dict(content: Any) -> dict | None:
     if isinstance(content, dict):
         return content
     if isinstance(content, str):
-        try:
-            parsed = json.loads(content)
-            if isinstance(parsed, dict):
-                return parsed
-        except json.JSONDecodeError:
-            return None
+        text = content.strip()
+        if text.startswith("{"):
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, dict):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+        if text and not text.startswith("_No content"):
+            return {
+                "big_idea": "Lesson content",
+                "sections": [{"title": "Content", "body": text, "box": "teal"}],
+                "mermaid_diagram": "",
+                "svg_diagram": "",
+                "visual_summary": [],
+            }
     return None
+
+
+def _as_dict(content: Any) -> dict | None:
+    return _coerce_dict(content)
 
 
 def _render_svg(svg: str) -> None:
@@ -49,9 +63,14 @@ def _render_svg(svg: str) -> None:
 
 def render_vocabulary(data: Any) -> None:
     """Word Wall, Flashcards, Picture Words, Practice, Self-Test — always visible."""
-    vocab = _as_dict(data)
-    if not vocab:
-        st.warning("Vocabulary could not be parsed. Regenerate adaptations.")
+    vocab = _coerce_dict(data)
+    if not vocab or not vocab.get("word_wall"):
+        st.error(
+            "Vocabulary sections were not generated correctly. "
+            "Click **Clear Session**, then **Generate Adaptations** again (~8–12 min)."
+        )
+        with st.expander("Technical details"):
+            st.write(type(data).__name__, str(data)[:800] if data else "empty")
         return
 
     topic = vocab.get("topic", "Lesson Vocabulary")
@@ -150,9 +169,14 @@ def render_vocabulary(data: Any) -> None:
 
 def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
     """Exam paper layout with short answer, long answer, checklist."""
-    sheet = _as_dict(data)
-    if not sheet:
-        st.warning("Worksheet could not be parsed. Regenerate adaptations.")
+    sheet = _coerce_dict(data)
+    if not sheet or not sheet.get("short_answer"):
+        st.error(
+            "Worksheet sections were not generated correctly. "
+            "Click **Clear Session**, then **Generate Adaptations** again."
+        )
+        with st.expander("Technical details"):
+            st.write(type(data).__name__, str(data)[:800] if data else "empty")
         return
 
     header = sheet.get("header") or {}

@@ -15,6 +15,7 @@ from structured_renderers import (
     render_lesson,
     render_vocabulary,
     render_worksheet,
+    _coerce_dict,
 )
 
 
@@ -131,14 +132,27 @@ def render_content_tab(
             render_vocabulary(content)
         elif spec_id == "worksheet":
             render_worksheet(content, key_prefix=spec_id)
-        elif isinstance(content, dict):
-            render_lesson(content)
+        elif _coerce_dict(content):
+            render_lesson(_coerce_dict(content))
         else:
             render_rich_content(str(content))
 
     full_export = content_to_export(title, content, spec_id)
-    render_download_button(
-        label=f"Download {title}",
-        content=full_export,
-        filename=download_filename,
-    )
+    col_txt, col_docx = st.columns(2)
+    with col_txt:
+        st.download_button(
+            label=f"Download {title} (text)",
+            data=full_export,
+            file_name=download_filename,
+            mime="text/plain",
+            use_container_width=True,
+        )
+    with col_docx:
+        docx_name = download_filename.rsplit(".", 1)[0] + ".docx"
+        st.download_button(
+            label=f"Download {title} (Word — LD friendly)",
+            data=export_tab_docx(title, content, spec_id),
+            file_name=docx_name,
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+        )

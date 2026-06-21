@@ -10,8 +10,9 @@ import streamlit as st
 from pathlib import Path
 
 from adaptation_specs import ADAPTATION_SPECS, OUTPUT_TAB_LABELS
-from ai_generator import generate_adaptations, get_effective_api_key, validate_api_key
+from ai_generator import generate_adaptations, get_effective_api_key, quality_report, validate_api_key
 from analytics_engine import build_analytics_report
+from docx_exporter import build_zip_bundle, export_tab_docx
 from document_parser import extract_lesson_text
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
 from styles import get_custom_css, render_header
@@ -42,6 +43,8 @@ if "runtime_api_key" not in st.session_state:
     st.session_state.runtime_api_key = ""
 if "last_saved_api_key" not in st.session_state:
     st.session_state.last_saved_api_key = ""
+if "quality" not in st.session_state:
+    st.session_state.quality = None
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -140,18 +143,32 @@ def run_generation() -> None:
         return
 
     with st.spinner(
-        "Generating lessons, vocabulary study page, and exam worksheet… (~4–6 min)"
+        "Step 1/3: Analyzing full lesson (all pages)… "
+        "Step 2/3: Building vocabulary & worksheet… "
+        "Step 3/3: Creating 16 adaptations… (~8–12 min for long lessons)"
     ):
         try:
             st.session_state.adaptations = generate_adaptations(
                 st.session_state.lesson_text,
                 override_api_key=st.session_state.runtime_api_key,
             )
+            st.session_state.quality = quality_report(st.session_state.adaptations)
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
 
-    st.success("All 19 tabs ready! Browse vocabulary, adaptations, and the exam worksheet below.")
+    q = st.session_state.get("quality") or {}
+    if q.get("exam_ready"):
+        st.success(
+            f"Ready for exam prep! {q.get('vocab_terms', 0)} vocab terms, "
+            f"{q.get('worksheet_short_q', 0)} short + {q.get('worksheet_long_q', 0)} long "
+            f"exam questions, {q.get('objectives_found', 0)} objectives covered."
+        )
+    else:
+        st.warning(
+            "Generation finished but some sections may be thin — try again or use a shorter "
+            "lesson extract. Check the Quality Report below."
+        )
 
 
 def _content_for_spec(spec: dict, adaptations: dict, lesson: str) -> str:
@@ -277,10 +294,32 @@ def main() -> None:
                 st.session_state.adaptations = None
                 st.session_state.analytics = None
                 st.session_state.upload_name = ""
+                st.session_state.quality = None
                 st.rerun()
 
     if st.session_state.adaptations:
         st.markdown("---")
+        q = st.session_state.quality or {}
+        if q:
+            with st.expander("Quality Report — exam coverage", expanded=True):
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Pages analyzed", q.get("pages_analyzed", 1))
+                c2.metric("Objectives", q.get("objectives_found", 0))
+                c3.metric("Vocab terms", q.get("vocab_terms", 0))
+                c4.metric("Exam questions", (q.get("worksheet_short_q") or 0) + (q.get("worksheet_long_q") or 0))
+                if q.get("source_chars", 0) > 50000:
+                    st.info(
+                        f"Your lesson is {q.get('source_chars', 0):,} characters — "
+                        "all sections were analyzed in chunks so content is not reduced to one page."
+                    )
+                if q.get("exam_ready"):
+                    st.success("This pack covers enough depth for exam revision on this topic.")
+                else:
+                    st.warning(
+                        "Some sections need more content. Click **Clear Session** and "
+                        "**Generate Adaptations** again, or upload a focused chapter."
+                    )
+
         st.subheader(
             "4. Your Differentiated Lessons "
             "(Original → Vocabulary → 16 AdaptEd versions → Exam Worksheet)"
@@ -288,14 +327,36 @@ def main() -> None:
         render_output_tabs()
 
         st.markdown("---")
-        bundle = _build_bundle_download()
-        st.download_button(
-            label="Download All Outputs (single file)",
-            data=bundle,
-            file_name=f"{st.session_state.upload_name or 'lesson'}_eduadapt_bundle.txt",
-            mime="text/plain",
-            use_container_width=True,
+        st.subheader("5. Download — print-friendly packs")
+        base_name = (
+            st.session_state.upload_name.rsplit(".", 1)[0]
+            if st.session_state.upload_name
+            else "lesson"
         )
+        zip_bytes = build_zip_bundle(
+            ADAPTATION_SPECS,
+            st.session_state.adaptations,
+            st.session_state.lesson_text,
+            base_name,
+        )
+        col_zip, col_txt = st.columns(2)
+        with col_zip:
+            st.download_button(
+                label="Download ZIP (separate DOCX + HTML per tab — best for printing)",
+                data=zip_bytes,
+                file_name=f"{base_name}_eduadapt_print_pack.zip",
+                mime="application/zip",
+                use_container_width=True,
+            )
+        with col_txt:
+            bundle = _build_bundle_download()
+            st.download_button(
+                label="Download plain text bundle",
+                data=bundle,
+                file_name=f"{base_name}_eduadapt_bundle.txt",
+                mime="text/plain",
+                use_container_width=True,
+            )
 
 
 def _build_bundle_download() -> str:

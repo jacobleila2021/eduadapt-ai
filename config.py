@@ -27,5 +27,6 @@ TIME_SAVED_PERCENT = 95
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-# Maximum characters sent to the model (keeps costs predictable)
-MAX_LESSON_CHARS = 12000
+# Maximum characters kept in excerpt (full doc analyzed via chunking in lesson_processor)
+MAX_LESSON_CHARS = 50000
+MAX_CHUNK_CHARS = 14000
