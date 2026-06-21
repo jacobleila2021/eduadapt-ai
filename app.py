@@ -15,6 +15,7 @@ from analytics_engine import build_analytics_report
 from document_parser import extract_lesson_text
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
 from styles import get_custom_css, render_header
+from structured_renderers import content_to_export
 from ui_helpers import render_analytics_panel, render_content_tab, render_sidebar
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -139,8 +140,7 @@ def run_generation() -> None:
         return
 
     with st.spinner(
-        "EduAdapt AI is generating 18 versions (adaptations, vocabulary, worksheet)… "
-        "(~3–5 min)"
+        "Generating lessons, vocabulary study page, and exam worksheet… (~4–6 min)"
     ):
         try:
             st.session_state.adaptations = generate_adaptations(
@@ -175,13 +175,13 @@ def render_output_tabs() -> None:
     for spec in ADAPTATION_SPECS:
         content = _content_for_spec(spec, adaptations, lesson)
         filename = f"{base_name}_{spec['id']}.txt"
-        tab_contents.append((spec["title"], content, filename))
+        tab_contents.append((spec["title"], content, filename, spec["id"]))
 
     tabs = st.tabs(OUTPUT_TAB_LABELS)
 
-    for tab, (title, content, filename) in zip(tabs, tab_contents):
+    for tab, (title, content, filename, spec_id) in zip(tabs, tab_contents):
         with tab:
-            render_content_tab(title, content, filename)
+            render_content_tab(title, content, filename, spec_id=spec_id)
 
 
 def main() -> None:
@@ -306,7 +306,15 @@ def _build_bundle_download() -> str:
     parts = ["EduAdapt AI — AdaptEd-Aligned Lesson Package\n" + "=" * 50 + "\n"]
     for spec in ADAPTATION_SPECS:
         body = _content_for_spec(spec, adaptations, lesson)
-        parts.append(f"\n\n{'=' * 50}\n{spec['title'].upper()}\n{'=' * 50}\n\n{body}")
+        if spec["generate"]:
+            parts.append(
+                "\n\n"
+                + content_to_export(spec["title"], body, spec["id"])
+            )
+        else:
+            parts.append(
+                f"\n\n{'=' * 50}\n{spec['title'].upper()}\n{'=' * 50}\n\n{body}"
+            )
 
     return "".join(parts)
 

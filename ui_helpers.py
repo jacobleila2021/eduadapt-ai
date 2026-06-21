@@ -9,7 +9,13 @@ from config import (
     MANUAL_TIME_HOURS,
     TIME_SAVED_PERCENT,
 )
-from content_renderer import render_rich_content, strip_mermaid_for_export
+from content_renderer import render_rich_content
+from structured_renderers import (
+    content_to_export,
+    render_lesson,
+    render_vocabulary,
+    render_worksheet,
+)
 
 
 def render_sidebar() -> None:
@@ -110,20 +116,27 @@ def render_download_button(label: str, content: str, filename: str) -> None:
     )
 
 
-def render_content_tab(title: str, content: str, download_filename: str) -> None:
+def render_content_tab(
+    title: str,
+    content: str | dict,
+    download_filename: str,
+    spec_id: str = "",
+) -> None:
     """
-    Display markdown content inside a card with a download button.
-
-    Args:
-        title: Section title for the download file header.
-        content: Markdown or plain text to show.
-        download_filename: Filename for the download button.
+    Display content inside a card with a download button.
+    Routes vocabulary, worksheet, and structured lessons to native renderers.
     """
     with st.container(border=True):
-        render_rich_content(content)
+        if spec_id == "vocabulary":
+            render_vocabulary(content)
+        elif spec_id == "worksheet":
+            render_worksheet(content, key_prefix=spec_id)
+        elif isinstance(content, dict):
+            render_lesson(content)
+        else:
+            render_rich_content(str(content))
 
-    export_body = strip_mermaid_for_export(content)
-    full_export = f"# {title}\n\n{export_body}"
+    full_export = content_to_export(title, content, spec_id)
     render_download_button(
         label=f"Download {title}",
         content=full_export,
