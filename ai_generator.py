@@ -103,7 +103,7 @@ def format_openai_error(error: Exception) -> str:
 
 
 def _lesson_prompt(adaptation_id: str, title: str, hint: str) -> str:
-    return f"""You are AdaptEd AI. Create ONE comprehensive lesson adaptation.
+    return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 
 Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value is an object:
 {{
@@ -129,7 +129,7 @@ Guidance: {hint}
 
 
 def _vocabulary_prompt() -> str:
-    return f"""You are AdaptEd AI. Build a complete vocabulary study page from the lesson analysis.
+    return f"""You are EduAdapt AI. Build a complete vocabulary study page from the lesson analysis.
 
 Return ONLY valid JSON with top-level key "vocabulary" containing this object:
 {{
@@ -149,7 +149,7 @@ Requirements: 12–15 word_wall terms, ALL sections filled, real content from le
 
 def _worksheet_prompt(terms: list) -> str:
     term_list = ", ".join(terms[:15]) if terms else "lesson vocabulary"
-    return f"""You are AdaptEd AI. Build a rigorous exam worksheet.
+    return f"""You are EduAdapt AI. Build a rigorous exam worksheet.
 
 Vocabulary terms to use: {term_list}
 

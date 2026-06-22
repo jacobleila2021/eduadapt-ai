@@ -2,6 +2,8 @@
 Reusable Streamlit UI components: sidebar, analytics cards, downloads.
 """
 
+from __future__ import annotations
+
 import streamlit as st
 
 from config import (

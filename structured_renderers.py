@@ -3,6 +3,8 @@ Render structured vocabulary, worksheet, and lesson objects with native Streamli
 Guarantees visible sections, colors, and diagrams (not dependent on HTML in markdown).
 """
 
+from __future__ import annotations
+
 import json
 from typing import Any
 

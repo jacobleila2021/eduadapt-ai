@@ -2,7 +2,7 @@
 EduAdapt AI — Main Streamlit application.
 
 Teachers upload a lesson (PDF/DOCX), review analytics, and generate
-AdaptEd AI–aligned differentiated versions (19 tabs: original, vocabulary,
+EduAdapt AI differentiated versions (19 tabs: original, vocabulary,
 16 learner adaptations, exam worksheet).
 """
 
