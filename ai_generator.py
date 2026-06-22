@@ -1,9 +1,10 @@
 """
-OpenAI integration — one focused call per output, full lesson analysis, validated JSON.
+OpenAI integration — chunked long-lesson analysis, parallel adaptations, validated JSON.
 """
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from openai import APIStatusError, OpenAI, RateLimitError
 
@@ -13,6 +14,7 @@ from lesson_processor import build_lesson_context, context_to_prompt
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file, reload_env
 
 LESSON_KEYS = [k for k in OUTPUT_KEYS if k not in ("vocabulary", "worksheet")]
+MAX_PARALLEL_LESSONS = 4
 
 DEPTH_RULES = """
 DEPTH REQUIREMENTS (critical):
@@ -47,7 +49,6 @@ def _chat(client: OpenAI, system: str, user: str, max_tokens: int = 8000) -> str
 
 
 def _coerce_dict(value) -> dict:
-    """Turn API value into dict — handles double-encoded JSON strings."""
     if isinstance(value, dict):
         return value
     if isinstance(value, str):
@@ -59,14 +60,14 @@ def _coerce_dict(value) -> dict:
                     return parsed
             except json.JSONDecodeError:
                 pass
-        # Wrap plain markdown as lesson structure
-        return {
-            "big_idea": "Key ideas from your lesson",
-            "sections": [{"title": "Lesson Content", "body": text, "box": "teal"}],
-            "mermaid_diagram": "",
-            "svg_diagram": "",
-            "visual_summary": [],
-        }
+        if text and not text.startswith("_No content"):
+            return {
+                "big_idea": "Key ideas from your lesson",
+                "sections": [{"title": "Lesson Content", "body": text, "box": "teal"}],
+                "mermaid_diagram": "",
+                "svg_diagram": "",
+                "visual_summary": [],
+            }
     return {}
 
 
@@ -130,7 +131,7 @@ Guidance: {hint}
 def _vocabulary_prompt() -> str:
     return f"""You are AdaptEd AI. Build a complete vocabulary study page from the lesson analysis.
 
-Return ONLY valid JSON with top-level key "vocabulary":
+Return ONLY valid JSON with top-level key "vocabulary" containing this object:
 {{
   "topic": "...",
   "word_wall": [{{"term": "...", "definition": "...", "emoji": "...", "visual_description": "..."}}],
@@ -167,7 +168,6 @@ Return ONLY valid JSON with top-level key "worksheet":
 Requirements:
 - 8 short_answer, 4 long_answer (exam-level), 6 vocab_questions
 - Questions must test ALL major concepts from the lesson analysis
-- Model answers detailed enough for marking
 {DEPTH_RULES}"""
 
 
@@ -192,10 +192,153 @@ def _valid_lesson(lesson: dict) -> bool:
     return bool(lesson.get("big_idea")) and len(sections) >= 3
 
 
-def generate_adaptations(lesson_text: str, override_api_key: str = "") -> dict:
-    """
-    Full pipeline: analyze long lessons, then one API call per output (validated).
-    """
+def _fallback_vocabulary(context: dict) -> dict:
+    """Build vocabulary from extracted lesson context when AI response is thin."""
+    terms = list(context.get("vocabulary_terms") or [])
+    for concept in context.get("key_concepts") or []:
+        if isinstance(concept, dict) and concept.get("name"):
+            terms.append(concept["name"])
+    terms = list(dict.fromkeys(terms))[:15]
+
+    word_wall = []
+    for index, term in enumerate(terms):
+        explanation = next(
+            (
+                c.get("explanation", "")
+                for c in (context.get("key_concepts") or [])
+                if isinstance(c, dict) and c.get("name") == term
+            ),
+            f"Important term from {context.get('topic', 'the lesson')}.",
+        )
+        word_wall.append(
+            {
+                "term": term,
+                "definition": explanation[:300] if explanation else f"Key vocabulary: {term}",
+                "emoji": ["💧", "🌿", "☀️", "📘", "🔬", "🌍"][index % 6],
+                "visual_description": f"Imagine a clear labelled diagram showing {term}.",
+            }
+        )
+
+    flashcards = [{"front": w["term"], "back": w["definition"]} for w in word_wall]
+    return {
+        "topic": context.get("topic", "Lesson Vocabulary"),
+        "word_wall": word_wall,
+        "flashcards": flashcards,
+        "picture_words": [
+            {
+                "term": w["term"],
+                "color_cue": "teal highlight",
+                "draw_this": w["visual_description"],
+                "label": w["term"],
+            }
+            for w in word_wall
+        ],
+        "practice": [
+            {
+                "term": w["term"],
+                "pronunciation": "say slowly",
+                "syllables": w["term"],
+                "sentence_blank": f"The ___ is important in this topic.",
+            }
+            for w in word_wall[:8]
+        ],
+        "self_test": {
+            "matching_prompt": "Match each term (1–5) to its meaning (A–E).",
+            "fill_blanks": [f"The process of ___ is essential. (use: {word_wall[0]['term']})"]
+            if word_wall
+            else [],
+        },
+        "reference_chart": [
+            {
+                "term": w["term"],
+                "definition": w["definition"][:120],
+                "synonym": "—",
+                "exam_tip": "Define clearly in exams.",
+            }
+            for w in word_wall
+        ],
+        "mermaid_diagram": f"flowchart TD\n  A[{context.get('topic', 'Topic')}] --> B[Key Terms]",
+    }
+
+
+def _fallback_worksheet(context: dict, vocab: dict) -> dict:
+    terms = [w.get("term", "") for w in vocab.get("word_wall") or [] if w.get("term")]
+    facts = context.get("facts_and_processes") or []
+    short = []
+    for index, fact in enumerate(facts[:8], 1):
+        short.append(
+            {
+                "question": f"Explain: {fact[:120]}",
+                "marks": 2,
+                "lines": 4,
+            }
+        )
+    if len(short) < 4:
+        short.extend(
+            [
+                {"question": "Name two key ideas from this topic.", "marks": 2, "lines": 3},
+                {"question": "Why is this topic important?", "marks": 2, "lines": 3},
+            ]
+        )
+    return {
+        "header": {
+            "subject": context.get("topic", "Subject"),
+            "topic": context.get("topic", "Topic"),
+            "time_allowed": "45 minutes",
+            "total_marks": 30,
+        },
+        "short_answer": short[:8],
+        "long_answer": [
+            {
+                "question": f"Describe {context.get('topic', 'this topic')} in detail with examples.",
+                "marks": 8,
+                "lines": 10,
+            },
+            {
+                "question": "How would you apply these concepts in a real-world situation?",
+                "marks": 6,
+                "lines": 8,
+            },
+        ],
+        "diagram_question": {
+            "question": "Draw and label a diagram for this topic.",
+            "marks": 4,
+            "svg_diagram": "",
+        },
+        "vocab_questions": [
+            {"question": f"Use '{term}' correctly in a sentence.", "marks": 2}
+            for term in terms[:6]
+        ],
+        "student_checklist": [
+            "Read all questions before starting",
+            "Allow 2 minutes per mark on long answers",
+            "Review vocabulary tab before Part D",
+        ],
+        "teacher_differentiation": "Assign Parts A–B to all; Part D with word bank for ELL.",
+        "answer_key": [
+            {"question_ref": "Part A Q1", "model_answer": "See lesson objectives.", "marks_notes": "2 marks"}
+        ],
+    }
+
+
+def _generate_one_lesson(
+    api_key: str, key: str, title: str, hint: str, user_prompt: str
+) -> tuple:
+    client = OpenAI(api_key=api_key)
+    raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=7000)
+    lesson = _extract_key(raw, key)
+    if not _valid_lesson(lesson):
+        raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=7000)
+        lesson = _extract_key(raw, key)
+    return key, lesson
+
+
+def generate_adaptations(
+    lesson_text: str,
+    override_api_key: str = "",
+    on_progress=None,
+) -> dict:
+    """Full pipeline with progress callbacks for Streamlit UI."""
     api_key = get_effective_api_key(override_api_key)
     if not api_key:
         raise ValueError(
@@ -205,58 +348,67 @@ def generate_adaptations(lesson_text: str, override_api_key: str = "") -> dict:
     client = OpenAI(api_key=api_key)
     model = _get_model()
     merged = {}
-    meta = {}
+
+    def step(message: str, fraction: float) -> None:
+        if on_progress:
+            on_progress(message, fraction)
 
     try:
+        step("Analyzing full lesson (all pages)…", 0.05)
         context = build_lesson_context(client, lesson_text, model)
-        meta["lesson_context"] = context
+        merged["_meta"] = {"lesson_context": context}
         user_prompt = context_to_prompt(context, lesson_text[:MAX_LESSON_CHARS])
 
-        by_id = {s["id"]: s for s in ADAPTATION_SPECS}
-
-        # Vocabulary first (worksheet depends on it)
-        for attempt in range(2):
+        step("Building vocabulary study page…", 0.15)
+        vocab = {}
+        for _ in range(2):
             raw = _chat(client, _vocabulary_prompt(), user_prompt, max_tokens=7000)
             vocab = _extract_key(raw, "vocabulary")
             if _valid_vocabulary(vocab):
-                merged["vocabulary"] = vocab
                 break
-        if "vocabulary" not in merged:
-            merged["vocabulary"] = vocab  # best effort
+        if not _valid_vocabulary(vocab):
+            vocab = _fallback_vocabulary(context)
+        merged["vocabulary"] = vocab
 
-        # Worksheet
+        step("Building exam worksheet…", 0.25)
         terms = [w.get("term", "") for w in merged["vocabulary"].get("word_wall") or []]
-        for attempt in range(2):
+        sheet = {}
+        for _ in range(2):
             raw = _chat(client, _worksheet_prompt(terms), user_prompt, max_tokens=7000)
             sheet = _extract_key(raw, "worksheet")
             if _valid_worksheet(sheet):
-                merged["worksheet"] = sheet
                 break
-        if "worksheet" not in merged:
-            merged["worksheet"] = sheet
+        if not _valid_worksheet(sheet):
+            sheet = _fallback_worksheet(context, merged["vocabulary"])
+        merged["worksheet"] = sheet
 
-        # One call per lesson adaptation (reliable JSON)
-        for key in LESSON_KEYS:
-            spec = by_id.get(key, {})
-            raw = _chat(
-                client,
-                _lesson_prompt(key, spec.get("title", key), spec.get("hint", "")),
-                user_prompt,
-                max_tokens=7000,
-            )
-            lesson = _extract_key(raw, key)
-            if not _valid_lesson(lesson):
-                # Retry once
-                raw = _chat(
-                    client,
-                    _lesson_prompt(key, spec.get("title", key), spec.get("hint", "")),
+        by_id = {s["id"]: s for s in ADAPTATION_SPECS}
+        total = len(LESSON_KEYS)
+        done = 0
+
+        step("Creating lesson adaptations (parallel)…", 0.30)
+        with ThreadPoolExecutor(max_workers=MAX_PARALLEL_LESSONS) as pool:
+            futures = {
+                pool.submit(
+                    _generate_one_lesson,
+                    api_key,
+                    key,
+                    by_id.get(key, {}).get("title", key),
+                    by_id.get(key, {}).get("hint", ""),
                     user_prompt,
-                    max_tokens=7000,
+                ): key
+                for key in LESSON_KEYS
+            }
+            for future in as_completed(futures):
+                key, lesson = future.result()
+                merged[key] = lesson
+                done += 1
+                step(
+                    f"Lesson adaptations… {done}/{total} complete",
+                    0.30 + (0.65 * done / total),
                 )
-                lesson = _extract_key(raw, key)
-            merged[key] = lesson
 
-        merged["_meta"] = meta
+        step("Done!", 1.0)
     except Exception as error:
         raise RuntimeError(format_openai_error(error)) from error
 
@@ -264,13 +416,11 @@ def generate_adaptations(lesson_text: str, override_api_key: str = "") -> dict:
 
 
 def quality_report(adaptations: dict) -> dict:
-    """Summary shown to teacher after generation."""
     vocab = _coerce_dict(adaptations.get("vocabulary", {}))
     sheet = _coerce_dict(adaptations.get("worksheet", {}))
     ctx = (adaptations.get("_meta") or {}).get("lesson_context", {})
     lesson_ok = sum(
-        1 for k in LESSON_KEYS
-        if _valid_lesson(_coerce_dict(adaptations.get(k, {})))
+        1 for k in LESSON_KEYS if _valid_lesson(_coerce_dict(adaptations.get(k, {})))
     )
     return {
         "pages_analyzed": ctx.get("chunks_processed", 1),

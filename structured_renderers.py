@@ -246,11 +246,15 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
 
 def render_lesson(data: Any) -> None:
     """Structured lesson with colored callouts, diagram, and sections."""
-    lesson = _as_dict(data)
-    if not lesson:
-        from content_renderer import render_rich_content
-
-        render_rich_content(str(data))
+    lesson = _coerce_dict(data)
+    if not lesson or not (lesson.get("sections") or lesson.get("big_idea")):
+        st.error(
+            "Lesson sections were not generated correctly. "
+            "Use **Clear Session** → **Generate Adaptations** again."
+        )
+        if data:
+            with st.expander("Raw content"):
+                st.write(str(data)[:1500])
         return
 
     big_idea = lesson.get("big_idea", "")
@@ -327,12 +331,13 @@ def lesson_to_text(data: Any) -> str:
 
 
 def content_to_export(title: str, content: Any, spec_id: str) -> str:
+    parsed = _coerce_dict(content) if spec_id != "original" else None
     if spec_id == "vocabulary":
-        return f"# {title}\n\n{vocabulary_to_text(content)}"
+        return f"# {title}\n\n{vocabulary_to_text(parsed or content)}"
     if spec_id == "worksheet":
-        return f"# {title}\n\n{worksheet_to_text(content)}"
-    if isinstance(content, dict):
-        return f"# {title}\n\n{lesson_to_text(content)}"
+        return f"# {title}\n\n{worksheet_to_text(parsed or content)}"
+    if parsed:
+        return f"# {title}\n\n{lesson_to_text(parsed)}"
     from content_renderer import strip_mermaid_for_export
 
     return f"# {title}\n\n{strip_mermaid_for_export(str(content))}"

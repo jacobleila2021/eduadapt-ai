@@ -12,6 +12,7 @@ from docx import Document
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import Pt, RGBColor
 
+from html_exporter import export_tab_html
 from structured_renderers import _as_dict, lesson_to_text, vocabulary_to_text, worksheet_to_text
 
 NAVY = RGBColor(0x0B, 0x2E, 0x59)
@@ -200,31 +201,10 @@ def export_tab_docx(title: str, content: Any, spec_id: str) -> bytes:
 
 
 def export_tab_html(title: str, content: Any, spec_id: str) -> str:
-    """Print-friendly HTML with dyslexia-friendly CSS."""
-    body = ""
-    if spec_id == "vocabulary":
-        body = vocabulary_to_text(content).replace("\n", "<br>")
-    elif spec_id == "worksheet":
-        body = worksheet_to_text(content).replace("\n", "<br>")
-    elif isinstance(content, dict) or _as_dict(content):
-        body = lesson_to_text(content).replace("\n", "<br>")
-    else:
-        body = html.escape(str(content)).replace("\n", "<br>")
+    """Delegate to html_exporter for rich LD-friendly HTML."""
+    from html_exporter import export_tab_html as _rich_html
 
-    return f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>{html.escape(title)}</title>
-<style>
-  body {{ font-family: Arial, Verdana, sans-serif; font-size: 16px; line-height: 1.8;
-         color: #0B2E59; max-width: 800px; margin: 2rem auto; padding: 1rem; }}
-  h1 {{ color: #008C95; border-bottom: 3px solid #008C95; padding-bottom: 0.5rem; }}
-  .box {{ background: #e6f7f8; border-left: 5px solid #008C95; padding: 1rem;
-          margin: 1rem 0; border-radius: 8px; }}
-  @media print {{ body {{ font-size: 14pt; }} }}
-</style></head><body>
-<h1>{html.escape(title)}</h1>
-<div class="box">LD-friendly print layout — Arial 16px, wide line spacing</div>
-<div>{body}</div>
-</body></html>"""
+    return _rich_html(title, content, spec_id)
 
 
 def build_zip_bundle(

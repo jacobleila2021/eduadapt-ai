@@ -17,6 +17,7 @@ from document_parser import extract_lesson_text
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
 from styles import get_custom_css, render_header
 from structured_renderers import content_to_export
+from version import APP_VERSION
 from ui_helpers import render_analytics_panel, render_content_tab, render_sidebar
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -142,20 +143,27 @@ def run_generation() -> None:
         )
         return
 
-    with st.spinner(
-        "Step 1/3: Analyzing full lesson (all pages)… "
-        "Step 2/3: Building vocabulary & worksheet… "
-        "Step 3/3: Creating 16 adaptations… (~8–12 min for long lessons)"
-    ):
+    with st.spinner("Starting…"):
+        progress = st.progress(0, text="Preparing…")
+        status = st.empty()
+
+        def on_progress(message: str, fraction: float) -> None:
+            progress.progress(min(max(fraction, 0.0), 1.0), text=message)
+            status.caption(message)
+
         try:
             st.session_state.adaptations = generate_adaptations(
                 st.session_state.lesson_text,
                 override_api_key=st.session_state.runtime_api_key,
+                on_progress=on_progress,
             )
             st.session_state.quality = quality_report(st.session_state.adaptations)
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
+        finally:
+            progress.empty()
+            status.empty()
 
     q = st.session_state.get("quality") or {}
     if q.get("exam_ready"):
@@ -209,6 +217,7 @@ def main() -> None:
     st.markdown(render_header(), unsafe_allow_html=True)
 
     render_sidebar()
+    st.sidebar.caption(f"App version **{APP_VERSION}** — structured vocabulary & worksheets")
 
     with st.sidebar.expander("OpenAI Setup", expanded=True):
         st.caption("Paste once. EduAdapt auto-saves it to `.env`.")

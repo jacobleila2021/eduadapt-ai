@@ -10,6 +10,8 @@ from config import (
     TIME_SAVED_PERCENT,
 )
 from content_renderer import render_rich_content
+from docx_exporter import export_tab_docx
+from html_exporter import export_tab_html
 from structured_renderers import (
     content_to_export,
     render_lesson,
@@ -138,10 +140,10 @@ def render_content_tab(
             render_rich_content(str(content))
 
     full_export = content_to_export(title, content, spec_id)
-    col_txt, col_docx = st.columns(2)
+    col_txt, col_docx, col_html = st.columns(3)
     with col_txt:
         st.download_button(
-            label=f"Download {title} (text)",
+            label="Text",
             data=full_export,
             file_name=download_filename,
             mime="text/plain",
@@ -150,9 +152,18 @@ def render_content_tab(
     with col_docx:
         docx_name = download_filename.rsplit(".", 1)[0] + ".docx"
         st.download_button(
-            label=f"Download {title} (Word — LD friendly)",
+            label="Word (LD friendly)",
             data=export_tab_docx(title, content, spec_id),
             file_name=docx_name,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+        )
+    with col_html:
+        html_name = download_filename.rsplit(".", 1)[0] + ".html"
+        st.download_button(
+            label="HTML (print / colour)",
+            data=export_tab_html(title, content, spec_id),
+            file_name=html_name,
+            mime="text/html",
             use_container_width=True,
         )
