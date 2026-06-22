@@ -6,7 +6,16 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from openai import APIStatusError, OpenAI, RateLimitError
+from openai import OpenAI
+
+try:
+    from openai import APIStatusError, RateLimitError
+except ImportError:  # older/newer openai SDK layouts on Streamlit Cloud
+    try:
+        from openai._exceptions import APIStatusError, RateLimitError
+    except ImportError:
+        APIStatusError = Exception
+        RateLimitError = Exception
 
 from adaptation_specs import ADAPTATION_SPECS, OUTPUT_KEYS
 from config import ENV_PATH, MAX_LESSON_CHARS
@@ -94,7 +103,7 @@ def format_openai_error(error: Exception) -> str:
             "OpenAI rate limit (429): wait 1–2 minutes or check billing at "
             "https://platform.openai.com/account/billing"
         )
-    if isinstance(error, APIStatusError) and error.status_code == 401:
+    if isinstance(error, APIStatusError) and getattr(error, "status_code", None) == 401:
         return (
             "OpenAI rejected the API key (401). Update key in sidebar or Streamlit Secrets. "
             f"Key file: {ENV_PATH}"

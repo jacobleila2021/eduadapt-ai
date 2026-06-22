@@ -6,30 +6,42 @@ EduAdapt AI differentiated versions (19 tabs: original, vocabulary,
 16 learner adaptations, exam worksheet).
 """
 
+import traceback
+
 import streamlit as st
-from pathlib import Path
 
-from adaptation_specs import ADAPTATION_SPECS, OUTPUT_TAB_LABELS
-from ai_generator import generate_adaptations, get_effective_api_key, quality_report, validate_api_key
-from analytics_engine import build_analytics_report
-from docx_exporter import build_zip_bundle, export_tab_docx
-from document_parser import extract_lesson_text
-from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
-from styles import get_custom_css, render_header
-from structured_renderers import content_to_export
-from version import APP_VERSION
-from ui_helpers import render_analytics_panel, render_content_tab, render_sidebar
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-SAMPLE_LESSON_PATH = PROJECT_ROOT / "samples" / "sample_lesson.docx"
-
-# --- Page configuration (must be first Streamlit command) ---
+# Page config MUST be the first Streamlit command
 st.set_page_config(
     page_title="EduAdapt AI",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+from pathlib import Path
+
+try:
+    from adaptation_specs import ADAPTATION_SPECS, OUTPUT_TAB_LABELS
+    from ai_generator import generate_adaptations, get_effective_api_key, quality_report, validate_api_key
+    from analytics_engine import build_analytics_report
+    from docx_exporter import build_zip_bundle, export_tab_docx
+    from document_parser import extract_lesson_text
+    from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
+    from styles import get_custom_css, render_header
+    from structured_renderers import content_to_export
+    from version import APP_VERSION
+    from ui_helpers import render_analytics_panel, render_content_tab, render_sidebar
+except Exception as import_error:
+    st.error("EduAdapt AI could not start. Details below (share with support if needed):")
+    st.code(traceback.format_exc())
+    st.info(
+        "Common fix: Streamlit **Settings → Secrets** must include "
+        "`OPENAI_API_KEY`. Also confirm **Manage app → Logs** shows a successful pip install."
+    )
+    st.stop()
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+SAMPLE_LESSON_PATH = PROJECT_ROOT / "samples" / "sample_lesson.docx"
 
 # --- Session state defaults ---
 if "lesson_text" not in st.session_state:
