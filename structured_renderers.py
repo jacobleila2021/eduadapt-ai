@@ -51,14 +51,14 @@ def _as_dict(content: Any) -> dict | None:
     return _coerce_dict(content)
 
 
-def _render_svg(svg: str) -> None:
+def _render_svg(svg: str, height: int = 260) -> None:
     if not svg or not svg.strip():
         return
     import streamlit.components.v1 as components
 
     components.html(
         f'<div style="text-align:center;padding:8px;">{svg.strip()}</div>',
-        height=260,
+        height=height,
         scrolling=True,
     )
 
@@ -168,7 +168,7 @@ def render_vocabulary(data: Any) -> None:
     st.caption("Study how all vocabulary terms connect to the main topic.")
     from concept_map_builder import build_vocabulary_concept_map_svg
 
-    _render_svg(build_vocabulary_concept_map_svg(vocab))
+    _render_svg(build_vocabulary_concept_map_svg(vocab), height=540)
     if mermaid:
         with st.expander("Alternative AI concept map"):
             _render_mermaid(mermaid)
