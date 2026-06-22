@@ -3,10 +3,24 @@ Build a printable vocabulary concept map (SVG + Word table) in EduAdapt teal/nav
 """
 
 import html
+import json
 import math
 from typing import Any
 
-from structured_renderers import _coerce_dict
+
+def _coerce_dict(content: Any) -> dict | None:
+    if isinstance(content, dict):
+        return content
+    if isinstance(content, str):
+        text = content.strip()
+        if text.startswith("{"):
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, dict):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+    return None
 
 NAVY = "#0B2E59"
 TEAL = "#008C95"
@@ -24,6 +38,16 @@ def _topic_and_terms(vocab: dict) -> tuple[str, list[str]]:
             terms.append(term)
     if len(terms) < 3:
         for row in vocab.get("reference_chart") or []:
+            term = (row.get("term") or "").strip()
+            if term and term not in terms:
+                terms.append(term)
+    if len(terms) < 1:
+        for card in vocab.get("flashcards") or []:
+            term = (card.get("front") or card.get("term") or "").strip()
+            if term and term not in terms:
+                terms.append(term)
+    if len(terms) < 1:
+        for row in vocab.get("picture_words") or []:
             term = (row.get("term") or "").strip()
             if term and term not in terms:
                 terms.append(term)
@@ -130,6 +154,41 @@ def _shade_cell(cell, fill_hex: str) -> None:
     cell._tc.get_or_add_tcPr().append(shading)
 
 
+def render_concept_map_streamlit(vocab: Any) -> None:
+    """Always-visible hub-and-spoke map in the app (no iframe)."""
+    import streamlit as st
+
+    data = _coerce_dict(vocab) or {}
+    topic, terms = _topic_and_terms(data)
+    if not terms:
+        terms = ["Key term 1", "Key term 2", "Key term 3"]
+
+    st.markdown(
+        f'<p style="text-align:center;font-weight:700;color:{NAVY};font-size:1.1rem;">'
+        f"Concept Map</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<div style="text-align:center;margin:0.75rem 0 1.25rem;">'
+        f'<span style="display:inline-block;background:{NAVY};color:#fff;padding:14px 26px;'
+        f'border-radius:12px;border:2px solid {TEAL};font-weight:700;">'
+        f"{html.escape(topic)}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    columns = st.columns(3)
+    for index, term in enumerate(terms):
+        fill = LIGHT_TEAL if index % 2 == 0 else LIGHT_BLUE
+        with columns[index % 3]:
+            st.markdown(
+                f'<div style="text-align:center;background:{fill};border:2px solid {TEAL};'
+                f"border-radius:10px;padding:10px 8px;margin:6px 0;color:{NAVY};"
+                f'font-weight:600;font-size:0.95rem;">'
+                f"&#8595; {html.escape(term)}</div>",
+                unsafe_allow_html=True,
+            )
+
+
 def add_vocabulary_concept_map_to_docx(doc, vocab: Any) -> None:
     """Section 7 — centred flowchart-style concept map for Word print."""
     from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -138,7 +197,7 @@ def add_vocabulary_concept_map_to_docx(doc, vocab: Any) -> None:
     data = _coerce_dict(vocab) or {}
     topic, terms = _topic_and_terms(data)
     if not terms:
-        return
+        terms = ["Key term 1", "Key term 2", "Key term 3"]
 
     heading = doc.add_heading("7. Concept Map", level=2)
     for run in heading.runs:
@@ -193,9 +252,23 @@ def add_vocabulary_concept_map_to_docx(doc, vocab: Any) -> None:
 
 def vocabulary_concept_map_html_block(vocab: Any) -> str:
     """Centered concept map section for HTML export."""
-    svg = build_vocabulary_concept_map_svg(vocab)
+    data = _coerce_dict(vocab) or {}
+    topic, terms = _topic_and_terms(data)
+    if not terms:
+        terms = ["Key term 1", "Key term 2", "Key term 3"]
+    svg = build_vocabulary_concept_map_svg(data)
+    term_cells = "".join(
+        f'<span style="display:inline-block;margin:6px;padding:10px 14px;background:'
+        f'{"#e6f7f8" if i % 2 == 0 else "#e3f2fd"};border:2px solid #008C95;border-radius:10px;'
+        f'color:#0B2E59;font-weight:600;">{html.escape(t)}</span>'
+        for i, t in enumerate(terms)
+    )
     return (
         '<h2>7. Concept Map</h2>'
         '<p style="text-align:center;color:#0B2E59;">Study how all vocabulary terms connect to the main topic.</p>'
         f'<div class="concept-map">{svg}</div>'
+        f'<div style="text-align:center;margin-top:1rem;">'
+        f'<span style="display:inline-block;background:#0B2E59;color:#fff;padding:12px 24px;'
+        f'border-radius:12px;font-weight:700;">{html.escape(topic)}</span></div>'
+        f'<div style="text-align:center;margin:1rem 0 2rem;line-height:2.2;">{term_cells}</div>'
     )

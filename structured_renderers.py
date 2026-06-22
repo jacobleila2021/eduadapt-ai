@@ -54,12 +54,10 @@ def _as_dict(content: Any) -> dict | None:
 def _render_svg(svg: str, height: int = 260) -> None:
     if not svg or not svg.strip():
         return
-    import streamlit.components.v1 as components
-
-    components.html(
-        f'<div style="text-align:center;padding:8px;">{svg.strip()}</div>',
-        height=height,
-        scrolling=True,
+    # Inline SVG — Streamlit iframes often render blank on Streamlit Cloud.
+    st.markdown(
+        f'<div style="text-align:center;max-width:100%;overflow-x:auto;">{svg.strip()}</div>',
+        unsafe_allow_html=True,
     )
 
 
@@ -163,12 +161,16 @@ def render_vocabulary(data: Any) -> None:
             ]
         )
 
-    mermaid = vocab.get("mermaid_diagram") or vocab.get("mermaid", "")
+    # --- 7. Concept Map (built from Word Wall — does not need AI mermaid) ---
+    st.markdown("---")
     st.markdown("### 7. Concept Map")
     st.caption("Study how all vocabulary terms connect to the main topic.")
-    from concept_map_builder import build_vocabulary_concept_map_svg
+    from concept_map_builder import build_vocabulary_concept_map_svg, render_concept_map_streamlit
 
-    _render_svg(build_vocabulary_concept_map_svg(vocab), height=540)
+    render_concept_map_streamlit(vocab)
+    with st.expander("Print-style flowchart (full diagram)", expanded=False):
+        _render_svg(build_vocabulary_concept_map_svg(vocab))
+    mermaid = vocab.get("mermaid_diagram") or vocab.get("mermaid", "")
     if mermaid:
         with st.expander("Alternative AI concept map"):
             _render_mermaid(mermaid)
@@ -306,12 +308,37 @@ def render_lesson(data: Any) -> None:
 def vocabulary_to_text(data: Any) -> str:
     vocab = _as_dict(data) or {}
     lines = [f"# Vocabulary — {vocab.get('topic', 'Lesson')}", ""]
-    lines.append("## Word Wall")
+    lines.append("## 1. Word Wall")
     for word in vocab.get("word_wall") or []:
         lines.append(f"- **{word.get('term', '')}**: {word.get('definition', '')}")
-    lines.append("\n## Flashcards")
+    lines.append("\n## 2. Flashcards")
     for card in vocab.get("flashcards") or []:
         lines.append(f"- Front: {card.get('front', '')} | Back: {card.get('back', '')}")
+    lines.append("\n## 3. Picture Words")
+    for row in vocab.get("picture_words") or []:
+        lines.append(f"- {row.get('term', '')}: {row.get('draw_this', '')}")
+    lines.append("\n## 4. Say · Spell · Use")
+    for item in vocab.get("practice") or []:
+        lines.append(f"- {item.get('term', '')}: {item.get('sentence_blank', '')}")
+    lines.append("\n## 5. Self-Test")
+    self_test = vocab.get("self_test") or {}
+    if self_test.get("matching_prompt"):
+        lines.append(str(self_test["matching_prompt"]))
+    for sentence in self_test.get("fill_blanks") or []:
+        lines.append(f"- {sentence}")
+    lines.append("\n## 6. Quick Reference")
+    for row in vocab.get("reference_chart") or []:
+        lines.append(
+            f"- **{row.get('term', '')}**: {row.get('definition', '')} "
+            f"(Exam tip: {row.get('exam_tip', '')})"
+        )
+    lines.append("\n## 7. Concept Map")
+    from concept_map_builder import _topic_and_terms
+
+    topic, terms = _topic_and_terms(vocab)
+    lines.append(f"Central topic: **{topic}**")
+    lines.append("Linked terms: " + ", ".join(terms))
+    lines.append("(Download HTML for the full coloured flowchart.)")
     return "\n".join(lines)
 
 
