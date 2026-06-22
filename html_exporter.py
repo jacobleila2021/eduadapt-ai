@@ -5,6 +5,7 @@ Rich HTML exports — LD-friendly print layout with colours and clear sections.
 import html
 from typing import Any
 
+from concept_map_builder import vocabulary_concept_map_html_block
 from structured_renderers import _coerce_dict
 
 _CARD_COLORS = ["#e6f7f8", "#fff8e1", "#f3e5f5", "#e8f5e9", "#fce4ec", "#e3f2fd"]
@@ -43,9 +44,15 @@ def _page(title: str, body: str) -> str:
   td {{ border: 1px solid #c0c0c0; padding: 0.6rem; vertical-align: top; }}
   .answer-line {{ border-bottom: 2px dotted #008C95; height: 1.8rem; margin: 0.4rem 0; }}
   .meta {{ background: #0B2E59; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }}
+  .concept-map {{ text-align: center; margin: 1.5rem auto 2rem; page-break-inside: avoid; }}
+  .concept-map svg {{ max-width: 100%; height: auto; display: block; margin: 0 auto; }}
   @media print {{
     body {{ font-size: 13pt; background: white; }}
     h2 {{ page-break-before: auto; }}
+    .concept-map svg {{
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }}
   }}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
@@ -108,6 +115,8 @@ def export_vocabulary_html(data: Any) -> str:
             f"<td>{html.escape(row.get('exam_tip', ''))}</td></tr>"
         )
     parts.append("</table>")
+
+    parts.append(vocabulary_concept_map_html_block(vocab))
 
     return _page(f"Vocabulary — {vocab.get('topic', 'Lesson')}", "\n".join(parts))
 

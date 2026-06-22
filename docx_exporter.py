@@ -12,6 +12,7 @@ from docx import Document
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import Pt, RGBColor
 
+from concept_map_builder import add_vocabulary_concept_map_to_docx, build_vocabulary_concept_map_svg
 from html_exporter import export_tab_html
 from structured_renderers import _as_dict, lesson_to_text, vocabulary_to_text, worksheet_to_text
 
@@ -100,6 +101,8 @@ def export_vocabulary_docx(data: Any) -> bytes:
             f"{row.get('term', '')}: {row.get('definition', '')} "
             f"(Exam tip: {row.get('exam_tip', '')})"
         )
+
+    add_vocabulary_concept_map_to_docx(doc, vocab)
 
     buffer = io.BytesIO()
     doc.save(buffer)
@@ -226,4 +229,7 @@ def build_zip_bundle(
             zf.writestr(f"{base_name}_{safe_title}.docx", docx_bytes)
             html_str = export_tab_html(spec["title"], content, spec["id"])
             zf.writestr(f"{base_name}_{safe_title}.html", html_str)
+            if spec["id"] == "vocabulary":
+                svg = build_vocabulary_concept_map_svg(content)
+                zf.writestr(f"{base_name}_vocabulary_concept_map.svg", svg)
     return buffer.getvalue()

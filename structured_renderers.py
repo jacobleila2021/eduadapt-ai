@@ -164,9 +164,14 @@ def render_vocabulary(data: Any) -> None:
         )
 
     mermaid = vocab.get("mermaid_diagram") or vocab.get("mermaid", "")
+    st.markdown("### 7. Concept Map")
+    st.caption("Study how all vocabulary terms connect to the main topic.")
+    from concept_map_builder import build_vocabulary_concept_map_svg
+
+    _render_svg(build_vocabulary_concept_map_svg(vocab))
     if mermaid:
-        st.markdown("### Concept Map")
-        _render_mermaid(mermaid)
+        with st.expander("Alternative AI concept map"):
+            _render_mermaid(mermaid)
 
 
 def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
