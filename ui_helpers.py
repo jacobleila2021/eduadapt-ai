@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from adaptation_specs import SPEC_ICONS
 from config import (
     EDUADAPT_TIME_MINUTES,
     MANUAL_TIME_HOURS,
@@ -22,6 +21,29 @@ from structured_renderers import (
     render_worksheet,
     _coerce_dict,
 )
+
+# Navigation icons — defined here so app startup never depends on adaptation_specs exports.
+SPEC_ICONS = {
+    "original": "📄",
+    "vocabulary": "📚",
+    "standard": "✨",
+    "ld": "♿",
+    "dyslexia": "🔤",
+    "dysgraphia": "✍️",
+    "dyscalculia": "🔢",
+    "adhd": "⚡",
+    "autism": "🧩",
+    "executive": "📋",
+    "visual": "👁️",
+    "auditory": "👂",
+    "ell": "🌍",
+    "gifted": "🚀",
+    "parent": "🏠",
+    "teacher": "👩‍🏫",
+    "tutor": "🤖",
+    "multisensory": "🎨",
+    "worksheet": "📝",
+}
 
 
 def render_sidebar() -> None:

@@ -21,7 +21,7 @@ st.set_page_config(
 from pathlib import Path
 
 try:
-    from adaptation_specs import ADAPTATION_SPECS, SPEC_ICONS
+    from adaptation_specs import ADAPTATION_SPECS
     from ai_generator import generate_adaptations, quality_report, validate_api_key
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
@@ -31,7 +31,13 @@ try:
     from styles import get_custom_css, render_header
     from structured_renderers import content_to_export
     from version import APP_VERSION
-    from ui_helpers import render_adaptation_nav, render_analytics_panel, render_content_tab, render_sidebar
+    from ui_helpers import (
+        render_adaptation_nav,
+        render_analytics_panel,
+        render_content_tab,
+        render_sidebar,
+        SPEC_ICONS,
+    )
 except Exception as import_error:
     st.error("EduAdapt AI could not start. Details below (share with support if needed):")
     st.code(traceback.format_exc())
