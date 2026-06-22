@@ -154,6 +154,54 @@ def get_custom_css() -> str:
         color: {COLOR_DARK_BLUE};
         margin-top: 1.25rem;
     }}
+
+    .adapt-nav-hint {{
+        color: #5a6b7d;
+        font-size: 0.92rem;
+        margin: 0 0 0.75rem 0;
+    }}
+
+    .adapt-nav-grid [data-testid="column"] button {{
+        min-height: 3.25rem;
+        white-space: normal;
+        line-height: 1.25;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 0.45rem 0.35rem;
+    }}
+
+    .adapt-nav-grid [data-testid="column"] button[kind="primary"] {{
+        background: {COLOR_TEAL} !important;
+        border: 2px solid {COLOR_TEAL} !important;
+        box-shadow: 0 2px 8px rgba(0, 140, 149, 0.35);
+    }}
+
+    .adapt-nav-grid [data-testid="column"] button[kind="secondary"] {{
+        background: #eef4f8 !important;
+        color: {COLOR_DARK_BLUE} !important;
+        border: 1px solid #c8d8e4 !important;
+    }}
+
+    .sidebar-status-ready {{
+        background: rgba(0, 140, 149, 0.25);
+        border: 1px solid rgba(0, 200, 210, 0.45);
+        border-radius: 10px;
+        padding: 0.65rem 0.85rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }}
+
+    .sidebar-status-warn {{
+        background: rgba(255, 193, 7, 0.15);
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        border-radius: 10px;
+        padding: 0.65rem 0.85rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }}
     </style>
     """
 

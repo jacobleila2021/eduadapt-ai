@@ -21,16 +21,17 @@ st.set_page_config(
 from pathlib import Path
 
 try:
-    from adaptation_specs import ADAPTATION_SPECS, OUTPUT_TAB_LABELS
-    from ai_generator import generate_adaptations, get_effective_api_key, quality_report, validate_api_key
+    from adaptation_specs import ADAPTATION_SPECS, SPEC_ICONS
+    from ai_generator import generate_adaptations, quality_report, validate_api_key
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
     from document_parser import extract_lesson_text
+    from html_exporter import export_tab_html
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
     from styles import get_custom_css, render_header
     from structured_renderers import content_to_export
     from version import APP_VERSION
-    from ui_helpers import render_analytics_panel, render_content_tab, render_sidebar
+    from ui_helpers import render_adaptation_nav, render_analytics_panel, render_content_tab, render_sidebar
 except Exception as import_error:
     st.error("EduAdapt AI could not start. Details below (share with support if needed):")
     st.code(traceback.format_exc())
@@ -58,6 +59,8 @@ if "last_saved_api_key" not in st.session_state:
     st.session_state.last_saved_api_key = ""
 if "quality" not in st.session_state:
     st.session_state.quality = None
+if "active_output_id" not in st.session_state:
+    st.session_state.active_output_id = "vocabulary"
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -150,8 +153,8 @@ def run_generation() -> None:
 
     if not validate_api_key(st.session_state.runtime_api_key):
         st.error(
-            "Missing OpenAI API key. Add it in the sidebar under "
-            "**OpenAI Setup** or in `.env` as `OPENAI_API_KEY=...`."
+            "AI service is not configured. Open **Administrator settings** in the sidebar "
+            "or contact your platform administrator."
         )
         return
 
@@ -170,6 +173,7 @@ def run_generation() -> None:
                 on_progress=on_progress,
             )
             st.session_state.quality = quality_report(st.session_state.adaptations)
+            st.session_state.active_output_id = "vocabulary"
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
@@ -198,47 +202,41 @@ def _content_for_spec(spec: dict, adaptations: dict, lesson: str) -> str:
     return adaptations.get(spec["id"], "_No content generated for this section._")
 
 
-def render_output_tabs() -> None:
-    """Show original lesson, vocabulary, adaptations, and worksheet in separate tabs."""
-    adaptations = st.session_state.adaptations
-    lesson = st.session_state.lesson_text
-    base_name = (
-        st.session_state.upload_name.rsplit(".", 1)[0]
-        if st.session_state.upload_name
-        else "lesson"
-    )
-
-    tab_contents = []
-    for spec in ADAPTATION_SPECS:
-        content = _content_for_spec(spec, adaptations, lesson)
-        filename = f"{base_name}_{spec['id']}.txt"
-        tab_contents.append((spec["title"], content, filename, spec["id"]))
-
-    tabs = st.tabs(OUTPUT_TAB_LABELS)
-
-    for tab, (title, content, filename, spec_id) in zip(tabs, tab_contents):
-        with tab:
-            render_content_tab(title, content, filename, spec_id=spec_id)
+def _cloud_api_key_configured() -> bool:
+    """True when Streamlit Cloud secrets include a valid OpenAI key."""
+    try:
+        return is_valid_openai_key(str(st.secrets.get("OPENAI_API_KEY", "")))
+    except Exception:
+        return False
 
 
-def main() -> None:
-    """Application entry point."""
-    load_api_key_from_env_file()
+def render_api_sidebar() -> None:
+    """Professional sidebar status — no exposed key details on the main view."""
+    cloud_key = _cloud_api_key_configured()
+    active = validate_api_key(st.session_state.runtime_api_key)
 
-    st.markdown(get_custom_css(), unsafe_allow_html=True)
-    st.markdown(render_header(), unsafe_allow_html=True)
+    if active:
+        st.sidebar.markdown(
+            '<div class="sidebar-status-ready">● AI service ready</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.sidebar.markdown(
+            '<div class="sidebar-status-warn">○ Setup required</div>',
+            unsafe_allow_html=True,
+        )
 
-    render_sidebar()
-    st.sidebar.caption(f"App version **{APP_VERSION}** — structured vocabulary & worksheets")
+    if cloud_key:
+        return
 
-    with st.sidebar.expander("OpenAI Setup", expanded=True):
-        st.caption("Paste once. EduAdapt auto-saves it to `.env`.")
+    with st.sidebar.expander("Administrator settings", expanded=False):
+        st.caption("Self-hosted only. Keys are stored locally in `.env`.")
         session_key = st.text_input(
-            "OpenAI API Key",
+            "OpenAI API key",
             value=st.session_state.runtime_api_key,
             type="password",
-            placeholder="sk-...",
-            help="Stored in .env on your machine; on Streamlit Cloud use Secrets.",
+            placeholder="sk-…",
+            label_visibility="collapsed",
         )
         st.session_state.runtime_api_key = session_key.strip()
 
@@ -249,20 +247,86 @@ def main() -> None:
             try:
                 save_api_key_to_env(st.session_state.runtime_api_key)
                 st.session_state.last_saved_api_key = st.session_state.runtime_api_key
-                st.success("API key auto-saved to .env")
             except Exception as error:
-                st.warning(f"Could not save .env locally: {error}")
+                st.warning(f"Could not save settings locally: {error}")
 
-        active_key = get_effective_api_key(st.session_state.runtime_api_key)
-        if active_key:
-            st.success("API key detected. Ready to generate.")
-            st.caption(f"Using key ending in ...{active_key[-4:]}")
+        if validate_api_key(st.session_state.runtime_api_key):
+            st.caption("Configuration saved.")
         else:
-            st.warning("API key missing. Add key to continue.")
+            st.caption("Enter a valid API key to enable generation.")
 
-        if st.button("Reload key from .env", use_container_width=True):
-            load_api_key_from_env_file()
-            st.rerun()
+
+def render_output_tabs() -> None:
+    """Show adaptations with persistent grid navigation (all labels visible)."""
+    adaptations = st.session_state.adaptations
+    lesson = st.session_state.lesson_text
+    base_name = (
+        st.session_state.upload_name.rsplit(".", 1)[0]
+        if st.session_state.upload_name
+        else "lesson"
+    )
+
+    nav_specs = [spec for spec in ADAPTATION_SPECS if spec["id"] != "original"]
+    active_id = st.session_state.active_output_id
+    if active_id == "original" or not any(s["id"] == active_id for s in nav_specs):
+        active_id = "vocabulary"
+        st.session_state.active_output_id = active_id
+
+    render_adaptation_nav(nav_specs, active_id)
+
+    active_spec = next(spec for spec in ADAPTATION_SPECS if spec["id"] == active_id)
+    content = _content_for_spec(active_spec, adaptations, lesson)
+    filename = f"{base_name}_{active_spec['id']}.txt"
+    icon = SPEC_ICONS.get(active_id, "📘")
+
+    st.markdown(f"### {icon} {active_spec['title']}")
+    render_content_tab(active_spec["title"], content, filename, spec_id=active_id)
+
+    with st.expander("View uploaded original lesson", expanded=False):
+        st.caption(
+            "Your source file is saved in the ZIP bundle. "
+            "Open this only when you need to check the upload."
+        )
+        col_txt, col_docx, col_html = st.columns(3)
+        with col_txt:
+            st.download_button(
+                label="Text",
+                data=content_to_export("Original Lesson Archive", lesson, "original"),
+                file_name=f"{base_name}_original.txt",
+                mime="text/plain",
+                use_container_width=True,
+                key="dl_txt_original",
+            )
+        with col_docx:
+            st.download_button(
+                label="Word",
+                data=export_tab_docx("Original Lesson Archive", lesson, "original"),
+                file_name=f"{base_name}_original.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+                key="dl_docx_original",
+            )
+        with col_html:
+            st.download_button(
+                label="HTML",
+                data=export_tab_html("Original Lesson Archive", lesson, "original"),
+                file_name=f"{base_name}_original.html",
+                mime="text/html",
+                use_container_width=True,
+                key="dl_html_original",
+            )
+
+
+def main() -> None:
+    """Application entry point."""
+    load_api_key_from_env_file()
+
+    st.markdown(get_custom_css(), unsafe_allow_html=True)
+    st.markdown(render_header(), unsafe_allow_html=True)
+
+    render_sidebar()
+    render_api_sidebar()
+    st.sidebar.caption(f"Version **{APP_VERSION}**")
 
     st.subheader("1. Upload Your Lesson")
 
@@ -316,6 +380,7 @@ def main() -> None:
                 st.session_state.analytics = None
                 st.session_state.upload_name = ""
                 st.session_state.quality = None
+                st.session_state.active_output_id = "vocabulary"
                 st.rerun()
 
     if st.session_state.adaptations:
@@ -341,9 +406,10 @@ def main() -> None:
                         "**Generate Adaptations** again, or upload a focused chapter."
                     )
 
-        st.subheader(
-            "4. Your Differentiated Lessons "
-            "(Original → Vocabulary → 16 AdaptEd versions → Exam Worksheet)"
+        st.subheader("4. Your Differentiated Lessons")
+        st.caption(
+            "Vocabulary → 16 learner adaptations → Exam worksheet. "
+            "Pick any version from the grid — it stays open while you browse or download."
         )
         render_output_tabs()
 

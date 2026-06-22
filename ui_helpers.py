@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from adaptation_specs import SPEC_ICONS
 from config import (
     EDUADAPT_TIME_MINUTES,
     MANUAL_TIME_HOURS,
@@ -121,6 +122,39 @@ def render_download_button(label: str, content: str, filename: str) -> None:
     )
 
 
+def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None:
+    """
+    Persistent adaptation picker — all labels visible in a grid.
+    Unlike st.tabs, the selected version stays open after downloads or reruns.
+    """
+    st.markdown(
+        '<p class="adapt-nav-hint">Choose a version below — your selection stays open while you '
+        "download or switch between adaptations.</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="adapt-nav-grid">', unsafe_allow_html=True)
+    for row_start in range(0, len(specs), columns):
+        row_specs = specs[row_start : row_start + columns]
+        cols = st.columns(columns)
+        for col, spec in zip(cols, row_specs):
+            icon = SPEC_ICONS.get(spec["id"], "📘")
+            label = f"{icon} {spec['tab']}"
+            with col:
+                is_active = spec["id"] == active_id
+                if st.button(
+                    label,
+                    key=f"adapt_nav_{spec['id']}",
+                    use_container_width=True,
+                    type="primary" if is_active else "secondary",
+                ):
+                    st.session_state.active_output_id = spec["id"]
+                    st.rerun()
+        for col in cols[len(row_specs) :]:
+            with col:
+                st.empty()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_content_tab(
     title: str,
     content: str | dict,
@@ -150,6 +184,7 @@ def render_content_tab(
             file_name=download_filename,
             mime="text/plain",
             use_container_width=True,
+            key=f"dl_txt_{spec_id}",
         )
     with col_docx:
         docx_name = download_filename.rsplit(".", 1)[0] + ".docx"
@@ -159,6 +194,7 @@ def render_content_tab(
             file_name=docx_name,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True,
+            key=f"dl_docx_{spec_id}",
         )
     with col_html:
         html_name = download_filename.rsplit(".", 1)[0] + ".html"
@@ -168,4 +204,5 @@ def render_content_tab(
             file_name=html_name,
             mime="text/html",
             use_container_width=True,
+            key=f"dl_html_{spec_id}",
         )

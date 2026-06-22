@@ -221,8 +221,30 @@ LESSON_ADAPTATION_IDS = {
     "executive", "visual", "auditory", "ell", "gifted", "tutor", "multisensory",
 }
 
-# Tab labels for st.tabs (derived)
+# Tab labels for st.tabs (derived) — legacy; navigation uses SPEC_ICONS + spec["tab"]
 OUTPUT_TAB_LABELS = [spec["tab"] for spec in ADAPTATION_SPECS]
+
+SPEC_ICONS = {
+    "original": "📄",
+    "vocabulary": "📚",
+    "standard": "✨",
+    "ld": "♿",
+    "dyslexia": "🔤",
+    "dysgraphia": "✍️",
+    "dyscalculia": "🔢",
+    "adhd": "⚡",
+    "autism": "🧩",
+    "executive": "📋",
+    "visual": "👁️",
+    "auditory": "👂",
+    "ell": "🌍",
+    "gifted": "🚀",
+    "parent": "🏠",
+    "teacher": "👩‍🏫",
+    "tutor": "🤖",
+    "multisensory": "🎨",
+    "worksheet": "📝",
+}
 
 # Keys sent to / returned from OpenAI
 OUTPUT_KEYS = [spec["id"] for spec in ADAPTATION_SPECS if spec["generate"]]
