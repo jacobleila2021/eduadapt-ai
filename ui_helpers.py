@@ -119,7 +119,7 @@ def render_brand_header(show_logo_path: str | None = None) -> None:
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown(
         f'<div style="height:4px;background:linear-gradient(90deg,{COLOR_DEEP_NAVY},'
-        f"{COLOR_ELECTRIC_CYAN},{COLOR_BRIGHT_AQUA});border-radius:4px;margin-bottom:1.25rem;"></div>",
+        f'{COLOR_ELECTRIC_CYAN},{COLOR_BRIGHT_AQUA});border-radius:4px;margin-bottom:1.25rem;"></div>',
         unsafe_allow_html=True,
     )
 
