@@ -7,6 +7,17 @@ from io import BytesIO
 from docx import Document
 from pypdf import PdfReader
 
+# Strip bytes that break Word export and other XML pipelines.
+import re
+
+_BAD_TEXT_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufeff]")
+
+
+def _clean_extracted_text(text: str) -> str:
+    if not text:
+        return ""
+    return _BAD_TEXT_CHARS.sub("", text).replace("\x00", "")
+
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """
@@ -26,7 +37,7 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
         if page_text.strip():
             pages.append(f"--- Page {index} ---\n{page_text.strip()}")
 
-    return "\n\n".join(pages)
+    return _clean_extracted_text("\n\n".join(pages))
 
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
@@ -41,7 +52,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
     """
     document = Document(BytesIO(file_bytes))
     paragraphs = [para.text.strip() for para in document.paragraphs if para.text.strip()]
-    return "\n\n".join(paragraphs)
+    return _clean_extracted_text("\n\n".join(paragraphs))
 
 
 def extract_lesson_text(filename: str, file_bytes: bytes) -> str:

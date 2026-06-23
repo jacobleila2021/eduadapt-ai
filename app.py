@@ -26,7 +26,6 @@ try:
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
     from document_parser import extract_lesson_text
-    from html_exporter import export_tab_html
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
     from styles import get_custom_css, render_header
     from structured_renderers import content_to_export
@@ -290,37 +289,17 @@ def render_output_tabs() -> None:
 
     with st.expander("View uploaded original lesson", expanded=False):
         st.caption(
-            "Your source file is saved in the ZIP bundle. "
-            "Open this only when you need to check the upload."
+            "Your source file is included in the **Download ZIP** section below "
+            "(Word + HTML). Use Text here for a quick plain copy."
         )
-        col_txt, col_docx, col_html = st.columns(3)
-        with col_txt:
-            st.download_button(
-                label="Text",
-                data=content_to_export("Original Lesson Archive", lesson, "original"),
-                file_name=f"{base_name}_original.txt",
-                mime="text/plain",
-                use_container_width=True,
-                key="dl_txt_original",
-            )
-        with col_docx:
-            st.download_button(
-                label="Word",
-                data=export_tab_docx("Original Lesson Archive", lesson, "original"),
-                file_name=f"{base_name}_original.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-                key="dl_docx_original",
-            )
-        with col_html:
-            st.download_button(
-                label="HTML",
-                data=export_tab_html("Original Lesson Archive", lesson, "original"),
-                file_name=f"{base_name}_original.html",
-                mime="text/html",
-                use_container_width=True,
-                key="dl_html_original",
-            )
+        st.download_button(
+            label="Download original as Text",
+            data=content_to_export("Original Lesson Archive", lesson, "original"),
+            file_name=f"{base_name}_original.txt",
+            mime="text/plain",
+            use_container_width=True,
+            key="dl_txt_original",
+        )
 
 
 def main() -> None:
