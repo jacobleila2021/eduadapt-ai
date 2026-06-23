@@ -15,12 +15,15 @@ st.set_page_config(
 
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+SAMPLE_LESSON_PATH = PROJECT_ROOT / "samples" / "sample_lesson.docx"
+ALORA_LOGO = PROJECT_ROOT / "assets" / "alora_logo.png"
+
 try:
     from adaptation_specs import ADAPTATION_SPECS
     from ai_generator import generate_adaptations, quality_report, validate_api_key
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
-    from brand_assets import ALORA_LOGO
     from document_parser import extract_lesson_text
     from config import APP_NAME
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
@@ -43,9 +46,6 @@ except Exception as import_error:
         "`OPENAI_API_KEY`. Also confirm **Manage app → Logs** shows a successful pip install."
     )
     st.stop()
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-SAMPLE_LESSON_PATH = PROJECT_ROOT / "samples" / "sample_lesson.docx"
 
 # --- Session state defaults ---
 if "lesson_text" not in st.session_state:
