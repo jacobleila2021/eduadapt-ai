@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from brand_assets import OMNILI_LOGO
 from config import (
     EDUADAPT_TIME_MINUTES,
     MANUAL_TIME_HOURS,
