@@ -9,7 +9,6 @@ import streamlit as st
 from config import (
     EDUADAPT_TIME_MINUTES,
     MANUAL_TIME_HOURS,
-    OMNILI_LOGO,
     TIME_SAVED_PERCENT,
 )
 from content_renderer import render_rich_content

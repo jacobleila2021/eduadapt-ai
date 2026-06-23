@@ -25,10 +25,6 @@ COLOR_TEAL = COLOR_ELECTRIC_CYAN
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 ASSETS_DIR = PROJECT_ROOT / "assets"
-EDUADAPT_LOGO = ASSETS_DIR / "eduadapt_logo.png"
-OMNILI_LOGO = ASSETS_DIR / "omnili_logo.png"
-
-# --- Time-saved sidebar metrics ---
 MANUAL_TIME_HOURS = 4
 EDUADAPT_TIME_MINUTES = 2
 TIME_SAVED_PERCENT = 95

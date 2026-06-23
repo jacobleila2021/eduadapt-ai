@@ -25,8 +25,8 @@ try:
     from ai_generator import generate_adaptations, quality_report, validate_api_key
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
+    from brand_assets import EDUADAPT_LOGO, OMNILI_LOGO
     from document_parser import extract_lesson_text
-    from config import EDUADAPT_LOGO, OMNILI_LOGO
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
     from styles import get_custom_css, render_brand_header
     from structured_renderers import content_to_export
