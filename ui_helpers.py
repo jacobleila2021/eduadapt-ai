@@ -9,6 +9,7 @@ import streamlit as st
 from config import (
     EDUADAPT_TIME_MINUTES,
     MANUAL_TIME_HOURS,
+    OMNILI_LOGO,
     TIME_SAVED_PERCENT,
 )
 from content_renderer import render_rich_content
@@ -47,11 +48,16 @@ SPEC_ICONS = {
 
 
 def render_sidebar() -> None:
-    """
-    Display time-saved metrics and quick tips in the sidebar.
-    """
-    st.sidebar.title("EduAdapt AI")
-    st.sidebar.caption("Upload Once. Teach Every Learner.")
+    """Time-saved metrics and Omnili branding in the left pane."""
+    if OMNILI_LOGO.exists():
+        st.sidebar.image(str(OMNILI_LOGO), use_container_width=True)
+        st.sidebar.caption("Powered by Omnili")
+
+    st.sidebar.markdown(
+        f'<p style="font-size:1.15rem;font-weight:700;color:#22F0FF;margin:0;">EduAdapt AI</p>'
+        f'<p style="font-size:0.85rem;opacity:0.9;margin:0.2rem 0 0 0;">Upload Once. Teach Every Learner.</p>',
+        unsafe_allow_html=True,
+    )
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("Time Saved")
@@ -76,9 +82,23 @@ def render_sidebar() -> None:
 
     st.sidebar.markdown("---")
     st.sidebar.info(
-        "**Tip:** Upload a lesson, generate adaptations, then study **Vocabulary** "
-        "separately before the **Worksheet** exam practice tab."
+        "**Tip:** All adaptation versions stay on one page below — open any section without reloading."
     )
+
+
+def render_adaptation_section(
+    spec: dict,
+    content: str | dict,
+    base_name: str,
+    expanded: bool = False,
+) -> None:
+    """One adaptation block inside an expander — others on the page stay open."""
+    icon = SPEC_ICONS.get(spec["id"], "📘")
+    filename = f"{base_name}_{spec['id']}.txt"
+    label = f"{icon}  {spec['tab']}"
+    with st.expander(label, expanded=expanded):
+        st.markdown(f"**{spec['title']}**")
+        render_content_tab(spec["title"], content, filename, spec_id=spec["id"])
 
 
 def render_analytics_panel(analytics: dict) -> None:
@@ -145,36 +165,9 @@ def render_download_button(label: str, content: str, filename: str) -> None:
 
 
 def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None:
-    """
-    Persistent adaptation picker — all labels visible in a grid.
-    Unlike st.tabs, the selected version stays open after downloads or reruns.
-    """
-    st.markdown(
-        '<p class="adapt-nav-hint">Choose a version below — your selection stays open while you '
-        "download or switch between adaptations.</p>",
-        unsafe_allow_html=True,
-    )
-    st.markdown('<div class="adapt-nav-grid">', unsafe_allow_html=True)
-    for row_start in range(0, len(specs), columns):
-        row_specs = specs[row_start : row_start + columns]
-        cols = st.columns(columns)
-        for col, spec in zip(cols, row_specs):
-            icon = SPEC_ICONS.get(spec["id"], "📘")
-            label = f"{icon} {spec['tab']}"
-            with col:
-                is_active = spec["id"] == active_id
-                if st.button(
-                    label,
-                    key=f"adapt_nav_{spec['id']}",
-                    use_container_width=True,
-                    type="primary" if is_active else "secondary",
-                ):
-                    if spec["id"] != active_id:
-                        st.session_state.active_output_id = spec["id"]
-        for col in cols[len(row_specs) :]:
-            with col:
-                st.empty()
-    st.markdown("</div>", unsafe_allow_html=True)
+    """Deprecated — use render_adaptation_section on one page instead."""
+    for spec in specs:
+        st.caption(f"• {spec['tab']}")
 
 
 def render_content_tab(

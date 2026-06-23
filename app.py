@@ -26,16 +26,16 @@ try:
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
     from document_parser import extract_lesson_text
+    from config import EDUADAPT_LOGO, OMNILI_LOGO
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
-    from styles import get_custom_css, render_header
+    from styles import get_custom_css, render_brand_header
     from structured_renderers import content_to_export
     from version import APP_VERSION
     from ui_helpers import (
-        render_adaptation_nav,
+        render_adaptation_section,
         render_analytics_panel,
         render_content_tab,
         render_sidebar,
-        SPEC_ICONS,
     )
 except Exception as import_error:
     st.error("EduAdapt AI could not start. Details below (share with support if needed):")
@@ -64,8 +64,6 @@ if "last_saved_api_key" not in st.session_state:
     st.session_state.last_saved_api_key = ""
 if "quality" not in st.session_state:
     st.session_state.quality = None
-if "active_output_id" not in st.session_state:
-    st.session_state.active_output_id = "vocabulary"
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -178,7 +176,6 @@ def run_generation() -> None:
                 on_progress=on_progress,
             )
             st.session_state.quality = quality_report(st.session_state.adaptations)
-            st.session_state.active_output_id = "vocabulary"
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
@@ -262,7 +259,7 @@ def render_api_sidebar() -> None:
 
 
 def render_output_tabs() -> None:
-    """Show adaptations with persistent grid navigation (all labels visible)."""
+    """All adaptation versions on one page — each in its own expander (none reload)."""
     adaptations = st.session_state.adaptations
     lesson = st.session_state.lesson_text
     base_name = (
@@ -271,27 +268,23 @@ def render_output_tabs() -> None:
         else "lesson"
     )
 
-    nav_specs = [spec for spec in ADAPTATION_SPECS if spec["id"] != "original"]
-    active_id = st.session_state.active_output_id
-    if active_id == "original" or not any(s["id"] == active_id for s in nav_specs):
-        active_id = "vocabulary"
-        st.session_state.active_output_id = active_id
-
-    render_adaptation_nav(nav_specs, active_id)
-
-    active_spec = next(spec for spec in ADAPTATION_SPECS if spec["id"] == active_id)
-    content = _content_for_spec(active_spec, adaptations, lesson)
-    filename = f"{base_name}_{active_spec['id']}.txt"
-    icon = SPEC_ICONS.get(active_id, "📘")
-
     st.markdown(
-        f'<div id="adaptation-content" style="scroll-margin-top:80px;"></div>',
+        '<p class="adapt-panel-hint"><strong>All versions stay on this page.</strong> '
+        "Open any section below — others remain visible. Nothing reloads or closes.</p>",
         unsafe_allow_html=True,
     )
-    st.markdown(f"### {icon} {active_spec['title']}")
-    render_content_tab(active_spec["title"], content, filename, spec_id=active_id)
 
-    with st.expander("View uploaded original lesson", expanded=False):
+    nav_specs = [spec for spec in ADAPTATION_SPECS if spec["id"] != "original"]
+    for spec in nav_specs:
+        content = _content_for_spec(spec, adaptations, lesson)
+        render_adaptation_section(
+            spec,
+            content,
+            base_name,
+            expanded=(spec["id"] == "vocabulary"),
+        )
+
+    with st.expander("📄  Original uploaded lesson", expanded=False):
         st.caption(
             "Your source file is included in the **Download ZIP** section below "
             "(Word + HTML). Use Text here for a quick plain copy."
@@ -339,9 +332,7 @@ def _adaptation_workspace_impl() -> None:
                 )
 
     st.subheader("4. Your Differentiated Lessons")
-    st.caption(
-        "Pick any version from the grid below. The lesson stays open while you switch or download."
-    )
+    st.caption("18 versions on one scrollable page — Vocabulary, learner adaptations, and Exam Worksheet.")
     render_output_tabs()
 
 
@@ -406,7 +397,6 @@ def _render_setup_sections() -> None:
                 st.session_state.analytics = None
                 st.session_state.upload_name = ""
                 st.session_state.quality = None
-                st.session_state.active_output_id = "vocabulary"
                 st.rerun()
 
 
@@ -415,7 +405,12 @@ def main() -> None:
     load_api_key_from_env_file()
 
     st.markdown(get_custom_css(), unsafe_allow_html=True)
-    st.markdown(render_header(), unsafe_allow_html=True)
+
+    if OMNILI_LOGO.exists() and hasattr(st, "logo"):
+        st.logo(str(OMNILI_LOGO))
+
+    logo_path = str(EDUADAPT_LOGO) if EDUADAPT_LOGO.exists() else None
+    render_brand_header(logo_path)
 
     render_sidebar()
     render_api_sidebar()
