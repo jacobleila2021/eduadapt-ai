@@ -1,8 +1,7 @@
-"""Logo paths — separate module so Streamlit Cloud never misses config exports."""
+"""Logo path for Alora AI — single asset used in the app header."""
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 ASSETS_DIR = ROOT / "assets"
-EDUADAPT_LOGO = ASSETS_DIR / "eduadapt_logo.png"
-OMNILI_LOGO = ASSETS_DIR / "omnili_logo.png"
+ALORA_LOGO = ASSETS_DIR / "alora_logo.png"

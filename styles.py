@@ -1,18 +1,18 @@
 """
-Custom CSS and HTML helpers for the EduAdapt AI interface.
+Custom CSS for Alora AI — luxe, high-contrast, readable.
 """
 
 from config import (
     COLOR_BRIGHT_AQUA,
     COLOR_DEEP_NAVY,
     COLOR_ELECTRIC_CYAN,
-    COLOR_SILVER,
+    COLOR_PAGE_BG,
+    COLOR_TEXT,
     COLOR_WHITE,
 )
 
 
 def get_custom_css() -> str:
-    """Return Streamlit-compatible CSS for the Omnili / EduAdapt design system."""
     return f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -23,228 +23,174 @@ def get_custom_css() -> str:
 
     .main .block-container {{
         padding-top: 1rem;
-        max-width: 1200px;
+        max-width: 1180px;
+        background: {COLOR_PAGE_BG};
+    }}
+
+    .main, .main p, .main li, .main span, .main label,
+    .main .stMarkdown, .main h1, .main h2, .main h3, .main h4 {{
+        color: {COLOR_TEXT};
     }}
 
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
 
-    /* ---- Sidebar (Deep Navy + cyan accents) ---- */
-    div[data-testid="stSidebar"] {{
-        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #021028 100%);
-        border-right: 1px solid rgba(20, 217, 229, 0.25);
+    /* ---- Sidebar: navy panel, scoped text (no global * override) ---- */
+    section[data-testid="stSidebar"] > div {{
+        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #021a42 100%);
     }}
 
-    div[data-testid="stSidebar"] * {{
-        color: {COLOR_WHITE} !important;
-    }}
-
-    div[data-testid="stSidebar"] .stButton > button {{
-        background: linear-gradient(135deg, {COLOR_ELECTRIC_CYAN}, {COLOR_BRIGHT_AQUA}) !important;
-        color: {COLOR_DEEP_NAVY} !important;
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-    }}
-
-    div[data-testid="stSidebar"] hr {{
-        border-color: rgba(20, 217, 229, 0.3);
-    }}
-
-    .sidebar-metric {{
+    section[data-testid="stSidebar"] .sidebar-tip {{
         background: rgba(20, 217, 229, 0.12);
-        border: 1px solid rgba(34, 240, 255, 0.35);
+        border: 1px solid rgba(20, 217, 229, 0.45);
         border-radius: 12px;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        text-align: center;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.75rem;
+        color: {COLOR_WHITE};
+        font-size: 0.9rem;
+        line-height: 1.5;
     }}
 
-    .sidebar-metric strong {{
-        color: {COLOR_BRIGHT_AQUA} !important;
-        font-size: 1.15rem;
+    section[data-testid="stSidebar"] .sidebar-tip strong {{
+        color: {COLOR_BRIGHT_AQUA};
     }}
 
-    .sidebar-status-ready {{
-        background: rgba(20, 217, 229, 0.18);
+    section[data-testid="stSidebar"] .sidebar-tip-num {{
+        display: inline-block;
+        background: {COLOR_ELECTRIC_CYAN};
+        color: {COLOR_DEEP_NAVY};
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 0.1rem 0.45rem;
+        margin-right: 0.35rem;
+        font-size: 0.75rem;
+    }}
+
+    section[data-testid="stSidebar"] .sidebar-status-ready {{
+        background: rgba(20, 217, 229, 0.15);
         border: 1px solid {COLOR_ELECTRIC_CYAN};
         border-radius: 10px;
-        padding: 0.65rem 0.85rem;
+        padding: 0.55rem 0.75rem;
         text-align: center;
+        color: {COLOR_BRIGHT_AQUA};
         font-weight: 600;
-        color: {COLOR_BRIGHT_AQUA} !important;
+        font-size: 0.88rem;
+        margin-bottom: 0.75rem;
     }}
 
-    .sidebar-status-warn {{
-        background: rgba(255, 193, 7, 0.12);
-        border: 1px solid rgba(255, 193, 7, 0.4);
-        border-radius: 10px;
-        padding: 0.65rem 0.85rem;
-        text-align: center;
-        font-weight: 600;
-    }}
-
-    /* ---- Main header with logo ---- */
-    .brand-header-wrap {{
-        background: linear-gradient(135deg, {COLOR_DEEP_NAVY} 0%, #062659 55%, #0a3d6e 100%);
-        padding: 1rem 1.25rem;
-        border-radius: 16px;
+    /* ---- Header ---- */
+    .alora-header {{
+        background: {COLOR_WHITE};
         border: 1px solid rgba(20, 217, 229, 0.35);
-        margin-bottom: 0.5rem;
-        box-shadow: 0 10px 32px rgba(4, 27, 77, 0.35);
+        border-radius: 14px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 20px rgba(4, 27, 77, 0.06);
     }}
 
-    .brand-header {{
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-        background: linear-gradient(135deg, {COLOR_DEEP_NAVY} 0%, #062659 55%, #0a3d6e 100%);
-        padding: 1.25rem 1.75rem;
-        border-radius: 16px;
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        margin-bottom: 1.25rem;
-        box-shadow: 0 10px 32px rgba(4, 27, 77, 0.45);
-    }}
-
-    .brand-header-text h1 {{
-        margin: 0;
-        font-size: 1.85rem;
+    .alora-title {{
+        color: {COLOR_DEEP_NAVY};
+        font-size: 1.65rem;
         font-weight: 700;
-        color: {COLOR_WHITE} !important;
+        margin: 0;
     }}
 
-    .brand-tagline {{
-        margin: 0.35rem 0 0 0;
-        font-size: 1.05rem;
+    .alora-tagline {{
         color: {COLOR_ELECTRIC_CYAN};
-        font-weight: 500;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0.25rem 0 0 0;
     }}
 
-    .brand-sub {{
-        margin: 0.5rem 0 0 0;
-        font-size: 0.92rem;
-        color: {COLOR_SILVER};
-    }}
-
-    /* ---- Metrics & cards ---- */
+    /* ---- Metrics ---- */
     .metric-card {{
         background: {COLOR_WHITE};
+        border: 1px solid rgba(20, 217, 229, 0.35);
         border-left: 4px solid {COLOR_ELECTRIC_CYAN};
         border-radius: 12px;
         padding: 1rem 1.25rem;
-        box-shadow: 0 2px 12px rgba(4, 27, 77, 0.1);
-        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 10px rgba(4, 27, 77, 0.06);
     }}
 
     .metric-card h4 {{
         color: {COLOR_DEEP_NAVY};
         margin: 0 0 0.25rem 0;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
     }}
 
     .metric-card p {{
         color: {COLOR_ELECTRIC_CYAN};
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.45rem;
         font-weight: 700;
     }}
 
-    /* ---- Adaptation expanders (all stay on page) ---- */
-    .adapt-panel-hint {{
+    /* ---- Adaptation tab grid ---- */
+    .adapt-nav-hint {{
         color: {COLOR_DEEP_NAVY};
-        font-size: 0.95rem;
-        margin: 0 0 1rem 0;
-        padding: 0.65rem 1rem;
-        background: rgba(20, 217, 229, 0.12);
+        font-size: 0.92rem;
+        margin: 0 0 0.85rem 0;
+        padding: 0.6rem 0.9rem;
+        background: {COLOR_WHITE};
         border-left: 4px solid {COLOR_ELECTRIC_CYAN};
-        border-radius: 0 10px 10px 0;
-    }}
-
-    div[data-testid="stExpander"] {{
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        border-radius: 12px;
-        margin-bottom: 0.65rem;
-        background: #f7fdff;
-    }}
-
-    div[data-testid="stExpander"] details summary {{
-        background: linear-gradient(90deg, {COLOR_DEEP_NAVY}, #0a3568);
-        color: {COLOR_BRIGHT_AQUA} !important;
-        font-weight: 700;
-        border-radius: 11px;
-        padding: 0.15rem 0.5rem;
-    }}
-
-    div[data-testid="stExpander"] details[open] summary {{
-        border-radius: 11px 11px 0 0;
-        border-bottom: 2px solid {COLOR_ELECTRIC_CYAN};
-    }}
-
-    /* ---- Streamlit tabs (if used elsewhere) ---- */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 6px;
-        flex-wrap: wrap;
-    }}
-
-    .stTabs [data-baseweb="tab"] {{
-        background: rgba(4, 27, 77, 0.08);
-        border-radius: 10px 10px 0 0;
-        color: {COLOR_DEEP_NAVY};
-        font-weight: 600;
+        border-radius: 0 8px 8px 0;
         border: 1px solid rgba(20, 217, 229, 0.25);
+        border-left: 4px solid {COLOR_ELECTRIC_CYAN};
     }}
 
-    .stTabs [aria-selected="true"] {{
-        background: linear-gradient(180deg, {COLOR_DEEP_NAVY}, #0a3568) !important;
+    .adapt-nav-grid [data-testid="column"] button[kind="primary"] {{
+        background: {COLOR_DEEP_NAVY} !important;
         color: {COLOR_BRIGHT_AQUA} !important;
-        border-color: {COLOR_ELECTRIC_CYAN} !important;
+        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
+        font-weight: 600;
+        border-radius: 10px;
     }}
 
-    .main h2, .main h3 {{
-        color: {COLOR_DEEP_NAVY};
-        margin-top: 1.25rem;
+    .adapt-nav-grid [data-testid="column"] button[kind="secondary"] {{
+        background: {COLOR_WHITE} !important;
+        color: {COLOR_DEEP_NAVY} !important;
+        border: 1px solid rgba(20, 217, 229, 0.45) !important;
+        font-weight: 600;
+        border-radius: 10px;
     }}
 
+    .adapt-nav-grid [data-testid="column"] button {{
+        min-height: 2.75rem;
+        white-space: normal;
+        line-height: 1.2;
+        font-size: 0.8rem;
+    }}
+
+    /* ---- Lesson content area ---- */
     .main th {{
         background: {COLOR_DEEP_NAVY};
         color: {COLOR_WHITE};
-        padding: 0.5rem 0.75rem;
-        text-align: left;
     }}
 
     .main td {{
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        padding: 0.5rem 0.75rem;
+        background: {COLOR_WHITE};
+        color: {COLOR_TEXT};
+        border: 1px solid rgba(20, 217, 229, 0.3);
     }}
 
-    .main svg {{
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 1rem auto;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(4, 27, 77, 0.15);
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        background: {COLOR_WHITE};
+        border-color: rgba(20, 217, 229, 0.35) !important;
     }}
 
-    div[data-testid="stMain"] .stDownloadButton button {{
-        background: linear-gradient(135deg, {COLOR_DEEP_NAVY}, #0a3568);
-        color: {COLOR_BRIGHT_AQUA};
-        border: 1px solid {COLOR_ELECTRIC_CYAN};
+    .stTabs [data-baseweb="tab"] {{
+        background: {COLOR_WHITE};
+        color: {COLOR_DEEP_NAVY};
         font-weight: 600;
+        border: 1px solid rgba(20, 217, 229, 0.35);
+        border-radius: 8px 8px 0 0;
+    }}
+
+    .stTabs [aria-selected="true"] {{
+        background: {COLOR_DEEP_NAVY} !important;
+        color: {COLOR_BRIGHT_AQUA} !important;
     }}
     </style>
-    """
-
-
-def render_header() -> str:
-    """Legacy HTML header (prefer render_brand_header in app.py)."""
-    return f"""
-    <div class="brand-header">
-        <div class="brand-header-text">
-            <h1>EduAdapt AI</h1>
-            <p class="brand-tagline">Upload Once. Teach Every Learner.</p>
-        </div>
-    </div>
     """

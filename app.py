@@ -1,18 +1,13 @@
 """
-EduAdapt AI — Main Streamlit application.
-
-Teachers upload a lesson (PDF/DOCX), review analytics, and generate
-EduAdapt AI differentiated versions (19 tabs: original, vocabulary,
-16 learner adaptations, exam worksheet).
+Alora AI — Main Streamlit application.
 """
 
 import traceback
 
 import streamlit as st
 
-# Page config MUST be the first Streamlit command
 st.set_page_config(
-    page_title="EduAdapt AI",
+    page_title="Alora AI",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -25,21 +20,23 @@ try:
     from ai_generator import generate_adaptations, quality_report, validate_api_key
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle, export_tab_docx
-    from brand_assets import EDUADAPT_LOGO, OMNILI_LOGO
+    from brand_assets import ALORA_LOGO
     from document_parser import extract_lesson_text
+    from config import APP_NAME
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
     from styles import get_custom_css
     from structured_renderers import content_to_export
     from version import APP_VERSION
     from ui_helpers import (
-        render_adaptation_section,
+        render_adaptation_nav,
         render_analytics_panel,
         render_brand_header,
         render_content_tab,
         render_sidebar,
+        SPEC_ICONS,
     )
 except Exception as import_error:
-    st.error("EduAdapt AI could not start. Details below (share with support if needed):")
+    st.error("Alora AI could not start. Details below (share with support if needed):")
     st.code(traceback.format_exc())
     st.info(
         "Common fix: Streamlit **Settings → Secrets** must include "
@@ -65,6 +62,8 @@ if "last_saved_api_key" not in st.session_state:
     st.session_state.last_saved_api_key = ""
 if "quality" not in st.session_state:
     st.session_state.quality = None
+if "active_output_id" not in st.session_state:
+    st.session_state.active_output_id = "vocabulary"
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -177,6 +176,7 @@ def run_generation() -> None:
                 on_progress=on_progress,
             )
             st.session_state.quality = quality_report(st.session_state.adaptations)
+            st.session_state.active_output_id = "vocabulary"
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
@@ -260,7 +260,7 @@ def render_api_sidebar() -> None:
 
 
 def render_output_tabs() -> None:
-    """All adaptation versions on one page — each in its own expander (none reload)."""
+    """Persistent tab grid + one lesson panel (adaptations stay in memory)."""
     adaptations = st.session_state.adaptations
     lesson = st.session_state.lesson_text
     base_name = (
@@ -269,23 +269,23 @@ def render_output_tabs() -> None:
         else "lesson"
     )
 
-    st.markdown(
-        '<p class="adapt-panel-hint"><strong>All versions stay on this page.</strong> '
-        "Open any section below — others remain visible. Nothing reloads or closes.</p>",
-        unsafe_allow_html=True,
-    )
-
     nav_specs = [spec for spec in ADAPTATION_SPECS if spec["id"] != "original"]
-    for spec in nav_specs:
-        content = _content_for_spec(spec, adaptations, lesson)
-        render_adaptation_section(
-            spec,
-            content,
-            base_name,
-            expanded=(spec["id"] == "vocabulary"),
-        )
+    active_id = st.session_state.active_output_id
+    if not any(s["id"] == active_id for s in nav_specs):
+        active_id = "vocabulary"
+        st.session_state.active_output_id = active_id
 
-    with st.expander("📄  Original uploaded lesson", expanded=False):
+    render_adaptation_nav(nav_specs, active_id)
+
+    active_spec = next(spec for spec in ADAPTATION_SPECS if spec["id"] == active_id)
+    content = _content_for_spec(active_spec, adaptations, lesson)
+    filename = f"{base_name}_{active_spec['id']}.txt"
+    icon = SPEC_ICONS.get(active_id, "📘")
+
+    st.markdown(f"### {icon} {active_spec['title']}")
+    render_content_tab(active_spec["title"], content, filename, spec_id=active_id)
+
+    with st.expander("Original uploaded lesson (download only)", expanded=False):
         st.caption(
             "Your source file is included in the **Download ZIP** section below "
             "(Word + HTML). Use Text here for a quick plain copy."
@@ -332,8 +332,8 @@ def _adaptation_workspace_impl() -> None:
                     "**Generate Adaptations** again, or upload a focused chapter."
                 )
 
-    st.subheader("4. Your Differentiated Lessons")
-    st.caption("18 versions on one scrollable page — Vocabulary, learner adaptations, and Exam Worksheet.")
+    st.subheader("4. Lesson Adaptations")
+    st.caption("Select a version — all tabs stay visible above. Your generated lessons remain loaded.")
     render_output_tabs()
 
 
@@ -398,6 +398,7 @@ def _render_setup_sections() -> None:
                 st.session_state.analytics = None
                 st.session_state.upload_name = ""
                 st.session_state.quality = None
+                st.session_state.active_output_id = "vocabulary"
                 st.rerun()
 
 
@@ -407,10 +408,7 @@ def main() -> None:
 
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
-    if OMNILI_LOGO.exists() and hasattr(st, "logo"):
-        st.logo(str(OMNILI_LOGO))
-
-    logo_path = str(EDUADAPT_LOGO) if EDUADAPT_LOGO.exists() else None
+    logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
     render_brand_header(logo_path)
 
     render_sidebar()
@@ -443,7 +441,7 @@ def main() -> None:
             st.download_button(
                 label="Download ZIP (separate DOCX + HTML per tab — best for printing)",
                 data=zip_bytes,
-                file_name=f"{base_name}_eduadapt_print_pack.zip",
+                file_name=f"{base_name}_alora_print_pack.zip",
                 mime="application/zip",
                 use_container_width=True,
                 key="dl_zip_bundle",
@@ -453,7 +451,7 @@ def main() -> None:
             st.download_button(
                 label="Download plain text bundle",
                 data=bundle,
-                file_name=f"{base_name}_eduadapt_bundle.txt",
+                file_name=f"{base_name}_alora_bundle.txt",
                 mime="text/plain",
                 use_container_width=True,
                 key="dl_txt_bundle",
@@ -465,7 +463,7 @@ def _build_bundle_download() -> str:
     adaptations = st.session_state.adaptations
     lesson = st.session_state.lesson_text
 
-    parts = ["EduAdapt AI — AdaptEd-Aligned Lesson Package\n" + "=" * 50 + "\n"]
+    parts = [f"{APP_NAME} — Lesson Adaptation Package\n" + "=" * 50 + "\n"]
     for spec in ADAPTATION_SPECS:
         body = _content_for_spec(spec, adaptations, lesson)
         if spec["generate"]:

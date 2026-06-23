@@ -1,20 +1,13 @@
 """
-Reusable Streamlit UI components: sidebar, analytics cards, downloads.
+Reusable Streamlit UI components for Alora AI.
 """
 
 from __future__ import annotations
 
 import streamlit as st
 
-from brand_assets import OMNILI_LOGO
-from config import (
-    EDUADAPT_TIME_MINUTES,
-    MANUAL_TIME_HOURS,
-    TIME_SAVED_PERCENT,
-)
-from content_renderer import render_rich_content
-from docx_exporter import export_tab_docx
-from html_exporter import export_tab_html
+from config import APP_NAME, APP_TAGLINE
+
 from structured_renderers import (
     content_to_export,
     render_lesson,
@@ -22,8 +15,9 @@ from structured_renderers import (
     render_worksheet,
     _coerce_dict,
 )
+from docx_exporter import export_tab_docx
+from html_exporter import export_tab_html
 
-# Navigation icons — defined here so app startup never depends on adaptation_specs exports.
 SPEC_ICONS = {
     "original": "📄",
     "vocabulary": "📚",
@@ -48,164 +42,104 @@ SPEC_ICONS = {
 
 
 def render_sidebar() -> None:
-    """Time-saved metrics and Omnili branding in the left pane."""
-    if OMNILI_LOGO.exists():
-        st.sidebar.image(str(OMNILI_LOGO), use_container_width=True)
-        st.sidebar.caption("Powered by Omnili")
-
+    """Two coloured tips only — clean left pane."""
     st.sidebar.markdown(
-        f'<p style="font-size:1.15rem;font-weight:700;color:#22F0FF;margin:0;">EduAdapt AI</p>'
-        f'<p style="font-size:0.85rem;opacity:0.9;margin:0.2rem 0 0 0;">Upload Once. Teach Every Learner.</p>',
-        unsafe_allow_html=True,
-    )
-
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Time Saved")
-
-    st.sidebar.markdown(
-        f"""
-        <div class="sidebar-metric">
-            <small>Estimated Manual Time</small><br>
-            <strong>{MANUAL_TIME_HOURS} Hours</strong>
+        """
+        <div class="sidebar-tip">
+            <span class="sidebar-tip-num">1</span>
+            <strong>Study order:</strong> Open <strong>Vocabulary</strong> first,
+            then learner versions, then the <strong>Worksheet</strong>.
         </div>
-        <div class="sidebar-metric">
-            <small>EduAdapt Time</small><br>
-            <strong>{EDUADAPT_TIME_MINUTES} Minutes</strong>
-        </div>
-        <div class="sidebar-metric">
-            <small>Time Saved</small><br>
-            <strong>{TIME_SAVED_PERCENT}%</strong>
+        <div class="sidebar-tip">
+            <span class="sidebar-tip-num">2</span>
+            <strong>Switch freely:</strong> Pick any version below — your adaptations
+            stay loaded; you never need to regenerate.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.sidebar.markdown("---")
-    st.sidebar.info(
-        "**Tip:** All adaptation versions stay on one page below — open any section without reloading."
-    )
 
-
-def render_brand_header(show_logo_path: str | None = None) -> None:
-    """Hero with EduAdapt logo in the top-left."""
-    from config import (
-        COLOR_BRIGHT_AQUA,
-        COLOR_DEEP_NAVY,
-        COLOR_ELECTRIC_CYAN,
-        COLOR_SILVER,
-        COLOR_WHITE,
-    )
-
-    st.markdown('<div class="brand-header-wrap">', unsafe_allow_html=True)
-    col_logo, col_text = st.columns([1, 4], vertical_alignment="center")
+def render_brand_header(logo_path: str | None = None) -> None:
+    """Logo top-left + Alora AI title (single image on page)."""
+    col_logo, col_text = st.columns([1, 5], vertical_alignment="center")
     with col_logo:
-        if show_logo_path:
-            st.image(show_logo_path, width=150)
+        if logo_path:
+            st.image(logo_path, width=110)
     with col_text:
         st.markdown(
             f"""
-            <div class="brand-header-text">
-                <h1 style="color:{COLOR_WHITE};margin:0;font-size:1.85rem;">EduAdapt AI</h1>
-                <p style="color:{COLOR_ELECTRIC_CYAN};margin:0.35rem 0 0 0;font-weight:600;">
-                    Upload Once. Teach Every Learner.
-                </p>
-                <p style="color:{COLOR_SILVER};margin:0.45rem 0 0 0;font-size:0.92rem;">
-                    Differentiated lessons for Grades 3–11 — powered by Omnili
-                </p>
+            <div class="alora-header" style="border:none;box-shadow:none;padding:0;">
+                <p class="alora-title">{APP_NAME}</p>
+                <p class="alora-tagline">{APP_TAGLINE}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None:
+    """Tab grid — labels always visible; selection stored in session (no reload)."""
     st.markdown(
-        f'<div style="height:4px;background:linear-gradient(90deg,{COLOR_DEEP_NAVY},'
-        f'{COLOR_ELECTRIC_CYAN},{COLOR_BRIGHT_AQUA});border-radius:4px;margin-bottom:1.25rem;"></div>',
+        '<p class="adapt-nav-hint"><strong>All versions stay loaded.</strong> '
+        "Click a label to view that lesson — nothing closes or regenerates.</p>",
         unsafe_allow_html=True,
     )
-
-
-def render_adaptation_section(
-    spec: dict,
-    content: str | dict,
-    base_name: str,
-    expanded: bool = False,
-) -> None:
-    """One adaptation block inside an expander — others on the page stay open."""
-    icon = SPEC_ICONS.get(spec["id"], "📘")
-    filename = f"{base_name}_{spec['id']}.txt"
-    label = f"{icon}  {spec['tab']}"
-    with st.expander(label, expanded=expanded):
-        st.markdown(f"**{spec['title']}**")
-        render_content_tab(spec["title"], content, filename, spec_id=spec["id"])
+    st.markdown('<div class="adapt-nav-grid">', unsafe_allow_html=True)
+    for row_start in range(0, len(specs), columns):
+        row_specs = specs[row_start : row_start + columns]
+        cols = st.columns(columns)
+        for col, spec in zip(cols, row_specs):
+            icon = SPEC_ICONS.get(spec["id"], "📘")
+            label = f"{icon} {spec['tab']}"
+            with col:
+                is_active = spec["id"] == active_id
+                if st.button(
+                    label,
+                    key=f"adapt_nav_{spec['id']}",
+                    use_container_width=True,
+                    type="primary" if is_active else "secondary",
+                ):
+                    if spec["id"] != active_id:
+                        st.session_state.active_output_id = spec["id"]
+        for col in cols[len(row_specs) :]:
+            with col:
+                st.empty()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_analytics_panel(analytics: dict) -> None:
-    """
-    Show lesson complexity, reading level, and objective count in cards.
-
-    Args:
-        analytics: Output from analytics_engine.build_analytics_report.
-    """
-    st.subheader("Lesson Analytics")
-
     col1, col2, col3 = st.columns(3)
-
     with col1:
         st.markdown(
             f"""
             <div class="metric-card">
-                <h4>Lesson Complexity Score</h4>
+                <h4>Complexity Score</h4>
                 <p>{analytics['complexity_score']}/100</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-
     with col2:
         st.markdown(
             f"""
             <div class="metric-card">
-                <h4>Estimated Reading Level</h4>
+                <h4>Reading Level</h4>
                 <p>{analytics['reading_level']}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-
     with col3:
         st.markdown(
             f"""
             <div class="metric-card">
-                <h4>Learning Objectives</h4>
+                <h4>Objectives Found</h4>
                 <p>{analytics['objective_count']}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-
-
-def render_download_button(label: str, content: str, filename: str) -> None:
-    """
-    Add a download button for a single output tab.
-
-    Args:
-        label: Button text shown to the teacher.
-        content: Text file content to download.
-        filename: Suggested filename (e.g. dyslexia_lesson.txt).
-    """
-    st.download_button(
-        label=label,
-        data=content,
-        file_name=filename,
-        mime="text/plain",
-        use_container_width=True,
-    )
-
-
-def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None:
-    """Deprecated — use render_adaptation_section on one page instead."""
-    for spec in specs:
-        st.caption(f"• {spec['tab']}")
 
 
 def render_content_tab(
@@ -214,10 +148,7 @@ def render_content_tab(
     download_filename: str,
     spec_id: str = "",
 ) -> None:
-    """
-    Display content inside a card with a download button.
-    Routes vocabulary, worksheet, and structured lessons to native renderers.
-    """
+    """Structured lesson / vocabulary / worksheet — original formatting."""
     with st.container(border=True):
         if spec_id == "vocabulary":
             render_vocabulary(content)
@@ -226,6 +157,7 @@ def render_content_tab(
         elif _coerce_dict(content):
             render_lesson(_coerce_dict(content))
         else:
+            from content_renderer import render_rich_content
             render_rich_content(str(content))
 
     full_export = content_to_export(title, content, spec_id)
