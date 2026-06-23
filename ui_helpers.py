@@ -169,8 +169,8 @@ def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
                 ):
-                    st.session_state.active_output_id = spec["id"]
-                    st.rerun()
+                    if spec["id"] != active_id:
+                        st.session_state.active_output_id = spec["id"]
         for col in cols[len(row_specs) :]:
             with col:
                 st.empty()

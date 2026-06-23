@@ -284,6 +284,10 @@ def render_output_tabs() -> None:
     filename = f"{base_name}_{active_spec['id']}.txt"
     icon = SPEC_ICONS.get(active_id, "📘")
 
+    st.markdown(
+        f'<div id="adaptation-content" style="scroll-margin-top:80px;"></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(f"### {icon} {active_spec['title']}")
     render_content_tab(active_spec["title"], content, filename, spec_id=active_id)
 
@@ -302,17 +306,54 @@ def render_output_tabs() -> None:
         )
 
 
-def main() -> None:
-    """Application entry point."""
-    load_api_key_from_env_file()
+@st.cache_data(show_spinner="Preparing print pack…")
+def _cached_zip_bundle(adaptations_json: str, lesson_text: str, base_name: str) -> bytes:
+    """Build ZIP once per lesson — avoids rebuilding on every adaptation click."""
+    import json
 
-    st.markdown(get_custom_css(), unsafe_allow_html=True)
-    st.markdown(render_header(), unsafe_allow_html=True)
+    adaptations = json.loads(adaptations_json)
+    return build_zip_bundle(ADAPTATION_SPECS, adaptations, lesson_text, base_name)
 
-    render_sidebar()
-    render_api_sidebar()
-    st.sidebar.caption(f"Version **{APP_VERSION}**")
 
+def _adaptation_workspace_impl() -> None:
+    """Adaptation grid + content (runs inside st.fragment when available)."""
+    q = st.session_state.quality or {}
+    if q:
+        with st.expander("Quality Report — exam coverage", expanded=False):
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Analysis sections", q.get("pages_analyzed", 1))
+            c2.metric("Objectives", q.get("objectives_found", 0))
+            c3.metric("Vocab terms", q.get("vocab_terms", 0))
+            c4.metric("Exam questions", (q.get("worksheet_short_q") or 0) + (q.get("worksheet_long_q") or 0))
+            if q.get("source_chars", 0) > 50000:
+                st.info(
+                    f"Your lesson is {q.get('source_chars', 0):,} characters — "
+                    "analyzed in sections for full exam coverage."
+                )
+            if q.get("exam_ready"):
+                st.success("This pack covers enough depth for exam revision on this topic.")
+            else:
+                st.warning(
+                    "Some sections need more content. Click **Clear Session** and "
+                    "**Generate Adaptations** again, or upload a focused chapter."
+                )
+
+    st.subheader("4. Your Differentiated Lessons")
+    st.caption(
+        "Pick any version from the grid below. The lesson stays open while you switch or download."
+    )
+    render_output_tabs()
+
+
+_adaptation_workspace = (
+    st.fragment(_adaptation_workspace_impl)
+    if hasattr(st, "fragment")
+    else _adaptation_workspace_impl
+)
+
+
+def _render_setup_sections() -> None:
+    """Upload, analytics, and generate controls."""
     st.subheader("1. Upload Your Lesson")
 
     col_upload, col_sample = st.columns([3, 1])
@@ -368,35 +409,27 @@ def main() -> None:
                 st.session_state.active_output_id = "vocabulary"
                 st.rerun()
 
+
+def main() -> None:
+    """Application entry point."""
+    load_api_key_from_env_file()
+
+    st.markdown(get_custom_css(), unsafe_allow_html=True)
+    st.markdown(render_header(), unsafe_allow_html=True)
+
+    render_sidebar()
+    render_api_sidebar()
+    st.sidebar.caption(f"Version **{APP_VERSION}**")
+
+    if st.session_state.adaptations:
+        with st.expander("1–3. Upload, insights & generate", expanded=False):
+            _render_setup_sections()
+    else:
+        _render_setup_sections()
+
     if st.session_state.adaptations:
         st.markdown("---")
-        q = st.session_state.quality or {}
-        if q:
-            with st.expander("Quality Report — exam coverage", expanded=True):
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric("Pages analyzed", q.get("pages_analyzed", 1))
-                c2.metric("Objectives", q.get("objectives_found", 0))
-                c3.metric("Vocab terms", q.get("vocab_terms", 0))
-                c4.metric("Exam questions", (q.get("worksheet_short_q") or 0) + (q.get("worksheet_long_q") or 0))
-                if q.get("source_chars", 0) > 50000:
-                    st.info(
-                        f"Your lesson is {q.get('source_chars', 0):,} characters — "
-                        "all sections were analyzed in chunks so content is not reduced to one page."
-                    )
-                if q.get("exam_ready"):
-                    st.success("This pack covers enough depth for exam revision on this topic.")
-                else:
-                    st.warning(
-                        "Some sections need more content. Click **Clear Session** and "
-                        "**Generate Adaptations** again, or upload a focused chapter."
-                    )
-
-        st.subheader("4. Your Differentiated Lessons")
-        st.caption(
-            "Vocabulary → 16 learner adaptations → Exam worksheet. "
-            "Pick any version from the grid — it stays open while you browse or download."
-        )
-        render_output_tabs()
+        _adaptation_workspace()
 
         st.markdown("---")
         st.subheader("5. Download — print-friendly packs")
@@ -405,12 +438,10 @@ def main() -> None:
             if st.session_state.upload_name
             else "lesson"
         )
-        zip_bytes = build_zip_bundle(
-            ADAPTATION_SPECS,
-            st.session_state.adaptations,
-            st.session_state.lesson_text,
-            base_name,
-        )
+        import json
+
+        adaptations_json = json.dumps(st.session_state.adaptations, sort_keys=True, default=str)
+        zip_bytes = _cached_zip_bundle(adaptations_json, st.session_state.lesson_text, base_name)
         col_zip, col_txt = st.columns(2)
         with col_zip:
             st.download_button(
@@ -419,6 +450,7 @@ def main() -> None:
                 file_name=f"{base_name}_eduadapt_print_pack.zip",
                 mime="application/zip",
                 use_container_width=True,
+                key="dl_zip_bundle",
             )
         with col_txt:
             bundle = _build_bundle_download()
@@ -428,6 +460,7 @@ def main() -> None:
                 file_name=f"{base_name}_eduadapt_bundle.txt",
                 mime="text/plain",
                 use_container_width=True,
+                key="dl_txt_bundle",
             )
 
 
