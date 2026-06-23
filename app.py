@@ -332,8 +332,11 @@ def _adaptation_workspace_impl() -> None:
                     "**Generate Adaptations** again, or upload a focused chapter."
                 )
 
-    st.subheader("4. Lesson Adaptations")
-    st.caption("Select a version — all tabs stay visible above. Your generated lessons remain loaded.")
+    st.subheader("4. Your Differentiated Lessons")
+    st.caption(
+        "Original → Vocabulary → 16 learner adaptations → Exam Worksheet. "
+        "All version tabs stay visible — click any label to view."
+    )
     render_output_tabs()
 
 
@@ -408,18 +411,18 @@ def main() -> None:
 
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
+    render_api_sidebar()
+
     logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
     render_brand_header(logo_path)
 
     render_sidebar()
-    render_api_sidebar()
-    st.sidebar.caption(f"Version **{APP_VERSION}**")
+    st.sidebar.markdown(
+        f'<p class="sidebar-version">Version {APP_VERSION}</p>',
+        unsafe_allow_html=True,
+    )
 
-    if st.session_state.adaptations:
-        with st.expander("1–3. Upload, insights & generate", expanded=False):
-            _render_setup_sections()
-    else:
-        _render_setup_sections()
+    _render_setup_sections()
 
     if st.session_state.adaptations:
         st.markdown("---")

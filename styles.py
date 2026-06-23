@@ -1,12 +1,12 @@
 """
-Custom CSS for Alora AI — luxe, high-contrast, readable.
+Custom CSS for Alora AI — EduAdapt-style hero + readable main content.
 """
 
 from config import (
-    COLOR_BRIGHT_AQUA,
     COLOR_DEEP_NAVY,
     COLOR_ELECTRIC_CYAN,
-    COLOR_PAGE_BG,
+    COLOR_SILVER,
+    COLOR_TEAL,
     COLOR_TEXT,
     COLOR_WHITE,
 )
@@ -23,174 +23,179 @@ def get_custom_css() -> str:
 
     .main .block-container {{
         padding-top: 1rem;
-        max-width: 1180px;
-        background: {COLOR_PAGE_BG};
+        max-width: 1100px;
     }}
 
     .main, .main p, .main li, .main span, .main label,
-    .main .stMarkdown, .main h1, .main h2, .main h3, .main h4 {{
+    .main .stMarkdown, .main h2, .main h3, .main h4 {{
         color: {COLOR_TEXT};
     }}
 
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
 
-    /* ---- Sidebar: navy panel, scoped text (no global * override) ---- */
+    /* ---- Sidebar ---- */
     section[data-testid="stSidebar"] > div {{
-        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #021a42 100%);
+        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #0a2540 100%);
+    }}
+
+    section[data-testid="stSidebar"] .sidebar-spacer {{
+        height: 5.5rem;
+    }}
+
+    section[data-testid="stSidebar"] .sidebar-tips-heading {{
+        color: {COLOR_ELECTRIC_CYAN};
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0 0 0.75rem 0;
     }}
 
     section[data-testid="stSidebar"] .sidebar-tip {{
-        background: rgba(20, 217, 229, 0.12);
-        border: 1px solid rgba(20, 217, 229, 0.45);
-        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0, 140, 149, 0.45);
+        border-left: 4px solid {COLOR_TEAL};
+        border-radius: 10px;
         padding: 0.85rem 1rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.85rem;
         color: {COLOR_WHITE};
-        font-size: 0.9rem;
-        line-height: 1.5;
+        font-size: 0.88rem;
+        line-height: 1.55;
     }}
 
     section[data-testid="stSidebar"] .sidebar-tip strong {{
-        color: {COLOR_BRIGHT_AQUA};
+        color: {COLOR_ELECTRIC_CYAN};
     }}
 
     section[data-testid="stSidebar"] .sidebar-tip-num {{
         display: inline-block;
-        background: {COLOR_ELECTRIC_CYAN};
-        color: {COLOR_DEEP_NAVY};
+        background: {COLOR_TEAL};
+        color: {COLOR_WHITE};
         font-weight: 700;
         border-radius: 6px;
-        padding: 0.1rem 0.45rem;
+        padding: 0.12rem 0.5rem;
         margin-right: 0.35rem;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }}
 
     section[data-testid="stSidebar"] .sidebar-status-ready {{
-        background: rgba(20, 217, 229, 0.15);
-        border: 1px solid {COLOR_ELECTRIC_CYAN};
+        background: rgba(0, 140, 149, 0.2);
+        border: 1px solid {COLOR_TEAL};
         border-radius: 10px;
         padding: 0.55rem 0.75rem;
         text-align: center;
-        color: {COLOR_BRIGHT_AQUA};
+        color: {COLOR_WHITE};
         font-weight: 600;
         font-size: 0.88rem;
-        margin-bottom: 0.75rem;
     }}
 
-    /* ---- Header ---- */
-    .alora-header {{
-        background: {COLOR_WHITE};
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        border-radius: 14px;
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 20px rgba(4, 27, 77, 0.06);
+    section[data-testid="stSidebar"] .sidebar-version {{
+        color: {COLOR_SILVER};
+        font-size: 0.78rem;
+        text-align: center;
+        margin-top: 1.5rem;
     }}
 
-    .alora-title {{
-        color: {COLOR_DEEP_NAVY};
-        font-size: 1.65rem;
+    /* ---- Hero banner (EduAdapt-style, centred) ---- */
+    .alora-hero {{
+        background: linear-gradient(135deg, {COLOR_DEEP_NAVY} 0%, {COLOR_TEAL} 100%);
+        padding: 1.75rem 2rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        color: {COLOR_WHITE};
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 28px rgba(4, 27, 77, 0.28);
+    }}
+
+    .alora-hero h1 {{
+        margin: 0.75rem 0 0.35rem 0;
+        font-size: 2.35rem;
         font-weight: 700;
-        margin: 0;
+        color: {COLOR_WHITE} !important;
+        letter-spacing: -0.02em;
     }}
 
-    .alora-tagline {{
-        color: {COLOR_ELECTRIC_CYAN};
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0.25rem 0 0 0;
+    .alora-hero .hero-tagline {{
+        margin: 0;
+        font-size: 1.15rem;
+        color: {COLOR_SILVER};
+        font-weight: 500;
+    }}
+
+    .alora-hero .hero-sub {{
+        margin: 0.65rem 0 0 0;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.88);
     }}
 
     /* ---- Metrics ---- */
     .metric-card {{
         background: {COLOR_WHITE};
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        border-left: 4px solid {COLOR_ELECTRIC_CYAN};
+        border-left: 4px solid {COLOR_TEAL};
         border-radius: 12px;
         padding: 1rem 1.25rem;
-        box-shadow: 0 2px 10px rgba(4, 27, 77, 0.06);
+        box-shadow: 0 2px 12px rgba(11, 46, 89, 0.08);
+        margin-bottom: 0.75rem;
     }}
 
     .metric-card h4 {{
         color: {COLOR_DEEP_NAVY};
         margin: 0 0 0.25rem 0;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
     }}
 
     .metric-card p {{
-        color: {COLOR_ELECTRIC_CYAN};
+        color: {COLOR_TEAL};
         margin: 0;
-        font-size: 1.45rem;
+        font-size: 1.5rem;
         font-weight: 700;
     }}
 
-    /* ---- Adaptation tab grid ---- */
+    /* ---- Adaptation grid ---- */
     .adapt-nav-hint {{
         color: {COLOR_DEEP_NAVY};
         font-size: 0.92rem;
         margin: 0 0 0.85rem 0;
-        padding: 0.6rem 0.9rem;
-        background: {COLOR_WHITE};
-        border-left: 4px solid {COLOR_ELECTRIC_CYAN};
-        border-radius: 0 8px 8px 0;
-        border: 1px solid rgba(20, 217, 229, 0.25);
-        border-left: 4px solid {COLOR_ELECTRIC_CYAN};
+        padding: 0.65rem 1rem;
+        background: #eef4f8;
+        border-left: 4px solid {COLOR_TEAL};
+        border-radius: 0 10px 10px 0;
     }}
 
     .adapt-nav-grid [data-testid="column"] button[kind="primary"] {{
-        background: {COLOR_DEEP_NAVY} !important;
-        color: {COLOR_BRIGHT_AQUA} !important;
-        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
+        background: {COLOR_TEAL} !important;
+        color: {COLOR_WHITE} !important;
+        border: none !important;
         font-weight: 600;
-        border-radius: 10px;
+        border-radius: 8px;
     }}
 
     .adapt-nav-grid [data-testid="column"] button[kind="secondary"] {{
-        background: {COLOR_WHITE} !important;
+        background: #eef4f8 !important;
         color: {COLOR_DEEP_NAVY} !important;
-        border: 1px solid rgba(20, 217, 229, 0.45) !important;
-        font-weight: 600;
-        border-radius: 10px;
+        border: 1px solid #c8d8e4 !important;
+        font-weight: 500;
+        border-radius: 8px;
     }}
 
     .adapt-nav-grid [data-testid="column"] button {{
-        min-height: 2.75rem;
+        min-height: 2.85rem;
         white-space: normal;
-        line-height: 1.2;
-        font-size: 0.8rem;
+        line-height: 1.25;
+        font-size: 0.82rem;
     }}
 
-    /* ---- Lesson content area ---- */
     .main th {{
         background: {COLOR_DEEP_NAVY};
         color: {COLOR_WHITE};
     }}
 
     .main td {{
-        background: {COLOR_WHITE};
+        border: 1px solid {COLOR_SILVER};
         color: {COLOR_TEXT};
-        border: 1px solid rgba(20, 217, 229, 0.3);
-    }}
-
-    div[data-testid="stVerticalBlockBorderWrapper"] {{
-        background: {COLOR_WHITE};
-        border-color: rgba(20, 217, 229, 0.35) !important;
-    }}
-
-    .stTabs [data-baseweb="tab"] {{
-        background: {COLOR_WHITE};
-        color: {COLOR_DEEP_NAVY};
-        font-weight: 600;
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        border-radius: 8px 8px 0 0;
-    }}
-
-    .stTabs [aria-selected="true"] {{
-        background: {COLOR_DEEP_NAVY} !important;
-        color: {COLOR_BRIGHT_AQUA} !important;
     }}
     </style>
     """

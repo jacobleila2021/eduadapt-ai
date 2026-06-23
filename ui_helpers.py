@@ -42,7 +42,9 @@ SPEC_ICONS = {
 
 
 def render_sidebar() -> None:
-    """Two coloured tips only — clean left pane."""
+    """Two tips — positioned lower in the sidebar column."""
+    st.sidebar.markdown('<div class="sidebar-spacer"></div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p class="sidebar-tips-heading">Quick tips</p>', unsafe_allow_html=True)
     st.sidebar.markdown(
         """
         <div class="sidebar-tip">
@@ -52,8 +54,8 @@ def render_sidebar() -> None:
         </div>
         <div class="sidebar-tip">
             <span class="sidebar-tip-num">2</span>
-            <strong>Switch freely:</strong> Pick any version below — your adaptations
-            stay loaded; you never need to regenerate.
+            <strong>Switch freely:</strong> All version tabs stay visible — pick any
+            label without regenerating your adaptations.
         </div>
         """,
         unsafe_allow_html=True,
@@ -61,21 +63,22 @@ def render_sidebar() -> None:
 
 
 def render_brand_header(logo_path: str | None = None) -> None:
-    """Logo top-left + Alora AI title (single image on page)."""
-    col_logo, col_text = st.columns([1, 5], vertical_alignment="center")
-    with col_logo:
-        if logo_path:
-            st.image(logo_path, width=110)
-    with col_text:
-        st.markdown(
-            f"""
-            <div class="alora-header" style="border:none;box-shadow:none;padding:0;">
-                <p class="alora-title">{APP_NAME}</p>
-                <p class="alora-tagline">{APP_TAGLINE}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    """Centred EduAdapt-style hero with large logo above title."""
+    if logo_path:
+        col_left, col_center, col_right = st.columns([1, 2, 1])
+        with col_center:
+            st.image(logo_path, width=220)
+
+    st.markdown(
+        f"""
+        <div class="alora-hero">
+            <h1>{APP_NAME}</h1>
+            <p class="hero-tagline">{APP_TAGLINE}</p>
+            <p class="hero-sub">Differentiated lessons for Grades 3–11 in under 2 minutes</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None:
@@ -109,12 +112,13 @@ def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None
 
 
 def render_analytics_panel(analytics: dict) -> None:
+    st.subheader("Lesson Analytics")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(
             f"""
             <div class="metric-card">
-                <h4>Complexity Score</h4>
+                <h4>Lesson Complexity Score</h4>
                 <p>{analytics['complexity_score']}/100</p>
             </div>
             """,
@@ -124,7 +128,7 @@ def render_analytics_panel(analytics: dict) -> None:
         st.markdown(
             f"""
             <div class="metric-card">
-                <h4>Reading Level</h4>
+                <h4>Estimated Reading Level</h4>
                 <p>{analytics['reading_level']}</p>
             </div>
             """,
@@ -134,7 +138,7 @@ def render_analytics_panel(analytics: dict) -> None:
         st.markdown(
             f"""
             <div class="metric-card">
-                <h4>Objectives Found</h4>
+                <h4>Learning Objectives</h4>
                 <p>{analytics['objective_count']}</p>
             </div>
             """,
