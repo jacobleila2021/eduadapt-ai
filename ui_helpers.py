@@ -86,6 +86,44 @@ def render_sidebar() -> None:
     )
 
 
+def render_brand_header(show_logo_path: str | None = None) -> None:
+    """Hero with EduAdapt logo in the top-left."""
+    from config import (
+        COLOR_BRIGHT_AQUA,
+        COLOR_DEEP_NAVY,
+        COLOR_ELECTRIC_CYAN,
+        COLOR_SILVER,
+        COLOR_WHITE,
+    )
+
+    st.markdown('<div class="brand-header-wrap">', unsafe_allow_html=True)
+    col_logo, col_text = st.columns([1, 4], vertical_alignment="center")
+    with col_logo:
+        if show_logo_path:
+            st.image(show_logo_path, width=150)
+    with col_text:
+        st.markdown(
+            f"""
+            <div class="brand-header-text">
+                <h1 style="color:{COLOR_WHITE};margin:0;font-size:1.85rem;">EduAdapt AI</h1>
+                <p style="color:{COLOR_ELECTRIC_CYAN};margin:0.35rem 0 0 0;font-weight:600;">
+                    Upload Once. Teach Every Learner.
+                </p>
+                <p style="color:{COLOR_SILVER};margin:0.45rem 0 0 0;font-size:0.92rem;">
+                    Differentiated lessons for Grades 3–11 — powered by Omnili
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="height:4px;background:linear-gradient(90deg,{COLOR_DEEP_NAVY},'
+        f"{COLOR_ELECTRIC_CYAN},{COLOR_BRIGHT_AQUA});border-radius:4px;margin-bottom:1.25rem;"></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def render_adaptation_section(
     spec: dict,
     content: str | dict,

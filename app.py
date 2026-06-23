@@ -28,12 +28,13 @@ try:
     from brand_assets import EDUADAPT_LOGO, OMNILI_LOGO
     from document_parser import extract_lesson_text
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
-    from styles import get_custom_css, render_brand_header
+    from styles import get_custom_css
     from structured_renderers import content_to_export
     from version import APP_VERSION
     from ui_helpers import (
         render_adaptation_section,
         render_analytics_panel,
+        render_brand_header,
         render_content_tab,
         render_sidebar,
     )
