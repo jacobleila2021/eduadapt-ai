@@ -30,7 +30,7 @@ try:
     from config import APP_NAME
     from navigation import category_for_spec, default_spec_for_category
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
-    from session_state import close_workspace, init_navigation_state, is_workspace
+    from session_state import VIEW_WORKSPACE, close_workspace, init_navigation_state, is_workspace, sync_from_query_params
     from structured_renderers import content_to_export
     from styles import get_custom_css
     from version import APP_VERSION
@@ -408,6 +408,8 @@ def render_workspace_page() -> None:
 
 def main() -> None:
     load_api_key_from_env_file()
+    sync_from_query_params()
+
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
     logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
@@ -415,12 +417,17 @@ def main() -> None:
     render_api_sidebar()
     render_sidebar(APP_VERSION)
 
-    if is_workspace() and st.session_state.adaptations:
+    # Workspace first — never show dashboard and workspace on the same run
+    if st.session_state.adaptations and (
+        is_workspace() or st.session_state.get("app_view") == VIEW_WORKSPACE
+    ):
         render_workspace_page()
-    else:
-        if st.session_state.get("app_view") == "workspace" and not st.session_state.adaptations:
-            close_workspace()
-        render_dashboard()
+        return
+
+    if st.session_state.get("app_view") == VIEW_WORKSPACE and not st.session_state.adaptations:
+        close_workspace()
+
+    render_dashboard()
 
 
 if __name__ == "__main__":

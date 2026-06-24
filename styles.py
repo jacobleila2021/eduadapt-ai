@@ -359,36 +359,41 @@ def get_custom_css() -> str:
     div[class*="st-key-pill_"] button,
     div[class*="st-key-ws_pill_"] button,
     div[class*="st-key-subpill_"] button {{
-        background: linear-gradient(180deg, {COLOR_BRIGHT_AQUA} 0%, {COLOR_ELECTRIC_CYAN} 100%) !important;
+        background: linear-gradient(180deg, #089aa4 0%, #066d75 100%) !important;
         color: {COLOR_WHITE} !important;
-        border: 2px solid rgba(255, 255, 255, 0.5) !important;
+        border: 2px solid rgba(255, 255, 255, 0.55) !important;
         border-radius: 999px !important;
-        min-height: 3.4rem !important;
-        font-size: 1.05rem !important;
+        min-height: 3.5rem !important;
+        font-size: 1.08rem !important;
         font-weight: 700 !important;
         transition: all 0.22s ease !important;
-        letter-spacing: 0.02em;
-        text-shadow: 0 1px 2px rgba(4, 27, 77, 0.25);
-        box-shadow: 0 4px 18px rgba(20, 217, 229, 0.45);
+        letter-spacing: 0.025em;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 4px 16px rgba(4, 27, 77, 0.35);
     }}
 
     div[class*="st-key-pill_"] button:hover,
     div[class*="st-key-ws_pill_"] button:hover,
     div[class*="st-key-subpill_"] button:hover {{
-        background: linear-gradient(180deg, #5ff7ff 0%, {COLOR_BRIGHT_AQUA} 100%) !important;
+        background: linear-gradient(180deg, #0ab0bd 0%, #087682 100%) !important;
         color: {COLOR_WHITE} !important;
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 8px 28px rgba(34, 240, 255, 0.55);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 22px rgba(4, 27, 77, 0.45);
         border-color: {COLOR_WHITE} !important;
     }}
 
     div[class*="st-key-pill_"] button[kind="primary"],
     div[class*="st-key-ws_pill_"] button[kind="primary"],
     div[class*="st-key-subpill_"] button[kind="primary"] {{
-        background: linear-gradient(180deg, {COLOR_ELECTRIC_CYAN} 0%, #089aa4 100%) !important;
+        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #062456 100%) !important;
         color: {COLOR_WHITE} !important;
-        border: 2px solid {COLOR_WHITE} !important;
-        box-shadow: 0 0 26px rgba(20, 217, 229, 0.85), 0 6px 20px rgba(4, 27, 77, 0.25) !important;
+        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
+        box-shadow: 0 0 20px rgba(20, 217, 229, 0.5), 0 4px 16px rgba(4, 27, 77, 0.4) !important;
+    }}
+
+    /* Fallback if st-key classes differ on Cloud */
+    .main [data-testid="stHorizontalBlock"] .stButton button {{
+        border-radius: 999px !important;
     }}
 
     div[class*="st-key-subpill_"] button {{

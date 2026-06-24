@@ -1,31 +1,23 @@
 """
-Adaptation pill tabs — reliable on_click navigation + shared styling hooks.
+Adaptation pill tabs — opens dedicated workspace on click.
+Direct if st.button() pattern (most reliable on Streamlit Cloud).
 """
 
 from __future__ import annotations
 
 import streamlit as st
 
-from navigation import PILL_CATEGORIES, spec_by_id
+from navigation import PILL_CATEGORIES, category_for_id, spec_by_id
 from session_state import VIEW_WORKSPACE, is_workspace, open_adaptation
 
 
-def _select_category(category_id: str) -> None:
-    open_adaptation(category_id)
-
-
-def _select_spec(spec_id: str) -> None:
-    st.session_state.active_output_id = spec_id
-    st.session_state.app_view = VIEW_WORKSPACE
-
-
 def render_pill_navigation(key_prefix: str = "pill") -> None:
-    """Cyan pill tabs — opens dedicated workspace via on_click (reliable on Cloud)."""
+    """Dark cyan pills — one click opens the dedicated workspace."""
     active_cat = st.session_state.get("active_category_id", "")
     in_workspace = is_workspace()
 
     st.markdown(
-        '<p class="pill-nav-hint">Tap a version to open its dedicated workspace.</p>',
+        '<p class="pill-nav-hint">Click a version — it opens in a dedicated workspace.</p>',
         unsafe_allow_html=True,
     )
 
@@ -35,24 +27,23 @@ def render_pill_navigation(key_prefix: str = "pill") -> None:
         cols = st.columns(cols_per_row)
         for col, category in zip(cols, row):
             with col:
-                is_active = in_workspace and active_cat == category["id"]
-                st.button(
+                cat_id = category["id"]
+                is_active = in_workspace and active_cat == cat_id
+                if st.button(
                     category["label"],
-                    key=f"{key_prefix}_{category['id']}",
+                    key=f"{key_prefix}_{cat_id}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
-                    on_click=_select_category,
-                    args=(category["id"],),
-                )
+                ):
+                    open_adaptation(cat_id)
+                    st.rerun()
         for col in cols[len(row) :]:
             with col:
                 st.empty()
 
 
 def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
-    """Secondary pills inside workspace for multi-version categories."""
-    from navigation import category_for_id
-
+    """Secondary pills for categories with multiple versions."""
     category = category_for_id(category_id)
     if not category or len(category["spec_ids"]) <= 1:
         return
@@ -65,11 +56,12 @@ def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
         if not spec:
             continue
         with col:
-            st.button(
+            if st.button(
                 spec["tab"],
                 key=f"subpill_{spec_id}",
                 use_container_width=True,
                 type="primary" if spec_id == active_spec_id else "secondary",
-                on_click=_select_spec,
-                args=(spec_id,),
-            )
+            ):
+                st.session_state.active_output_id = spec_id
+                st.session_state.app_view = VIEW_WORKSPACE
+                st.rerun()
