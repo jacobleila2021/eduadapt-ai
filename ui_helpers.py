@@ -55,21 +55,29 @@ def _logo_data_uri(logo_path: str | None) -> str | None:
 
 
 def render_top_nav(logo_path: str | None = None) -> None:
-    """Fixed header: logo left, Alora AI centred."""
+    """Fixed brand signage bar — logo left, Alora AI centred, platform address right."""
     data_uri = _logo_data_uri(logo_path)
     logo_html = (
-        f'<img src="{data_uri}" alt="Alora AI logo"/>' if data_uri else ""
+        f'<img src="{data_uri}" alt="Alora AI logo" class="topnav-logo-img"/>'
+        if data_uri
+        else ""
     )
     st.markdown(
         f"""
         <div class="alora-topnav">
+          <div class="topnav-accent"></div>
           <div class="topnav-inner">
             <div class="topnav-logo">{logo_html}</div>
-            <div class="topnav-title">
-              <span class="name-alora">Alora</span>
-              <span class="name-ai"> AI</span>
+            <div class="topnav-center">
+              <div class="topnav-title">
+                <span class="name-alora">Alora</span><span class="name-ai"> AI</span>
+              </div>
+              <div class="topnav-tagline">{APP_TAGLINE}</div>
             </div>
-            <div class="topnav-right"></div>
+            <div class="topnav-right">
+              <span class="topnav-address">Adaptive Learning Platform</span>
+              <span class="topnav-url">eduadapt-ai.streamlit.app</span>
+            </div>
           </div>
         </div>
         """,

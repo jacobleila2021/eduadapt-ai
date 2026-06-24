@@ -23,7 +23,7 @@ def get_custom_css() -> str:
     }}
 
     .main .block-container {{
-        padding-top: 4.5rem;
+        padding-top: 6.75rem;
         max-width: 1140px;
     }}
 
@@ -39,48 +39,68 @@ def get_custom_css() -> str:
         height: 0;
     }}
 
-    /* ---- Fixed top navigation ---- */
+    /* ---- Fixed top navigation (brand signage bar) ---- */
     .alora-topnav {{
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 999999;
-        background: linear-gradient(90deg, {COLOR_DEEP_NAVY} 0%, #062456 50%, {COLOR_DEEP_NAVY} 100%);
-        border-bottom: 1px solid rgba(20, 217, 229, 0.25);
-        box-shadow: 0 4px 24px rgba(4, 27, 77, 0.35);
-        height: 64px;
+        background: linear-gradient(180deg, #051a42 0%, {COLOR_DEEP_NAVY} 45%, #031638 100%);
+        box-shadow: 0 6px 32px rgba(4, 27, 77, 0.45);
+        height: 96px;
+    }}
+
+    .topnav-accent {{
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, {COLOR_ELECTRIC_CYAN}, {COLOR_BRIGHT_AQUA}, {COLOR_ELECTRIC_CYAN});
     }}
 
     .topnav-inner {{
         display: grid;
-        grid-template-columns: 1fr auto 1fr;
+        grid-template-columns: minmax(140px, 1fr) auto minmax(140px, 1fr);
         align-items: center;
-        max-width: 1140px;
+        max-width: 1280px;
         margin: 0 auto;
-        padding: 0 1.25rem;
-        height: 64px;
+        padding: 0 1.75rem;
+        height: 96px;
     }}
 
     .topnav-logo {{
         justify-self: start;
         display: flex;
         align-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(20, 217, 229, 0.35);
+        border-radius: 14px;
+        padding: 0.35rem 0.65rem;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
     }}
 
-    .topnav-logo img {{
-        height: 46px;
+    .topnav-logo-img {{
+        height: 72px;
         width: auto;
+        max-width: 200px;
         object-fit: contain;
-        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+        display: block;
+        filter: drop-shadow(0 3px 10px rgba(20, 217, 229, 0.35));
+    }}
+
+    .topnav-center {{
+        justify-self: center;
+        text-align: center;
     }}
 
     .topnav-title {{
-        justify-self: center;
-        font-size: 1.65rem;
+        font-size: 2.15rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         white-space: nowrap;
+        line-height: 1.15;
     }}
 
     .topnav-title .name-alora {{
@@ -91,15 +111,40 @@ def get_custom_css() -> str:
         color: {COLOR_ELECTRIC_CYAN};
     }}
 
+    .topnav-tagline {{
+        color: {COLOR_SILVER};
+        font-size: 0.82rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        margin-top: 0.2rem;
+    }}
+
     .topnav-right {{
         justify-self: end;
-        width: 120px;
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }}
+
+    .topnav-address {{
+        color: {COLOR_ELECTRIC_CYAN};
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+    }}
+
+    .topnav-url {{
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.72rem;
+        font-weight: 500;
     }}
 
     /* ---- Sidebar ---- */
     section[data-testid="stSidebar"] > div {{
         background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #051633 100%);
-        padding-top: 4rem;
+        padding-top: 5.75rem;
     }}
 
     section[data-testid="stSidebar"] .sidebar-block {{
@@ -340,9 +385,12 @@ def get_custom_css() -> str:
     }}
 
     @media (max-width: 768px) {{
-        .topnav-title {{ font-size: 1.25rem; }}
-        .topnav-logo img {{ height: 38px; }}
-        .main .block-container {{ padding-top: 4rem; }}
+        .alora-topnav {{ height: 82px; }}
+        .topnav-inner {{ height: 82px; padding: 0 1rem; }}
+        .topnav-title {{ font-size: 1.45rem; }}
+        .topnav-logo-img {{ height: 54px; }}
+        .topnav-tagline, .topnav-right {{ display: none; }}
+        .main .block-container {{ padding-top: 5.5rem; }}
     }}
     </style>
     """
