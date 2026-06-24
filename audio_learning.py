@@ -231,7 +231,7 @@ def render_audio_learning_panel(
                 file_name=f"{spec_id}_narration.mp3",
                 mime="audio/mpeg",
                 use_container_width=True,
-                key=f"dl_mp3_{spec_id}",
+                key=f"audio_dl_mp3_{spec_id}",
             )
         else:
             st.caption("MP3 via OpenAI TTS when API key is configured.")

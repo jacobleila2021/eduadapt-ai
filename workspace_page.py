@@ -33,19 +33,12 @@ def render_action_bar(
     """Four premium actions: download/print this version and all."""
     from docx_exporter import export_tab_docx
     from html_exporter import export_tab_html as rich_html_export
-    from audio_learning import OPENAI_VOICE_MAP, extract_speech_text, generate_openai_speech
 
     st.markdown("#### Download & Print")
     c1, c2, c3, c4 = st.columns(4)
 
     docx_bytes = export_tab_docx(title, content, spec_id)
-    html_bytes = rich_html_export(title, content, spec_id)
     print_single = build_print_html_single(title, content, spec_id)
-
-    api_key = st.session_state.get("runtime_api_key", "")
-    voice = st.session_state.get("audio_voice", "Female Professional")
-    speech = extract_speech_text(title, content, spec_id)
-    mp3 = generate_openai_speech(speech, OPENAI_VOICE_MAP.get(voice, "nova"), api_key)
 
     print_all = build_print_html_all(
         adaptations, lesson_text, base_name, content_for_spec
@@ -58,18 +51,10 @@ def render_action_bar(
             file_name=download_filename.rsplit(".", 1)[0] + ".docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True,
-            key=f"dl_this_{spec_id}",
+            key=f"ws_dl_this_{spec_id}",
             help="Word (DOCX) with LD-friendly formatting",
         )
-        if mp3:
-            st.download_button(
-                "MP3 Audio",
-                data=mp3,
-                file_name=f"{base_name}_{spec_id}.mp3",
-                mime="audio/mpeg",
-                use_container_width=True,
-                key=f"dl_mp3_{spec_id}",
-            )
+        st.caption("MP3 audio is in the Audio Learning section below.")
 
     with c2:
         if zip_bytes:
@@ -79,7 +64,7 @@ def render_action_bar(
                 file_name=f"{base_name}_alora_print_pack.zip",
                 mime="application/zip",
                 use_container_width=True,
-                key="dl_all_zip",
+                key="ws_dl_all_zip",
                 help="ZIP with HTML + Word per version",
             )
         st.download_button(
@@ -88,7 +73,7 @@ def render_action_bar(
             file_name=f"{base_name}_all_adaptations.html",
             mime="text/html",
             use_container_width=True,
-            key="dl_all_html",
+            key="ws_dl_all_html",
         )
 
     with c3:
@@ -98,7 +83,7 @@ def render_action_bar(
             file_name=f"{base_name}_{spec_id}_print.html",
             mime="text/html",
             use_container_width=True,
-            key=f"print_this_{spec_id}",
+            key=f"ws_print_this_{spec_id}",
             help="Download print-ready HTML — open and press Ctrl+P",
         )
 
@@ -109,7 +94,7 @@ def render_action_bar(
             file_name=f"{base_name}_print_all.html",
             mime="text/html",
             use_container_width=True,
-            key="print_all_pack",
+            key="ws_print_all_pack",
             help="Cover page, contents, and all primary versions",
         )
 
