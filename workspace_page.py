@@ -137,6 +137,11 @@ def render_workspace(
     )
 
     st.markdown(
+        '<div class="workspace-mode-strip">Adaptation workspace — one version at a time</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
         f"""
         <div class="workspace-banner">
           <h2>{icon} {active_spec["title"]}</h2>

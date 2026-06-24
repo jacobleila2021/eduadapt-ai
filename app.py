@@ -30,7 +30,13 @@ try:
     from config import APP_NAME
     from navigation import category_for_spec, default_spec_for_category
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
-    from session_state import VIEW_WORKSPACE, close_workspace, init_navigation_state, is_workspace, sync_from_query_params
+    from session_state import (
+        VIEW_WORKSPACE,
+        clear_stale_url_params,
+        close_workspace,
+        init_navigation_state,
+        should_render_workspace,
+    )
     from structured_renderers import content_to_export
     from styles import get_custom_css
     from version import APP_VERSION
@@ -392,8 +398,14 @@ def render_workspace_page() -> None:
     """Dedicated workspace — single adaptation, never on homepage."""
     adaptations = st.session_state.adaptations
     if not adaptations:
-        close_workspace()
-        st.rerun()
+        st.warning(
+            "Adaptations are not available in this session. "
+            "Please go back and click **Generate Adaptations** again."
+        )
+        if st.button("← Back to Dashboard", key="ws_missing_back", type="primary"):
+            close_workspace()
+            clear_stale_url_params()
+            st.rerun()
         return
 
     active_spec = _resolve_active_spec()
@@ -419,7 +431,7 @@ def render_workspace_page() -> None:
 
 def main() -> None:
     load_api_key_from_env_file()
-    sync_from_query_params()
+    clear_stale_url_params()
 
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
@@ -428,10 +440,7 @@ def main() -> None:
     render_api_sidebar()
     render_sidebar(APP_VERSION)
 
-    # Workspace first — never show dashboard and workspace on the same run
-    if st.session_state.adaptations and (
-        is_workspace() or st.session_state.get("app_view") == VIEW_WORKSPACE
-    ):
+    if should_render_workspace():
         render_workspace_page()
         return
 

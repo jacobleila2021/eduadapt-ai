@@ -1,6 +1,6 @@
 """
 Adaptation pill tabs — opens dedicated workspace on click.
-Uses on_click callbacks so navigation runs BEFORE dashboard file-upload logic.
+on_click callbacks run before the rest of the script (keeps adaptations intact).
 """
 
 from __future__ import annotations
@@ -25,13 +25,6 @@ def _make_spec_handler(spec_id: str):
         if cat:
             st.session_state.active_category_id = cat["id"]
         st.session_state.app_view = VIEW_WORKSPACE
-        try:
-            st.query_params["view"] = "workspace"
-            st.query_params["spec"] = spec_id
-            if cat:
-                st.query_params["cat"] = cat["id"]
-        except Exception:
-            pass
 
     return _handler
 

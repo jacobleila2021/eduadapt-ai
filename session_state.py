@@ -1,5 +1,6 @@
 """
 Single source of truth for Alora AI navigation and adaptation selection.
+Session state only — query params are NOT written (they can reset Cloud sessions).
 """
 
 from __future__ import annotations
@@ -28,35 +29,24 @@ def open_adaptation(category_id: str, spec_id: str | None = None) -> None:
     st.session_state.active_category_id = category_id
     st.session_state.active_output_id = spec_id or default_spec_for_category(category_id)
     st.session_state.app_view = VIEW_WORKSPACE
-    # Query params backup — survives odd Cloud rerun behaviour
-    try:
-        st.query_params["view"] = "workspace"
-        st.query_params["cat"] = category_id
-        st.query_params["spec"] = st.session_state.active_output_id
-    except Exception:
-        pass
 
 
 def close_workspace() -> None:
     st.session_state.app_view = VIEW_DASHBOARD
-    try:
-        st.query_params.clear()
-    except Exception:
-        pass
 
 
-def sync_from_query_params() -> None:
-    """Restore workspace route from URL if session was reset."""
+def clear_stale_url_params() -> None:
+    """Remove orphaned ?view=workspace from URL when session has no adaptations."""
     try:
-        if st.query_params.get("view") == "workspace" and st.session_state.get("adaptations"):
-            st.session_state.app_view = VIEW_WORKSPACE
-            if cat := st.query_params.get("cat"):
-                st.session_state.active_category_id = cat
-            if spec := st.query_params.get("spec"):
-                st.session_state.active_output_id = spec
+        if st.query_params.get("view") == "workspace" and not st.session_state.get("adaptations"):
+            st.query_params.clear()
     except Exception:
         pass
 
 
 def is_workspace() -> bool:
     return st.session_state.get("app_view") == VIEW_WORKSPACE
+
+
+def should_render_workspace() -> bool:
+    return bool(st.session_state.get("adaptations")) and is_workspace()

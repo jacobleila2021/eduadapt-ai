@@ -418,6 +418,20 @@ def get_custom_css() -> str:
         box-shadow: 0 8px 28px rgba(4, 27, 77, 0.25);
     }}
 
+    .workspace-mode-strip {{
+        background: linear-gradient(90deg, #066d75, #089aa4);
+        color: {COLOR_WHITE};
+        font-weight: 700;
+        font-size: 0.92rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-align: center;
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+        margin: 0.75rem 0 1.25rem 0;
+        box-shadow: 0 4px 14px rgba(4, 27, 77, 0.25);
+    }}
+
     .workspace-banner h2 {{
         color: {COLOR_WHITE} !important;
         margin: 0 0 0.35rem 0;
