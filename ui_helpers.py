@@ -23,7 +23,7 @@ def _logo_data_uri(logo_path: str | None) -> str | None:
     return f"data:image/png;base64,{b64}"
 
 
-def render_top_nav(logo_path: str | None = None) -> None:
+def render_top_nav(logo_path: str | None = None, version: str = "") -> None:
     """Fixed brand signage bar — logo left, Alora AI centred, platform address right."""
     data_uri = _logo_data_uri(logo_path)
     logo_html = (
@@ -31,6 +31,7 @@ def render_top_nav(logo_path: str | None = None) -> None:
         if data_uri
         else ""
     )
+    version_html = f'<span class="topnav-version">v{version}</span>' if version else ""
     st.markdown(
         f"""
         <div class="alora-topnav">
@@ -46,6 +47,7 @@ def render_top_nav(logo_path: str | None = None) -> None:
             <div class="topnav-right">
               <span class="topnav-address">Adaptive Learning Platform</span>
               <span class="topnav-url">eduadapt-ai.streamlit.app</span>
+              {version_html}
             </div>
           </div>
         </div>

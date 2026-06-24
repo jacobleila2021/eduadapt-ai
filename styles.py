@@ -155,6 +155,19 @@ def get_custom_css() -> str:
         font-weight: 500;
     }}
 
+    .topnav-version {{
+        display: inline-block;
+        margin-top: 0.35rem;
+        padding: 0.2rem 0.65rem;
+        background: rgba(20, 217, 229, 0.2);
+        border: 1px solid rgba(20, 217, 229, 0.55);
+        border-radius: 999px;
+        color: {COLOR_BRIGHT_AQUA};
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }}
+
     /* ---- Sidebar ---- */
     section[data-testid="stSidebar"] > div {{
         background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #051633 100%);

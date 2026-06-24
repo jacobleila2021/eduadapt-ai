@@ -411,7 +411,7 @@ def main() -> None:
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
     logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
-    render_top_nav(logo_path)
+    render_top_nav(logo_path, APP_VERSION)
     render_api_sidebar()
     render_sidebar(APP_VERSION)
 
