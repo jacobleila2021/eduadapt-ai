@@ -92,7 +92,33 @@ def apply_lesson(name: str, text: str) -> None:
     st.session_state.adaptations = None
     st.session_state.analytics = build_analytics_report(text)
     close_workspace()
-    st.success(f"Loaded: **{name}** ({len(text):,} characters)")
+
+
+def _upload_fingerprint(uploaded_file) -> str:
+    return f"{uploaded_file.name}:{uploaded_file.size}"
+
+
+def handle_file_upload(uploaded_file) -> None:
+    if uploaded_file is None:
+        return
+    fingerprint = _upload_fingerprint(uploaded_file)
+    if st.session_state.get("_processed_upload_key") == fingerprint:
+        return
+    try:
+        file_bytes = uploaded_file.read()
+        text = extract_lesson_text(uploaded_file.name, file_bytes)
+    except ValueError as error:
+        st.error(str(error))
+        return
+    except Exception as error:
+        st.error(f"Could not read file: {error}")
+        return
+    if not text.strip():
+        st.warning("No text found in this file. Try a different PDF or DOCX.")
+        return
+    st.session_state._processed_upload_key = fingerprint
+    apply_lesson(uploaded_file.name, text)
+    st.success(f"Loaded: **{uploaded_file.name}** ({len(text):,} characters)")
 
 
 def ensure_sample_lesson_exists() -> bool:
@@ -120,25 +146,9 @@ def load_sample_lesson() -> None:
     if not text.strip():
         st.warning("Sample lesson file is empty. Try uploading your own file.")
         return
+    st.session_state._processed_upload_key = f"{SAMPLE_LESSON_PATH.name}:sample"
     apply_lesson(SAMPLE_LESSON_PATH.name, text)
-
-
-def handle_file_upload(uploaded_file) -> None:
-    if uploaded_file is None:
-        return
-    try:
-        file_bytes = uploaded_file.read()
-        text = extract_lesson_text(uploaded_file.name, file_bytes)
-    except ValueError as error:
-        st.error(str(error))
-        return
-    except Exception as error:
-        st.error(f"Could not read file: {error}")
-        return
-    if not text.strip():
-        st.warning("No text found in this file. Try a different PDF or DOCX.")
-        return
-    apply_lesson(uploaded_file.name, text)
+    st.success(f"Loaded: **{SAMPLE_LESSON_PATH.name}** ({len(text):,} characters)")
 
 
 def run_generation() -> None:
@@ -351,6 +361,7 @@ def render_dashboard() -> None:
                 st.session_state.quality = None
                 st.session_state.active_output_id = "vocabulary"
                 st.session_state.active_category_id = "vocabulary"
+                st.session_state._processed_upload_key = ""
                 close_workspace()
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)

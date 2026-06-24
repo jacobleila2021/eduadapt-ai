@@ -1,14 +1,39 @@
 """
 Adaptation pill tabs — opens dedicated workspace on click.
-Direct if st.button() pattern (most reliable on Streamlit Cloud).
+Uses on_click callbacks so navigation runs BEFORE dashboard file-upload logic.
 """
 
 from __future__ import annotations
 
 import streamlit as st
 
-from navigation import PILL_CATEGORIES, category_for_id, spec_by_id
+from navigation import PILL_CATEGORIES, category_for_id, category_for_spec, spec_by_id
 from session_state import VIEW_WORKSPACE, is_workspace, open_adaptation
+
+
+def _make_category_handler(category_id: str):
+    def _handler() -> None:
+        open_adaptation(category_id)
+
+    return _handler
+
+
+def _make_spec_handler(spec_id: str):
+    def _handler() -> None:
+        st.session_state.active_output_id = spec_id
+        cat = category_for_spec(spec_id)
+        if cat:
+            st.session_state.active_category_id = cat["id"]
+        st.session_state.app_view = VIEW_WORKSPACE
+        try:
+            st.query_params["view"] = "workspace"
+            st.query_params["spec"] = spec_id
+            if cat:
+                st.query_params["cat"] = cat["id"]
+        except Exception:
+            pass
+
+    return _handler
 
 
 def render_pill_navigation(key_prefix: str = "pill") -> None:
@@ -29,14 +54,13 @@ def render_pill_navigation(key_prefix: str = "pill") -> None:
             with col:
                 cat_id = category["id"]
                 is_active = in_workspace and active_cat == cat_id
-                if st.button(
+                st.button(
                     category["label"],
                     key=f"{key_prefix}_{cat_id}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
-                ):
-                    open_adaptation(cat_id)
-                    st.rerun()
+                    on_click=_make_category_handler(cat_id),
+                )
         for col in cols[len(row) :]:
             with col:
                 st.empty()
@@ -56,12 +80,10 @@ def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
         if not spec:
             continue
         with col:
-            if st.button(
+            st.button(
                 spec["tab"],
                 key=f"subpill_{spec_id}",
                 use_container_width=True,
                 type="primary" if spec_id == active_spec_id else "secondary",
-            ):
-                st.session_state.active_output_id = spec_id
-                st.session_state.app_view = VIEW_WORKSPACE
-                st.rerun()
+                on_click=_make_spec_handler(spec_id),
+            )

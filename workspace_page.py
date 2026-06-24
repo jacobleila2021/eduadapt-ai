@@ -129,9 +129,12 @@ def render_workspace(
     spec_id = active_spec["id"]
     icon = SPEC_ICONS.get(spec_id, "📘")
 
-    if st.button("← Back to Dashboard", key="back_to_dashboard", type="secondary"):
-        close_workspace()
-        st.rerun()
+    st.button(
+        "← Back to Dashboard",
+        key="back_to_dashboard",
+        type="secondary",
+        on_click=close_workspace,
+    )
 
     st.markdown(
         f"""
