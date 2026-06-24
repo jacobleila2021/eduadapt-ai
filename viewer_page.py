@@ -8,7 +8,7 @@ import streamlit as st
 
 from docx_exporter import export_tab_docx
 from html_exporter import export_tab_html as rich_html_export
-from navigation import category_for_id, spec_by_id
+from pill_tabs import render_sub_spec_pills
 from structured_renderers import (
     _coerce_dict,
     content_to_export,
@@ -18,34 +18,6 @@ from structured_renderers import (
 )
 
 from spec_icons import SPEC_ICONS
-
-
-def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
-    """Secondary pills when a category has multiple adaptations."""
-    category = category_for_id(category_id)
-    if not category or len(category["spec_ids"]) <= 1:
-        return
-
-    st.markdown("**Versions in this category**")
-    st.markdown('<div class="sub-pill-row pill-nav-grid">', unsafe_allow_html=True)
-    spec_ids = category["spec_ids"]
-    cols = st.columns(min(len(spec_ids), 5))
-    for col, spec_id in zip(cols, spec_ids):
-        spec = spec_by_id(spec_id)
-        if not spec:
-            continue
-        label = spec["tab"]
-        with col:
-            if st.button(
-                label,
-                key=f"subpill_{spec_id}",
-                use_container_width=True,
-                type="primary" if spec_id == active_spec_id else "secondary",
-            ):
-                st.session_state.active_output_id = spec_id
-                st.session_state.app_view = "workspace"
-                st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_viewer_downloads(

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from navigation import PILL_CATEGORIES
 from print_exporter import build_print_html_all, build_print_html_single
 from session_state import close_workspace, open_adaptation
 from spec_icons import SPEC_ICONS
@@ -15,29 +14,9 @@ from viewer_page import render_adaptation_viewer
 
 def render_workspace_pills() -> None:
     """Switch adaptation while staying in workspace."""
-    from session_state import open_adaptation
+    from pill_tabs import render_pill_navigation as _render_pills
 
-    active_cat = st.session_state.get("active_category_id")
-    st.markdown('<div class="pill-nav-grid workspace-pills">', unsafe_allow_html=True)
-    cols_per_row = 3
-    for row_start in range(0, len(PILL_CATEGORIES), cols_per_row):
-        row = PILL_CATEGORIES[row_start : row_start + cols_per_row]
-        cols = st.columns(cols_per_row)
-        for col, category in zip(cols, row):
-            with col:
-                is_active = active_cat == category["id"]
-                if st.button(
-                    category["label"],
-                    key=f"ws_pill_{category['id']}",
-                    use_container_width=True,
-                    type="primary" if is_active else "secondary",
-                ):
-                    open_adaptation(category["id"])
-                    st.rerun()
-        for col in cols[len(row) :]:
-            with col:
-                st.empty()
-    st.markdown("</div>", unsafe_allow_html=True)
+    _render_pills(key_prefix="ws_pill")
 
 
 def render_action_bar(

@@ -418,6 +418,8 @@ def main() -> None:
     if is_workspace() and st.session_state.adaptations:
         render_workspace_page()
     else:
+        if st.session_state.get("app_view") == "workspace" and not st.session_state.adaptations:
+            close_workspace()
         render_dashboard()
 
 

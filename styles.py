@@ -347,65 +347,53 @@ def get_custom_css() -> str:
         font-weight: 700;
     }}
 
-    /* ---- Teal / cyan pill tabs (WCAG contrast) ---- */
+    /* ---- Cyan pill tabs (Streamlit st-key-* selectors — CSS must NOT rely on wrapper divs) ---- */
     .pill-nav-hint {{
         color: #3d5470;
-        font-size: 0.92rem;
-        margin: 0 0 1.15rem 0;
+        font-size: 0.95rem;
+        margin: 0 0 1.25rem 0;
         line-height: 1.5;
+        font-weight: 500;
     }}
 
-    .pill-nav-grid [data-testid="column"] button {{
-        border-radius: 999px !important;
-        min-height: 2.75rem !important;
-        font-weight: 600 !important;
-        font-size: 0.84rem !important;
-        transition: all 0.2s ease !important;
-        letter-spacing: 0.01em;
-    }}
-
-    .pill-nav-grid [data-testid="column"] button[kind="secondary"] {{
-        background: {COLOR_ELECTRIC_CYAN} !important;
-        color: {COLOR_DEEP_NAVY} !important;
-        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
-    }}
-
-    .pill-nav-grid [data-testid="column"] button[kind="secondary"]:hover {{
-        background: {COLOR_BRIGHT_AQUA} !important;
-        border-color: {COLOR_BRIGHT_AQUA} !important;
-        color: {COLOR_DEEP_NAVY} !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(20, 217, 229, 0.45);
-    }}
-
-    .pill-nav-grid [data-testid="column"] button[kind="primary"] {{
-        background: {COLOR_DEEP_NAVY} !important;
+    div[class*="st-key-pill_"] button,
+    div[class*="st-key-ws_pill_"] button,
+    div[class*="st-key-subpill_"] button {{
+        background: linear-gradient(180deg, {COLOR_BRIGHT_AQUA} 0%, {COLOR_ELECTRIC_CYAN} 100%) !important;
         color: {COLOR_WHITE} !important;
-        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
-        box-shadow: 0 0 22px rgba(20, 217, 229, 0.55), 0 4px 16px rgba(4, 27, 77, 0.3);
-    }}
-
-    .pill-nav-grid [data-testid="column"] button[kind="primary"]:hover {{
-        box-shadow: 0 0 28px rgba(34, 240, 255, 0.65), 0 6px 20px rgba(4, 27, 77, 0.35);
-        transform: translateY(-2px);
-    }}
-
-    .sub-pill-row [data-testid="column"] button[kind="secondary"] {{
-        background: rgba(20, 217, 229, 0.25) !important;
-        color: {COLOR_DEEP_NAVY} !important;
-        border: 1px solid {COLOR_ELECTRIC_CYAN} !important;
+        border: 2px solid rgba(255, 255, 255, 0.5) !important;
         border-radius: 999px !important;
-        font-size: 0.78rem !important;
-        min-height: 2.35rem !important;
+        min-height: 3.4rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        transition: all 0.22s ease !important;
+        letter-spacing: 0.02em;
+        text-shadow: 0 1px 2px rgba(4, 27, 77, 0.25);
+        box-shadow: 0 4px 18px rgba(20, 217, 229, 0.45);
     }}
 
-    .sub-pill-row [data-testid="column"] button[kind="primary"] {{
-        background: {COLOR_TEAL} !important;
+    div[class*="st-key-pill_"] button:hover,
+    div[class*="st-key-ws_pill_"] button:hover,
+    div[class*="st-key-subpill_"] button:hover {{
+        background: linear-gradient(180deg, #5ff7ff 0%, {COLOR_BRIGHT_AQUA} 100%) !important;
         color: {COLOR_WHITE} !important;
-        border-radius: 999px !important;
-        font-size: 0.78rem !important;
-        min-height: 2.35rem !important;
-        box-shadow: 0 0 14px rgba(20, 217, 229, 0.4);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 28px rgba(34, 240, 255, 0.55);
+        border-color: {COLOR_WHITE} !important;
+    }}
+
+    div[class*="st-key-pill_"] button[kind="primary"],
+    div[class*="st-key-ws_pill_"] button[kind="primary"],
+    div[class*="st-key-subpill_"] button[kind="primary"] {{
+        background: linear-gradient(180deg, {COLOR_ELECTRIC_CYAN} 0%, #089aa4 100%) !important;
+        color: {COLOR_WHITE} !important;
+        border: 2px solid {COLOR_WHITE} !important;
+        box-shadow: 0 0 26px rgba(20, 217, 229, 0.85), 0 6px 20px rgba(4, 27, 77, 0.25) !important;
+    }}
+
+    div[class*="st-key-subpill_"] button {{
+        min-height: 2.85rem !important;
+        font-size: 0.92rem !important;
     }}
 
     .viewer-header {{

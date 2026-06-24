@@ -10,9 +10,6 @@ from pathlib import Path
 import streamlit as st
 
 from config import APP_NAME, APP_TAGLINE
-from navigation import PILL_CATEGORIES
-
-from spec_icons import SPEC_ICONS
 
 
 def _logo_data_uri(logo_path: str | None) -> str | None:
@@ -116,35 +113,10 @@ def render_dashboard_intro() -> None:
 
 
 def render_pill_navigation() -> None:
-    """Teal pill tabs on dashboard — opens dedicated workspace on click."""
-    from session_state import open_adaptation, is_workspace
+    """Dashboard adaptation pills."""
+    from pill_tabs import render_pill_navigation as _render_pills
 
-    st.markdown(
-        '<p class="pill-nav-hint">Select a version to open in its dedicated workspace.</p>',
-        unsafe_allow_html=True,
-    )
-    st.markdown('<div class="pill-nav-grid">', unsafe_allow_html=True)
-
-    cols_per_row = 3
-    for row_start in range(0, len(PILL_CATEGORIES), cols_per_row):
-        row = PILL_CATEGORIES[row_start : row_start + cols_per_row]
-        cols = st.columns(cols_per_row)
-        for col, category in zip(cols, row):
-            with col:
-                is_active = is_workspace() and st.session_state.get("active_category_id") == category["id"]
-                if st.button(
-                    category["label"],
-                    key=f"pill_{category['id']}",
-                    use_container_width=True,
-                    type="primary" if is_active else "secondary",
-                ):
-                    open_adaptation(category["id"])
-                    st.rerun()
-        for col in cols[len(row) :]:
-            with col:
-                st.empty()
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    _render_pills(key_prefix="pill")
 
 
 def render_analytics_panel(analytics: dict) -> None:
