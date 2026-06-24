@@ -12,6 +12,9 @@ from config import (
     COLOR_WHITE,
 )
 
+# Taller premium header (~30% above prior 96px bar)
+HEADER_HEIGHT_PX = 125
+
 
 def get_custom_css() -> str:
     return f"""
@@ -23,13 +26,20 @@ def get_custom_css() -> str:
     }}
 
     .main .block-container {{
-        padding-top: 6.75rem;
-        max-width: 1140px;
+        padding-top: 8.25rem;
+        max-width: 1160px;
+        padding-bottom: 2.5rem;
     }}
 
     .main, .main p, .main li, .main span, .main label,
     .main .stMarkdown, .main h2, .main h3, .main h4 {{
         color: {COLOR_TEXT};
+    }}
+
+    .main h2 {{
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.65rem;
     }}
 
     #MainMenu {{visibility: hidden;}}
@@ -39,16 +49,16 @@ def get_custom_css() -> str:
         height: 0;
     }}
 
-    /* ---- Fixed top navigation (brand signage bar) ---- */
+    /* ---- Premium brand signage bar ---- */
     .alora-topnav {{
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 999999;
-        background: linear-gradient(180deg, #051a42 0%, {COLOR_DEEP_NAVY} 45%, #031638 100%);
-        box-shadow: 0 6px 32px rgba(4, 27, 77, 0.45);
-        height: 96px;
+        background: linear-gradient(180deg, #051a42 0%, {COLOR_DEEP_NAVY} 50%, #031638 100%);
+        box-shadow: 0 8px 36px rgba(4, 27, 77, 0.5);
+        height: {HEADER_HEIGHT_PX}px;
     }}
 
     .topnav-accent {{
@@ -62,45 +72,47 @@ def get_custom_css() -> str:
 
     .topnav-inner {{
         display: grid;
-        grid-template-columns: minmax(140px, 1fr) auto minmax(140px, 1fr);
+        grid-template-columns: minmax(160px, 1fr) auto minmax(160px, 1fr);
         align-items: center;
-        max-width: 1280px;
+        max-width: 1320px;
         margin: 0 auto;
-        padding: 0 1.75rem;
-        height: 96px;
+        padding: 0 2rem;
+        height: {HEADER_HEIGHT_PX}px;
     }}
 
+    /* Logo — direct on header, no box or frame */
     .topnav-logo {{
         justify-self: start;
         display: flex;
         align-items: center;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(20, 217, 229, 0.35);
-        border-radius: 14px;
-        padding: 0.35rem 0.65rem;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+        height: 100%;
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
     }}
 
     .topnav-logo-img {{
-        height: 72px;
+        height: 98px;
         width: auto;
-        max-width: 200px;
+        max-width: none;
         object-fit: contain;
         display: block;
-        filter: drop-shadow(0 3px 10px rgba(20, 217, 229, 0.35));
+        filter: drop-shadow(0 4px 14px rgba(20, 217, 229, 0.4));
     }}
 
     .topnav-center {{
         justify-self: center;
         text-align: center;
+        padding: 0.5rem 0;
     }}
 
     .topnav-title {{
-        font-size: 2.15rem;
+        font-size: 2.35rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         white-space: nowrap;
-        line-height: 1.15;
+        line-height: 1.1;
     }}
 
     .topnav-title .name-alora {{
@@ -112,11 +124,12 @@ def get_custom_css() -> str:
     }}
 
     .topnav-tagline {{
-        color: {COLOR_SILVER};
-        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.92rem;
         font-weight: 500;
-        letter-spacing: 0.04em;
-        margin-top: 0.2rem;
+        letter-spacing: 0.03em;
+        margin-top: 0.35rem;
+        line-height: 1.4;
     }}
 
     .topnav-right {{
@@ -124,31 +137,31 @@ def get_custom_css() -> str:
         text-align: right;
         display: flex;
         flex-direction: column;
-        gap: 0.15rem;
+        gap: 0.25rem;
     }}
 
     .topnav-address {{
         color: {COLOR_ELECTRIC_CYAN};
-        font-size: 0.78rem;
+        font-size: 0.8rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.07em;
+        letter-spacing: 0.08em;
     }}
 
     .topnav-url {{
-        color: rgba(255, 255, 255, 0.75);
-        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.76rem;
         font-weight: 500;
     }}
 
     /* ---- Sidebar ---- */
     section[data-testid="stSidebar"] > div {{
         background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #051633 100%);
-        padding-top: 5.75rem;
+        padding-top: 7.25rem;
     }}
 
     section[data-testid="stSidebar"] .sidebar-block {{
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.35rem;
         padding: 0 0.15rem;
     }}
 
@@ -159,16 +172,13 @@ def get_custom_css() -> str:
         text-transform: uppercase;
         letter-spacing: 0.1em;
         margin: 0 0 0.65rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
     }}
 
     section[data-testid="stSidebar"] .sidebar-item {{
         color: rgba(255, 255, 255, 0.92);
         font-size: 0.86rem;
-        line-height: 1.5;
-        padding: 0.35rem 0 0.35rem 1.5rem;
+        line-height: 1.55;
+        padding: 0.4rem 0 0.4rem 1.5rem;
         position: relative;
     }}
 
@@ -184,7 +194,7 @@ def get_custom_css() -> str:
     section[data-testid="stSidebar"] .sidebar-divider {{
         border: none;
         border-top: 1px solid rgba(20, 217, 229, 0.2);
-        margin: 1.1rem 0;
+        margin: 1.25rem 0;
     }}
 
     section[data-testid="stSidebar"] .sidebar-status-ready {{
@@ -220,131 +230,149 @@ def get_custom_css() -> str:
         border-top: 1px solid rgba(255,255,255,0.1);
     }}
 
-    /* ---- Dashboard cards ---- */
+    /* ---- Dashboard ---- */
     .dashboard-hero {{
         background: linear-gradient(135deg, {COLOR_DEEP_NAVY} 0%, #0a3d5c 100%);
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
+        border-radius: 18px;
+        padding: 1.75rem 2.25rem;
         color: {COLOR_WHITE};
-        margin-bottom: 1.5rem;
-        box-shadow: 0 8px 32px rgba(4, 27, 77, 0.22);
+        margin-bottom: 1.75rem;
+        box-shadow: 0 10px 40px rgba(4, 27, 77, 0.2);
     }}
 
     .dashboard-hero h2 {{
         color: {COLOR_WHITE} !important;
-        margin: 0 0 0.35rem 0;
-        font-size: 1.5rem;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.65rem;
     }}
 
     .dashboard-hero p {{
-        color: rgba(255,255,255,0.88);
+        color: rgba(255,255,255,0.9);
         margin: 0;
-        font-size: 0.95rem;
+        font-size: 1rem;
+        line-height: 1.5;
     }}
 
     .workspace-card {{
         background: {COLOR_WHITE};
-        border-radius: 14px;
-        padding: 1.25rem 1.5rem;
-        box-shadow: 0 2px 16px rgba(4, 27, 77, 0.08);
-        border: 1px solid rgba(4, 27, 77, 0.06);
-        margin-bottom: 1rem;
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        box-shadow: 0 4px 24px rgba(4, 27, 77, 0.07);
+        border: 1px solid rgba(4, 27, 77, 0.07);
+        margin-bottom: 1.35rem;
+    }}
+
+    .adaptation-panel {{
+        border-top: 4px solid {COLOR_ELECTRIC_CYAN};
+        margin-top: 0.5rem;
     }}
 
     .multimodal-strip {{
         display: flex;
         flex-wrap: wrap;
         gap: 0.65rem;
-        margin: 1rem 0 0 0;
+        margin: 1.15rem 0 0 0;
     }}
 
     .multimodal-chip {{
-        background: rgba(20, 217, 229, 0.15);
-        border: 1px solid rgba(20, 217, 229, 0.4);
-        color: {COLOR_ELECTRIC_CYAN};
+        background: rgba(20, 217, 229, 0.18);
+        border: 1px solid rgba(20, 217, 229, 0.45);
+        color: {COLOR_BRIGHT_AQUA};
         border-radius: 999px;
-        padding: 0.35rem 0.85rem;
-        font-size: 0.8rem;
+        padding: 0.4rem 0.95rem;
+        font-size: 0.82rem;
         font-weight: 600;
     }}
 
-    /* ---- Metrics ---- */
     .metric-card {{
-        background: {COLOR_WHITE};
+        background: #f8fcfd;
         border-left: 4px solid {COLOR_ELECTRIC_CYAN};
         border-radius: 12px;
-        padding: 1rem 1.25rem;
-        box-shadow: 0 2px 12px rgba(4, 27, 77, 0.06);
-        margin-bottom: 0.75rem;
+        padding: 1.1rem 1.35rem;
+        box-shadow: 0 2px 12px rgba(4, 27, 77, 0.05);
+        margin-bottom: 0.5rem;
     }}
 
     .metric-card h4 {{
         color: {COLOR_DEEP_NAVY};
-        margin: 0 0 0.25rem 0;
-        font-size: 0.8rem;
+        margin: 0 0 0.3rem 0;
+        font-size: 0.78rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
     }}
 
     .metric-card p {{
         color: {COLOR_TEAL};
         margin: 0;
-        font-size: 1.45rem;
+        font-size: 1.5rem;
         font-weight: 700;
     }}
 
-    /* ---- Pill tabs ---- */
+    /* ---- Teal / cyan pill tabs (WCAG contrast) ---- */
     .pill-nav-hint {{
-        color: {COLOR_DEEP_NAVY};
-        font-size: 0.9rem;
-        margin: 0 0 1rem 0;
+        color: #3d5470;
+        font-size: 0.92rem;
+        margin: 0 0 1.15rem 0;
+        line-height: 1.5;
     }}
 
-    .pill-nav-row {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.55rem;
-        margin-bottom: 0.5rem;
-    }}
-
-    div[data-testid="column"] .pill-nav-row + div button,
     .pill-nav-grid [data-testid="column"] button {{
         border-radius: 999px !important;
-        min-height: 2.5rem;
-        font-weight: 600;
-        font-size: 0.82rem;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }}
-
-    .pill-nav-grid [data-testid="column"] button:hover {{
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(4, 27, 77, 0.15);
-    }}
-
-    .pill-nav-grid [data-testid="column"] button[kind="primary"] {{
-        background: linear-gradient(135deg, {COLOR_DEEP_NAVY}, #0a3d6e) !important;
-        color: {COLOR_WHITE} !important;
-        border: none !important;
-        box-shadow: 0 4px 14px rgba(4, 27, 77, 0.25);
+        min-height: 2.75rem !important;
+        font-weight: 600 !important;
+        font-size: 0.84rem !important;
+        transition: all 0.2s ease !important;
+        letter-spacing: 0.01em;
     }}
 
     .pill-nav-grid [data-testid="column"] button[kind="secondary"] {{
-        background: linear-gradient(135deg, {COLOR_DEEP_NAVY}, #0a3d6e) !important;
-        color: {COLOR_WHITE} !important;
-        border: 1px solid rgba(20, 217, 229, 0.35) !important;
-        opacity: 0.88;
+        background: {COLOR_ELECTRIC_CYAN} !important;
+        color: {COLOR_DEEP_NAVY} !important;
+        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
     }}
 
     .pill-nav-grid [data-testid="column"] button[kind="secondary"]:hover {{
-        opacity: 1;
-        border-color: {COLOR_ELECTRIC_CYAN} !important;
+        background: {COLOR_BRIGHT_AQUA} !important;
+        border-color: {COLOR_BRIGHT_AQUA} !important;
+        color: {COLOR_DEEP_NAVY} !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(20, 217, 229, 0.45);
     }}
 
-    /* ---- Viewer workspace ---- */
+    .pill-nav-grid [data-testid="column"] button[kind="primary"] {{
+        background: {COLOR_DEEP_NAVY} !important;
+        color: {COLOR_WHITE} !important;
+        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
+        box-shadow: 0 0 22px rgba(20, 217, 229, 0.55), 0 4px 16px rgba(4, 27, 77, 0.3);
+    }}
+
+    .pill-nav-grid [data-testid="column"] button[kind="primary"]:hover {{
+        box-shadow: 0 0 28px rgba(34, 240, 255, 0.65), 0 6px 20px rgba(4, 27, 77, 0.35);
+        transform: translateY(-2px);
+    }}
+
+    .sub-pill-row [data-testid="column"] button[kind="secondary"] {{
+        background: rgba(20, 217, 229, 0.25) !important;
+        color: {COLOR_DEEP_NAVY} !important;
+        border: 1px solid {COLOR_ELECTRIC_CYAN} !important;
+        border-radius: 999px !important;
+        font-size: 0.78rem !important;
+        min-height: 2.35rem !important;
+    }}
+
+    .sub-pill-row [data-testid="column"] button[kind="primary"] {{
+        background: {COLOR_TEAL} !important;
+        color: {COLOR_WHITE} !important;
+        border-radius: 999px !important;
+        font-size: 0.78rem !important;
+        min-height: 2.35rem !important;
+        box-shadow: 0 0 14px rgba(20, 217, 229, 0.4);
+    }}
+
     .viewer-header {{
         background: linear-gradient(135deg, #eef9fb 0%, #f8fbfd 100%);
         border-radius: 14px;
-        padding: 1.25rem 1.5rem;
+        padding: 1.35rem 1.65rem;
         margin-bottom: 1.25rem;
         border-left: 5px solid {COLOR_ELECTRIC_CYAN};
     }}
@@ -360,20 +388,6 @@ def get_custom_css() -> str:
         font-size: 0.92rem;
     }}
 
-    .auditory-focus .main .block-container {{
-        max-width: 900px;
-    }}
-
-    .auditory-focus [data-testid="stVerticalBlock"] > div {{
-        margin-bottom: 0.5rem;
-    }}
-
-    .sub-pill-row [data-testid="column"] button {{
-        border-radius: 999px !important;
-        font-size: 0.78rem !important;
-        min-height: 2.2rem !important;
-    }}
-
     .main th {{
         background: {COLOR_DEEP_NAVY};
         color: {COLOR_WHITE};
@@ -385,12 +399,11 @@ def get_custom_css() -> str:
     }}
 
     @media (max-width: 768px) {{
-        .alora-topnav {{ height: 82px; }}
-        .topnav-inner {{ height: 82px; padding: 0 1rem; }}
-        .topnav-title {{ font-size: 1.45rem; }}
-        .topnav-logo-img {{ height: 54px; }}
+        .alora-topnav, .topnav-inner {{ height: 100px; }}
+        .topnav-title {{ font-size: 1.5rem; }}
+        .topnav-logo-img {{ height: 72px; }}
         .topnav-tagline, .topnav-right {{ display: none; }}
-        .main .block-container {{ padding-top: 5.5rem; }}
+        .main .block-container {{ padding-top: 6.75rem; }}
     }}
     </style>
     """

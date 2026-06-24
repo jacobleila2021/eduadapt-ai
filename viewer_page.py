@@ -43,6 +43,7 @@ def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
                 type="primary" if spec_id == active_spec_id else "secondary",
             ):
                 st.session_state.active_output_id = spec_id
+                st.session_state.adaptation_open = True
                 st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -86,7 +87,7 @@ def render_viewer_downloads(
         with c3:
             html_name = download_filename.rsplit(".", 1)[0] + ".html"
             st.download_button(
-                "HTML",
+                "Print (HTML)",
                 data=rich_html_export(title, content, spec_id),
                 file_name=html_name,
                 mime="text/html",
@@ -147,26 +148,36 @@ def render_adaptation_viewer(
     zip_bytes: bytes | None,
     base_name: str,
     api_key: str,
+    *,
+    inline: bool = False,
 ) -> None:
-    """Dedicated workspace — single adaptation only."""
+    """Single adaptation workspace — inline on homepage or standalone."""
     from audio_learning import render_audio_learning_panel
 
     icon = SPEC_ICONS.get(spec_id, "📘")
     category_id = st.session_state.get("active_category_id", "")
 
-    if st.button("← Back to Workspace", key="back_to_dashboard"):
-        st.session_state.app_view = "dashboard"
-        st.rerun()
-
-    st.markdown(
-        f"""
-        <div class="viewer-header">
-          <h2>{icon} {title}</h2>
-          <p>Dedicated viewing workspace — typography, layout, and accessibility preserved for print & export.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if inline:
+        col_title, col_close = st.columns([5, 1])
+        with col_title:
+            st.markdown(f"### {icon} {title}")
+        with col_close:
+            if st.button("Close", key="close_adaptation_panel", use_container_width=True):
+                st.session_state.adaptation_open = False
+                st.rerun()
+    else:
+        if st.button("← Back to Workspace", key="back_to_dashboard"):
+            st.session_state.adaptation_open = False
+            st.rerun()
+        st.markdown(
+            f"""
+            <div class="viewer-header">
+              <h2>{icon} {title}</h2>
+              <p>Dedicated viewing workspace — typography, layout, and accessibility preserved for print & export.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     render_sub_spec_pills(category_id, spec_id)
 

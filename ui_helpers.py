@@ -112,40 +112,42 @@ def render_dashboard_intro() -> None:
     )
 
 
-def render_pill_navigation(active_category_id: str | None = None) -> str | None:
+def render_pill_navigation(active_category_id: str | None = None) -> None:
     """
-    Rounded pill tabs — clicking opens dedicated viewer (returns selected spec_id).
+    Teal pill tabs — single source of truth via session state.
+    Clicking opens exactly one adaptation inline below.
     """
+    open_id = st.session_state.get("active_category_id")
+    is_open = st.session_state.get("adaptation_open", False)
+
     st.markdown(
-        '<p class="pill-nav-hint">Select an adaptation to open in its dedicated workspace.</p>',
+        '<p class="pill-nav-hint">Click a version to open it — only one adaptation displays at a time.</p>',
         unsafe_allow_html=True,
     )
     st.markdown('<div class="pill-nav-grid">', unsafe_allow_html=True)
 
-    selected_spec: str | None = None
     cols_per_row = 3
     for row_start in range(0, len(PILL_CATEGORIES), cols_per_row):
         row = PILL_CATEGORIES[row_start : row_start + cols_per_row]
         cols = st.columns(cols_per_row)
         for col, category in zip(cols, row):
             with col:
-                is_active = category["id"] == active_category_id
+                is_active = is_open and open_id == category["id"]
                 if st.button(
                     category["label"],
                     key=f"pill_{category['id']}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
                 ):
-                    selected_spec = category["spec_ids"][0]
                     st.session_state.active_category_id = category["id"]
-                    st.session_state.active_output_id = selected_spec
-                    st.session_state.app_view = "viewer"
+                    st.session_state.active_output_id = category["spec_ids"][0]
+                    st.session_state.adaptation_open = True
+                    st.rerun()
         for col in cols[len(row) :]:
             with col:
                 st.empty()
 
     st.markdown("</div>", unsafe_allow_html=True)
-    return selected_spec
 
 
 def render_analytics_panel(analytics: dict) -> None:

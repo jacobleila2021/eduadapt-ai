@@ -69,8 +69,8 @@ if "active_output_id" not in st.session_state:
     st.session_state.active_output_id = "vocabulary"
 if "active_category_id" not in st.session_state:
     st.session_state.active_category_id = "vocabulary"
-if "app_view" not in st.session_state:
-    st.session_state.app_view = "dashboard"
+if "adaptation_open" not in st.session_state:
+    st.session_state.adaptation_open = False
 if "auditory_mode" not in st.session_state:
     st.session_state.auditory_mode = False
 
@@ -95,7 +95,7 @@ def apply_lesson(name: str, text: str) -> None:
     st.session_state.upload_name = name
     st.session_state.adaptations = None
     st.session_state.analytics = build_analytics_report(text)
-    st.session_state.app_view = "dashboard"
+    st.session_state.adaptation_open = False
     st.success(f"Loaded: **{name}** ({len(text):,} characters)")
 
 
@@ -173,7 +173,7 @@ def run_generation() -> None:
             st.session_state.quality = quality_report(st.session_state.adaptations)
             st.session_state.active_output_id = "vocabulary"
             st.session_state.active_category_id = "vocabulary"
-            st.session_state.app_view = "dashboard"
+            st.session_state.adaptation_open = False
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
@@ -289,6 +289,47 @@ def _zip_bytes() -> bytes | None:
     )
 
 
+def _render_active_adaptation() -> None:
+    """Render the single selected adaptation with print/download options."""
+    adaptations = st.session_state.adaptations
+    if not adaptations or not st.session_state.get("adaptation_open"):
+        return
+
+    active_id = st.session_state.active_output_id
+    active_spec = next((s for s in ADAPTATION_SPECS if s["id"] == active_id), None)
+    if not active_spec:
+        active_id = default_spec_for_category(
+            st.session_state.get("active_category_id", "vocabulary")
+        )
+        active_spec = next(s for s in ADAPTATION_SPECS if s["id"] == active_id)
+        st.session_state.active_output_id = active_id
+
+    cat = category_for_spec(active_id)
+    if cat:
+        st.session_state.active_category_id = cat["id"]
+
+    content = _content_for_spec(active_spec, adaptations, st.session_state.lesson_text)
+    base_name = _base_name()
+    filename = f"{base_name}_{active_spec['id']}.txt"
+
+    st.session_state._text_bundle_cache = _build_bundle_download()
+    zip_bytes = _zip_bytes()
+
+    st.markdown('<div class="adaptation-panel workspace-card">', unsafe_allow_html=True)
+    st.subheader("5. Your Selected Adaptation")
+    render_adaptation_viewer(
+        spec_id=active_id,
+        title=active_spec["title"],
+        content=content,
+        download_filename=filename,
+        zip_bytes=zip_bytes,
+        base_name=base_name,
+        api_key=st.session_state.runtime_api_key,
+        inline=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_dashboard() -> None:
     """Homepage — upload, analytics, generate, pill tabs only (no stacked outputs)."""
     render_dashboard_intro()
@@ -344,7 +385,7 @@ def render_dashboard() -> None:
                 st.session_state.quality = None
                 st.session_state.active_output_id = "vocabulary"
                 st.session_state.active_category_id = "vocabulary"
-                st.session_state.app_view = "dashboard"
+                st.session_state.adaptation_open = False
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -352,12 +393,12 @@ def render_dashboard() -> None:
         st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
         st.subheader("4. Open an Adaptation")
         st.caption(
-            "Multimodal delivery — read, listen, or print each version in its own workspace."
+            "Multimodal delivery — read, listen, or print each version. One adaptation opens at a time."
         )
-        selected = render_pill_navigation(st.session_state.active_category_id)
-        if selected:
-            st.rerun()
+        render_pill_navigation(st.session_state.active_category_id)
         st.markdown("</div>", unsafe_allow_html=True)
+
+        _render_active_adaptation()
 
         q = st.session_state.quality or {}
         if q:
@@ -372,47 +413,6 @@ def render_dashboard() -> None:
                 )
 
 
-def render_viewer_page() -> None:
-    """Dedicated page — single adaptation with audio + downloads."""
-    adaptations = st.session_state.adaptations
-    if not adaptations:
-        st.session_state.app_view = "dashboard"
-        st.rerun()
-        return
-
-    active_id = st.session_state.active_output_id
-    active_spec = next(
-        (s for s in ADAPTATION_SPECS if s["id"] == active_id),
-        None,
-    )
-    if not active_spec:
-        active_id = default_spec_for_category(
-            st.session_state.get("active_category_id", "vocabulary")
-        )
-        active_spec = next(s for s in ADAPTATION_SPECS if s["id"] == active_id)
-
-    cat = category_for_spec(active_id)
-    if cat:
-        st.session_state.active_category_id = cat["id"]
-
-    content = _content_for_spec(active_spec, adaptations, st.session_state.lesson_text)
-    base_name = _base_name()
-    filename = f"{base_name}_{active_spec['id']}.txt"
-
-    st.session_state._text_bundle_cache = _build_bundle_download()
-    zip_bytes = _zip_bytes()
-
-    render_adaptation_viewer(
-        spec_id=active_id,
-        title=active_spec["title"],
-        content=content,
-        download_filename=filename,
-        zip_bytes=zip_bytes,
-        base_name=base_name,
-        api_key=st.session_state.runtime_api_key,
-    )
-
-
 def main() -> None:
     load_api_key_from_env_file()
 
@@ -424,10 +424,7 @@ def main() -> None:
     render_api_sidebar()
     render_sidebar(APP_VERSION)
 
-    if st.session_state.app_view == "viewer" and st.session_state.adaptations:
-        render_viewer_page()
-    else:
-        render_dashboard()
+    render_dashboard()
 
 
 if __name__ == "__main__":
