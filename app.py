@@ -1,6 +1,6 @@
 """
 Alora AI — Main Streamlit application.
-Premium dashboard + dedicated adaptation viewer.
+Dashboard + dedicated adaptation workspace (never stacked on homepage).
 """
 
 import json
@@ -30,10 +30,11 @@ try:
     from config import APP_NAME
     from navigation import category_for_spec, default_spec_for_category
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
+    from session_state import close_workspace, init_navigation_state, is_workspace
     from structured_renderers import content_to_export
     from styles import get_custom_css
     from version import APP_VERSION
-    from viewer_page import render_adaptation_viewer
+    from workspace_page import render_workspace
     from ui_helpers import (
         render_analytics_panel,
         render_dashboard_intro,
@@ -50,7 +51,8 @@ except Exception as import_error:
     )
     st.stop()
 
-# --- Session state defaults ---
+init_navigation_state()
+
 if "lesson_text" not in st.session_state:
     st.session_state.lesson_text = ""
 if "adaptations" not in st.session_state:
@@ -65,12 +67,6 @@ if "last_saved_api_key" not in st.session_state:
     st.session_state.last_saved_api_key = ""
 if "quality" not in st.session_state:
     st.session_state.quality = None
-if "active_output_id" not in st.session_state:
-    st.session_state.active_output_id = "vocabulary"
-if "active_category_id" not in st.session_state:
-    st.session_state.active_category_id = "vocabulary"
-if "adaptation_open" not in st.session_state:
-    st.session_state.adaptation_open = False
 if "auditory_mode" not in st.session_state:
     st.session_state.auditory_mode = False
 
@@ -95,7 +91,7 @@ def apply_lesson(name: str, text: str) -> None:
     st.session_state.upload_name = name
     st.session_state.adaptations = None
     st.session_state.analytics = build_analytics_report(text)
-    st.session_state.adaptation_open = False
+    close_workspace()
     st.success(f"Loaded: **{name}** ({len(text):,} characters)")
 
 
@@ -173,7 +169,7 @@ def run_generation() -> None:
             st.session_state.quality = quality_report(st.session_state.adaptations)
             st.session_state.active_output_id = "vocabulary"
             st.session_state.active_category_id = "vocabulary"
-            st.session_state.adaptation_open = False
+            close_workspace()
         except (ValueError, RuntimeError) as error:
             st.error(str(error))
             return
@@ -186,7 +182,7 @@ def run_generation() -> None:
         st.success(
             f"Ready! {q.get('vocab_terms', 0)} vocab terms, "
             f"{q.get('worksheet_short_q', 0)} short + {q.get('worksheet_long_q', 0)} long "
-            f"exam questions. Select a tab below to open an adaptation."
+            f"exam questions — select a tab below to open."
         )
     else:
         st.warning(
@@ -195,7 +191,7 @@ def run_generation() -> None:
         )
 
 
-def _content_for_spec(spec: dict, adaptations: dict, lesson: str) -> str:
+def _content_for_spec(spec: dict, adaptations: dict, lesson: str):
     if not spec["generate"]:
         return lesson
     return adaptations.get(spec["id"], "_No content generated for this section._")
@@ -289,12 +285,7 @@ def _zip_bytes() -> bytes | None:
     )
 
 
-def _render_active_adaptation() -> None:
-    """Render the single selected adaptation with print/download options."""
-    adaptations = st.session_state.adaptations
-    if not adaptations or not st.session_state.get("adaptation_open"):
-        return
-
+def _resolve_active_spec():
     active_id = st.session_state.active_output_id
     active_spec = next((s for s in ADAPTATION_SPECS if s["id"] == active_id), None)
     if not active_spec:
@@ -303,46 +294,21 @@ def _render_active_adaptation() -> None:
         )
         active_spec = next(s for s in ADAPTATION_SPECS if s["id"] == active_id)
         st.session_state.active_output_id = active_id
-
     cat = category_for_spec(active_id)
     if cat:
         st.session_state.active_category_id = cat["id"]
-
-    content = _content_for_spec(active_spec, adaptations, st.session_state.lesson_text)
-    base_name = _base_name()
-    filename = f"{base_name}_{active_spec['id']}.txt"
-
-    st.session_state._text_bundle_cache = _build_bundle_download()
-    zip_bytes = _zip_bytes()
-
-    st.markdown('<div class="adaptation-panel workspace-card">', unsafe_allow_html=True)
-    st.subheader("5. Your Selected Adaptation")
-    render_adaptation_viewer(
-        spec_id=active_id,
-        title=active_spec["title"],
-        content=content,
-        download_filename=filename,
-        zip_bytes=zip_bytes,
-        base_name=base_name,
-        api_key=st.session_state.runtime_api_key,
-        inline=True,
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
+    return active_spec
 
 
 def render_dashboard() -> None:
-    """Homepage — upload, analytics, generate, pill tabs only (no stacked outputs)."""
+    """Homepage only — no adaptation outputs."""
     render_dashboard_intro()
 
     st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
     st.subheader("1. Upload Your Lesson")
     col_upload, col_sample = st.columns([3, 1])
     with col_sample:
-        if st.button(
-            "Use Sample Lesson",
-            use_container_width=True,
-            help="Grade 6 water cycle sample.",
-        ):
+        if st.button("Use Sample Lesson", use_container_width=True):
             load_sample_lesson()
     with col_upload:
         uploaded = st.file_uploader(
@@ -385,20 +351,18 @@ def render_dashboard() -> None:
                 st.session_state.quality = None
                 st.session_state.active_output_id = "vocabulary"
                 st.session_state.active_category_id = "vocabulary"
-                st.session_state.adaptation_open = False
+                close_workspace()
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.adaptations:
         st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
-        st.subheader("4. Open an Adaptation")
+        st.subheader("4. Choose an Adaptation")
         st.caption(
-            "Multimodal delivery — read, listen, or print each version. One adaptation opens at a time."
+            "Each version opens in its own workspace — one adaptation at a time, never stacked here."
         )
-        render_pill_navigation(st.session_state.active_category_id)
+        render_pill_navigation()
         st.markdown("</div>", unsafe_allow_html=True)
-
-        _render_active_adaptation()
 
         q = st.session_state.quality or {}
         if q:
@@ -413,18 +377,48 @@ def render_dashboard() -> None:
                 )
 
 
+def render_workspace_page() -> None:
+    """Dedicated workspace — single adaptation, never on homepage."""
+    adaptations = st.session_state.adaptations
+    if not adaptations:
+        close_workspace()
+        st.rerun()
+        return
+
+    active_spec = _resolve_active_spec()
+    content = _content_for_spec(active_spec, adaptations, st.session_state.lesson_text)
+    base_name = _base_name()
+    filename = f"{base_name}_{active_spec['id']}.txt"
+
+    st.session_state._text_bundle_cache = _build_bundle_download()
+    zip_bytes = _zip_bytes()
+
+    render_workspace(
+        active_spec=active_spec,
+        content=content,
+        download_filename=filename,
+        zip_bytes=zip_bytes,
+        base_name=base_name,
+        api_key=st.session_state.runtime_api_key,
+        adaptations=adaptations,
+        lesson_text=st.session_state.lesson_text,
+        content_for_spec=_content_for_spec,
+    )
+
+
 def main() -> None:
     load_api_key_from_env_file()
-
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
     logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
     render_top_nav(logo_path)
-
     render_api_sidebar()
     render_sidebar(APP_VERSION)
 
-    render_dashboard()
+    if is_workspace() and st.session_state.adaptations:
+        render_workspace_page()
+    else:
+        render_dashboard()
 
 
 if __name__ == "__main__":

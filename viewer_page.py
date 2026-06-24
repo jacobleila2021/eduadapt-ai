@@ -43,7 +43,7 @@ def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
                 type="primary" if spec_id == active_spec_id else "secondary",
             ):
                 st.session_state.active_output_id = spec_id
-                st.session_state.adaptation_open = True
+                st.session_state.app_view = "workspace"
                 st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -150,34 +150,31 @@ def render_adaptation_viewer(
     api_key: str,
     *,
     inline: bool = False,
+    hide_downloads: bool = False,
 ) -> None:
-    """Single adaptation workspace — inline on homepage or standalone."""
+    """Single adaptation content panel."""
     from audio_learning import render_audio_learning_panel
 
     icon = SPEC_ICONS.get(spec_id, "📘")
     category_id = st.session_state.get("active_category_id", "")
 
-    if inline:
-        col_title, col_close = st.columns([5, 1])
-        with col_title:
-            st.markdown(f"### {icon} {title}")
-        with col_close:
-            if st.button("Close", key="close_adaptation_panel", use_container_width=True):
-                st.session_state.adaptation_open = False
-                st.rerun()
-    else:
-        if st.button("← Back to Workspace", key="back_to_dashboard"):
-            st.session_state.adaptation_open = False
+    if not inline:
+        from session_state import close_workspace
+
+        if st.button("← Back to Dashboard", key="back_to_dashboard"):
+            close_workspace()
             st.rerun()
         st.markdown(
             f"""
             <div class="viewer-header">
               <h2>{icon} {title}</h2>
-              <p>Dedicated viewing workspace — typography, layout, and accessibility preserved for print & export.</p>
+              <p>Multimodal workspace — read, listen, visualise, and interact.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
+    elif not hide_downloads:
+        st.markdown(f"### {icon} {title}")
 
     render_sub_spec_pills(category_id, spec_id)
 
@@ -214,6 +211,7 @@ def render_adaptation_viewer(
 
             render_rich_content(str(content))
 
-    render_viewer_downloads(
-        title, content, spec_id, download_filename, zip_bytes, base_name
-    )
+    if not hide_downloads:
+        render_viewer_downloads(
+            title, content, spec_id, download_filename, zip_bytes, base_name
+        )

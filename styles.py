@@ -12,8 +12,8 @@ from config import (
     COLOR_WHITE,
 )
 
-# Taller premium header (~30% above prior 96px bar)
-HEADER_HEIGHT_PX = 125
+# Luxury enterprise header (~35% taller than original 96px bar)
+HEADER_HEIGHT_PX = 135
 
 
 def get_custom_css() -> str:
@@ -26,7 +26,7 @@ def get_custom_css() -> str:
     }}
 
     .main .block-container {{
-        padding-top: 8.25rem;
+        padding-top: 8.85rem;
         max-width: 1160px;
         padding-bottom: 2.5rem;
     }}
@@ -76,7 +76,7 @@ def get_custom_css() -> str:
         align-items: center;
         max-width: 1320px;
         margin: 0 auto;
-        padding: 0 2rem;
+        padding: 0 2rem 0 2.25rem;
         height: {HEADER_HEIGHT_PX}px;
     }}
 
@@ -93,22 +93,23 @@ def get_custom_css() -> str:
     }}
 
     .topnav-logo-img {{
-        height: 98px;
+        height: 108px;
         width: auto;
         max-width: none;
         object-fit: contain;
         display: block;
-        filter: drop-shadow(0 4px 14px rgba(20, 217, 229, 0.4));
+        margin-left: 0.25rem;
+        filter: drop-shadow(0 4px 16px rgba(20, 217, 229, 0.45));
     }}
 
     .topnav-center {{
         justify-self: center;
         text-align: center;
-        padding: 0.5rem 0;
+        padding: 0.65rem 0;
     }}
 
     .topnav-title {{
-        font-size: 2.35rem;
+        font-size: 2.5rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         white-space: nowrap;
@@ -157,7 +158,7 @@ def get_custom_css() -> str:
     /* ---- Sidebar ---- */
     section[data-testid="stSidebar"] > div {{
         background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #051633 100%);
-        padding-top: 7.25rem;
+        padding-top: 7.85rem;
     }}
 
     section[data-testid="stSidebar"] .sidebar-block {{
@@ -225,9 +226,34 @@ def get_custom_css() -> str:
         font-size: 0.78rem;
         text-align: center;
         line-height: 1.6;
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255,255,255,0.1);
+        margin-top: 1.25rem;
+    }}
+
+    section[data-testid="stSidebar"] .sidebar-creator {{
+        margin-top: 1rem;
+        padding: 1rem 0.85rem;
+        text-align: center;
+        background: rgba(20, 217, 229, 0.12);
+        border: 1px solid rgba(20, 217, 229, 0.45);
+        border-radius: 12px;
+    }}
+
+    section[data-testid="stSidebar"] .sidebar-creator-label {{
+        display: block;
+        color: {COLOR_ELECTRIC_CYAN};
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.35rem;
+    }}
+
+    section[data-testid="stSidebar"] .sidebar-creator-name {{
+        display: block;
+        color: {COLOR_WHITE};
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
     }}
 
     /* ---- Dashboard ---- */
@@ -375,6 +401,38 @@ def get_custom_css() -> str:
         padding: 1.35rem 1.65rem;
         margin-bottom: 1.25rem;
         border-left: 5px solid {COLOR_ELECTRIC_CYAN};
+    }}
+
+    .workspace-banner {{
+        background: linear-gradient(135deg, {COLOR_DEEP_NAVY} 0%, #0a3d6e 100%);
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 1.25rem;
+        color: {COLOR_WHITE};
+        box-shadow: 0 8px 28px rgba(4, 27, 77, 0.25);
+    }}
+
+    .workspace-banner h2 {{
+        color: {COLOR_WHITE} !important;
+        margin: 0 0 0.35rem 0;
+    }}
+
+    .workspace-banner p {{
+        color: rgba(255,255,255,0.88);
+        margin: 0;
+        font-size: 0.95rem;
+    }}
+
+    .stDownloadButton button {{
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+        border: 1px solid rgba(20, 217, 229, 0.35) !important;
+    }}
+
+    .stDownloadButton button:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(20, 217, 229, 0.35);
     }}
 
     .viewer-header h2 {{

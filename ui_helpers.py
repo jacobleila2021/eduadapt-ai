@@ -68,9 +68,9 @@ def render_sidebar(version: str) -> None:
         <hr class="sidebar-divider"/>
         <div class="sidebar-block">
           <p class="sidebar-block-title">◆ Adaptive Learning</p>
-          <div class="sidebar-item">Personalized pathways</div>
-          <div class="sidebar-item">Inclusive content delivery</div>
-          <div class="sidebar-item">Accessibility-first design</div>
+          <div class="sidebar-item">Personalised pathways</div>
+          <div class="sidebar-item">Inclusive learning</div>
+          <div class="sidebar-item">Accessibility first</div>
         </div>
         <hr class="sidebar-divider"/>
         <div class="sidebar-block">
@@ -84,10 +84,11 @@ def render_sidebar(version: str) -> None:
     )
     st.sidebar.markdown(
         f"""
-        <p class="sidebar-meta">
-          Version: {version}<br/>
-          Creator: Leila Jacob
-        </p>
+        <p class="sidebar-meta">Version: {version}</p>
+        <div class="sidebar-creator">
+          <span class="sidebar-creator-label">Creator</span>
+          <span class="sidebar-creator-name">Leila Jacob</span>
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -112,16 +113,12 @@ def render_dashboard_intro() -> None:
     )
 
 
-def render_pill_navigation(active_category_id: str | None = None) -> None:
-    """
-    Teal pill tabs — single source of truth via session state.
-    Clicking opens exactly one adaptation inline below.
-    """
-    open_id = st.session_state.get("active_category_id")
-    is_open = st.session_state.get("adaptation_open", False)
+def render_pill_navigation() -> None:
+    """Teal pill tabs on dashboard — opens dedicated workspace on click."""
+    from session_state import open_adaptation, is_workspace
 
     st.markdown(
-        '<p class="pill-nav-hint">Click a version to open it — only one adaptation displays at a time.</p>',
+        '<p class="pill-nav-hint">Select a version to open in its dedicated workspace.</p>',
         unsafe_allow_html=True,
     )
     st.markdown('<div class="pill-nav-grid">', unsafe_allow_html=True)
@@ -132,16 +129,14 @@ def render_pill_navigation(active_category_id: str | None = None) -> None:
         cols = st.columns(cols_per_row)
         for col, category in zip(cols, row):
             with col:
-                is_active = is_open and open_id == category["id"]
+                is_active = is_workspace() and st.session_state.get("active_category_id") == category["id"]
                 if st.button(
                     category["label"],
                     key=f"pill_{category['id']}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
                 ):
-                    st.session_state.active_category_id = category["id"]
-                    st.session_state.active_output_id = category["spec_ids"][0]
-                    st.session_state.adaptation_open = True
+                    open_adaptation(category["id"])
                     st.rerun()
         for col in cols[len(row) :]:
             with col:
@@ -193,7 +188,7 @@ def render_brand_header(logo_path: str | None = None) -> None:
 
 def render_adaptation_nav(specs: list, active_id: str, columns: int = 4) -> None:
     """Legacy grid — redirects to pill style."""
-    render_pill_navigation(st.session_state.get("active_category_id"))
+    render_pill_navigation()
 
 
 def render_content_tab(
