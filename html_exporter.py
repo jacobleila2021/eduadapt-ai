@@ -57,7 +57,7 @@ def _page(title: str, body: str) -> str:
 </style></head><body>
 <h1>{html.escape(title)}</h1>
 {body}
-<p style="margin-top:3rem;font-size:0.85rem;color:#666;">EduAdapt AI — LD-friendly print pack</p>
+<p style="margin-top:3rem;font-size:0.85rem;color:#666;">Alora AI — LD-friendly print pack</p>
 </body></html>"""
 
 

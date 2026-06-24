@@ -1,10 +1,10 @@
 @echo off
-REM EduAdapt AI — one-click launcher for Windows
+title Alora AI
 cd /d "%~dp0"
 
 echo.
 echo  ========================================
-echo   EduAdapt AI - Starting...
+echo   Alora AI - Starting...
 echo  ========================================
 echo.
 
@@ -16,7 +16,7 @@ if %errorlevel% equ 0 (
 ) else (
     where py >nul 2>&1
     if %errorlevel% equ 0 (
-        set "PYTHON_CMD=py"
+        set "PYTHON_CMD=py -3"
     )
 )
 
@@ -50,13 +50,11 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM Sample lesson for testing uploadsc
 if not exist "samples\sample_lesson.docx" (
     echo Creating sample lesson file...
     "%VENV_PY%" create_sample_lesson.py
 )
 
-REM Remind about API key
 if not exist ".env" (
     echo.
     echo NOTE: Copy .env.example to .env and add your OPENAI_API_KEY
@@ -64,11 +62,6 @@ if not exist ".env" (
     echo.
 )
 
-echo Opening EduAdapt AI in your browser...
-echo Press Ctrl+C in this window to stop the app.
-echo.
-
-REM Prevent first-run interactive Streamlit email prompt
 if not exist "%USERPROFILE%\.streamlit" (
     mkdir "%USERPROFILE%\.streamlit"
 )
@@ -77,7 +70,28 @@ if not exist "%USERPROFILE%\.streamlit" (
     echo email = ""
 ) > "%USERPROFILE%\.streamlit\credentials.toml"
 
+REM Pick a free port if 8501 is already in use
+set "PORT=8501"
+netstat -ano | findstr ":%PORT% " | findstr "LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Port 8501 is busy — using 8502 instead.
+    set "PORT=8502"
+)
+
+echo.
+echo Opening Alora AI at http://localhost:%PORT%
+echo Keep this window open. Press Ctrl+C to stop the app.
+echo.
+
 set "STREAMLIT_BROWSER_GATHER_USAGE_STATS=false"
-".venv\Scripts\streamlit.exe" run app.py --browser.gatherUsageStats false
+start "" "http://localhost:%PORT%"
+".venv\Scripts\streamlit.exe" run app.py --server.port %PORT% --browser.gatherUsageStats false
+
+if %errorlevel% neq 0 (
+    echo.
+    echo ERROR: Alora AI could not start. See the message above.
+    pause
+    exit /b 1
+)
 
 pause
