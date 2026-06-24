@@ -33,8 +33,8 @@ try:
     from structured_renderers import content_to_export
     from styles import get_custom_css
     from version import APP_VERSION
+    from viewer_page import render_adaptation_viewer
     from ui_helpers import (
-        render_adaptation_viewer,
         render_analytics_panel,
         render_dashboard_intro,
         render_pill_navigation,
