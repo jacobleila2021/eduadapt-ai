@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import streamlit as st
 
+from accessibility import render_accessibility_toolbar
 from docx_exporter import export_tab_docx
 from html_exporter import export_tab_html as rich_html_export
-from pill_tabs import render_sub_spec_pills
 from structured_renderers import (
     _coerce_dict,
     content_to_export,
@@ -74,7 +74,7 @@ def render_viewer_downloads(
             )
 
             api_key = st.session_state.get("runtime_api_key", "")
-            voice = st.session_state.get("audio_voice", "Female Professional")
+            voice = st.session_state.get("audio_voice", "Warm Female")
             speech = extract_speech_text(title, content, spec_id)
             mp3 = generate_openai_speech(
                 speech, OPENAI_VOICE_MAP.get(voice, "nova"), api_key
@@ -123,12 +123,12 @@ def render_adaptation_viewer(
     *,
     inline: bool = False,
     hide_downloads: bool = False,
+    lesson_title: str = "",
 ) -> None:
-    """Single adaptation content panel."""
+    """Single adaptation content panel — audio top, lesson body, tabs at page bottom."""
     from audio_learning import render_audio_learning_panel
 
     icon = SPEC_ICONS.get(spec_id, "📘")
-    category_id = st.session_state.get("active_category_id", "")
 
     if not inline:
         from session_state import close_workspace
@@ -139,38 +139,33 @@ def render_adaptation_viewer(
         st.markdown(
             f"""
             <div class="viewer-header">
-              <h2>{icon} {title}</h2>
+              <h2>{icon} {lesson_title or title}</h2>
               <p>Multimodal workspace — read, listen, visualise, and interact.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-    elif not hide_downloads:
-        st.markdown(f"### {icon} {title}")
-
-    render_sub_spec_pills(category_id, spec_id)
 
     auditory_mode = st.toggle(
         "Auditory Learning Mode",
         value=st.session_state.get("auditory_mode", False),
-        help="Larger audio controls and listening-focused layout.",
+        help="Larger transcript text and listening-focused layout.",
         key=f"auditory_toggle_{spec_id}",
     )
     st.session_state.auditory_mode = auditory_mode
 
-    if auditory_mode:
-        st.markdown(
-            "<style>.main .block-container { max-width: 900px !important; }</style>",
-            unsafe_allow_html=True,
-        )
+    render_accessibility_toolbar(spec_id)
 
     render_audio_learning_panel(
         title, content, spec_id, api_key, auditory_mode=auditory_mode
     )
 
     st.markdown("---")
-    st.markdown("#### Lesson Content")
+    st.markdown(f"#### 📚 {lesson_title or 'Lesson Content'}")
+    if inline:
+        st.caption(f"Version: **{title}**")
 
+    st.markdown(f'<div class="lesson-content-panel-{spec_id}">', unsafe_allow_html=True)
     with st.container(border=True):
         if spec_id == "vocabulary":
             render_vocabulary(content)
@@ -182,6 +177,7 @@ def render_adaptation_viewer(
             from content_renderer import render_rich_content
 
             render_rich_content(str(content))
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if not hide_downloads:
         render_viewer_downloads(

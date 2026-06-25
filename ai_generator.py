@@ -4,6 +4,7 @@ OpenAI integration — chunked long-lesson analysis, parallel adaptations, valid
 
 import json
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from openai import OpenAI
@@ -32,6 +33,18 @@ DEPTH REQUIREMENTS (critical):
 - Each section body: minimum 80 words with concrete facts, examples, and steps.
 - Students must be able to pass an exam using ONLY this material.
 - Include worked examples where the subject requires them.
+- DIAGRAM-FIRST: every adaptation MUST include mermaid_diagram AND svg_diagram (never text-only boxes).
+- Each learner version must be MEASURABLY DIFFERENT: reading level, structure, vocabulary, layout, diagram density.
+"""
+
+DIFFERENTIATION_RULES = """
+DIFFERENTIATION (minimum 80% unique from standard version):
+- ADHD: short 2-minute chunks, checkpoints, movement breaks, numbered steps only.
+- Autism Support: predictable routine, literal language, calm transitions, same color pattern every section.
+- Visual Learner: 2+ diagrams, minimal prose, icon labels, color-coded stages.
+- Auditory Learner: listen-and-repeat scripts, call-and-response, audio chunk headers.
+- Neurodiversity Support: simplified vocabulary (Grade 3-4), reduced cognitive load, one idea per section.
+- Dyslexia: bullet points, bold keywords, extra white space cues, no dense paragraphs.
 """
 
 
@@ -128,13 +141,20 @@ Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value
     {{"title": "Exam Focus", "body": "what to revise for tests", "box": "orange"}},
     {{"title": "Summary", "body": "recap all key points", "box": "orange"}}
   ],
-  "visual_summary": [{{"icon": "🔵", "color_name": "Blue", "idea": "label"}}]
+  "visual_summary": [
+    {{"icon": "🟦", "color_name": "Topic", "idea": "..."}},
+    {{"icon": "🟩", "color_name": "Concept", "idea": "..."}},
+    {{"icon": "🟨", "color_name": "Example", "idea": "..."}},
+    {{"icon": "🟪", "color_name": "Vocabulary", "idea": "..."}},
+    {{"icon": "🟥", "color_name": "Assessment", "idea": "..."}}
+  ]
 }}
 
 Adaptation: {title}
 Guidance: {hint}
 
-{DEPTH_RULES}"""
+{DEPTH_RULES}
+{DIFFERENTIATION_RULES}"""
 
 
 def _vocabulary_prompt() -> str:
@@ -198,7 +218,26 @@ def _valid_worksheet(sheet: dict) -> bool:
 
 def _valid_lesson(lesson: dict) -> bool:
     sections = lesson.get("sections") or []
-    return bool(lesson.get("big_idea")) and len(sections) >= 3
+    has_diagram = bool(lesson.get("mermaid_diagram") or lesson.get("svg_diagram"))
+    return bool(lesson.get("big_idea")) and len(sections) >= 3 and has_diagram
+
+
+def _lesson_fingerprint(lesson: dict) -> set[str]:
+    text = json.dumps(lesson, sort_keys=True, default=str).lower()
+    words = set(re.findall(r"[a-z]{5,}", text))
+    return words
+
+
+def _adaptation_difference_score(base: dict, adapted: dict) -> float:
+    """0.0–1.0 — how different two adaptations are (target >= 0.80)."""
+    if not base or not adapted:
+        return 0.0
+    a = _lesson_fingerprint(base)
+    b = _lesson_fingerprint(adapted)
+    if not a or not b:
+        return 0.0
+    overlap = len(a & b) / max(len(a | b), 1)
+    return round(1.0 - overlap, 3)
 
 
 def _fallback_vocabulary(context: dict) -> dict:
@@ -331,7 +370,7 @@ def _fallback_worksheet(context: dict, vocab: dict) -> dict:
 
 
 def _generate_one_lesson(
-    api_key: str, key: str, title: str, hint: str, user_prompt: str
+    api_key: str, key: str, title: str, hint: str, user_prompt: str, baseline: dict | None = None
 ) -> tuple:
     client = OpenAI(api_key=api_key)
     raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=7000)
@@ -339,6 +378,12 @@ def _generate_one_lesson(
     if not _valid_lesson(lesson):
         raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=7000)
         lesson = _extract_key(raw, key)
+    if baseline and key not in ("standard", "vocabulary", "worksheet"):
+        score = _adaptation_difference_score(baseline, lesson)
+        if score < 0.80:
+            retry_prompt = user_prompt + f"\n\nIMPORTANT: Previous output was only {score:.0%} different from standard. Regenerate with clearly distinct structure, reading level, and diagrams for {title}."
+            raw = _chat(client, _lesson_prompt(key, title, hint), retry_prompt, max_tokens=7000)
+            lesson = _extract_key(raw, key)
     return key, lesson
 
 
@@ -391,11 +436,25 @@ def generate_adaptations(
             sheet = _fallback_worksheet(context, merged["vocabulary"])
         merged["worksheet"] = sheet
 
+        step("Creating lesson adaptations (parallel)…", 0.30)
         by_id = {s["id"]: s for s in ADAPTATION_SPECS}
         total = len(LESSON_KEYS)
         done = 0
 
-        step("Creating lesson adaptations (parallel)…", 0.30)
+        std_spec = by_id.get("standard", {})
+        _, baseline_lesson = _generate_one_lesson(
+            api_key,
+            "standard",
+            std_spec.get("title", "standard"),
+            std_spec.get("hint", ""),
+            user_prompt,
+            None,
+        )
+        merged["standard"] = baseline_lesson
+        done = 1
+        step(f"Lesson adaptations… {done}/{total} complete", 0.30 + (0.65 * done / total))
+
+        other_keys = [k for k in LESSON_KEYS if k != "standard"]
         with ThreadPoolExecutor(max_workers=MAX_PARALLEL_LESSONS) as pool:
             futures = {
                 pool.submit(
@@ -405,8 +464,9 @@ def generate_adaptations(
                     by_id.get(key, {}).get("title", key),
                     by_id.get(key, {}).get("hint", ""),
                     user_prompt,
+                    baseline_lesson,
                 ): key
-                for key in LESSON_KEYS
+                for key in other_keys
             }
             for future in as_completed(futures):
                 key, lesson = future.result()

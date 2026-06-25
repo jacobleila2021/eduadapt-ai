@@ -78,14 +78,28 @@ if %errorlevel% equ 0 (
     set "PORT=8502"
 )
 
+set "APP_URL=http://127.0.0.1:%PORT%"
+
 echo.
-echo Opening Alora AI at http://localhost:%PORT%
-echo Keep this window open. Press Ctrl+C to stop the app.
+echo ========================================
+echo   Alora AI — local URL (HTTP only):
+echo   %APP_URL%
+echo ========================================
+echo.
+echo IMPORTANT: Use http:// NOT https://
+echo If you see "connection is not secure" or ERR_SSL_PROTOCOL_ERROR,
+echo your browser tried HTTPS by mistake. Paste the URL above manually.
+echo.
+echo Keep this window open. Press Ctrl+C to stop.
 echo.
 
 set "STREAMLIT_BROWSER_GATHER_USAGE_STATS=false"
-start "" "http://localhost:%PORT%"
-".venv\Scripts\streamlit.exe" run app.py --server.port %PORT% --browser.gatherUsageStats false
+
+REM Open browser with plain HTTP once the server responds
+start "" powershell -NoProfile -WindowStyle Hidden -Command ^
+  "$url='%APP_URL%'; for ($i=0; $i -lt 60; $i++) { try { Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null; Start-Process $url; exit 0 } catch { Start-Sleep -Seconds 1 } }"
+
+".venv\Scripts\streamlit.exe" run app.py --server.port %PORT% --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false --browser.serverAddress 127.0.0.1
 
 if %errorlevel% neq 0 (
     echo.

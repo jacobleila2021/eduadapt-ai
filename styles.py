@@ -432,6 +432,16 @@ def get_custom_css() -> str:
         box-shadow: 0 4px 14px rgba(4, 27, 77, 0.25);
     }}
 
+    .bottom-tabs-label {{
+        color: #334155;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 2rem 0 0.5rem 0;
+        text-align: center;
+    }}
+
     .workspace-banner h2 {{
         color: {COLOR_WHITE} !important;
         margin: 0 0 0.35rem 0;

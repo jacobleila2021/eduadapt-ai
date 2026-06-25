@@ -6,17 +6,24 @@ from __future__ import annotations
 
 import streamlit as st
 
+from navigation import category_for_id
 from print_exporter import build_print_html_all, build_print_html_single
-from session_state import close_workspace, open_adaptation
+from pill_tabs import render_pill_navigation, render_sub_spec_pills
+from session_state import close_workspace
 from spec_icons import SPEC_ICONS
 from viewer_page import render_adaptation_viewer
 
 
-def render_workspace_pills() -> None:
-    """Switch adaptation while staying in workspace."""
-    from pill_tabs import render_pill_navigation as _render_pills
-
-    _render_pills(key_prefix="ws_pill")
+def lesson_display_title() -> str:
+    """Actual lesson name for the page header (not the adaptation version label)."""
+    upload = st.session_state.get("upload_name", "")
+    if upload:
+        stem = upload.rsplit(".", 1)[0]
+        return stem.replace("_", " ").replace("-", " ").strip().title()
+    meta = (st.session_state.get("adaptations") or {}).get("_meta", {})
+    ctx = meta.get("lesson_context") or {}
+    topic = ctx.get("topic") or (st.session_state.get("analytics") or {}).get("topic")
+    return topic or "Your Lesson"
 
 
 def render_action_bar(
@@ -32,14 +39,12 @@ def render_action_bar(
 ) -> None:
     """Four premium actions: download/print this version and all."""
     from docx_exporter import export_tab_docx
-    from html_exporter import export_tab_html as rich_html_export
 
     st.markdown("#### Download & Print")
     c1, c2, c3, c4 = st.columns(4)
 
     docx_bytes = export_tab_docx(title, content, spec_id)
     print_single = build_print_html_single(title, content, spec_id)
-
     print_all = build_print_html_all(
         adaptations, lesson_text, base_name, content_for_spec
     )
@@ -99,6 +104,18 @@ def render_action_bar(
         )
 
 
+def render_bottom_adaptation_bar(category_id: str, active_spec_id: str) -> None:
+    """Fixed bottom bar — sub-version pills + category pills."""
+    st.markdown(
+        '<p class="bottom-tabs-label">Switch adaptation version</p>',
+        unsafe_allow_html=True,
+    )
+    category = category_for_id(category_id)
+    if category and len(category["spec_ids"]) > 1:
+        render_sub_spec_pills(category_id, active_spec_id)
+    render_pill_navigation(key_prefix="ws_pill")
+
+
 def render_workspace(
     active_spec: dict,
     content,
@@ -113,6 +130,8 @@ def render_workspace(
     """Full-screen dedicated workspace for one adaptation."""
     spec_id = active_spec["id"]
     icon = SPEC_ICONS.get(spec_id, "📘")
+    lesson_title = lesson_display_title()
+    category_id = st.session_state.get("active_category_id", "")
 
     st.button(
         "← Back to Dashboard",
@@ -129,14 +148,12 @@ def render_workspace(
     st.markdown(
         f"""
         <div class="workspace-banner">
-          <h2>{icon} {active_spec["title"]}</h2>
-          <p>Dedicated adaptation workspace — Reading · Listening · Visual · Interactive</p>
+          <h2>{icon} {lesson_title}</h2>
+          <p>Version: {active_spec["tab"]} · Reading · Listening · Visual · Interactive</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    render_workspace_pills()
 
     render_action_bar(
         active_spec["title"],
@@ -160,4 +177,7 @@ def render_workspace(
         api_key=api_key,
         inline=True,
         hide_downloads=True,
+        lesson_title=lesson_title,
     )
+
+    render_bottom_adaptation_bar(category_id, spec_id)

@@ -5,6 +5,7 @@ Guarantees visible sections, colors, and diagrams (not dependent on HTML in mark
 
 from __future__ import annotations
 
+import html
 import json
 from typing import Any
 
@@ -51,12 +52,41 @@ def _as_dict(content: Any) -> dict | None:
     return _coerce_dict(content)
 
 
+def _word_illustration_svg(term: str, emoji: str, color: str) -> str:
+    safe = html.escape(term[:24])
+    return f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="280" height="140" viewBox="0 0 280 140" role="img" aria-label="{safe}">
+      <rect x="8" y="8" width="264" height="124" rx="14" fill="{color}" stroke="#0F766E" stroke-width="2"/>
+      <text x="140" y="58" text-anchor="middle" font-size="36">{emoji}</text>
+      <text x="140" y="98" text-anchor="middle" font-size="14" fill="#334155" font-family="Verdana,sans-serif">{safe}</text>
+    </svg>
+    """
+
+
+def _lookup_answer(answer_key: list, ref: str) -> str:
+    for item in answer_key or []:
+        if item.get("question_ref", "").strip().lower() == ref.strip().lower():
+            return item.get("model_answer", "")
+        if ref.lower() in (item.get("question_ref") or "").lower():
+            return item.get("model_answer", "")
+    return ""
+
+
+def _show_answer_button(label: str, answer: str, key: str) -> None:
+    if not answer:
+        return
+    if st.button(f"Show Answer — {label}", key=key, type="secondary"):
+        st.session_state[key] = True
+    if st.session_state.get(key):
+        st.success(answer)
+
+
 def _render_svg(svg: str, height: int = 260) -> None:
     if not svg or not svg.strip():
         return
-    # Inline SVG — Streamlit iframes often render blank on Streamlit Cloud.
     st.markdown(
-        f'<div style="text-align:center;max-width:100%;overflow-x:auto;">{svg.strip()}</div>',
+        f'<div style="display:flex;justify-content:center;align-items:center;'
+        f'max-width:100%;overflow-x:auto;padding:1rem 0;">{svg.strip()}</div>',
         unsafe_allow_html=True,
     )
 
@@ -92,13 +122,19 @@ def render_vocabulary(data: Any) -> None:
                     term = word.get("term", "Term")
                     st.markdown(f"#### {emoji} **{term}**")
                     st.markdown(
-                        f'<div style="background:{color};padding:10px;border-radius:8px;'
-                        f'border-left:4px solid #008C95;">{word.get("definition", "")}</div>',
+                        _word_illustration_svg(term, emoji, color),
                         unsafe_allow_html=True,
                     )
-                    visual = word.get("visual_description") or word.get("visual", "")
-                    if visual:
-                        st.caption(f"🎨 Picture in your mind: {visual}")
+                    child_note = word.get("child_friendly") or word.get("visual_description") or ""
+                    st.markdown(
+                        f'<div style="background:{color};padding:10px;border-radius:8px;'
+                        f'border-left:4px solid #0F766E;">'
+                        f'<strong>Definition:</strong> {html.escape(word.get("definition", ""))}'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    if child_note:
+                        st.caption(f"💡 {child_note}")
 
     # --- 2. Flashcards ---
     st.markdown("### 2. Flashcards — Term → Meaning")
@@ -142,8 +178,12 @@ def render_vocabulary(data: Any) -> None:
     if matching:
         st.markdown(matching if isinstance(matching, str) else str(matching))
     fill_blanks = self_test.get("fill_blanks") or []
+    flashcards = vocab.get("flashcards") or []
     for index, sentence in enumerate(fill_blanks, 1):
         st.markdown(f"{index}. {sentence}")
+        if index <= len(flashcards):
+            ans = flashcards[index - 1].get("back") or flashcards[index - 1].get("definition", "")
+            _show_answer_button(f"Vocab Q{index}", ans, f"vocab_ans_{index}")
 
     # --- 6. Quick Reference ---
     st.markdown("### 6. Quick Reference Chart")
@@ -198,12 +238,16 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
     st.text_input("Date", key=f"{key_prefix}_date", placeholder="Date")
 
     # Part A — Short answer
+    answer_key = sheet.get("answer_key") or []
     st.markdown("### Part A — Short Answer")
     for index, item in enumerate(sheet.get("short_answer") or [], 1):
         marks = item.get("marks", 2)
         st.markdown(f"**Q{index}. ({marks} marks)** {item.get('question', '')}")
         for _ in range(int(item.get("lines", 3))):
             st.markdown("_________________________________________________________")
+        ref = f"Part A Q{index}"
+        ans = _lookup_answer(answer_key, ref) or item.get("model_answer", "")
+        _show_answer_button(ref, ans, f"{key_prefix}_sa_{index}")
         st.markdown("")
 
     # Part B — Long answer
@@ -213,6 +257,9 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         st.markdown(f"**Q{index}. ({marks} marks)** {item.get('question', '')}")
         for _ in range(int(item.get("lines", 8))):
             st.markdown("_________________________________________________________")
+        ref = f"Part B Q{index}"
+        ans = _lookup_answer(answer_key, ref) or item.get("model_answer", "")
+        _show_answer_button(ref, ans, f"{key_prefix}_la_{index}")
         st.markdown("")
 
     # Part C — Diagram
@@ -233,6 +280,9 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         marks = item.get("marks", 1)
         st.markdown(f"**{index}. ({marks} mark)** {item.get('question', '')}")
         st.markdown("Answer: _________________________________")
+        ref = f"Part D Q{index}"
+        ans = _lookup_answer(answer_key, ref) or item.get("model_answer", "")
+        _show_answer_button(ref, ans, f"{key_prefix}_vq_{index}")
 
     # Part E — Student checklist
     st.markdown("### Part E — Exam Ready Checklist")
@@ -270,12 +320,14 @@ def render_lesson(data: Any) -> None:
     if big_idea:
         st.info(f"💡 **Big Idea:** {big_idea}")
 
+    svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
     if mermaid:
         st.markdown("#### 📊 Concept Diagram")
         _render_mermaid(mermaid)
+    elif not svg:
+        st.info("Every lesson includes a visual diagram. Re-generate if this section is missing.")
 
-    svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     if svg:
         st.markdown("#### 🎨 Study Diagram")
         _render_svg(svg)
@@ -293,16 +345,28 @@ def render_lesson(data: Any) -> None:
             st.markdown(body)
 
     summary = lesson.get("visual_summary") or []
-    if summary:
-        st.markdown("#### Visual Summary")
-        cols = st.columns(min(len(summary), 4) or 1)
-        for index, item in enumerate(summary):
-            with cols[index % len(cols)]:
-                icon = item.get("icon", "🔵")
-                idea = item.get("idea", "")
-                color = item.get("color_name", "")
-                st.markdown(f"{icon} **{color}**")
-                st.caption(idea)
+    st.markdown("#### Visual Summary — Colour Key")
+    legend_defaults = [
+        {"icon": "🟦", "color_name": "Topic", "idea": "Main lesson theme", "hex": "#334155"},
+        {"icon": "🟩", "color_name": "Concept", "idea": "Core ideas to learn", "hex": "#0F766E"},
+        {"icon": "🟨", "color_name": "Example", "idea": "Worked examples", "hex": "#F59E0B"},
+        {"icon": "🟪", "color_name": "Vocabulary", "idea": "Key terms", "hex": "#8B5CF6"},
+        {"icon": "🟥", "color_name": "Assessment", "idea": "Exam focus points", "hex": "#EF4444"},
+    ]
+    items = summary if summary else legend_defaults
+    cols = st.columns(min(len(items), 5) or 1)
+    for index, item in enumerate(items[:5]):
+        with cols[index % len(cols)]:
+            icon = item.get("icon", "🔵")
+            idea = item.get("idea", "")
+            color = item.get("color_name", "")
+            hex_color = item.get("hex", "#0F766E")
+            st.markdown(
+                f'<div style="background:#F4E9D8;border-left:5px solid {hex_color};'
+                f'padding:0.65rem;border-radius:8px;">{icon} <strong>{color}</strong><br/>'
+                f'<span style="font-size:0.9rem;">{html.escape(idea)}</span></div>',
+                unsafe_allow_html=True,
+            )
 
 
 def vocabulary_to_text(data: Any) -> str:

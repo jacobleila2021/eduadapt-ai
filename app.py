@@ -75,6 +75,10 @@ if "quality" not in st.session_state:
     st.session_state.quality = None
 if "auditory_mode" not in st.session_state:
     st.session_state.auditory_mode = False
+if "audio_voice" not in st.session_state:
+    st.session_state.audio_voice = "Warm Female"
+if "audio_speed" not in st.session_state:
+    st.session_state.audio_speed = 1.0
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -318,13 +322,16 @@ def _resolve_active_spec():
 
 def render_dashboard() -> None:
     """Homepage only — no adaptation outputs."""
+    from landing_sample_styles import get_landing_sample_css
+
+    st.markdown(get_landing_sample_css(), unsafe_allow_html=True)
     render_dashboard_intro()
 
-    st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
-    st.subheader("1. Upload Your Lesson")
+    st.markdown('<div class="landing-card">', unsafe_allow_html=True)
+    st.markdown('<p class="landing-section-title">1. Upload Your Lesson</p>', unsafe_allow_html=True)
     col_upload, col_sample = st.columns([3, 1])
     with col_sample:
-        if st.button("Use Sample Lesson", use_container_width=True):
+        if st.button("Use Sample Lesson", key="landing_sample_btn", use_container_width=True):
             load_sample_lesson()
     with col_upload:
         uploaded = st.file_uploader(
@@ -337,14 +344,14 @@ def render_dashboard() -> None:
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.analytics:
-        st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
-        st.subheader("2. Lesson Insights")
-        render_analytics_panel(st.session_state.analytics)
+        st.markdown('<div class="landing-card">', unsafe_allow_html=True)
+        st.markdown('<p class="landing-section-title">2. Lesson Insights</p>', unsafe_allow_html=True)
+        render_analytics_panel(st.session_state.analytics, landing_sample=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.lesson_text:
-        st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
-        st.subheader("3. Generate Adaptations")
+        st.markdown('<div class="landing-card">', unsafe_allow_html=True)
+        st.markdown('<p class="landing-section-title">3. Generate Adaptations</p>', unsafe_allow_html=True)
         col_generate, col_clear = st.columns([2, 1])
         with col_generate:
             can_generate = bool(
@@ -353,13 +360,14 @@ def render_dashboard() -> None:
             )
             if st.button(
                 "Generate Adaptations",
+                key="landing_generate_btn",
                 type="primary",
                 use_container_width=True,
                 disabled=not can_generate,
             ):
                 run_generation()
         with col_clear:
-            if st.button("Clear Session", use_container_width=True):
+            if st.button("Clear Session", key="landing_clear_btn", use_container_width=True):
                 st.session_state.lesson_text = ""
                 st.session_state.adaptations = None
                 st.session_state.analytics = None
@@ -373,8 +381,8 @@ def render_dashboard() -> None:
         st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.adaptations:
-        st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
-        st.subheader("4. Choose an Adaptation")
+        st.markdown('<div class="landing-card">', unsafe_allow_html=True)
+        st.markdown('<p class="landing-section-title">4. Choose an Adaptation</p>', unsafe_allow_html=True)
         st.caption(
             "Each version opens in its own workspace — one adaptation at a time, never stacked here."
         )
@@ -440,11 +448,15 @@ def main() -> None:
     render_api_sidebar()
     render_sidebar(APP_VERSION)
 
+    # Workspace route — must run before dashboard (dashboard upload must not run first)
     if should_render_workspace():
         render_workspace_page()
         return
 
-    if st.session_state.get("app_view") == VIEW_WORKSPACE and not st.session_state.adaptations:
+    if st.session_state.get("app_view") == VIEW_WORKSPACE:
+        if st.session_state.adaptations:
+            render_workspace_page()
+            return
         close_workspace()
 
     render_dashboard()

@@ -11,31 +11,28 @@ from navigation import PILL_CATEGORIES, category_for_id, category_for_spec, spec
 from session_state import VIEW_WORKSPACE, is_workspace, open_adaptation
 
 
-def _make_category_handler(category_id: str):
-    def _handler() -> None:
-        open_adaptation(category_id)
-
-    return _handler
+def _open_category(category_id: str) -> None:
+    open_adaptation(category_id)
 
 
-def _make_spec_handler(spec_id: str):
-    def _handler() -> None:
-        st.session_state.active_output_id = spec_id
-        cat = category_for_spec(spec_id)
-        if cat:
-            st.session_state.active_category_id = cat["id"]
-        st.session_state.app_view = VIEW_WORKSPACE
-
-    return _handler
+def _open_spec(spec_id: str) -> None:
+    st.session_state.active_output_id = spec_id
+    cat = category_for_spec(spec_id)
+    if cat:
+        st.session_state.active_category_id = cat["id"]
+    st.session_state.app_view = VIEW_WORKSPACE
 
 
 def render_pill_navigation(key_prefix: str = "pill") -> None:
     """Dark cyan pills — one click opens the dedicated workspace."""
     active_cat = st.session_state.get("active_category_id", "")
     in_workspace = is_workspace()
+    is_dashboard = key_prefix == "pill"
 
     st.markdown(
-        '<p class="pill-nav-hint">Click a version — it opens in a dedicated workspace.</p>',
+        '<p class="landing-pill-hint">Click a version — it opens in a dedicated workspace.</p>'
+        if is_dashboard
+        else '<p class="pill-nav-hint">Click a version — it opens in a dedicated workspace.</p>',
         unsafe_allow_html=True,
     )
 
@@ -52,7 +49,8 @@ def render_pill_navigation(key_prefix: str = "pill") -> None:
                     key=f"{key_prefix}_{cat_id}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
-                    on_click=_make_category_handler(cat_id),
+                    on_click=_open_category,
+                    kwargs={"category_id": cat_id},
                 )
         for col in cols[len(row) :]:
             with col:
@@ -78,5 +76,6 @@ def render_sub_spec_pills(category_id: str, active_spec_id: str) -> None:
                 key=f"subpill_{spec_id}",
                 use_container_width=True,
                 type="primary" if spec_id == active_spec_id else "secondary",
-                on_click=_make_spec_handler(spec_id),
+                on_click=_open_spec,
+                kwargs={"spec_id": spec_id},
             )
