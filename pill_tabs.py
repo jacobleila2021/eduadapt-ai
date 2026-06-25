@@ -27,12 +27,8 @@ def render_pill_navigation(key_prefix: str = "pill") -> None:
     """Dark cyan pills — one click opens the dedicated workspace."""
     active_cat = st.session_state.get("active_category_id", "")
     in_workspace = is_workspace()
-    is_dashboard = key_prefix == "pill"
-
     st.markdown(
-        '<p class="landing-pill-hint">Click a version — it opens in a dedicated workspace.</p>'
-        if is_dashboard
-        else '<p class="pill-nav-hint">Click a version — it opens in a dedicated workspace.</p>',
+        '<p class="pill-nav-hint">Click a version — it opens in a dedicated workspace.</p>',
         unsafe_allow_html=True,
     )
 

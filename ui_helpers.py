@@ -94,35 +94,18 @@ def render_sidebar(version: str) -> None:
 
 
 def render_dashboard_intro() -> None:
-    """Homepage hero — palette sample (landing page only)."""
+    """Homepage hero — workspace, not lesson output."""
     st.markdown(
         f"""
-        <div class="landing-page-marker"></div>
-        <nav class="landing-nav" aria-label="Landing navigation sample">
-          <span class="landing-nav-active">Home</span>
-          <span>Upload</span>
-          <span>Insights</span>
-          <span>Generate</span>
-          <span>Adaptations</span>
-        </nav>
-        <div class="landing-hero">
-          <span class="landing-badge">Palette sample — landing only</span>
+        <div class="dashboard-hero">
           <h2>{APP_NAME} Workspace</h2>
           <p>{APP_TAGLINE}</p>
           <div class="multimodal-strip">
-            <span class="landing-chip">📖 Reading</span>
-            <span class="landing-chip">🎧 Listening</span>
-            <span class="landing-chip">👁 Visual</span>
-            <span class="landing-chip">✨ Interactive</span>
+            <span class="multimodal-chip">📖 Reading</span>
+            <span class="multimodal-chip">🎧 Listening</span>
+            <span class="multimodal-chip">👁 Visual</span>
+            <span class="multimodal-chip">✨ Interactive</span>
           </div>
-          <div class="landing-palette-strip">
-            <span class="landing-swatch"><span class="landing-swatch-dot" style="background:#334155"></span>Nav</span>
-            <span class="landing-swatch"><span class="landing-swatch-dot" style="background:#0F766E"></span>Primary</span>
-            <span class="landing-swatch"><span class="landing-swatch-dot" style="background:#7DD3C7"></span>Secondary</span>
-            <span class="landing-swatch"><span class="landing-swatch-dot" style="background:#F472B6"></span>Celebrate</span>
-            <span class="landing-swatch"><span class="landing-swatch-dot" style="background:#F4E9D8"></span>Surface</span>
-          </div>
-          <div class="landing-achievement">🏆 Investor-ready landing preview</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -136,15 +119,13 @@ def render_pill_navigation() -> None:
     _render_pills(key_prefix="pill")
 
 
-def render_analytics_panel(analytics: dict, *, landing_sample: bool = False) -> None:
-    card_class = "landing-metric-card" if landing_sample else "metric-card"
-    if not landing_sample:
-        st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
+def render_analytics_panel(analytics: dict) -> None:
+    st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(
             f"""
-            <div class="{card_class}">
+            <div class="metric-card">
                 <h4>Lesson Complexity</h4>
                 <p>{analytics['complexity_score']}/100</p>
             </div>
@@ -154,7 +135,7 @@ def render_analytics_panel(analytics: dict, *, landing_sample: bool = False) -> 
     with col2:
         st.markdown(
             f"""
-            <div class="{card_class}">
+            <div class="metric-card">
                 <h4>Reading Level</h4>
                 <p>{analytics['reading_level']}</p>
             </div>
@@ -164,20 +145,14 @@ def render_analytics_panel(analytics: dict, *, landing_sample: bool = False) -> 
     with col3:
         st.markdown(
             f"""
-            <div class="{card_class}">
+            <div class="metric-card">
                 <h4>Objectives</h4>
                 <p>{analytics['objective_count']}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-    if landing_sample:
-        st.markdown(
-            '<span class="landing-achievement">✦ Strong lesson structure detected</span>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # Legacy alias for imports
