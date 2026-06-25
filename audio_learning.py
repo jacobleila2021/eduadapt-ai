@@ -17,11 +17,23 @@ from structured_renderers import content_to_export
 VOICE_OPTIONS = {
     "Warm Female": {
         "openai": "nova",
-        "hints": ["female", "zira", "samantha", "susan", "karen", "hazel", "google uk english female"],
+        "hints": ["zira", "samantha", "susan", "karen", "hazel", "fiona", "google uk english female", "female"],
+        "avoid": [],
     },
     "Warm Male": {
         "openai": "onyx",
-        "hints": ["male", "david", "daniel", "mark", "google uk english male", "james"],
+        "hints": ["david", "daniel", "mark", "george", "james", "google uk english male"],
+        "avoid": ["female"],
+    },
+    "Indian Female Professional": {
+        "openai": "shimmer",
+        "hints": ["heera", "kalpana", "swara", "priya", "veena", "raveena", "en-in", "english (india)", "hindi"],
+        "avoid": ["male"],
+    },
+    "Indian Male Professional": {
+        "openai": "onyx",
+        "hints": ["ravi", "hemant", "prabhat", "madhur", "en-in", "english (india)"],
+        "avoid": ["female", "heera", "kalpana"],
     },
 }
 
@@ -83,6 +95,7 @@ def _audio_player_html(
     if voice_label not in VOICE_OPTIONS:
         voice_label = "Warm Female"
     voice_hints = VOICE_OPTIONS[voice_label]["hints"]
+    voice_avoid = VOICE_OPTIONS[voice_label].get("avoid", [])
     payload = json.dumps(sentences)
     mode_class = "auditory-mode" if auditory_mode else ""
     default_font = "1.35rem" if auditory_mode else "1.25rem"
@@ -220,6 +233,7 @@ def _audio_player_html(
     (function() {{
       const sentences = {payload};
       const voiceHints = {json.dumps(voice_hints)};
+      const voiceAvoid = {json.dumps(voice_avoid)};
       const storageKey = {json.dumps(storage_key)};
       let idx = 0;
       let speaking = false;
@@ -255,15 +269,28 @@ def _audio_player_html(
         }} catch (e) {{}}
       }}
 
+      function isAvoided(v) {{
+        const name = v.name.toLowerCase();
+        return voiceAvoid.some(a => name.includes(a));
+      }}
+
+      function voiceMatches(v, hint) {{
+        const name = v.name.toLowerCase();
+        const lang = (v.lang || "").toLowerCase();
+        return name.includes(hint) || lang.includes(hint);
+      }}
+
       function pickVoice() {{
         const voices = speechSynthesis.getVoices();
         if (!voices.length) return null;
         for (const hint of voiceHints) {{
           const h = hint.toLowerCase();
-          const match = voices.find(v => v.name.toLowerCase().includes(h));
+          const match = voices.find(v => voiceMatches(v, h) && !isAvoided(v));
           if (match) return match;
         }}
-        return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
+        return voices.find(v => (v.lang || "").toLowerCase().startsWith("en") && !isAvoided(v))
+            || voices.find(v => (v.lang || "").toLowerCase().startsWith("en"))
+            || voices[0];
       }}
 
       function highlight(i) {{

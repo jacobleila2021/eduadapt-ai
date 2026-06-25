@@ -34,6 +34,8 @@ DEPTH REQUIREMENTS (critical):
 - Students must be able to pass an exam using ONLY this material.
 - Include worked examples where the subject requires them.
 - DIAGRAM-FIRST: every adaptation MUST include mermaid_diagram AND svg_diagram (never text-only boxes).
+- DIAGRAM QUALITY: diagrams must be meaningful and educational (e.g. water cycle, food chain, timeline, fraction model, labelled body system). The svg_diagram MUST contain multiple <text> labels naming the parts. NEVER output a single circle, random shapes, decorative art, national flags, or graphics unrelated to the lesson topic.
+- ACCURACY: all diagram and content facts must be scientifically and historically correct.
 - Each learner version must be MEASURABLY DIFFERENT: reading level, structure, vocabulary, layout, diagram density.
 """
 
@@ -163,7 +165,7 @@ def _vocabulary_prompt() -> str:
 Return ONLY valid JSON with top-level key "vocabulary" containing this object:
 {{
   "topic": "...",
-  "word_wall": [{{"term": "...", "definition": "...", "emoji": "...", "visual_description": "..."}}],
+  "word_wall": [{{"term": "...", "definition": "...", "emoji": "...", "visual_description": "...", "child_friendly": "explain the word in very simple words a child understands", "example": "a clear example sentence using the term"}}],
   "flashcards": [{{"front": "...", "back": "..."}}],
   "picture_words": [{{"term": "...", "color_cue": "...", "draw_this": "...", "label": "..."}}],
   "practice": [{{"term": "...", "pronunciation": "...", "syllables": "...", "sentence_blank": "..."}}],
@@ -274,6 +276,8 @@ def _fallback_vocabulary(context: dict) -> dict:
                 "definition": explanation[:300] if explanation else f"Key vocabulary: {term}",
                 "emoji": ["💧", "🌿", "☀️", "📘", "🔬", "🌍"][index % 6],
                 "visual_description": f"Imagine a clear labelled diagram showing {term}.",
+                "child_friendly": f"{term} is an important idea from {context.get('topic', 'this lesson')}.",
+                "example": f"We learned about {term} in {context.get('topic', 'today\u2019s lesson')}.",
             }
         )
 

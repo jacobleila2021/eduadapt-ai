@@ -4,6 +4,8 @@ Dedicated adaptation workspace — separate from homepage dashboard.
 
 from __future__ import annotations
 
+import re
+
 import streamlit as st
 
 from accessibility import get_workspace_layout_css
@@ -14,17 +16,30 @@ from session_state import close_workspace
 from spec_icons import SPEC_ICONS
 from viewer_page import render_adaptation_viewer
 
+_TITLE_NOISE = re.compile(
+    r"\b(lesson|grade|class|year|student|learner|adapted?|adaptation|version|final|draft|copy|v\d+|worksheet|notes?)\b",
+    re.IGNORECASE,
+)
+
 
 def lesson_display_title() -> str:
-    """Actual lesson name for the page header (not the adaptation version label)."""
+    """Actual lesson name only — strip grade/class/version/student noise words."""
     upload = st.session_state.get("upload_name", "")
+    raw = ""
     if upload:
-        stem = upload.rsplit(".", 1)[0]
-        return stem.replace("_", " ").replace("-", " ").strip().title()
-    meta = (st.session_state.get("adaptations") or {}).get("_meta", {})
-    ctx = meta.get("lesson_context") or {}
-    topic = ctx.get("topic") or (st.session_state.get("analytics") or {}).get("topic")
-    return topic or "Your Lesson"
+        raw = upload.rsplit(".", 1)[0]
+    else:
+        meta = (st.session_state.get("adaptations") or {}).get("_meta", {})
+        ctx = meta.get("lesson_context") or {}
+        raw = ctx.get("topic") or (st.session_state.get("analytics") or {}).get("topic") or ""
+
+    cleaned = raw.replace("_", " ").replace("-", " ")
+    cleaned = _TITLE_NOISE.sub(" ", cleaned)
+    cleaned = re.sub(r"\d+", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,:-")
+    if not cleaned:
+        return "Your Lesson"
+    return cleaned.title()
 
 
 def render_action_bar(

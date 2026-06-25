@@ -52,6 +52,35 @@ def _as_dict(content: Any) -> dict | None:
     return _coerce_dict(content)
 
 
+def _valid_mermaid(diagram: str) -> bool:
+    """True only if the string looks like a real mermaid diagram (avoids blank boxes)."""
+    if not diagram or not isinstance(diagram, str):
+        return False
+    text = diagram.strip().lower()
+    if len(text) < 15:
+        return False
+    keywords = ("flowchart", "graph ", "graph\n", "mindmap", "sequencediagram", "timeline", "classdiagram")
+    has_kind = any(k in text for k in keywords)
+    has_edges = "-->" in text or "---" in text or "->>" in text
+    return has_kind and has_edges
+
+
+def _valid_svg_diagram(svg: str) -> bool:
+    """Reject empty/placeholder SVGs (single circle, no labels, suspicious content)."""
+    if not svg or not isinstance(svg, str):
+        return False
+    text = svg.strip().lower()
+    if "<svg" not in text or "</svg>" not in text:
+        return False
+    if len(text) < 80:
+        return False
+    # Must contain at least one text label to be educational, not a random shape/flag.
+    if "<text" not in text:
+        return False
+    shape_count = text.count("<rect") + text.count("<circle") + text.count("<path") + text.count("<line") + text.count("<polygon") + text.count("<ellipse")
+    return shape_count >= 1
+
+
 def _word_illustration_svg(term: str, emoji: str, color: str) -> str:
     safe = html.escape(term[:24])
     return f"""
@@ -121,21 +150,39 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
                 with st.container(border=True):
                     emoji = word.get("emoji", "📌")
                     term = word.get("term", "Term")
-                    st.markdown(f"#### {emoji} **{term}**")
+                    st.markdown(
+                        f'<div style="color:#111111;font-weight:800;font-size:1.15rem;">'
+                        f'{emoji} {html.escape(term)}</div>',
+                        unsafe_allow_html=True,
+                    )
                     st.markdown(
                         _word_illustration_svg(term, emoji, color),
                         unsafe_allow_html=True,
                     )
+                    definition = word.get("definition", "")
                     child_note = word.get("child_friendly") or word.get("visual_description") or ""
+                    example = word.get("example") or word.get("example_sentence") or ""
                     st.markdown(
-                        f'<div style="background:{color};padding:10px;border-radius:8px;'
-                        f'border-left:4px solid #0F766E;">'
-                        f'<strong>Definition:</strong> {html.escape(word.get("definition", ""))}'
-                        f'</div>',
+                        f'<div style="background:{color};padding:12px;border-radius:8px;'
+                        f'border-left:4px solid #0F766E;color:#111111;font-size:1rem;'
+                        f'line-height:1.6;">'
+                        f'<strong style="color:#111111;">Definition:</strong> '
+                        f'{html.escape(definition)}'
+                        + (
+                            f'<br/><strong style="color:#111111;">In simple words:</strong> '
+                            f'{html.escape(child_note)}'
+                            if child_note
+                            else ""
+                        )
+                        + (
+                            f'<br/><strong style="color:#111111;">Example:</strong> '
+                            f'<em>{html.escape(example)}</em>'
+                            if example
+                            else ""
+                        )
+                        + "</div>",
                         unsafe_allow_html=True,
                     )
-                    if child_note:
-                        st.caption(f"💡 {child_note}")
 
     # --- 2. Flashcards ---
     st.markdown("### 2. Flashcards — Term → Meaning")
@@ -212,8 +259,8 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     with st.expander("Print-style flowchart (full diagram)", expanded=False):
         _render_svg(build_vocabulary_concept_map_svg(vocab))
     mermaid = vocab.get("mermaid_diagram") or vocab.get("mermaid", "")
-    if mermaid:
-        with st.expander("Alternative AI concept map"):
+    if _valid_mermaid(mermaid):
+        with st.expander("Alternative AI concept map", expanded=False):
             _render_mermaid(mermaid)
 
 
@@ -247,7 +294,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         for _ in range(int(item.get("lines", 3))):
             st.markdown("_________________________________________________________")
         ref = f"Part A Q{index}"
-        ans = _lookup_answer(answer_key, ref) or item.get("model_answer", "")
+        ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
         _show_answer_button(ref, ans, f"{key_prefix}_sa_{index}")
         st.markdown("")
 
@@ -259,7 +306,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         for _ in range(int(item.get("lines", 8))):
             st.markdown("_________________________________________________________")
         ref = f"Part B Q{index}"
-        ans = _lookup_answer(answer_key, ref) or item.get("model_answer", "")
+        ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
         _show_answer_button(ref, ans, f"{key_prefix}_la_{index}")
         st.markdown("")
 
@@ -271,10 +318,10 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
             f"**({diagram.get('marks', 4)} marks)** {diagram.get('question', '')}"
         )
         svg = diagram.get("svg_diagram") or diagram.get("svg", "")
-        if svg:
+        if _valid_svg_diagram(svg):
             _render_svg(svg)
         st.markdown("_Label the diagram above on your answer sheet._")
-        dia_ans = _lookup_answer(answer_key, "Part C") or diagram.get("model_answer", "")
+        dia_ans = diagram.get("model_answer", "") or _lookup_answer(answer_key, "Part C")
         _show_answer_button("Part C", dia_ans, f"{key_prefix}_dia")
 
     # Part D — Vocab in context
@@ -284,7 +331,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         st.markdown(f"**{index}. ({marks} mark)** {item.get('question', '')}")
         st.markdown("Answer: _________________________________")
         ref = f"Part D Q{index}"
-        ans = _lookup_answer(answer_key, ref) or item.get("model_answer", "")
+        ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
         _show_answer_button(ref, ans, f"{key_prefix}_vq_{index}")
 
     # Part E — Student checklist
@@ -325,15 +372,19 @@ def render_lesson(data: Any) -> None:
 
     svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
-    if mermaid:
+    has_good_mermaid = _valid_mermaid(mermaid)
+    has_good_svg = _valid_svg_diagram(svg)
+
+    if has_good_mermaid:
         st.markdown("#### 📊 Concept Diagram")
         _render_mermaid(mermaid)
-    elif not svg:
-        st.info("Every lesson includes a visual diagram. Re-generate if this section is missing.")
 
-    if svg:
+    if has_good_svg:
         st.markdown("#### 🎨 Study Diagram")
         _render_svg(svg)
+
+    if not has_good_mermaid and not has_good_svg:
+        st.info("This version's visual diagram is being prepared — click Generate again if it stays missing.")
 
     for section in lesson.get("sections") or []:
         title = section.get("title", "")

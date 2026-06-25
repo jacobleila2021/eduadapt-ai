@@ -4,6 +4,38 @@ from audio_learning import VOICE_OPTIONS, split_sentences
 from ai_generator import _adaptation_difference_score, _valid_lesson
 
 
+def test_indian_voices_present():
+    from audio_learning import VOICE_OPTIONS
+
+    assert "Indian Female Professional" in VOICE_OPTIONS
+    assert "Indian Male Professional" in VOICE_OPTIONS
+
+
+def test_male_voice_avoids_female():
+    from audio_learning import VOICE_OPTIONS
+
+    assert "female" in VOICE_OPTIONS["Warm Male"]["avoid"]
+    # Warm Male hints must not contain bare "male" (which matches "female")
+    assert "male" not in VOICE_OPTIONS["Warm Male"]["hints"]
+
+
+def test_valid_mermaid_guard():
+    from structured_renderers import _valid_mermaid
+
+    assert _valid_mermaid("flowchart TD\nA-->B")
+    assert not _valid_mermaid("")
+    assert not _valid_mermaid("just some text")
+
+
+def test_valid_svg_guard():
+    from structured_renderers import _valid_svg_diagram
+
+    good = "<svg width='200' height='100'><rect x='1' y='1' width='5' height='5'/><text>Sun</text></svg>"
+    assert _valid_svg_diagram(good)
+    assert not _valid_svg_diagram("<svg></svg>")
+    assert not _valid_svg_diagram("")
+
+
 def test_ruler_colors_soft():
     from accessibility import RULER_COLORS
 
@@ -19,7 +51,14 @@ def test_general_learner_naming():
 
 
 def test_warm_voices_only():
-    assert set(VOICE_OPTIONS.keys()) == {"Warm Female", "Warm Male"}
+    assert "Warm Female" in VOICE_OPTIONS
+    assert "Warm Male" in VOICE_OPTIONS
+    assert set(VOICE_OPTIONS.keys()) == {
+        "Warm Female",
+        "Warm Male",
+        "Indian Female Professional",
+        "Indian Male Professional",
+    }
 
 
 def test_split_sentences_minimum():
