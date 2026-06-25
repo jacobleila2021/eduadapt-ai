@@ -4,6 +4,52 @@ from audio_learning import VOICE_OPTIONS, split_sentences
 from ai_generator import _adaptation_difference_score, _valid_lesson
 
 
+def test_narration_excludes_labels_and_markup():
+    from audio_learning import build_narration
+
+    lesson = {
+        "big_idea": "Water moves in a cycle.",
+        "sections": [
+            {"title": "Evaporation", "body": "<div style='color:#000'>The sun heats water.</div>"},
+            {"title": "Diagram", "body": "<svg><rect/></svg>"},
+        ],
+    }
+    text = build_narration(lesson, "standard")
+    assert "Water moves in a cycle." in text
+    assert "The sun heats water." in text
+    # No HTML/SVG markup or adaptation labels leak into narration
+    assert "<" not in text and ">" not in text
+    assert "svg" not in text.lower()
+    assert "Neurodiversity" not in text
+
+
+def test_narration_vocabulary_reads_definitions_only():
+    from audio_learning import build_narration
+
+    vocab = {
+        "word_wall": [
+            {"term": "Evaporation", "definition": "Water turning into vapour.", "example": "Puddles dry up."}
+        ]
+    }
+    text = build_narration(vocab, "vocabulary")
+    assert "Evaporation" in text
+    assert "Water turning into vapour." in text
+    assert "Word Wall" not in text
+    assert "Front" not in text and "Back" not in text
+
+
+def test_fallback_lesson_diagram_is_real_svg():
+    from structured_renderers import _fallback_lesson_diagram, _valid_svg_diagram
+
+    lesson = {
+        "topic": "Water Cycle",
+        "sections": [{"title": "Evaporation"}, {"title": "Condensation"}, {"title": "Precipitation"}],
+    }
+    svg = _fallback_lesson_diagram(lesson)
+    assert _valid_svg_diagram(svg)
+    assert "Evaporation" in svg
+
+
 def test_indian_voices_present():
     from audio_learning import VOICE_OPTIONS
 

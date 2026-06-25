@@ -12,7 +12,7 @@ from typing import Any
 import streamlit as st
 import streamlit.components.v1 as components
 
-from structured_renderers import content_to_export
+from structured_renderers import _coerce_dict, content_to_export
 
 VOICE_OPTIONS = {
     "Warm Female": {
@@ -42,10 +42,79 @@ PLAYBACK_SPEEDS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
 OPENAI_VOICE_MAP = {label: meta["openai"] for label, meta in VOICE_OPTIONS.items()}
 
 
-def extract_speech_text(title: str, content: Any, spec_id: str, max_chars: int = 4096) -> str:
-    raw = content_to_export(title, content, spec_id)
-    text = re.sub(r"[#*_`>\[\]|]", " ", raw)
+_MERMAID_BLOCK = re.compile(r"```mermaid.*?```", re.DOTALL | re.IGNORECASE)
+_SVG_BLOCK = re.compile(r"<svg.*?</svg>", re.DOTALL | re.IGNORECASE)
+_HTML_TAG = re.compile(r"<[^>]+>")
+_MD_SYMBOLS = re.compile(r"[#*_`>\[\]|]")
+
+
+def _clean_for_speech(text: str) -> str:
+    """Strip diagrams, HTML, markdown and entities so only spoken prose remains."""
+    if not text:
+        return ""
+    text = _MERMAID_BLOCK.sub(" ", text)
+    text = _SVG_BLOCK.sub(" ", text)
+    text = _HTML_TAG.sub(" ", text)
+    text = html.unescape(text)
+    text = _MD_SYMBOLS.sub(" ", text)
     text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def build_narration(content: Any, spec_id: str) -> str:
+    """
+    Produce ONLY educational lesson content for the audio engine.
+
+    Excludes adaptation names, section/navigation labels, button text,
+    "Audio transcript", diagram markup and download hints.
+    """
+    parsed = _coerce_dict(content) if spec_id != "original" else None
+
+    if spec_id == "vocabulary" and parsed:
+        out: list[str] = []
+        for word in parsed.get("word_wall") or []:
+            term = (word.get("term") or "").strip()
+            definition = _clean_for_speech(word.get("definition") or "")
+            child = _clean_for_speech(word.get("child_friendly") or "")
+            example = _clean_for_speech(word.get("example") or word.get("example_sentence") or "")
+            if term and definition:
+                out.append(f"{term}. {definition}")
+            if child:
+                out.append(child)
+            if example:
+                out.append(example)
+        return " ".join(out)
+
+    if spec_id == "worksheet" and parsed:
+        out = []
+        for item in (parsed.get("short_answer") or []) + (parsed.get("long_answer") or []):
+            q = _clean_for_speech(item.get("question") or "")
+            if q:
+                out.append(q)
+        return " ".join(out)
+
+    if parsed:
+        out = []
+        big_idea = _clean_for_speech(parsed.get("big_idea") or "")
+        if big_idea:
+            out.append(big_idea)
+        for section in parsed.get("sections") or []:
+            body = _clean_for_speech(section.get("body") or "")
+            if body:
+                out.append(body)
+        if out:
+            return " ".join(out)
+
+    # Plain/unstructured fallback: clean the raw content (never the title).
+    return _clean_for_speech(str(content))
+
+
+def extract_speech_text(title: str, content: Any, spec_id: str, max_chars: int = 4096) -> str:
+    text = build_narration(content, spec_id)
+    if not text:
+        # Last-resort fallback keeps audio working but still excludes the title.
+        raw = content_to_export("", content, spec_id)
+        text = _clean_for_speech(raw)
     if len(text) > max_chars:
         text = text[: max_chars - 3].rsplit(" ", 1)[0] + "..."
     return text

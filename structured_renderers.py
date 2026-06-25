@@ -81,6 +81,33 @@ def _valid_svg_diagram(svg: str) -> bool:
     return shape_count >= 1
 
 
+def _fallback_lesson_diagram(lesson: dict) -> str:
+    """Deterministic hub-and-spoke SVG built from the lesson's own sections.
+
+    Guarantees a real, labelled educational diagram (never a blank box) when the
+    AI fails to return a valid mermaid/svg diagram.
+    """
+    from concept_map_builder import build_vocabulary_concept_map_svg
+
+    topic = (
+        lesson.get("topic")
+        or lesson.get("title")
+        or (lesson.get("big_idea") or "Lesson")[:40]
+    )
+    terms = []
+    for section in lesson.get("sections") or []:
+        t = (section.get("title") or "").strip()
+        if t and t.lower() not in {x.lower() for x in terms}:
+            terms.append(t)
+    if not terms:
+        for kp in lesson.get("key_points") or lesson.get("objectives") or []:
+            if isinstance(kp, str) and kp.strip():
+                terms.append(kp.strip()[:24])
+    return build_vocabulary_concept_map_svg(
+        {"topic": topic, "word_wall": [{"term": t} for t in terms[:8]]}
+    )
+
+
 def _word_illustration_svg(term: str, emoji: str, color: str) -> str:
     safe = html.escape(term[:24])
     return f"""
@@ -151,7 +178,7 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
                     emoji = word.get("emoji", "📌")
                     term = word.get("term", "Term")
                     st.markdown(
-                        f'<div style="color:#111111;font-weight:800;font-size:1.15rem;">'
+                        f'<div style="color:#000000;font-weight:800;font-size:1.15rem;">'
                         f'{emoji} {html.escape(term)}</div>',
                         unsafe_allow_html=True,
                     )
@@ -164,19 +191,19 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
                     example = word.get("example") or word.get("example_sentence") or ""
                     st.markdown(
                         f'<div style="background:{color};padding:12px;border-radius:8px;'
-                        f'border-left:4px solid #0F766E;color:#111111;font-size:1rem;'
-                        f'line-height:1.6;">'
-                        f'<strong style="color:#111111;">Definition:</strong> '
+                        f'border-left:4px solid #0F766E;color:#000000;font-weight:500;'
+                        f'font-size:1rem;line-height:1.6;">'
+                        f'<strong style="color:#000000;">Definition:</strong> '
                         f'{html.escape(definition)}'
                         + (
-                            f'<br/><strong style="color:#111111;">In simple words:</strong> '
+                            f'<br/><strong style="color:#000000;">In simple words:</strong> '
                             f'{html.escape(child_note)}'
                             if child_note
                             else ""
                         )
                         + (
-                            f'<br/><strong style="color:#111111;">Example:</strong> '
-                            f'<em>{html.escape(example)}</em>'
+                            f'<br/><strong style="color:#000000;">Example:</strong> '
+                            f'<em style="color:#000000;">{html.escape(example)}</em>'
                             if example
                             else ""
                         )
@@ -258,10 +285,6 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     render_concept_map_streamlit(vocab)
     with st.expander("Print-style flowchart (full diagram)", expanded=False):
         _render_svg(build_vocabulary_concept_map_svg(vocab))
-    mermaid = vocab.get("mermaid_diagram") or vocab.get("mermaid", "")
-    if _valid_mermaid(mermaid):
-        with st.expander("Alternative AI concept map", expanded=False):
-            _render_mermaid(mermaid)
 
 
 def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
@@ -384,7 +407,9 @@ def render_lesson(data: Any) -> None:
         _render_svg(svg)
 
     if not has_good_mermaid and not has_good_svg:
-        st.info("This version's visual diagram is being prepared — click Generate again if it stays missing.")
+        # Never show a blank/placeholder: build a real diagram from the lesson itself.
+        st.markdown("#### 📊 Concept Diagram")
+        _render_svg(_fallback_lesson_diagram(lesson))
 
     for section in lesson.get("sections") or []:
         title = section.get("title", "")
