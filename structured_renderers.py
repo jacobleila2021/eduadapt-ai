@@ -75,9 +75,10 @@ def _lookup_answer(answer_key: list, ref: str) -> str:
 def _show_answer_button(label: str, answer: str, key: str) -> None:
     if not answer:
         return
-    if st.button(f"Show Answer — {label}", key=key, type="secondary"):
-        st.session_state[key] = True
-    if st.session_state.get(key):
+    reveal_key = f"revealed_{key}"
+    if st.button(f"Show Answer — {label}", key=f"btn_{key}", type="secondary"):
+        st.session_state[reveal_key] = True
+    if st.session_state.get(reveal_key):
         st.success(answer)
 
 
@@ -91,7 +92,7 @@ def _render_svg(svg: str, height: int = 260) -> None:
     )
 
 
-def render_vocabulary(data: Any) -> None:
+def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     """Word Wall, Flashcards, Picture Words, Practice, Self-Test — always visible."""
     vocab = _coerce_dict(data)
     if not vocab or not vocab.get("word_wall"):
@@ -183,7 +184,7 @@ def render_vocabulary(data: Any) -> None:
         st.markdown(f"{index}. {sentence}")
         if index <= len(flashcards):
             ans = flashcards[index - 1].get("back") or flashcards[index - 1].get("definition", "")
-            _show_answer_button(f"Vocab Q{index}", ans, f"vocab_ans_{index}")
+            _show_answer_button(f"Vocab Q{index}", ans, f"{key_prefix}_ans_{index}")
 
     # --- 6. Quick Reference ---
     st.markdown("### 6. Quick Reference Chart")

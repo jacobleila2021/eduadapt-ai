@@ -120,7 +120,6 @@ def render_pill_navigation() -> None:
 
 
 def render_analytics_panel(analytics: dict) -> None:
-    st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(
@@ -152,7 +151,6 @@ def render_analytics_panel(analytics: dict) -> None:
             """,
             unsafe_allow_html=True,
         )
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # Legacy alias for imports

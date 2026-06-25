@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from accessibility import get_workspace_layout_css
 from navigation import category_for_id
 from print_exporter import build_print_html_all, build_print_html_single
 from pill_tabs import render_pill_navigation, render_sub_spec_pills
@@ -132,6 +133,12 @@ def render_workspace(
     icon = SPEC_ICONS.get(spec_id, "📘")
     lesson_title = lesson_display_title()
     category_id = st.session_state.get("active_category_id", "")
+
+    st.markdown(
+        '<div class="alora-workspace-active" style="display:none;"></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(get_workspace_layout_css(), unsafe_allow_html=True)
 
     st.button(
         "← Back to Dashboard",

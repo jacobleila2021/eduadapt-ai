@@ -165,10 +165,10 @@ def render_adaptation_viewer(
     if inline:
         st.caption(f"Version: **{title}**")
 
-    st.markdown(f'<div class="lesson-content-panel-{spec_id}">', unsafe_allow_html=True)
+    st.markdown('<div class="adaptation-lesson-panel">', unsafe_allow_html=True)
     with st.container(border=True):
         if spec_id == "vocabulary":
-            render_vocabulary(content)
+            render_vocabulary(content, key_prefix=f"viewer_{spec_id}")
         elif spec_id == "worksheet":
             render_worksheet(content, key_prefix=f"viewer_{spec_id}")
         elif _coerce_dict(content):
