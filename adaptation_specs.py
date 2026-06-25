@@ -94,8 +94,8 @@ ADAPTATION_SPECS = [
     },
     {
         "id": "standard",
-        "tab": "Standard Enhanced",
-        "title": "Standard Enhanced Version",
+        "tab": "General Learner",
+        "title": "General Learner",
         "generate": True,
         "hint": "UDL sequence with diagrams and colored visual boxes. Hook, context, SVG diagram, mermaid map, guided explanation, practice, mastery check.",
     },

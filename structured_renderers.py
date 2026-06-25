@@ -274,6 +274,8 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         if svg:
             _render_svg(svg)
         st.markdown("_Label the diagram above on your answer sheet._")
+        dia_ans = _lookup_answer(answer_key, "Part C") or diagram.get("model_answer", "")
+        _show_answer_button("Part C", dia_ans, f"{key_prefix}_dia")
 
     # Part D — Vocab in context
     st.markdown("### Part D — Vocabulary in Context")

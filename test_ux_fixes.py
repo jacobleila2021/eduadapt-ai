@@ -4,6 +4,20 @@ from audio_learning import VOICE_OPTIONS, split_sentences
 from ai_generator import _adaptation_difference_score, _valid_lesson
 
 
+def test_ruler_colors_soft():
+    from accessibility import RULER_COLORS
+
+    assert set(RULER_COLORS.keys()) == {"Soft Yellow", "Soft Mint", "Soft Aqua", "Soft Peach"}
+
+
+def test_general_learner_naming():
+    from adaptation_specs import ADAPTATION_SPECS
+
+    std = next(s for s in ADAPTATION_SPECS if s["id"] == "standard")
+    assert std["tab"] == "General Learner"
+    assert std["title"] == "General Learner"
+
+
 def test_warm_voices_only():
     assert set(VOICE_OPTIONS.keys()) == {"Warm Female", "Warm Male"}
 

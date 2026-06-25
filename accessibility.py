@@ -7,10 +7,10 @@ from __future__ import annotations
 import streamlit as st
 
 RULER_COLORS = {
-    "Soft Yellow": "#FFF9C4",
-    "Light Aqua": "#B2EBF2",
-    "Soft Mint": "#C8E6C9",
-    "Light Peach": "#FFCCBC",
+    "Soft Yellow": "#FFF59D",
+    "Soft Mint": "#A5D6A7",
+    "Soft Aqua": "#80DEEA",
+    "Soft Peach": "#FFAB91",
 }
 
 

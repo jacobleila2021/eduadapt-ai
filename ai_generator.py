@@ -185,14 +185,24 @@ Vocabulary terms to use: {term_list}
 Return ONLY valid JSON with top-level key "worksheet":
 {{
   "header": {{"subject": "...", "topic": "...", "time_allowed": "45-60 minutes", "total_marks": 40}},
-  "short_answer": [{{"question": "...", "marks": 2, "lines": 4}}],
-  "long_answer": [{{"question": "...", "marks": 8, "lines": 10}}],
-  "diagram_question": {{"question": "...", "marks": 5, "svg_diagram": "<svg ...></svg>"}},
-  "vocab_questions": [{{"question": "...", "marks": 2}}],
+  "short_answer": [{{"question": "...", "marks": 2, "lines": 4, "model_answer": "ONE to TWO concise sentences only"}}],
+  "long_answer": [{{"question": "...", "marks": 8, "lines": 10, "model_answer": "FULL multi-sentence paragraph (minimum 5 sentences) with detailed explanation"}}],
+  "diagram_question": {{"question": "...", "marks": 5, "svg_diagram": "<svg ...></svg>", "model_answer": "what a labelled answer should show"}},
+  "vocab_questions": [{{"question": "...", "marks": 2, "model_answer": "concise correct usage"}}],
   "student_checklist": ["..."],
   "teacher_differentiation": "...",
-  "answer_key": [{{"question_ref": "Part A Q1", "model_answer": "...", "marks_notes": "..."}}]
+  "answer_key": [
+    {{"question_ref": "Part A Q1", "model_answer": "...", "marks_notes": "..."}},
+    {{"question_ref": "Part B Q1", "model_answer": "...", "marks_notes": "..."}},
+    {{"question_ref": "Part D Q1", "model_answer": "...", "marks_notes": "..."}}
+  ]
 }}
+
+CRITICAL ANSWER RULES:
+- SHORT answers (Part A) model_answer = 1–2 sentences MAX. Never a paragraph.
+- LONG answers (Part B) model_answer = full paragraph, minimum 5 complete sentences, detailed and age-appropriate.
+- Provide a model_answer for EVERY question AND a matching answer_key entry for Part A, Part B, Part D (refs like "Part A Q1", "Part B Q1", "Part D Q1").
+- Answers must be factually correct and drawn from the lesson analysis.
 
 Requirements:
 - 8 short_answer, 4 long_answer (exam-level), 6 vocab_questions
