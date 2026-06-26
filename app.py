@@ -76,7 +76,7 @@ if "quality" not in st.session_state:
 if "auditory_mode" not in st.session_state:
     st.session_state.auditory_mode = False
 if "audio_voice" not in st.session_state:
-    st.session_state.audio_voice = "Warm Female"
+    st.session_state.audio_voice = "Warm Female (International)"
 if "audio_speed" not in st.session_state:
     st.session_state.audio_speed = 1.0
 

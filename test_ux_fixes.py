@@ -53,16 +53,24 @@ def test_fallback_lesson_diagram_is_real_svg():
 def test_indian_voices_present():
     from audio_learning import VOICE_OPTIONS
 
-    assert "Indian Female Professional" in VOICE_OPTIONS
-    assert "Indian Male Professional" in VOICE_OPTIONS
+    assert "Warm Female (Indian)" in VOICE_OPTIONS
+    assert "Warm Male (Indian)" in VOICE_OPTIONS
 
 
 def test_male_voice_avoids_female():
     from audio_learning import VOICE_OPTIONS
 
-    assert "female" in VOICE_OPTIONS["Warm Male"]["avoid"]
+    assert "female" in VOICE_OPTIONS["Warm Male (International)"]["avoid"]
     # Warm Male hints must not contain bare "male" (which matches "female")
-    assert "male" not in VOICE_OPTIONS["Warm Male"]["hints"]
+    assert "male" not in VOICE_OPTIONS["Warm Male (International)"]["hints"]
+
+
+def test_voices_have_instructions():
+    from audio_learning import VOICE_OPTIONS
+
+    for label, meta in VOICE_OPTIONS.items():
+        assert meta.get("instructions"), f"{label} missing TTS instructions"
+        assert meta.get("openai"), f"{label} missing OpenAI voice"
 
 
 def test_valid_mermaid_guard():
@@ -97,13 +105,11 @@ def test_general_learner_naming():
 
 
 def test_warm_voices_only():
-    assert "Warm Female" in VOICE_OPTIONS
-    assert "Warm Male" in VOICE_OPTIONS
     assert set(VOICE_OPTIONS.keys()) == {
-        "Warm Female",
-        "Warm Male",
-        "Indian Female Professional",
-        "Indian Male Professional",
+        "Warm Female (International)",
+        "Warm Male (International)",
+        "Warm Female (Indian)",
+        "Warm Male (Indian)",
     }
 
 

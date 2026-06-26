@@ -68,16 +68,17 @@ def render_viewer_downloads(
             )
         with c4:
             from audio_learning import (
-                OPENAI_VOICE_MAP,
+                VOICE_OPTIONS,
                 extract_speech_text,
                 generate_openai_speech,
             )
 
             api_key = st.session_state.get("runtime_api_key", "")
-            voice = st.session_state.get("audio_voice", "Warm Female")
+            voice = st.session_state.get("audio_voice", "Warm Female (International)")
+            meta = VOICE_OPTIONS.get(voice) or next(iter(VOICE_OPTIONS.values()))
             speech = extract_speech_text(title, content, spec_id)
             mp3 = generate_openai_speech(
-                speech, OPENAI_VOICE_MAP.get(voice, "nova"), api_key
+                speech, meta["openai"], api_key, meta.get("instructions", "")
             )
             if mp3:
                 st.download_button(

@@ -442,8 +442,9 @@ def render_lesson(data: Any) -> None:
             hex_color = item.get("hex", "#0F766E")
             st.markdown(
                 f'<div style="background:#F4E9D8;border-left:5px solid {hex_color};'
-                f'padding:0.65rem;border-radius:8px;">{icon} <strong>{color}</strong><br/>'
-                f'<span style="font-size:0.9rem;">{html.escape(idea)}</span></div>',
+                f'padding:0.65rem;border-radius:8px;color:#000000;">'
+                f'{icon} <strong style="color:#000000;">{html.escape(color)}</strong><br/>'
+                f'<span style="font-size:0.9rem;color:#000000;">{html.escape(idea)}</span></div>',
                 unsafe_allow_html=True,
             )
 

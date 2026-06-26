@@ -15,27 +15,51 @@ import streamlit.components.v1 as components
 from structured_renderers import _coerce_dict, content_to_export
 
 VOICE_OPTIONS = {
-    "Warm Female": {
+    "Warm Female (International)": {
         "openai": "nova",
+        "instructions": (
+            "You are a warm, friendly female teacher reading a lesson aloud to children. "
+            "Use clear neutral international English, natural pacing, gentle expressive "
+            "intonation, and brief pauses at full stops. Sound encouraging, never robotic."
+        ),
         "hints": ["zira", "samantha", "susan", "karen", "hazel", "fiona", "google uk english female", "female"],
         "avoid": [],
     },
-    "Warm Male": {
+    "Warm Male (International)": {
         "openai": "onyx",
+        "instructions": (
+            "You are a warm, friendly male teacher reading a lesson aloud to children. "
+            "Use clear neutral international English, natural pacing, gentle expressive "
+            "intonation, and brief pauses at full stops. Sound encouraging, never robotic."
+        ),
         "hints": ["david", "daniel", "mark", "george", "james", "google uk english male"],
         "avoid": ["female"],
     },
-    "Indian Female Professional": {
+    "Warm Female (Indian)": {
         "openai": "shimmer",
+        "instructions": (
+            "You are a warm, professional female teacher with a clear, neutral urban Indian "
+            "English accent (well-spoken Mumbai or Bengaluru English). Read the lesson aloud "
+            "to children with natural pacing, warm teacher-style delivery, clear pronunciation, "
+            "and a child-friendly tone."
+        ),
         "hints": ["heera", "kalpana", "swara", "priya", "veena", "raveena", "en-in", "english (india)", "hindi"],
         "avoid": ["male"],
     },
-    "Indian Male Professional": {
-        "openai": "onyx",
+    "Warm Male (Indian)": {
+        "openai": "echo",
+        "instructions": (
+            "You are a warm, professional male teacher with a clear, neutral urban Indian "
+            "English accent (well-spoken Mumbai or Bengaluru English). Read the lesson aloud "
+            "to children with natural pacing, warm teacher-style delivery, clear pronunciation, "
+            "and a child-friendly tone."
+        ),
         "hints": ["ravi", "hemant", "prabhat", "madhur", "en-in", "english (india)"],
         "avoid": ["female", "heera", "kalpana"],
     },
 }
+
+DEFAULT_VOICE = "Warm Female (International)"
 
 PLAYBACK_SPEEDS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
 
@@ -125,32 +149,178 @@ def split_sentences(text: str) -> list[str]:
     return [part.strip() for part in parts if part.strip()]
 
 
-def generate_openai_speech(text: str, voice: str, api_key: str) -> bytes | None:
+def generate_openai_speech(
+    text: str, voice: str, api_key: str, instructions: str = ""
+) -> bytes | None:
+    """Generate expressive neural speech. Tries gpt-4o-mini-tts (accent/tone steerable),
+    then falls back to tts-1-hd and tts-1."""
     if not text.strip() or not api_key:
         return None
     try:
         from openai import OpenAI
-
-        client = OpenAI(api_key=api_key)
-        response = client.audio.speech.create(
-            model="tts-1-hd",
-            voice=voice,
-            input=text[:4096],
-        )
-        return response.content
     except Exception:
-        try:
-            from openai import OpenAI
+        return None
 
-            client = OpenAI(api_key=api_key)
-            response = client.audio.speech.create(
-                model="tts-1",
-                voice=voice,
-                input=text[:4096],
-            )
+    client = OpenAI(api_key=api_key)
+    attempts = [
+        ("gpt-4o-mini-tts", True),
+        ("tts-1-hd", False),
+        ("tts-1", False),
+    ]
+    for model, supports_instructions in attempts:
+        try:
+            kwargs: dict[str, Any] = {
+                "model": model,
+                "voice": voice,
+                "input": text[:4096],
+            }
+            if supports_instructions and instructions:
+                kwargs["instructions"] = instructions
+            response = client.audio.speech.create(**kwargs)
             return response.content
         except Exception:
-            return None
+            continue
+    return None
+
+
+def _audio_player_styles(default_font: str) -> str:
+    return f"""
+    <style>
+      .alora-audio-root {{
+        font-family: "Atkinson Hyperlegible", "Comic Sans MS", Verdana, sans-serif;
+        color: #334155;
+      }}
+      .alora-audio-toolbar {{
+        position: sticky; top: 0; z-index: 1000;
+        background: linear-gradient(135deg, #334155, #475569);
+        border-radius: 14px; padding: 0.85rem 1.1rem; margin-bottom: 0.85rem;
+        color: #fff; box-shadow: 0 6px 22px rgba(51, 65, 85, 0.35);
+      }}
+      .alora-audio-controls, .alora-audio-settings {{
+        display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center;
+      }}
+      .alora-audio-settings {{ margin-top: 0.55rem; font-size: 0.92rem; }}
+      .alora-audio-root button {{
+        background: #0F766E; color: #fff; border: none; border-radius: 999px;
+        padding: 0.5rem 1rem; font-weight: 700; cursor: pointer; font-size: 0.88rem;
+      }}
+      .alora-audio-root button:hover {{ background: #0d9488; }}
+      .alora-audio-root select {{
+        background: #fff; border: 1px solid #7DD3C7; border-radius: 8px;
+        padding: 0.35rem 0.5rem; margin-left: 0.35rem; color: #334155;
+      }}
+      .alora-transcript-card {{
+        background: #F4E9D8; border: 2px solid #7DD3C7; border-radius: 14px;
+        padding: 1.1rem 1.25rem; line-height: 1.9; font-size: {default_font};
+        letter-spacing: 0.04em; min-height: 120px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); color: #000000;
+      }}
+      .alora-transcript-label {{
+        font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; color: #0F766E; margin-bottom: 0.65rem;
+      }}
+      .speech-sentence {{
+        margin: 0.55rem 0; padding: 0.45rem 0.65rem; border-radius: 8px;
+        color: #000000; transition: background 0.2s, box-shadow 0.2s;
+      }}
+      .speech-sentence.active {{
+        background: rgba(125, 211, 199, 0.55);
+        box-shadow: inset 4px 0 0 #0F766E; font-weight: 600;
+      }}
+    </style>
+    """
+
+
+def _openai_audio_player_html(
+    audio_b64: str,
+    sentences: list[str],
+    speed: float,
+    spec_id: str,
+    storage_key: str,
+    default_font: str,
+) -> str:
+    """Native <audio> player (premium neural voice) with timed transcript highlight."""
+    if not sentences:
+        sentences = ["No transcript text is available for this adaptation yet."]
+    sentence_blocks = "".join(
+        f'<p class="speech-sentence" data-idx="{i}">{html.escape(s)}</p>'
+        for i, s in enumerate(sentences)
+    )
+    speed_opts = "".join(
+        f'<option value="{s}"{" selected" if s == speed else ""}>{s}x</option>'
+        for s in PLAYBACK_SPEEDS
+    )
+    lengths = [max(len(s), 1) for s in sentences]
+
+    return f"""
+    <div class="alora-audio-root" id="alora-audio-root">
+      <audio id="alora-audio" preload="auto" src="data:audio/mpeg;base64,{audio_b64}"></audio>
+      <div class="alora-audio-toolbar">
+        <div class="alora-audio-controls">
+          <button type="button" id="btn-play">▶ Play</button>
+          <button type="button" id="btn-pause">⏸ Pause</button>
+          <button type="button" id="btn-resume">⏵ Resume</button>
+          <button type="button" id="btn-stop">⏹ Stop</button>
+        </div>
+        <div class="alora-audio-settings">
+          <label>Speed <select id="speed-select">{speed_opts}</select></label>
+        </div>
+      </div>
+      <div class="alora-transcript-card" id="speech-text">
+        <div class="alora-transcript-label">Follow the highlighted text as it reads</div>
+        {sentence_blocks}
+      </div>
+    </div>
+    {_audio_player_styles(default_font)}
+    <script>
+    (function() {{
+      const audio = document.getElementById("alora-audio");
+      const lengths = {json.dumps(lengths)};
+      const storageKey = {json.dumps(storage_key)};
+      let bounds = [];
+      function computeBounds() {{
+        const total = lengths.reduce((a, b) => a + b, 0) || 1;
+        let acc = 0;
+        bounds = lengths.map(l => {{ acc += l; return acc / total; }});
+      }}
+      function highlight() {{
+        if (!audio.duration || !isFinite(audio.duration)) return;
+        const frac = audio.currentTime / audio.duration;
+        let i = bounds.findIndex(b => frac <= b);
+        if (i < 0) i = lengths.length - 1;
+        document.querySelectorAll(".speech-sentence").forEach(el => el.classList.remove("active"));
+        const el = document.querySelector('.speech-sentence[data-idx="' + i + '"]');
+        if (el) {{ el.classList.add("active"); el.scrollIntoView({{behavior: "smooth", block: "center"}}); }}
+      }}
+      function applySpeed() {{
+        audio.playbackRate = parseFloat(document.getElementById("speed-select").value) || 1;
+      }}
+      computeBounds();
+      audio.addEventListener("loadedmetadata", function() {{
+        computeBounds();
+        try {{ const p = parseFloat(localStorage.getItem(storageKey)); if (p > 0 && p < audio.duration) audio.currentTime = p; }} catch (e) {{}}
+      }});
+      audio.addEventListener("timeupdate", function() {{
+        highlight();
+        try {{ localStorage.setItem(storageKey, audio.currentTime); }} catch (e) {{}}
+      }});
+      audio.addEventListener("ended", function() {{
+        document.querySelectorAll(".speech-sentence").forEach(el => el.classList.remove("active"));
+        try {{ localStorage.setItem(storageKey, 0); }} catch (e) {{}}
+      }});
+      document.getElementById("speed-select").onchange = applySpeed;
+      document.getElementById("btn-play").onclick = function() {{ applySpeed(); audio.play(); }};
+      document.getElementById("btn-pause").onclick = function() {{ audio.pause(); }};
+      document.getElementById("btn-resume").onclick = function() {{ applySpeed(); audio.play(); }};
+      document.getElementById("btn-stop").onclick = function() {{
+        audio.pause(); audio.currentTime = 0;
+        document.querySelectorAll(".speech-sentence").forEach(el => el.classList.remove("active"));
+        try {{ localStorage.setItem(storageKey, 0); }} catch (e) {{}}
+      }};
+      applySpeed();
+    }})();
+    </script>
+    """
 
 
 def _audio_player_html(
@@ -201,7 +371,7 @@ def _audio_player_html(
         </div>
       </div>
       <div class="alora-transcript-card" id="speech-text">
-        <div class="alora-transcript-label">Audio transcript — follow the highlight</div>
+        <div class="alora-transcript-label">Follow the highlighted text as it reads</div>
         {sentence_blocks}
       </div>
       <div id="stop-dialog" class="alora-stop-dialog" hidden>
@@ -464,25 +634,72 @@ def render_audio_learning_panel(
     api_key: str,
     auditory_mode: bool = False,
 ) -> None:
-    """Sticky audio toolbar + cream transcript (all controls at top)."""
+    """Premium neural audio (OpenAI) with reliable Play/Pause/Resume/Stop/Speed and a
+    Streamlit-controlled voice selector. Falls back to browser TTS when no API key."""
+    import base64
+
     speech_text = extract_speech_text(title, content, spec_id)
     if not speech_text:
         st.caption("No narration text available for this adaptation.")
         return
 
-    voice = st.session_state.get("audio_voice", "Warm Female")
+    voice = st.session_state.get("audio_voice", DEFAULT_VOICE)
     if voice not in VOICE_OPTIONS:
-        voice = "Warm Female"
+        voice = DEFAULT_VOICE
         st.session_state.audio_voice = voice
 
     speed = float(st.session_state.get("audio_speed", 1.0))
     sentences = split_sentences(speech_text)
-    storage_key = f"alora_audio_{spec_id}"
+    storage_key = f"alora_audio_{spec_id}_{voice}"
+    default_font = "1.35rem" if auditory_mode else "1.25rem"
 
     st.markdown("#### 🔊 Adaptive Audio Learning")
-    if auditory_mode:
-        st.caption("Listening mode — controls stay fixed at the top while you read along.")
 
+    voice_labels = list(VOICE_OPTIONS.keys())
+    selected = st.selectbox(
+        "Voice",
+        voice_labels,
+        index=voice_labels.index(voice),
+        key=f"voice_select_{spec_id}",
+        label_visibility="collapsed",
+    )
+    if selected != voice:
+        st.session_state.audio_voice = selected
+        voice = selected
+        storage_key = f"alora_audio_{spec_id}_{voice}"
+
+    meta = VOICE_OPTIONS[voice]
+
+    audio_bytes: bytes | None = None
+    if api_key:
+        cache_key = f"_audio_cache_{spec_id}"
+        signature = f"{voice}|{hash(speech_text)}"
+        cached = st.session_state.get(cache_key)
+        if isinstance(cached, dict) and cached.get("sig") == signature:
+            audio_bytes = cached.get("bytes")
+        else:
+            with st.spinner(f"Preparing {voice} narration…"):
+                audio_bytes = generate_openai_speech(
+                    speech_text, meta["openai"], api_key, meta.get("instructions", "")
+                )
+            if audio_bytes:
+                st.session_state[cache_key] = {"sig": signature, "bytes": audio_bytes}
+
+    if audio_bytes:
+        b64 = base64.b64encode(audio_bytes).decode("ascii")
+        components.html(
+            _openai_audio_player_html(
+                b64, sentences, speed, spec_id, storage_key, default_font
+            ),
+            height=520 if auditory_mode else 460,
+            scrolling=True,
+        )
+        return
+
+    if api_key:
+        st.caption(
+            "Premium neural narration is temporarily unavailable — using your browser voice."
+        )
     components.html(
         _audio_player_html(
             sentences,

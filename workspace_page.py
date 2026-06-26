@@ -17,29 +17,40 @@ from spec_icons import SPEC_ICONS
 from viewer_page import render_adaptation_viewer
 
 _TITLE_NOISE = re.compile(
-    r"\b(lesson|grade|class|year|student|learner|adapted?|adaptation|version|final|draft|copy|v\d+|worksheet|notes?)\b",
+    r"\b(lesson|grade|class|year|student|learner|adapted?|adaptation|version|final|draft|copy|v\d+|worksheet|notes?|sample|demo|test|placeholder|example|untitled|document|doc|file)\b",
     re.IGNORECASE,
 )
 
 
-def lesson_display_title() -> str:
-    """Actual lesson name only — strip grade/class/version/student noise words."""
-    upload = st.session_state.get("upload_name", "")
-    raw = ""
-    if upload:
-        raw = upload.rsplit(".", 1)[0]
-    else:
-        meta = (st.session_state.get("adaptations") or {}).get("_meta", {})
-        ctx = meta.get("lesson_context") or {}
-        raw = ctx.get("topic") or (st.session_state.get("analytics") or {}).get("topic") or ""
-
-    cleaned = raw.replace("_", " ").replace("-", " ")
+def _clean_title(raw: str) -> str:
+    cleaned = (raw or "").replace("_", " ").replace("-", " ")
     cleaned = _TITLE_NOISE.sub(" ", cleaned)
     cleaned = re.sub(r"\d+", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,:-")
-    if not cleaned:
-        return "Your Lesson"
-    return cleaned.title()
+    # Keep it short and professional (max 4 words).
+    words = cleaned.split()
+    return " ".join(words[:4]).title()
+
+
+def lesson_display_title() -> str:
+    """Actual lesson topic only — prefer AI-detected topic, never the filename 'Sample'."""
+    adaptations = st.session_state.get("adaptations") or {}
+    meta = adaptations.get("_meta", {}) if isinstance(adaptations, dict) else {}
+    ctx = meta.get("lesson_context") or {}
+
+    # 1. AI-detected topic (most reliable, e.g. "Water Cycle")
+    topic = (ctx.get("topic") or "").strip()
+    # 2. Vocabulary topic
+    if not topic:
+        vocab = adaptations.get("vocabulary") if isinstance(adaptations, dict) else None
+        if isinstance(vocab, dict):
+            topic = (vocab.get("topic") or "").strip()
+    if topic and topic.lower() not in {"lesson", "lesson vocabulary", "topic", "subject"}:
+        return _clean_title(topic) or "Your Lesson"
+
+    # 3. Fall back to a cleaned upload filename (strips sample/demo/test/etc.)
+    cleaned = _clean_title(st.session_state.get("upload_name", ""))
+    return cleaned or "Your Lesson"
 
 
 def render_action_bar(
