@@ -23,13 +23,16 @@ _TITLE_NOISE = re.compile(
 
 
 def _clean_title(raw: str) -> str:
-    cleaned = (raw or "").replace("_", " ").replace("-", " ")
-    cleaned = _TITLE_NOISE.sub(" ", cleaned)
+    text = (raw or "").replace("_", " ").replace("-", " ")
+    # Drop subtitle after a colon, e.g. "The Water Cycle: How Water Moves" -> "The Water Cycle"
+    if ":" in text:
+        text = text.split(":", 1)[0]
+    cleaned = _TITLE_NOISE.sub(" ", text)
     cleaned = re.sub(r"\d+", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,:-")
-    # Keep it short and professional (max 4 words).
+    # Keep it short and professional (max 5 words).
     words = cleaned.split()
-    return " ".join(words[:4]).title()
+    return " ".join(words[:5]).title()
 
 
 def lesson_display_title() -> str:
@@ -182,7 +185,7 @@ def render_workspace(
         f"""
         <div class="workspace-banner">
           <h2>{icon} {lesson_title}</h2>
-          <p>Version: {active_spec["tab"]} · Reading · Listening · Visual · Interactive</p>
+          <p>Reading · Listening · Visual · Interactive</p>
         </div>
         """,
         unsafe_allow_html=True,

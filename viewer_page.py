@@ -163,8 +163,6 @@ def render_adaptation_viewer(
 
     st.markdown("---")
     st.markdown(f"#### 📚 {lesson_title or 'Lesson Content'}")
-    if inline:
-        st.caption(f"Version: **{title}**")
 
     st.markdown('<div class="adaptation-lesson-panel">', unsafe_allow_html=True)
     with st.container(border=True):

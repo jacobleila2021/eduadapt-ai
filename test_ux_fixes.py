@@ -115,12 +115,41 @@ def test_ruler_colors_soft():
     assert set(RULER_COLORS.keys()) == {"Soft Yellow", "Soft Mint", "Soft Aqua", "Soft Peach"}
 
 
-def test_general_learner_naming():
-    from adaptation_specs import ADAPTATION_SPECS
+def test_nine_version_tabs():
+    from navigation import PILL_CATEGORIES
 
-    std = next(s for s in ADAPTATION_SPECS if s["id"] == "standard")
-    assert std["tab"] == "General Learner"
-    assert std["title"] == "General Learner"
+    labels = [c["label"] for c in PILL_CATEGORIES]
+    assert labels == [
+        "Vocabulary Support",
+        "Mainstream Support",
+        "Neurodiversity Support",
+        "English Language Support",
+        "Visual Learner Support",
+        "Auditory Learner Support",
+        "Teacher Version",
+        "Parent Version",
+        "Exam Worksheet",
+    ]
+    # Each tab maps to exactly one version (no sub-classification pills)
+    for cat in PILL_CATEGORIES:
+        assert len(cat["spec_ids"]) == 1
+
+
+def test_only_nine_generated():
+    from adaptation_specs import OUTPUT_KEYS
+
+    assert len(OUTPUT_KEYS) == 9
+    assert set(OUTPUT_KEYS) == {
+        "vocabulary", "standard", "ld", "ell", "visual",
+        "auditory", "teacher", "parent", "worksheet",
+    }
+
+
+def test_title_drops_how_subtitle():
+    from workspace_page import _clean_title
+
+    assert _clean_title("The Water Cycle: How Water Moves") == "The Water Cycle"
+    assert _clean_title("Photosynthesis") == "Photosynthesis"
 
 
 def test_warm_voices_only():
