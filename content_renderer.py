@@ -19,6 +19,17 @@ def _render_mermaid(diagram: str, height: int = 420) -> None:
     components.html(
         f"""
         <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <style>
+          body {{ margin: 0; }}
+          .mermaid {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+          }}
+          .mermaid svg {{ margin: 0 auto; max-width: 100%; height: auto; }}
+        </style>
         <pre class="mermaid" id="{diagram_id}">{safe}</pre>
         <script>
             mermaid.initialize({{

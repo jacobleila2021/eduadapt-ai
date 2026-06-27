@@ -50,6 +50,25 @@ def test_fallback_lesson_diagram_is_real_svg():
     assert "Evaporation" in svg
 
 
+def test_fill_blank_answer_extraction():
+    from structured_renderers import _extract_blank_answer
+
+    display, ans = _extract_blank_answer(
+        "The distance from the center to the edge of a circle is called the _____ (radius)."
+    )
+    assert ans == "radius"
+    assert "(radius)" not in display
+    assert display.endswith(".")
+
+    display2, ans2 = _extract_blank_answer("The process of ___ is essential. (use: evaporation)")
+    assert ans2 == "evaporation"
+    assert "evaporation" not in display2.lower()
+
+    display3, ans3 = _extract_blank_answer("A plain sentence with no answer.")
+    assert ans3 == ""
+    assert display3 == "A plain sentence with no answer."
+
+
 def test_indian_voices_present():
     from audio_learning import VOICE_OPTIONS
 

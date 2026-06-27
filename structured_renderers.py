@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 from typing import Any
 
 import streamlit as st
@@ -138,6 +139,25 @@ def _show_answer_button(label: str, answer: str, key: str) -> None:
         st.success(answer)
 
 
+def _extract_blank_answer(sentence: str) -> tuple[str, str]:
+    """Pull the answer out of a fill-in-the-blank sentence's trailing brackets.
+
+    e.g. "...called the _____ (radius)." -> ("...called the _____.", "radius")
+    Also handles "(use: radius)" / "(answer: radius)". Returns the sentence with
+    the answer removed so it is not given away before reveal.
+    """
+    text = str(sentence)
+    match = re.search(r"\(([^)]*)\)\s*([.!?]?)\s*$", text)
+    if not match:
+        return text, ""
+    raw = match.group(1).strip()
+    raw = re.sub(r"^(use|answer|ans|hint)\s*[:\-]\s*", "", raw, flags=re.IGNORECASE).strip()
+    if not raw:
+        return text, ""
+    display = (text[: match.start()].rstrip() + match.group(2)).strip()
+    return display, raw
+
+
 def _render_svg(svg: str, height: int = 260) -> None:
     if not svg or not svg.strip():
         return
@@ -255,10 +275,14 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     fill_blanks = self_test.get("fill_blanks") or []
     flashcards = vocab.get("flashcards") or []
     for index, sentence in enumerate(fill_blanks, 1):
-        st.markdown(f"{index}. {sentence}")
-        if index <= len(flashcards):
+        display, ans = _extract_blank_answer(sentence)
+        st.markdown(f"{index}. {display}")
+        # Prefer the answer embedded in the sentence (always correct);
+        # only fall back to positional flashcard when no bracket is present.
+        if not ans and index <= len(flashcards):
             ans = flashcards[index - 1].get("back") or flashcards[index - 1].get("definition", "")
-            _show_answer_button(f"Vocab Q{index}", ans, f"{key_prefix}_ans_{index}")
+        if ans:
+            _show_answer_button(f"Q{index}", ans, f"{key_prefix}_ans_{index}")
 
     # --- 6. Quick Reference ---
     st.markdown("### 6. Quick Reference Chart")
