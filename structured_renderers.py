@@ -140,12 +140,7 @@ def _show_answer_button(label: str, answer: str, key: str) -> None:
 
 
 def _extract_blank_answer(sentence: str) -> tuple[str, str]:
-    """Pull the answer out of a fill-in-the-blank sentence's trailing brackets.
-
-    e.g. "...called the _____ (radius)." -> ("...called the _____.", "radius")
-    Also handles "(use: radius)" / "(answer: radius)". Returns the sentence with
-    the answer removed so it is not given away before reveal.
-    """
+    """Pull the answer out of a fill-in-the-blank sentence's trailing brackets."""
     text = str(sentence)
     match = re.search(r"\(([^)]*)\)\s*([.!?]?)\s*$", text)
     if not match:
@@ -156,6 +151,46 @@ def _extract_blank_answer(sentence: str) -> tuple[str, str]:
         return text, ""
     display = (text[: match.start()].rstrip() + match.group(2)).strip()
     return display, raw
+
+
+def _resolve_fill_blank_answer(
+    sentence: str,
+    index: int,
+    self_test: dict,
+    word_wall: list[dict],
+) -> tuple[str, str]:
+    """Return (display_sentence, correct_answer) for a self-test fill-in-the-blank."""
+    display, bracket_ans = _extract_blank_answer(sentence)
+
+    # 1. Explicit parallel answers array from AI (most reliable).
+    answers = self_test.get("fill_blank_answers") or self_test.get("answers") or []
+    if index - 1 < len(answers):
+        entry = answers[index - 1]
+        if isinstance(entry, dict):
+            explicit = (entry.get("answer") or entry.get("term") or "").strip()
+        else:
+            explicit = str(entry or "").strip()
+        if explicit:
+            return display or sentence, explicit
+
+    # 2. Bracket at end of sentence — usually the vocabulary term.
+    if bracket_ans:
+        if len(bracket_ans.split()) <= 5:
+            return display, bracket_ans
+        for word in word_wall:
+            term = (word.get("term") or "").strip()
+            defin = (word.get("definition") or "").strip()
+            if term and bracket_ans.lower() in defin.lower():
+                return display, term
+
+    # 3. Match a word-wall term mentioned in the sentence (never positional flashcards).
+    text_lower = sentence.lower()
+    for word in word_wall:
+        term = (word.get("term") or "").strip()
+        if term and re.search(rf"\b{re.escape(term.lower())}\b", text_lower):
+            return display or sentence, term
+
+    return display or sentence, bracket_ans
 
 
 def _render_svg(svg: str, height: int = 260) -> None:
@@ -186,6 +221,10 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
 
     # --- 1. Word Wall ---
     st.markdown("### 1. Word Wall — Study First")
+    st.caption(
+        "Each card uses a soft colour band to help visual memory — the colours are "
+        "learning cues only, not categories. Read the definition, then the example."
+    )
     word_wall = vocab.get("word_wall") or []
     if not word_wall:
         st.warning("No word wall terms generated.")
@@ -273,14 +312,11 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     if matching:
         st.markdown(matching if isinstance(matching, str) else str(matching))
     fill_blanks = self_test.get("fill_blanks") or []
-    flashcards = vocab.get("flashcards") or []
     for index, sentence in enumerate(fill_blanks, 1):
-        display, ans = _extract_blank_answer(sentence)
+        display, ans = _resolve_fill_blank_answer(
+            sentence, index, self_test, word_wall
+        )
         st.markdown(f"{index}. {display}")
-        # Prefer the answer embedded in the sentence (always correct);
-        # only fall back to positional flashcard when no bracket is present.
-        if not ans and index <= len(flashcards):
-            ans = flashcards[index - 1].get("back") or flashcards[index - 1].get("definition", "")
         if ans:
             _show_answer_button(f"Q{index}", ans, f"{key_prefix}_ans_{index}")
 
@@ -338,8 +374,13 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
     for index, item in enumerate(sheet.get("short_answer") or [], 1):
         marks = item.get("marks", 2)
         st.markdown(f"**Q{index}. ({marks} marks)** {item.get('question', '')}")
-        for _ in range(int(item.get("lines", 3))):
-            st.markdown("_________________________________________________________")
+        st.text_area(
+            f"Your answer — Q{index}",
+            key=f"{key_prefix}_sa_input_{index}",
+            height=int(item.get("lines", 3)) * 28,
+            label_visibility="collapsed",
+            placeholder="Type your answer here…",
+        )
         ref = f"Part A Q{index}"
         ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
         _show_answer_button(ref, ans, f"{key_prefix}_sa_{index}")
@@ -350,8 +391,13 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
     for index, item in enumerate(sheet.get("long_answer") or [], 1):
         marks = item.get("marks", 6)
         st.markdown(f"**Q{index}. ({marks} marks)** {item.get('question', '')}")
-        for _ in range(int(item.get("lines", 8))):
-            st.markdown("_________________________________________________________")
+        st.text_area(
+            f"Your answer — long Q{index}",
+            key=f"{key_prefix}_la_input_{index}",
+            height=int(item.get("lines", 8)) * 24,
+            label_visibility="collapsed",
+            placeholder="Type your extended answer here…",
+        )
         ref = f"Part B Q{index}"
         ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
         _show_answer_button(ref, ans, f"{key_prefix}_la_{index}")
@@ -376,7 +422,12 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
     for index, item in enumerate(sheet.get("vocab_questions") or [], 1):
         marks = item.get("marks", 1)
         st.markdown(f"**{index}. ({marks} mark)** {item.get('question', '')}")
-        st.markdown("Answer: _________________________________")
+        st.text_input(
+            f"Vocab answer {index}",
+            key=f"{key_prefix}_vq_input_{index}",
+            label_visibility="collapsed",
+            placeholder="Type your answer…",
+        )
         ref = f"Part D Q{index}"
         ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
         _show_answer_button(ref, ans, f"{key_prefix}_vq_{index}")
@@ -398,6 +449,15 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
             notes = item.get("marks_notes") or item.get("notes", "")
             if notes:
                 st.caption(notes)
+        from docx_exporter import export_worksheet_docx
+
+        st.download_button(
+            "Download Teacher Word (with answer key)",
+            data=export_worksheet_docx(sheet, include_teacher_key=True),
+            file_name="exam_worksheet_teacher.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            key=f"{key_prefix}_teacher_docx",
+        )
 
 
 def render_lesson(data: Any) -> None:
@@ -417,6 +477,20 @@ def render_lesson(data: Any) -> None:
     if big_idea:
         st.info(f"💡 **Big Idea:** {big_idea}")
 
+    sections = lesson.get("sections") or []
+    if sections:
+        st.markdown("**Jump to section**")
+        jump_cols = st.columns(min(len(sections), 4))
+        for idx, section in enumerate(sections):
+            title = (section.get("title") or f"Section {idx + 1}").strip()
+            anchor = f"sec_{idx}"
+            with jump_cols[idx % len(jump_cols)]:
+                st.markdown(
+                    f'<a href="#{anchor}" style="text-decoration:none;font-weight:600;">'
+                    f"↓ {html.escape(title)}</a>",
+                    unsafe_allow_html=True,
+                )
+
     svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
     has_good_mermaid = _valid_mermaid(mermaid)
@@ -435,10 +509,11 @@ def render_lesson(data: Any) -> None:
         st.markdown("#### 📊 Concept Diagram")
         _render_svg(_fallback_lesson_diagram(lesson))
 
-    for section in lesson.get("sections") or []:
+    for idx, section in enumerate(sections):
         title = section.get("title", "")
         body = section.get("body", "")
         box = (section.get("box") or "none").lower()
+        st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
         if title:
             st.markdown(f"#### {title}")
         renderer = _BOX_RENDERERS.get(box)

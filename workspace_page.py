@@ -71,6 +71,11 @@ def render_action_bar(
     from docx_exporter import export_tab_docx
 
     st.markdown("#### Download & Print")
+    st.caption(
+        "**This version** = Word or print-ready HTML for the tab you are viewing only. "
+        "**All adaptations** = combined pack with cover page and table of contents. "
+        "Exam Worksheet Word files are student papers only (no answer key)."
+    )
     c1, c2, c3, c4 = st.columns(4)
 
     docx_bytes = export_tab_docx(title, content, spec_id)
@@ -87,7 +92,7 @@ def render_action_bar(
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True,
             key=f"ws_dl_this_{spec_id}",
-            help="Word (DOCX) with LD-friendly formatting",
+            help="Word (DOCX) for this tab only — student worksheet has no answer key",
         )
         st.caption("MP3 audio is in the Audio Learning section below.")
 
@@ -119,7 +124,7 @@ def render_action_bar(
             mime="text/html",
             use_container_width=True,
             key=f"ws_print_this_{spec_id}",
-            help="Download print-ready HTML — open and press Ctrl+P",
+            help="Single-version print layout — open file, then Ctrl+P",
         )
 
     with c4:
@@ -130,7 +135,7 @@ def render_action_bar(
             mime="text/html",
             use_container_width=True,
             key="ws_print_all_pack",
-            help="Cover page, contents, and all primary versions",
+            help="Cover + contents + all 9 versions — open file, then Ctrl+P",
         )
 
 

@@ -110,6 +110,30 @@ def render_dashboard_intro() -> None:
         """,
         unsafe_allow_html=True,
     )
+    with st.expander("ℹ️ How Alora AI works (reviewer FAQ)", expanded=False):
+        st.markdown(
+            """
+**Generate Adaptations** sends your lesson to OpenAI, which builds **9 versions** from one upload:
+Vocabulary Support, Mainstream Support, Neurodiversity Support, English Language Support,
+Visual Learner Support, Auditory Learner Support, Teacher Version, Parent Version, and Exam Worksheet.
+Each version uses a different prompt (reading level, structure, visuals, vocabulary load).
+
+**Voices:** *International* uses neutral English teacher delivery; *Indian* uses the same
+neural engine with accent instructions for clear urban Indian English (Mumbai/Benguru style).
+First play generates audio (~5–10 s); it is cached for instant replay.
+
+**Workspace:** clicking a version tab scrolls this same page to that version — use the
+**bottom tabs** to switch. The lesson title stays the same; only the content changes.
+
+**Word Wall colours** are soft memory cues (not categories). **Self-test answers** come
+from the bracket in each sentence or a matched vocabulary term — click *Show Answer* to check.
+
+**Exam Worksheet** lets you **type answers** in the boxes. Student Word downloads exclude
+the answer key; teachers open *Part G* for marking guidance and a teacher Word file.
+
+**Downloads:** *This version* = one tab only. *All adaptations* = combined print pack with cover.
+            """
+        )
 
 
 def render_pill_navigation() -> None:
@@ -151,6 +175,11 @@ def render_analytics_panel(analytics: dict) -> None:
             """,
             unsafe_allow_html=True,
         )
+    st.caption(
+        "Calculated instantly from your uploaded text: complexity uses word length, "
+        "sentence length, and readability grade; objectives are counted from headings "
+        "and instructional verbs (explain, describe, compare, etc.)."
+    )
 
 
 # Legacy alias for imports

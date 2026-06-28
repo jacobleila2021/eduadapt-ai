@@ -28,7 +28,8 @@ def render_pill_navigation(key_prefix: str = "pill") -> None:
     active_cat = st.session_state.get("active_category_id", "")
     in_workspace = is_workspace()
     st.markdown(
-        '<p class="pill-nav-hint">Click a version — it opens in a dedicated workspace.</p>',
+        '<p class="pill-nav-hint">Choose a version below — the lesson opens here '
+        '(scroll down; use the tabs at the bottom to switch versions).</p>',
         unsafe_allow_html=True,
     )
 

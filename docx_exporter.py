@@ -137,7 +137,7 @@ def export_vocabulary_docx(data: Any) -> bytes:
     return buffer.getvalue()
 
 
-def export_worksheet_docx(data: Any) -> bytes:
+def export_worksheet_docx(data: Any, *, include_teacher_key: bool = False) -> bytes:
     sheet = _as_dict(data) or {}
     doc = Document()
     _apply_ld_normal_style(doc)
@@ -176,9 +176,13 @@ def export_worksheet_docx(data: Any) -> bytes:
     _add_heading(doc, "Part E — Exam Ready Checklist", 2)
     _add_bullets(doc, sheet.get("student_checklist") or [])
 
-    _add_heading(doc, "Teacher Answer Key", 2)
-    for item in sheet.get("answer_key") or []:
-        _safe_paragraph(doc, f"{item.get('question_ref', '')}: {item.get('model_answer', '')}")
+    if include_teacher_key:
+        _add_heading(doc, "Teacher Answer Key", 2)
+        for item in sheet.get("answer_key") or []:
+            _safe_paragraph(doc, f"{item.get('question_ref', '')}: {item.get('model_answer', '')}")
+        if sheet.get("teacher_differentiation"):
+            _add_heading(doc, "Teacher Differentiation Notes", 2)
+            _safe_paragraph(doc, sheet.get("teacher_differentiation", ""))
 
     buffer = io.BytesIO()
     doc.save(buffer)

@@ -169,12 +169,17 @@ Return ONLY valid JSON with top-level key "vocabulary" containing this object:
   "flashcards": [{{"front": "...", "back": "..."}}],
   "picture_words": [{{"term": "...", "color_cue": "...", "draw_this": "...", "label": "..."}}],
   "practice": [{{"term": "...", "pronunciation": "...", "syllables": "...", "sentence_blank": "..."}}],
-  "self_test": {{"matching_prompt": "...", "fill_blanks": ["..."]}},
+  "self_test": {{
+    "matching_prompt": "...",
+    "fill_blanks": ["The distance from the center to the edge of a circle is called the _____ (radius)."],
+    "fill_blank_answers": ["radius"]
+  }},
   "reference_chart": [{{"term": "...", "definition": "...", "synonym": "...", "exam_tip": "..."}}],
   "mermaid_diagram": "flowchart TD ..."
 }}
 
 Requirements: 12–15 word_wall terms, ALL sections filled, real content from lesson.
+- fill_blank_answers MUST be the same length as fill_blanks; each entry is the single correct vocabulary TERM (not a definition).
 {DEPTH_RULES}"""
 
 

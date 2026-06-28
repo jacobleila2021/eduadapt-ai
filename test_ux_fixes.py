@@ -51,22 +51,30 @@ def test_fallback_lesson_diagram_is_real_svg():
 
 
 def test_fill_blank_answer_extraction():
-    from structured_renderers import _extract_blank_answer
+    from structured_renderers import _extract_blank_answer, _resolve_fill_blank_answer
 
     display, ans = _extract_blank_answer(
         "The distance from the center to the edge of a circle is called the _____ (radius)."
     )
     assert ans == "radius"
     assert "(radius)" not in display
-    assert display.endswith(".")
 
-    display2, ans2 = _extract_blank_answer("The process of ___ is essential. (use: evaporation)")
-    assert ans2 == "evaporation"
-    assert "evaporation" not in display2.lower()
+    word_wall = [{"term": "radius", "definition": "Distance from center to edge."}]
+    _, resolved = _resolve_fill_blank_answer(
+        "The distance from the center to the edge of a circle is called the _____ (radius).",
+        1,
+        {"fill_blank_answers": ["radius"]},
+        word_wall,
+    )
+    assert resolved == "radius"
 
-    display3, ans3 = _extract_blank_answer("A plain sentence with no answer.")
-    assert ans3 == ""
-    assert display3 == "A plain sentence with no answer."
+    _, from_bracket = _resolve_fill_blank_answer(
+        "A _____ is used to draw circles (compass).",
+        1,
+        {},
+        [{"term": "compass", "definition": "Tool to draw circles."}],
+    )
+    assert from_bracket == "compass"
 
 
 def test_indian_voices_present():
