@@ -4,10 +4,10 @@ Accessibility tools — reading ruler, dyslexia-friendly text sizing.
 
 from __future__ import annotations
 
-import json
-
 import streamlit as st
 import streamlit.components.v1 as components
+
+from lesson_design import FONT_STACK
 
 RULER_COLORS = {
     "Soft Yellow": "#FFF59D",
@@ -38,7 +38,11 @@ def get_accessibility_css(spec_id: str) -> str:
         font-size: {font_px}px !important;
         line-height: 1.85 !important;
         letter-spacing: 0.04em !important;
-        font-family: "Atkinson Hyperlegible", "Comic Sans MS", Verdana, sans-serif !important;
+        font-family: {FONT_STACK} !important;
+        color: #333333 !important;
+        text-align: left !important;
+        line-height: 1.75 !important;
+        letter-spacing: 0.03em !important;
     }}
     </style>
     <div class="{marker}" style="display:none;" aria-hidden="true"></div>
@@ -98,11 +102,7 @@ def render_accessibility_toolbar(spec_id: str) -> None:
             32,
             22,
             key=f"lesson_font_{spec_id}",
-            help="Applies to lesson text below. Move the slider and the page updates instantly.",
-        )
-        st.caption(
-            "Tip: turn on the ruler, then move your mouse — the highlight band follows "
-            "your reading line."
+            help="Applies to lesson text below.",
         )
 
     st.markdown(get_accessibility_css(spec_id), unsafe_allow_html=True)
@@ -130,8 +130,8 @@ def get_workspace_layout_css() -> str:
         max-width: 100vw !important;
     }
     .adaptation-lesson-panel [data-testid="stVerticalBlockBorderWrapper"] {
-        background: #fff !important;
-        border-radius: 12px !important;
+        background: #FFF9EE !important;
+        border-radius: 16px !important;
     }
     </style>
     """

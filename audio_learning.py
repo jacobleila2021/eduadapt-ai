@@ -59,6 +59,8 @@ VOICE_OPTIONS = {
     },
 }
 
+from lesson_design import get_audio_passage_css
+
 DEFAULT_VOICE = "Warm Female (International)"
 
 PLAYBACK_SPEEDS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
@@ -183,52 +185,8 @@ def generate_openai_speech(
     return None
 
 
-def _audio_player_styles(default_font: str) -> str:
-    return f"""
-    <style>
-      .alora-audio-root {{
-        font-family: "Atkinson Hyperlegible", "Comic Sans MS", Verdana, sans-serif;
-        color: #334155;
-      }}
-      .alora-audio-toolbar {{
-        position: sticky; top: 0; z-index: 1000;
-        background: linear-gradient(135deg, #334155, #475569);
-        border-radius: 14px; padding: 0.85rem 1.1rem; margin-bottom: 0.85rem;
-        color: #fff; box-shadow: 0 6px 22px rgba(51, 65, 85, 0.35);
-      }}
-      .alora-audio-controls, .alora-audio-settings {{
-        display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center;
-      }}
-      .alora-audio-settings {{ margin-top: 0.55rem; font-size: 0.92rem; }}
-      .alora-audio-root button {{
-        background: #0F766E; color: #fff; border: none; border-radius: 999px;
-        padding: 0.5rem 1rem; font-weight: 700; cursor: pointer; font-size: 0.88rem;
-      }}
-      .alora-audio-root button:hover {{ background: #0d9488; }}
-      .alora-audio-root select {{
-        background: #fff; border: 1px solid #7DD3C7; border-radius: 8px;
-        padding: 0.35rem 0.5rem; margin-left: 0.35rem; color: #334155;
-      }}
-      .alora-transcript-card {{
-        background: #F4E9D8; border: 2px solid #7DD3C7; border-radius: 14px;
-        padding: 1.1rem 1.25rem; line-height: 1.9; font-size: {default_font};
-        letter-spacing: 0.04em; min-height: 120px;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); color: #000000;
-      }}
-      .alora-transcript-label {{
-        font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.08em; color: #0F766E; margin-bottom: 0.65rem;
-      }}
-      .speech-sentence {{
-        margin: 0.55rem 0; padding: 0.45rem 0.65rem; border-radius: 8px;
-        color: #000000; transition: background 0.2s, box-shadow 0.2s;
-      }}
-      .speech-sentence.active {{
-        background: rgba(125, 211, 199, 0.55);
-        box-shadow: inset 4px 0 0 #0F766E; font-weight: 600;
-      }}
-    </style>
-    """
+def _audio_player_styles(font_px: int = 21) -> str:
+    return f"<style>{get_audio_passage_css(font_px)}</style>"
 
 
 def _openai_audio_player_html(
@@ -238,6 +196,7 @@ def _openai_audio_player_html(
     spec_id: str,
     storage_key: str,
     default_font: str,
+    font_px: int = 21,
 ) -> str:
     """Native <audio> player (premium neural voice) with timed transcript highlight."""
     if not sentences:
@@ -255,6 +214,9 @@ def _openai_audio_player_html(
     return f"""
     <div class="alora-audio-root" id="alora-audio-root">
       <audio id="alora-audio" preload="auto" src="data:audio/mpeg;base64,{audio_b64}"></audio>
+      <div class="alora-transcript-card" id="speech-text">
+        {sentence_blocks}
+      </div>
       <div class="alora-audio-toolbar">
         <div class="alora-audio-controls">
           <button type="button" id="btn-play">▶ Play</button>
@@ -266,12 +228,8 @@ def _openai_audio_player_html(
           <label>Speed <select id="speed-select">{speed_opts}</select></label>
         </div>
       </div>
-      <div class="alora-transcript-card" id="speech-text">
-        <div class="alora-transcript-label">Follow the highlighted text as it reads</div>
-        {sentence_blocks}
-      </div>
     </div>
-    {_audio_player_styles(default_font)}
+    {_audio_player_styles(font_px)}
     <script>
     (function() {{
       const audio = document.getElementById("alora-audio");
@@ -337,7 +295,7 @@ def _audio_player_html(
     voice_avoid = VOICE_OPTIONS[voice_label].get("avoid", [])
     payload = json.dumps(sentences)
     mode_class = "auditory-mode" if auditory_mode else ""
-    default_font = "1.35rem" if auditory_mode else "1.25rem"
+    font_px = 22 if auditory_mode else 21
 
     if not sentences:
         sentences = ["No transcript text is available for this adaptation yet."]
@@ -358,6 +316,9 @@ def _audio_player_html(
 
     return f"""
     <div class="alora-audio-root {mode_class}" id="alora-audio-root">
+      <div class="alora-transcript-card" id="speech-text">
+        {sentence_blocks}
+      </div>
       <div class="alora-audio-toolbar" id="alora-audio-toolbar">
         <div class="alora-audio-controls">
           <button type="button" id="btn-play" title="Play">▶ Play</button>
@@ -370,104 +331,13 @@ def _audio_player_html(
           <label>Speed <select id="speed-select">{speed_opts}</select></label>
         </div>
       </div>
-      <div class="alora-transcript-card" id="speech-text">
-        <div class="alora-transcript-label">Follow the highlighted text as it reads</div>
-        {sentence_blocks}
-      </div>
       <div id="stop-dialog" class="alora-stop-dialog" hidden>
         <p>Resume from previous location?</p>
         <button type="button" id="btn-resume-yes">Yes — Resume</button>
         <button type="button" id="btn-resume-no">No — Start over</button>
       </div>
     </div>
-    <style>
-      .alora-audio-root {{
-        font-family: "Atkinson Hyperlegible", "Comic Sans MS", Verdana, sans-serif;
-        color: #334155;
-      }}
-      .alora-audio-toolbar {{
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background: linear-gradient(135deg, #334155, #475569);
-        border-radius: 14px;
-        padding: 0.85rem 1.1rem;
-        margin-bottom: 0.85rem;
-        color: #fff;
-        box-shadow: 0 6px 22px rgba(51, 65, 85, 0.35);
-      }}
-      .alora-audio-controls, .alora-audio-settings {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-        align-items: center;
-      }}
-      .alora-audio-settings {{
-        margin-top: 0.55rem;
-        font-size: 0.92rem;
-      }}
-      .alora-audio-root button {{
-        background: #0F766E;
-        color: #fff;
-        border: none;
-        border-radius: 999px;
-        padding: 0.5rem 1rem;
-        font-weight: 700;
-        cursor: pointer;
-        font-size: 0.88rem;
-      }}
-      .alora-audio-root button:hover {{ background: #0d9488; }}
-      .alora-audio-root select {{
-        background: #fff;
-        border: 1px solid #7DD3C7;
-        border-radius: 8px;
-        padding: 0.35rem 0.5rem;
-        margin-left: 0.35rem;
-        color: #334155;
-      }}
-      .alora-transcript-card {{
-        background: #F4E9D8;
-        border: 2px solid #7DD3C7;
-        border-radius: 14px;
-        padding: 1.1rem 1.25rem;
-        line-height: 1.9;
-        font-size: {default_font};
-        letter-spacing: 0.04em;
-        min-height: 120px;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
-      }}
-      .alora-transcript-label {{
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #0F766E;
-        margin-bottom: 0.65rem;
-      }}
-      .speech-sentence {{
-        margin: 0.55rem 0;
-        padding: 0.45rem 0.65rem;
-        border-radius: 8px;
-        transition: background 0.2s, box-shadow 0.2s;
-      }}
-      .speech-sentence.active {{
-        background: rgba(125, 211, 199, 0.55);
-        box-shadow: inset 4px 0 0 #0F766E;
-        font-weight: 600;
-      }}
-      .auditory-mode .speech-sentence {{ font-size: 1.3rem; }}
-      .alora-stop-dialog {{
-        margin-top: 0.75rem;
-        padding: 0.85rem 1rem;
-        background: #fff;
-        border: 2px solid #F472B6;
-        border-radius: 12px;
-      }}
-      .alora-stop-dialog button {{
-        background: #F472B6;
-        margin-right: 0.5rem;
-      }}
-    </style>
+    {_audio_player_styles(font_px)}
     <script>
     (function() {{
       const sentences = {payload};
@@ -651,7 +521,8 @@ def render_audio_learning_panel(
     speed = float(st.session_state.get("audio_speed", 1.0))
     sentences = split_sentences(speech_text)
     storage_key = f"alora_audio_{spec_id}_{voice}"
-    default_font = "1.35rem" if auditory_mode else "1.25rem"
+    default_font = "22px" if auditory_mode else "21px"
+    font_px = 22 if auditory_mode else 21
 
     st.markdown("#### 🔊 Adaptive Audio Learning")
 
@@ -689,7 +560,7 @@ def render_audio_learning_panel(
         b64 = base64.b64encode(audio_bytes).decode("ascii")
         components.html(
             _openai_audio_player_html(
-                b64, sentences, speed, spec_id, storage_key, default_font
+                b64, sentences, speed, spec_id, storage_key, default_font, font_px
             ),
             height=520 if auditory_mode else 460,
             scrolling=True,

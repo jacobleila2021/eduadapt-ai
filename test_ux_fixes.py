@@ -123,6 +123,17 @@ def test_ruler_colors_soft():
     assert set(RULER_COLORS.keys()) == {"Soft Yellow", "Soft Mint", "Soft Aqua", "Soft Peach"}
 
 
+def test_lesson_design_variants():
+    from lesson_design import BG_MAIN, TEXT_BODY, accent_for_variant, classify_section
+
+    assert BG_MAIN == "#FFF9EE"
+    assert TEXT_BODY == "#333333"
+    assert classify_section("Welcome to today's lesson", "", 0) == "introduction"
+    assert classify_section("Explain the water cycle", "teal", 1) == "information"
+    assert classify_section("Creative story time", "orange", 2) == "stories"
+    assert accent_for_variant("introduction") == "#059669"
+
+
 def test_nine_version_tabs():
     from navigation import PILL_CATEGORIES
 

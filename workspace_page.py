@@ -13,7 +13,7 @@ from navigation import category_for_id
 from print_exporter import build_print_html_all, build_print_html_single
 from pill_tabs import render_pill_navigation, render_sub_spec_pills
 from session_state import close_workspace
-from spec_icons import SPEC_ICONS
+from lesson_design import get_global_dyslexia_css, lesson_title_html
 from viewer_page import render_adaptation_viewer
 
 _TITLE_NOISE = re.compile(
@@ -71,11 +71,6 @@ def render_action_bar(
     from docx_exporter import export_tab_docx
 
     st.markdown("#### Download & Print")
-    st.caption(
-        "**This version** = Word or print-ready HTML for the tab you are viewing only. "
-        "**All adaptations** = combined pack with cover page and table of contents. "
-        "Exam Worksheet Word files are student papers only (no answer key)."
-    )
     c1, c2, c3, c4 = st.columns(4)
 
     docx_bytes = export_tab_docx(title, content, spec_id)
@@ -92,9 +87,8 @@ def render_action_bar(
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True,
             key=f"ws_dl_this_{spec_id}",
-            help="Word (DOCX) for this tab only — student worksheet has no answer key",
+            help="Word (DOCX) for this tab only",
         )
-        st.caption("MP3 audio is in the Audio Learning section below.")
 
     with c2:
         if zip_bytes:
@@ -164,7 +158,6 @@ def render_workspace(
 ) -> None:
     """Full-screen dedicated workspace for one adaptation."""
     spec_id = active_spec["id"]
-    icon = SPEC_ICONS.get(spec_id, "📘")
     lesson_title = lesson_display_title()
     category_id = st.session_state.get("active_category_id", "")
 
@@ -172,7 +165,10 @@ def render_workspace(
         '<div class="alora-workspace-active" style="display:none;"></div>',
         unsafe_allow_html=True,
     )
-    st.markdown(get_workspace_layout_css(), unsafe_allow_html=True)
+    st.markdown(
+        get_workspace_layout_css() + get_global_dyslexia_css(),
+        unsafe_allow_html=True,
+    )
 
     st.button(
         "← Back to Dashboard",
@@ -182,17 +178,7 @@ def render_workspace(
     )
 
     st.markdown(
-        '<div class="workspace-mode-strip">Adaptation workspace — one version at a time</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        f"""
-        <div class="workspace-banner">
-          <h2>{icon} {lesson_title}</h2>
-          <p>Reading · Listening · Visual · Interactive</p>
-        </div>
-        """,
+        lesson_title_html(lesson_title, "Reading · Listening · Visual · Interactive", "introduction"),
         unsafe_allow_html=True,
     )
 

@@ -1,0 +1,234 @@
+"""
+Dyslexia-friendly lesson screen design system — shared tokens and CSS.
+"""
+
+from __future__ import annotations
+
+import html
+import re
+
+# ---- Palette ----
+BG_MAIN = "#FFF9EE"
+TEXT_BODY = "#333333"
+BORDER_SUBTLE = "#E8E0CF"
+
+ACCENT_INTRO = "#059669"  # Emerald Green — Introduction
+ACCENT_INFO = "#1E3A8A"  # Dark Royal Blue — Information / Learn
+ACCENT_STORY = "#C2410C"  # Burnt Sienna — Stories / Creativity
+
+FONT_STACK = (
+    '"OpenDyslexic", "Atkinson Hyperlegible", "Lexend", Verdana, sans-serif'
+)
+
+FONT_IMPORTS = """
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600;700&display=swap');
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic-regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+"""
+
+_INTRO_KEYS = ("intro", "welcome", "hook", "overview", "start", "today", "warm")
+_INFO_KEYS = (
+    "learn", "explain", "concept", "information", "understand",
+    "practice", "example", "key", "step", "review", "check", "mastery",
+)
+_STORY_KEYS = ("story", "creative", "imagine", "activity", "wonder", "explore", "think")
+
+
+def classify_section(title: str, box: str, index: int) -> str:
+    """Map a lesson section to introduction | information | stories."""
+    t = (title or "").lower()
+    b = (box or "").lower()
+    if index == 0 or b == "intro" or any(k in t for k in _INTRO_KEYS):
+        return "introduction"
+    if b in ("orange",) or any(k in t for k in _STORY_KEYS):
+        return "stories"
+    if any(k in t for k in _INFO_KEYS) or b in ("teal", "blue", "green", "practice", "check"):
+        return "information"
+    return "information"
+
+
+def accent_for_variant(variant: str) -> str:
+    return {
+        "introduction": ACCENT_INTRO,
+        "information": ACCENT_INFO,
+        "stories": ACCENT_STORY,
+    }.get(variant, ACCENT_INFO)
+
+
+def get_global_dyslexia_css() -> str:
+    """Workspace-wide typography and layout defaults."""
+    return f"""
+    <style>
+    {FONT_IMPORTS}
+    .main .block-container:has(.alora-workspace-active) {{
+        background: {BG_MAIN} !important;
+    }}
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] p,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] li,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] span,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] td,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] h1,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] h2,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] h3,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] h4,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stTextArea"] textarea,
+    .main .block-container:has(.alora-workspace-active) [data-testid="stTextInput"] input {{
+        font-family: {FONT_STACK} !important;
+        color: {TEXT_BODY} !important;
+        text-align: left !important;
+        line-height: 1.75 !important;
+        letter-spacing: 0.03em !important;
+    }}
+    .main .block-container:has(.alora-workspace-active) h2,
+    .main .block-container:has(.alora-workspace-active) h3,
+    .main .block-container:has(.alora-workspace-active) h4 {{
+        font-weight: 700 !important;
+    }}
+    .main .block-container:has(.alora-workspace-active) [data-testid="stVerticalBlockBorderWrapper"] {{
+        background: {BG_MAIN} !important;
+        border-radius: 16px !important;
+    }}
+    </style>
+    """
+
+
+def section_card_html(title: str, body: str, variant: str) -> str:
+    """Themed lesson section card — cream background, coloured accent border."""
+    accent = accent_for_variant(variant)
+    safe_title = html.escape(title)
+    # Preserve basic paragraph breaks from AI body (plain text / light markdown).
+    safe_body = html.escape(body.strip())
+    safe_body = re.sub(r"\n\n+", "</p><p>", safe_body)
+    safe_body = safe_body.replace("\n", "<br/>")
+    return f"""
+    <div class="alora-lesson-section" style="
+        background:{BG_MAIN};
+        border:6px solid {accent};
+        border-radius:16px;
+        padding:28px 32px;
+        margin:1.25rem 0;
+        box-shadow:0 2px 8px rgba(51,51,51,0.06);
+        text-align:left;
+        font-family:{FONT_STACK};
+        color:{TEXT_BODY};
+        line-height:1.75;
+        letter-spacing:0.03em;">
+      <h3 style="color:{accent};font-weight:700;font-size:1.35rem;margin:0 0 1rem 0;
+          font-family:{FONT_STACK};">{safe_title}</h3>
+      <div style="font-size:1.05rem;color:{TEXT_BODY};max-width:48em;">
+        <p style="margin:0 0 1rem 0;">{safe_body}</p>
+      </div>
+    </div>
+    """
+
+
+def lesson_title_html(title: str, subtitle: str = "", variant: str = "introduction") -> str:
+    accent = accent_for_variant(variant)
+    sub = f'<p style="color:{TEXT_BODY};font-size:1.05rem;margin:0.5rem 0 0 0;'
+    sub += f'font-family:{FONT_STACK};line-height:1.7;">{html.escape(subtitle)}</p>' if subtitle else ""
+    return f"""
+    <div style="margin:0 0 1.5rem 0;text-align:left;font-family:{FONT_STACK};">
+      <h2 style="color:{accent};font-weight:700;font-size:1.75rem;margin:0;
+          font-family:{FONT_STACK};">{html.escape(title)}</h2>
+      {sub}
+    </div>
+    """
+
+
+def get_audio_passage_css(font_px: int = 21) -> str:
+    """Reading passage styling — identical across every lesson type."""
+    return f"""
+    {FONT_IMPORTS}
+    .alora-audio-root {{
+        font-family: {FONT_STACK};
+        color: {TEXT_BODY};
+        max-width: 48em;
+    }}
+    .alora-transcript-card {{
+        background: {BG_MAIN};
+        color: {TEXT_BODY};
+        border: 1px solid {BORDER_SUBTLE};
+        border-radius: 16px;
+        padding: 28px 32px;
+        line-height: 1.8;
+        font-size: {font_px}px;
+        letter-spacing: 0.03em;
+        min-height: 120px;
+        text-align: left;
+        margin-bottom: 1rem;
+        box-shadow: none;
+    }}
+    .alora-transcript-card .speech-sentence {{
+        margin: 0.65rem 0;
+        padding: 0.35rem 0;
+        color: {TEXT_BODY};
+        transition: background 0.2s;
+    }}
+    .alora-transcript-card .speech-sentence.active {{
+        background: rgba(232, 224, 207, 0.55);
+        box-shadow: inset 4px 0 0 {ACCENT_INTRO};
+        font-weight: 600;
+        padding-left: 0.5rem;
+        border-radius: 4px;
+    }}
+    .alora-audio-toolbar {{
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: {BG_MAIN};
+        border: 1px solid {BORDER_SUBTLE};
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.85rem;
+        box-shadow: 0 2px 8px rgba(51,51,51,0.06);
+    }}
+    .alora-audio-controls, .alora-audio-settings {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        align-items: center;
+    }}
+    .alora-audio-settings {{ margin-top: 0.55rem; font-size: 1rem; color: {TEXT_BODY}; }}
+    .alora-audio-root button {{
+        background: {ACCENT_INFO};
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 0.65rem 1.25rem;
+        min-height: 44px;
+        min-width: 44px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-family: {FONT_STACK};
+    }}
+    .alora-audio-root button:hover {{ background: #172554; }}
+    .alora-audio-root select {{
+        background: {BG_MAIN};
+        border: 1px solid {BORDER_SUBTLE};
+        border-radius: 12px;
+        padding: 0.5rem 0.65rem;
+        min-height: 44px;
+        margin-left: 0.35rem;
+        color: {TEXT_BODY};
+        font-family: {FONT_STACK};
+        font-size: 0.95rem;
+    }}
+    .alora-stop-dialog {{
+        margin-top: 0.75rem;
+        padding: 1rem 1.25rem;
+        background: {BG_MAIN};
+        border: 2px solid {BORDER_SUBTLE};
+        border-radius: 16px;
+        color: {TEXT_BODY};
+        font-family: {FONT_STACK};
+    }}
+    .alora-stop-dialog button {{
+        background: {ACCENT_INTRO};
+    }}
+    """

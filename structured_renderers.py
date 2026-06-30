@@ -13,8 +13,19 @@ from typing import Any
 import streamlit as st
 
 from content_renderer import _render_mermaid
+from lesson_design import (
+    ACCENT_INFO,
+    ACCENT_INTRO,
+    ACCENT_STORY,
+    BG_MAIN,
+    FONT_STACK,
+    TEXT_BODY,
+    accent_for_variant,
+    classify_section,
+    section_card_html,
+)
 
-_CARD_COLORS = ["#e6f7f8", "#fff8e1", "#f3e5f5", "#e8f5e9", "#fce4ec", "#e3f2fd"]
+_SECTION_ACCENTS = [ACCENT_INTRO, ACCENT_INFO, ACCENT_STORY]
 _BOX_RENDERERS = {
     "teal": lambda t: st.info(t),
     "blue": lambda t: st.info(t),
@@ -24,6 +35,7 @@ _BOX_RENDERERS = {
     "practice": lambda t: st.success(f"**Practice** — {t}"),
     "check": lambda t: st.warning(f"**Check** — {t}"),
 }
+
 
 
 def _coerce_dict(content: Any) -> dict | None:
@@ -217,52 +229,47 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
 
     topic = vocab.get("topic", "Lesson Vocabulary")
     st.subheader(f"📖 {topic}")
-    st.caption("Study each section in order before attempting the Worksheet tab.")
 
     # --- 1. Word Wall ---
     st.markdown("### 1. Word Wall — Study First")
-    st.caption(
-        "Each card uses a soft colour band to help visual memory — the colours are "
-        "learning cues only, not categories. Read the definition, then the example."
-    )
     word_wall = vocab.get("word_wall") or []
     if not word_wall:
         st.warning("No word wall terms generated.")
     else:
         cols = st.columns(2)
         for index, word in enumerate(word_wall):
-            color = _CARD_COLORS[index % len(_CARD_COLORS)]
+            accent = _SECTION_ACCENTS[index % len(_SECTION_ACCENTS)]
             with cols[index % 2]:
                 with st.container(border=True):
                     emoji = word.get("emoji", "📌")
                     term = word.get("term", "Term")
                     st.markdown(
-                        f'<div style="color:#000000;font-weight:800;font-size:1.15rem;">'
-                        f'{emoji} {html.escape(term)}</div>',
+                        f'<div style="color:{TEXT_BODY};font-weight:800;font-size:1.15rem;'
+                        f'font-family:{FONT_STACK};">{emoji} {html.escape(term)}</div>',
                         unsafe_allow_html=True,
                     )
                     st.markdown(
-                        _word_illustration_svg(term, emoji, color),
+                        _word_illustration_svg(term, emoji, BG_MAIN),
                         unsafe_allow_html=True,
                     )
                     definition = word.get("definition", "")
                     child_note = word.get("child_friendly") or word.get("visual_description") or ""
                     example = word.get("example") or word.get("example_sentence") or ""
                     st.markdown(
-                        f'<div style="background:{color};padding:12px;border-radius:8px;'
-                        f'border-left:4px solid #0F766E;color:#000000;font-weight:500;'
-                        f'font-size:1rem;line-height:1.6;">'
-                        f'<strong style="color:#000000;">Definition:</strong> '
+                        f'<div style="background:{BG_MAIN};padding:12px;border-radius:16px;'
+                        f'border-left:6px solid {accent};color:{TEXT_BODY};font-weight:500;'
+                        f'font-size:1rem;line-height:1.75;letter-spacing:0.03em;">'
+                        f'<strong style="color:{TEXT_BODY};">Definition:</strong> '
                         f'{html.escape(definition)}'
                         + (
-                            f'<br/><strong style="color:#000000;">In simple words:</strong> '
+                            f'<br/><strong style="color:{TEXT_BODY};">In simple words:</strong> '
                             f'{html.escape(child_note)}'
                             if child_note
                             else ""
                         )
                         + (
-                            f'<br/><strong style="color:#000000;">Example:</strong> '
-                            f'<em style="color:#000000;">{html.escape(example)}</em>'
+                            f'<br/><strong style="color:{TEXT_BODY};">Example:</strong> '
+                            f'<em style="color:{TEXT_BODY};">{html.escape(example)}</em>'
                             if example
                             else ""
                         )
@@ -475,19 +482,23 @@ def render_lesson(data: Any) -> None:
 
     big_idea = lesson.get("big_idea", "")
     if big_idea:
-        st.info(f"💡 **Big Idea:** {big_idea}")
+        st.markdown(
+            section_card_html("Big Idea", big_idea, "introduction"),
+            unsafe_allow_html=True,
+        )
 
     sections = lesson.get("sections") or []
     if sections:
-        st.markdown("**Jump to section**")
         jump_cols = st.columns(min(len(sections), 4))
         for idx, section in enumerate(sections):
             title = (section.get("title") or f"Section {idx + 1}").strip()
+            variant = classify_section(title, section.get("box", ""), idx)
+            accent = accent_for_variant(variant)
             anchor = f"sec_{idx}"
             with jump_cols[idx % len(jump_cols)]:
                 st.markdown(
-                    f'<a href="#{anchor}" style="text-decoration:none;font-weight:600;">'
-                    f"↓ {html.escape(title)}</a>",
+                    f'<a href="#{anchor}" style="text-decoration:none;font-weight:700;'
+                    f'color:{accent};font-family:{FONT_STACK};">↓ {html.escape(title)}</a>',
                     unsafe_allow_html=True,
                 )
 
@@ -510,17 +521,16 @@ def render_lesson(data: Any) -> None:
         _render_svg(_fallback_lesson_diagram(lesson))
 
     for idx, section in enumerate(sections):
-        title = section.get("title", "")
+        title = section.get("title", "") or f"Section {idx + 1}"
         body = section.get("body", "")
         box = (section.get("box") or "none").lower()
+        variant = classify_section(title, box, idx)
         st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
-        if title:
-            st.markdown(f"#### {title}")
-        renderer = _BOX_RENDERERS.get(box)
-        if renderer and body:
-            renderer(body)
-        elif body:
-            st.markdown(body)
+        if body:
+            st.markdown(
+                section_card_html(title, body, variant),
+                unsafe_allow_html=True,
+            )
 
     summary = lesson.get("visual_summary") or []
     st.markdown("#### Visual Summary — Colour Key")
@@ -540,10 +550,10 @@ def render_lesson(data: Any) -> None:
             color = item.get("color_name", "")
             hex_color = item.get("hex", "#0F766E")
             st.markdown(
-                f'<div style="background:#F4E9D8;border-left:5px solid {hex_color};'
-                f'padding:0.65rem;border-radius:8px;color:#000000;">'
-                f'{icon} <strong style="color:#000000;">{html.escape(color)}</strong><br/>'
-                f'<span style="font-size:0.9rem;color:#000000;">{html.escape(idea)}</span></div>',
+                f'<div style="background:{BG_MAIN};border-left:6px solid {hex_color};'
+                f'padding:0.75rem;border-radius:16px;color:{TEXT_BODY};">'
+                f'{icon} <strong style="color:{TEXT_BODY};">{html.escape(color)}</strong><br/>'
+                f'<span style="font-size:0.95rem;color:{TEXT_BODY};">{html.escape(idea)}</span></div>',
                 unsafe_allow_html=True,
             )
 
