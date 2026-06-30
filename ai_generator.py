@@ -170,16 +170,18 @@ Return ONLY valid JSON with top-level key "vocabulary" containing this object:
   "picture_words": [{{"term": "...", "color_cue": "...", "draw_this": "...", "label": "..."}}],
   "practice": [{{"term": "...", "pronunciation": "...", "syllables": "...", "sentence_blank": "..."}}],
   "self_test": {{
-    "matching_prompt": "...",
-    "fill_blanks": ["The distance from the center to the edge of a circle is called the _____ (radius)."],
-    "fill_blank_answers": ["radius"]
+    "matching_prompt": "Match each term to its definition from the word wall.",
+    "fill_blanks": ["Meristematic tissue is made of cells that can _____ (divide)."],
+    "fill_blank_answers": ["divide"]
   }},
   "reference_chart": [{{"term": "...", "definition": "...", "synonym": "...", "exam_tip": "..."}}],
   "mermaid_diagram": "flowchart TD ..."
 }}
 
 Requirements: 12–15 word_wall terms, ALL sections filled, real content from lesson.
-- fill_blank_answers MUST be the same length as fill_blanks; each entry is the single correct vocabulary TERM (not a definition).
+- fill_blank_answers MUST be the same length as fill_blanks; each entry is the single correct vocabulary TERM from word_wall (not a definition).
+- Every fill_blanks sentence MUST test a term from THIS lesson's word_wall — never reuse generic math/science examples from other subjects.
+- flashcards MUST pair each word_wall term (front) with its definition (back).
 {DEPTH_RULES}"""
 
 
@@ -227,6 +229,36 @@ def _extract_key(raw: str, key: str) -> dict:
 
 def _valid_vocabulary(vocab: dict) -> bool:
     return bool(vocab.get("word_wall")) and len(vocab.get("word_wall") or []) >= 5
+
+
+def _sanitize_vocabulary(vocab: dict) -> dict:
+    """Ensure flashcards and self-test answers align with the word wall."""
+    word_wall = vocab.get("word_wall") or []
+    if not word_wall:
+        return vocab
+
+    vocab["flashcards"] = [
+        {"front": w.get("term", ""), "back": w.get("definition", "")}
+        for w in word_wall
+        if w.get("term")
+    ]
+
+    self_test = dict(vocab.get("self_test") or {})
+    blanks = self_test.get("fill_blanks") or []
+    if blanks:
+        from structured_renderers import _resolve_fill_blank_answer
+
+        validated: list[str] = []
+        for index, sentence in enumerate(blanks, 1):
+            _, ans = _resolve_fill_blank_answer(sentence, index, self_test, word_wall)
+            if not ans:
+                fallback = word_wall[(index - 1) % len(word_wall)]
+                ans = (fallback.get("term") or "").strip()
+            validated.append(ans)
+        self_test["fill_blank_answers"] = validated
+        vocab["self_test"] = self_test
+
+    return vocab
 
 
 def _valid_worksheet(sheet: dict) -> bool:
@@ -441,7 +473,7 @@ def generate_adaptations(
                 break
         if not _valid_vocabulary(vocab):
             vocab = _fallback_vocabulary(context)
-        merged["vocabulary"] = vocab
+        merged["vocabulary"] = _sanitize_vocabulary(vocab)
 
         step("Building exam worksheet…", 0.25)
         terms = [w.get("term", "") for w in merged["vocabulary"].get("word_wall") or []]

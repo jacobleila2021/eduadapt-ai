@@ -74,7 +74,7 @@ def render_viewer_downloads(
             )
 
             api_key = st.session_state.get("runtime_api_key", "")
-            voice = st.session_state.get("audio_voice", "Warm Female (International)")
+            voice = st.session_state.get("audio_voice", "Female")
             meta = VOICE_OPTIONS.get(voice) or next(iter(VOICE_OPTIONS.values()))
             speech = extract_speech_text(title, content, spec_id)
             mp3 = generate_openai_speech(

@@ -94,7 +94,7 @@ def get_workspace_css_fragment() -> str:
         text-align: left !important;
         line-height: 1.75 !important;
         letter-spacing: 0.03em !important;
-        font-size: var(--alora-font, 22px) !important;
+        font-size: var(--alora-font, 24px) !important;
     }}
     .main .block-container:has(.alora-workspace-active) h2,
     .main .block-container:has(.alora-workspace-active) h3,
@@ -117,6 +117,22 @@ def get_workspace_css_fragment() -> str:
         margin: 0 !important;
         box-shadow: 0 -8px 28px rgba(0,0,0,0.35) !important;
         max-width: 100vw !important;
+    }}
+    .main .block-container:has(.alora-workspace-active) .alora-lesson-title p {{
+        color: {TEXT_BODY} !important;
+        opacity: 1 !important;
+    }}
+    .main .block-container:has(.alora-workspace-active)
+    div[data-testid="element-container"]:has(.alora-audio-stick),
+    .main .block-container:has(.alora-workspace-active)
+    div[data-testid="element-container"]:has(.alora-audio-sticky-start) {{
+        position: sticky !important;
+        top: 8.5rem !important;
+        z-index: 998 !important;
+        background: {BG_MAIN} !important;
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.15rem !important;
+        border-bottom: 1px solid {BORDER_SUBTLE} !important;
     }}
     """
 
@@ -153,18 +169,23 @@ def section_card_html(title: str, body: str, variant: str) -> str:
 
 def lesson_title_html(title: str, subtitle: str = "", variant: str = "introduction") -> str:
     accent = accent_for_variant(variant)
-    sub = f'<p style="color:{TEXT_BODY};font-size:1.05rem;margin:0.5rem 0 0 0;'
-    sub += f'font-family:{FONT_STACK};line-height:1.7;">{html.escape(subtitle)}</p>' if subtitle else ""
+    sub = (
+        f'<p style="color:{TEXT_BODY};font-size:1.1rem;margin:0.5rem 0 0 0;'
+        f'font-family:{FONT_STACK};line-height:1.7;font-weight:600;">'
+        f'{html.escape(subtitle)}</p>'
+        if subtitle
+        else ""
+    )
     return f"""
-    <div style="margin:0 0 1.5rem 0;text-align:left;font-family:{FONT_STACK};">
-      <h2 style="color:{accent};font-weight:700;font-size:1.75rem;margin:0;
+    <div class="alora-lesson-title" style="margin:0 0 1.5rem 0;text-align:left;font-family:{FONT_STACK};">
+      <h2 style="color:{accent};font-weight:700;font-size:1.9rem;margin:0;
           font-family:{FONT_STACK};">{html.escape(title)}</h2>
       {sub}
     </div>
     """
 
 
-def get_audio_passage_css(font_px: int = 21) -> str:
+def get_audio_passage_css(font_px: int = 24) -> str:
     """Reading passage styling — identical across every lesson type."""
     return f"""
     {FONT_IMPORTS}

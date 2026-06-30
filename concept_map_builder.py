@@ -95,20 +95,26 @@ def build_vocabulary_concept_map_svg(vocab: Any) -> str:
         f'font-size="18" font-weight="700" fill="{NAVY}">Concept Map</text>',
     ]
 
-    # Central topic box
+    # Topic label sits above the hub centre (where spokes meet).
+    topic_lines = _wrap_label(topic, 18)
+    topic_base_y = cy - hub_h // 2 - 14
+    for index, line in enumerate(topic_lines):
+        ty = topic_base_y - (len(topic_lines) - 1 - index) * 20
+        parts.append(
+            f'<text x="{cx}" y="{ty}" text-anchor="middle" font-family="{FONT}" '
+            f'font-size="15" font-weight="700" fill="{NAVY}">{html.escape(line)}</text>'
+        )
+
+    # Central hub node (no text inside — label is projected above).
     hub_x = cx - hub_w // 2
     hub_y = cy - hub_h // 2
     parts.append(
         f'<rect x="{hub_x}" y="{hub_y}" width="{hub_w}" height="{hub_h}" rx="12" '
         f'fill="{NAVY}" stroke="{TEAL}" stroke-width="2"/>'
     )
-    topic_lines = _wrap_label(topic, 18)
-    for index, line in enumerate(topic_lines):
-        ty = cy - 6 + index * 18
-        parts.append(
-            f'<text x="{cx}" y="{ty}" text-anchor="middle" font-family="{FONT}" '
-            f'font-size="15" font-weight="600" fill="#ffffff">{html.escape(line)}</text>'
-        )
+    parts.append(
+        f'<circle cx="{cx}" cy="{cy}" r="6" fill="{TEAL}"/>'
+    )
 
     count = len(terms)
     radius_x = 290

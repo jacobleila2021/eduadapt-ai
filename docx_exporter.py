@@ -103,8 +103,8 @@ def export_vocabulary_docx(data: Any) -> bytes:
     for row in vocab.get("picture_words") or []:
         _safe_paragraph(
             doc,
-            f"{row.get('term', '')} — {row.get('color_cue', '')} — "
-            f"Draw: {row.get('draw_this', '')}",
+            f"{row.get('term', '')} — Draw: {row.get('draw_this', '')} — "
+            f"Label: {row.get('label', '')}",
         )
 
     _add_heading(doc, "4. Say · Spell · Use", 2)

@@ -15,27 +15,7 @@ import streamlit.components.v1 as components
 from structured_renderers import _coerce_dict, content_to_export
 
 VOICE_OPTIONS = {
-    "Warm Female (International)": {
-        "openai": "nova",
-        "instructions": (
-            "You are a warm, friendly female teacher reading a lesson aloud to children. "
-            "Use clear neutral international English, natural pacing, gentle expressive "
-            "intonation, and brief pauses at full stops. Sound encouraging, never robotic."
-        ),
-        "hints": ["zira", "samantha", "susan", "karen", "hazel", "fiona", "google uk english female", "female"],
-        "avoid": [],
-    },
-    "Warm Male (International)": {
-        "openai": "onyx",
-        "instructions": (
-            "You are a warm, friendly male teacher reading a lesson aloud to children. "
-            "Use clear neutral international English, natural pacing, gentle expressive "
-            "intonation, and brief pauses at full stops. Sound encouraging, never robotic."
-        ),
-        "hints": ["david", "daniel", "mark", "george", "james", "google uk english male"],
-        "avoid": ["female"],
-    },
-    "Warm Female (Indian)": {
+    "Female": {
         "openai": "shimmer",
         "instructions": (
             "You are a warm, professional female teacher with a clear, neutral urban Indian "
@@ -46,7 +26,7 @@ VOICE_OPTIONS = {
         "hints": ["heera", "kalpana", "swara", "priya", "veena", "raveena", "en-in", "english (india)", "hindi"],
         "avoid": ["male"],
     },
-    "Warm Male (Indian)": {
+    "Male": {
         "openai": "echo",
         "instructions": (
             "You are a warm, professional male teacher with a clear, neutral urban Indian "
@@ -61,7 +41,7 @@ VOICE_OPTIONS = {
 
 from lesson_design import get_audio_passage_css
 
-DEFAULT_VOICE = "Warm Female (International)"
+DEFAULT_VOICE = "Female"
 
 PLAYBACK_SPEEDS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
 
@@ -185,8 +165,84 @@ def generate_openai_speech(
     return None
 
 
-def _audio_player_styles(font_px: int = 21) -> str:
+def _audio_player_styles(font_px: int = 24) -> str:
     return f"<style>{get_audio_passage_css(font_px)}</style>"
+
+
+def _transcript_html(sentences: list[str], font_px: int = 24) -> str:
+    """Reading passage only — playback controls live in Streamlit (st.audio / sticky toolbar)."""
+    if not sentences:
+        sentences = ["No transcript text is available for this adaptation yet."]
+    blocks = "".join(
+        f'<p class="speech-sentence">{html.escape(s)}</p>' for s in sentences
+    )
+    return f"""
+    <div class="alora-audio-root">
+      <div class="alora-transcript-card">{blocks}</div>
+    </div>
+    {_audio_player_styles(font_px)}
+    """
+
+
+def _openai_controls_html(
+    audio_b64: str,
+    sentences: list[str],
+    speed: float,
+    storage_key: str,
+    font_px: int = 24,
+) -> str:
+    """Sticky toolbar + hidden audio element (transcript rendered separately)."""
+    speed_opts = "".join(
+        f'<option value="{s}"{" selected" if s == speed else ""}>{s}x</option>'
+        for s in PLAYBACK_SPEEDS
+    )
+    lengths = [max(len(s), 1) for s in sentences]
+
+    return f"""
+    <div class="alora-audio-root" id="alora-audio-root">
+      <audio id="alora-audio" preload="auto" src="data:audio/mpeg;base64,{audio_b64}"></audio>
+      <div class="alora-audio-toolbar">
+        <div class="alora-audio-controls">
+          <button type="button" id="btn-play">▶ Play</button>
+          <button type="button" id="btn-pause">⏸ Pause</button>
+          <button type="button" id="btn-resume">⏵ Resume</button>
+          <button type="button" id="btn-stop">⏹ Stop</button>
+        </div>
+        <div class="alora-audio-settings">
+          <label>Speed <select id="speed-select">{speed_opts}</select></label>
+        </div>
+      </div>
+    </div>
+    {_audio_player_styles(font_px)}
+    <script>
+    (function() {{
+      const audio = document.getElementById("alora-audio");
+      const lengths = {json.dumps(lengths)};
+      const storageKey = {json.dumps(storage_key)};
+      function applySpeed() {{
+        audio.playbackRate = parseFloat(document.getElementById("speed-select").value) || 1;
+      }}
+      audio.addEventListener("loadedmetadata", function() {{
+        try {{ const p = parseFloat(localStorage.getItem(storageKey)); if (p > 0 && p < audio.duration) audio.currentTime = p; }} catch (e) {{}}
+      }});
+      audio.addEventListener("timeupdate", function() {{
+        try {{ localStorage.setItem(storageKey, audio.currentTime); }} catch (e) {{}}
+      }});
+      audio.addEventListener("ended", function() {{
+        try {{ localStorage.setItem(storageKey, 0); }} catch (e) {{}}
+      }});
+      document.getElementById("speed-select").onchange = applySpeed;
+      document.getElementById("btn-play").onclick = function() {{ applySpeed(); audio.play(); }};
+      document.getElementById("btn-pause").onclick = function() {{ audio.pause(); }};
+      document.getElementById("btn-resume").onclick = function() {{ applySpeed(); audio.play(); }};
+      document.getElementById("btn-stop").onclick = function() {{
+        audio.pause(); audio.currentTime = 0;
+        try {{ localStorage.setItem(storageKey, 0); }} catch (e) {{}}
+      }};
+      applySpeed();
+    }})();
+    </script>
+    """
 
 
 def _openai_audio_player_html(
@@ -214,9 +270,6 @@ def _openai_audio_player_html(
     return f"""
     <div class="alora-audio-root" id="alora-audio-root">
       <audio id="alora-audio" preload="auto" src="data:audio/mpeg;base64,{audio_b64}"></audio>
-      <div class="alora-transcript-card" id="speech-text">
-        {sentence_blocks}
-      </div>
       <div class="alora-audio-toolbar">
         <div class="alora-audio-controls">
           <button type="button" id="btn-play">▶ Play</button>
@@ -227,6 +280,9 @@ def _openai_audio_player_html(
         <div class="alora-audio-settings">
           <label>Speed <select id="speed-select">{speed_opts}</select></label>
         </div>
+      </div>
+      <div class="alora-transcript-card" id="speech-text">
+        {sentence_blocks}
       </div>
     </div>
     {_audio_player_styles(font_px)}
@@ -290,12 +346,12 @@ def _audio_player_html(
     storage_key: str,
 ) -> str:
     if voice_label not in VOICE_OPTIONS:
-        voice_label = "Warm Female"
+        voice_label = DEFAULT_VOICE
     voice_hints = VOICE_OPTIONS[voice_label]["hints"]
     voice_avoid = VOICE_OPTIONS[voice_label].get("avoid", [])
     payload = json.dumps(sentences)
     mode_class = "auditory-mode" if auditory_mode else ""
-    font_px = 22 if auditory_mode else 21
+    font_px = 26 if auditory_mode else 24
 
     if not sentences:
         sentences = ["No transcript text is available for this adaptation yet."]
@@ -316,9 +372,6 @@ def _audio_player_html(
 
     return f"""
     <div class="alora-audio-root {mode_class}" id="alora-audio-root">
-      <div class="alora-transcript-card" id="speech-text">
-        {sentence_blocks}
-      </div>
       <div class="alora-audio-toolbar" id="alora-audio-toolbar">
         <div class="alora-audio-controls">
           <button type="button" id="btn-play" title="Play">▶ Play</button>
@@ -330,6 +383,9 @@ def _audio_player_html(
           <label>Voice <select id="voice-select">{voice_opts}</select></label>
           <label>Speed <select id="speed-select">{speed_opts}</select></label>
         </div>
+      </div>
+      <div class="alora-transcript-card" id="speech-text">
+        {sentence_blocks}
       </div>
       <div id="stop-dialog" class="alora-stop-dialog" hidden>
         <p>Resume from previous location?</p>
@@ -521,19 +577,37 @@ def render_audio_learning_panel(
     speed = float(st.session_state.get("audio_speed", 1.0))
     sentences = split_sentences(speech_text)
     storage_key = f"alora_audio_{spec_id}_{voice}"
-    default_font = "22px" if auditory_mode else "21px"
-    font_px = 22 if auditory_mode else 21
+    font_px = 26 if auditory_mode else 24
 
+    st.markdown(
+        '<div class="alora-audio-sticky-start" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="alora-audio-stick" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown("#### 🔊 Adaptive Audio Learning")
 
     voice_labels = list(VOICE_OPTIONS.keys())
-    selected = st.selectbox(
-        "Voice",
-        voice_labels,
-        index=voice_labels.index(voice),
-        key=f"voice_select_{spec_id}",
-        label_visibility="collapsed",
-    )
+    ctrl1, ctrl2 = st.columns(2)
+    with ctrl1:
+        selected = st.selectbox(
+            "Voice",
+            voice_labels,
+            index=voice_labels.index(voice),
+            key=f"voice_select_{spec_id}",
+        )
+    with ctrl2:
+        speed = st.selectbox(
+            "Speed",
+            PLAYBACK_SPEEDS,
+            index=PLAYBACK_SPEEDS.index(speed) if speed in PLAYBACK_SPEEDS else 1,
+            format_func=lambda s: f"{s}x",
+            key=f"audio_speed_select_{spec_id}",
+        )
+        st.session_state.audio_speed = speed
+
     if selected != voice:
         st.session_state.audio_voice = selected
         voice = selected
@@ -558,11 +632,18 @@ def render_audio_learning_panel(
 
     if audio_bytes:
         b64 = base64.b64encode(audio_bytes).decode("ascii")
+        st.markdown(
+            '<div class="alora-audio-stick" aria-hidden="true"></div>',
+            unsafe_allow_html=True,
+        )
         components.html(
-            _openai_audio_player_html(
-                b64, sentences, speed, spec_id, storage_key, default_font, font_px
-            ),
-            height=520 if auditory_mode else 460,
+            _openai_controls_html(b64, sentences, speed, storage_key, font_px),
+            height=130,
+            scrolling=False,
+        )
+        components.html(
+            _transcript_html(sentences, font_px),
+            height=420 if auditory_mode else 360,
             scrolling=True,
         )
         return
@@ -571,6 +652,10 @@ def render_audio_learning_panel(
         st.caption(
             "Premium neural narration is temporarily unavailable — using your browser voice."
         )
+    st.markdown(
+        '<div class="alora-audio-stick" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
     components.html(
         _audio_player_html(
             sentences,
@@ -580,6 +665,6 @@ def render_audio_learning_panel(
             spec_id,
             storage_key,
         ),
-        height=520 if auditory_mode else 460,
+        height=560 if auditory_mode else 500,
         scrolling=True,
     )

@@ -18,7 +18,7 @@ RULER_COLORS = {
 
 def _a11y_marker_html(spec_id: str) -> str:
     """Hidden marker that sets --alora-font for styles defined in styles.py."""
-    font_px = int(st.session_state.get(f"lesson_font_{spec_id}", 22))
+    font_px = int(st.session_state.get(f"lesson_font_{spec_id}", 24))
     marker = f"alora-a11y-{spec_id}"
     return (
         f'<div class="{marker}" style="--alora-font:{font_px}px;display:none;" '
@@ -77,7 +77,7 @@ def render_accessibility_toolbar(spec_id: str) -> None:
             "Text size (px)",
             18,
             32,
-            22,
+            24,
             key=f"lesson_font_{spec_id}",
         )
 

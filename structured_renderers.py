@@ -18,6 +18,7 @@ from lesson_design import (
     ACCENT_INTRO,
     ACCENT_STORY,
     BG_MAIN,
+    BORDER_SUBTLE,
     FONT_STACK,
     TEXT_BODY,
     accent_for_variant,
@@ -125,9 +126,9 @@ def _word_illustration_svg(term: str, emoji: str, color: str) -> str:
     safe = html.escape(term[:24])
     return f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="280" height="140" viewBox="0 0 280 140" role="img" aria-label="{safe}">
-      <rect x="8" y="8" width="264" height="124" rx="14" fill="{color}" stroke="#0F766E" stroke-width="2"/>
+      <rect x="8" y="8" width="264" height="124" rx="14" fill="{color}" stroke="{BORDER_SUBTLE}" stroke-width="1"/>
       <text x="140" y="58" text-anchor="middle" font-size="36">{emoji}</text>
-      <text x="140" y="98" text-anchor="middle" font-size="14" fill="#334155" font-family="Verdana,sans-serif">{safe}</text>
+      <text x="140" y="98" text-anchor="middle" font-size="14" fill="{TEXT_BODY}" font-family="Verdana,sans-serif">{safe}</text>
     </svg>
     """
 
@@ -165,16 +166,45 @@ def _extract_blank_answer(sentence: str) -> tuple[str, str]:
     return display, raw
 
 
+def _wall_term_map(word_wall: list[dict]) -> dict[str, str]:
+    return {
+        (w.get("term") or "").strip().lower(): (w.get("term") or "").strip()
+        for w in word_wall
+        if (w.get("term") or "").strip()
+    }
+
+
+def _canonical_wall_term(candidate: str, term_map: dict[str, str]) -> str:
+    key = (candidate or "").strip().lower()
+    return term_map.get(key, "") if key else ""
+
+
+def _best_wall_term_for_sentence(sentence: str, word_wall: list[dict]) -> str:
+    """Pick the longest word-wall term mentioned in the sentence."""
+    text_lower = sentence.lower()
+    term_map = _wall_term_map(word_wall)
+    best = ""
+    best_len = 0
+    for key, term in term_map.items():
+        if re.search(rf"\b{re.escape(key)}\b", text_lower):
+            if len(term) > best_len:
+                best_len = len(term)
+                best = term
+    return best
+
+
 def _resolve_fill_blank_answer(
     sentence: str,
     index: int,
     self_test: dict,
     word_wall: list[dict],
 ) -> tuple[str, str]:
-    """Return (display_sentence, correct_answer) for a self-test fill-in-the-blank."""
+    """Return (display_sentence, correct_answer) — answer must be a word-wall term."""
     display, bracket_ans = _extract_blank_answer(sentence)
+    term_map = _wall_term_map(word_wall)
+    if not term_map:
+        return display or sentence, ""
 
-    # 1. Explicit parallel answers array from AI (most reliable).
     answers = self_test.get("fill_blank_answers") or self_test.get("answers") or []
     if index - 1 < len(answers):
         entry = answers[index - 1]
@@ -182,27 +212,20 @@ def _resolve_fill_blank_answer(
             explicit = (entry.get("answer") or entry.get("term") or "").strip()
         else:
             explicit = str(entry or "").strip()
-        if explicit:
-            return display or sentence, explicit
+        canonical = _canonical_wall_term(explicit, term_map)
+        if canonical:
+            return display or sentence, canonical
 
-    # 2. Bracket at end of sentence — usually the vocabulary term.
     if bracket_ans:
-        if len(bracket_ans.split()) <= 5:
-            return display, bracket_ans
-        for word in word_wall:
-            term = (word.get("term") or "").strip()
-            defin = (word.get("definition") or "").strip()
-            if term and bracket_ans.lower() in defin.lower():
-                return display, term
+        canonical = _canonical_wall_term(bracket_ans, term_map)
+        if canonical:
+            return display, canonical
 
-    # 3. Match a word-wall term mentioned in the sentence (never positional flashcards).
-    text_lower = sentence.lower()
-    for word in word_wall:
-        term = (word.get("term") or "").strip()
-        if term and re.search(rf"\b{re.escape(term.lower())}\b", text_lower):
-            return display or sentence, term
+    matched = _best_wall_term_for_sentence(sentence, word_wall)
+    if matched:
+        return display or sentence, matched
 
-    return display or sentence, bracket_ans
+    return display or sentence, ""
 
 
 def _render_svg(svg: str, height: int = 260) -> None:
@@ -238,44 +261,45 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     else:
         cols = st.columns(2)
         for index, word in enumerate(word_wall):
-            accent = _SECTION_ACCENTS[index % len(_SECTION_ACCENTS)]
             with cols[index % 2]:
-                with st.container(border=True):
-                    emoji = word.get("emoji", "📌")
-                    term = word.get("term", "Term")
-                    st.markdown(
-                        f'<div style="color:{TEXT_BODY};font-weight:800;font-size:1.15rem;'
-                        f'font-family:{FONT_STACK};">{emoji} {html.escape(term)}</div>',
-                        unsafe_allow_html=True,
+                emoji = word.get("emoji", "📌")
+                term = word.get("term", "Term")
+                st.markdown(
+                    f'<div style="background:{BG_MAIN};padding:16px;border-radius:16px;'
+                    f'border:1px solid {BORDER_SUBTLE};margin-bottom:0.75rem;">'
+                    f'<div style="color:{TEXT_BODY};font-weight:700;font-size:1.15rem;'
+                    f'font-family:{FONT_STACK};margin-bottom:0.5rem;">'
+                    f'{emoji} {html.escape(term)}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    _word_illustration_svg(term, emoji, BG_MAIN),
+                    unsafe_allow_html=True,
+                )
+                definition = word.get("definition", "")
+                child_note = word.get("child_friendly") or word.get("visual_description") or ""
+                example = word.get("example") or word.get("example_sentence") or ""
+                st.markdown(
+                    f'<div style="background:{BG_MAIN};padding:12px 0 0 0;'
+                    f'color:{TEXT_BODY};font-weight:500;font-size:1rem;line-height:1.75;'
+                    f'letter-spacing:0.03em;font-family:{FONT_STACK};">'
+                    f'<strong style="color:{TEXT_BODY};">Definition:</strong> '
+                    f'{html.escape(definition)}'
+                    + (
+                        f'<br/><strong style="color:{TEXT_BODY};">In simple words:</strong> '
+                        f'{html.escape(child_note)}'
+                        if child_note
+                        else ""
                     )
-                    st.markdown(
-                        _word_illustration_svg(term, emoji, BG_MAIN),
-                        unsafe_allow_html=True,
+                    + (
+                        f'<br/><strong style="color:{TEXT_BODY};">Example:</strong> '
+                        f'<em style="color:{TEXT_BODY};">{html.escape(example)}</em>'
+                        if example
+                        else ""
                     )
-                    definition = word.get("definition", "")
-                    child_note = word.get("child_friendly") or word.get("visual_description") or ""
-                    example = word.get("example") or word.get("example_sentence") or ""
-                    st.markdown(
-                        f'<div style="background:{BG_MAIN};padding:12px;border-radius:16px;'
-                        f'border-left:6px solid {accent};color:{TEXT_BODY};font-weight:500;'
-                        f'font-size:1rem;line-height:1.75;letter-spacing:0.03em;">'
-                        f'<strong style="color:{TEXT_BODY};">Definition:</strong> '
-                        f'{html.escape(definition)}'
-                        + (
-                            f'<br/><strong style="color:{TEXT_BODY};">In simple words:</strong> '
-                            f'{html.escape(child_note)}'
-                            if child_note
-                            else ""
-                        )
-                        + (
-                            f'<br/><strong style="color:{TEXT_BODY};">Example:</strong> '
-                            f'<em style="color:{TEXT_BODY};">{html.escape(example)}</em>'
-                            if example
-                            else ""
-                        )
-                        + "</div>",
-                        unsafe_allow_html=True,
-                    )
+                    + "</div></div>",
+                    unsafe_allow_html=True,
+                )
 
     # --- 2. Flashcards ---
     st.markdown("### 2. Flashcards — Term → Meaning")
@@ -294,7 +318,6 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
             [
                 {
                     "Term": row.get("term", ""),
-                    "Color cue": row.get("color_cue", ""),
                     "Draw / imagine": row.get("draw_this") or row.get("visual", ""),
                     "Label": row.get("label", ""),
                 }

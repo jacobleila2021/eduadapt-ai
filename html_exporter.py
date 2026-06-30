@@ -83,12 +83,12 @@ def export_vocabulary_html(data: Any) -> str:
         )
     parts.append("</table>")
 
-    parts.append("<h2>3. Picture Words</h2><table><tr><th>Term</th><th>Color</th><th>Draw</th></tr>")
+    parts.append("<h2>3. Picture Words</h2><table><tr><th>Term</th><th>Draw</th><th>Label</th></tr>")
     for row in vocab.get("picture_words") or []:
         parts.append(
             f"<tr><td>{html.escape(row.get('term', ''))}</td>"
-            f"<td>{html.escape(row.get('color_cue', ''))}</td>"
-            f"<td>{html.escape(row.get('draw_this', ''))}</td></tr>"
+            f"<td>{html.escape(row.get('draw_this', '') or row.get('visual', ''))}</td>"
+            f"<td>{html.escape(row.get('label', ''))}</td></tr>"
         )
     parts.append("</table>")
 

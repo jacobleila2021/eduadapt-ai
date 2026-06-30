@@ -77,19 +77,34 @@ def test_fill_blank_answer_extraction():
     assert from_bracket == "compass"
 
 
+def test_fill_blank_rejects_off_topic_answers():
+    from structured_renderers import _resolve_fill_blank_answer
+
+    tissues_wall = [
+        {"term": "Meristematic tissue", "definition": "Tissue with dividing cells."},
+        {"term": "Parenchyma", "definition": "Storage tissue in plants."},
+    ]
+    _, ans = _resolve_fill_blank_answer(
+        "The distance from the center to the edge of a circle is called the _____ (radius).",
+        1,
+        {"fill_blank_answers": ["radius"]},
+        tissues_wall,
+    )
+    assert ans == ""
+
+
 def test_indian_voices_present():
     from audio_learning import VOICE_OPTIONS
 
-    assert "Warm Female (Indian)" in VOICE_OPTIONS
-    assert "Warm Male (Indian)" in VOICE_OPTIONS
+    assert "Female" in VOICE_OPTIONS
+    assert "Male" in VOICE_OPTIONS
 
 
 def test_male_voice_avoids_female():
     from audio_learning import VOICE_OPTIONS
 
-    assert "female" in VOICE_OPTIONS["Warm Male (International)"]["avoid"]
-    # Warm Male hints must not contain bare "male" (which matches "female")
-    assert "male" not in VOICE_OPTIONS["Warm Male (International)"]["hints"]
+    assert "female" in VOICE_OPTIONS["Male"]["avoid"]
+    assert "male" not in VOICE_OPTIONS["Male"]["hints"]
 
 
 def test_voices_have_instructions():
@@ -172,12 +187,7 @@ def test_title_drops_how_subtitle():
 
 
 def test_warm_voices_only():
-    assert set(VOICE_OPTIONS.keys()) == {
-        "Warm Female (International)",
-        "Warm Male (International)",
-        "Warm Female (Indian)",
-        "Warm Male (Indian)",
-    }
+    assert set(VOICE_OPTIONS.keys()) == {"Female", "Male"}
 
 
 def test_split_sentences_minimum():
