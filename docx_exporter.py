@@ -11,7 +11,7 @@ from typing import Any
 
 from docx import Document
 from docx.enum.text import WD_LINE_SPACING
-from docx.shared import Pt, RGBColor
+from docx.shared import Inches, Pt, RGBColor
 
 from concept_map_builder import add_vocabulary_concept_map_to_docx, build_vocabulary_concept_map_svg
 from html_exporter import export_tab_html
@@ -100,11 +100,29 @@ def export_vocabulary_docx(data: Any) -> bytes:
         )
 
     _add_heading(doc, "3. Picture Words", 2)
-    for row in vocab.get("picture_words") or []:
-        _safe_paragraph(
-            doc,
-            f"{row.get('term', '')} — Draw: {row.get('draw_this', '')}",
-        )
+    from image_generation import batch_load_picture_word_images, images_enabled
+
+    topic = vocab.get("topic", "Lesson")
+    picture_rows = vocab.get("picture_words") or []
+    if images_enabled() and picture_rows:
+        images = batch_load_picture_word_images(picture_rows, topic)
+        for row in picture_rows:
+            term = row.get("term", "")
+            _safe_paragraph(doc, term)
+            img = images.get(term)
+            if img:
+                try:
+                    doc.add_picture(io.BytesIO(img), width=Inches(2.2))
+                except Exception:
+                    _safe_paragraph(doc, f"Draw: {row.get('draw_this', '')}")
+            else:
+                _safe_paragraph(doc, f"Draw: {row.get('draw_this', '')}")
+    else:
+        for row in picture_rows:
+            _safe_paragraph(
+                doc,
+                f"{row.get('term', '')} — Draw: {row.get('draw_this', '')}",
+            )
 
     from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
 

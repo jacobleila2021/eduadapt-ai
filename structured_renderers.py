@@ -8,6 +8,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import base64
 from typing import Any
 
 import streamlit as st
@@ -24,6 +25,11 @@ from lesson_design import (
     accent_for_variant,
     classify_section,
     section_card_html,
+)
+from image_generation import (
+    IMAGE_PROVIDER,
+    batch_load_picture_word_images,
+    images_enabled,
 )
 _BOX_RENDERERS = {
     "teal": lambda t: st.info(t),
@@ -506,6 +512,64 @@ def _render_svg(svg: str, height: int = 260) -> None:
     )
 
 
+def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str) -> None:
+    """Picture Words — AI-generated illustrations instead of text-only draw prompts."""
+    st.markdown("### 3. Picture Words — Visual Memory")
+    if not picture_words:
+        st.caption("No picture vocabulary generated.")
+        return
+
+    if not images_enabled():
+        st.table(
+            [
+                {
+                    "Term": row.get("term", ""),
+                    "Draw / imagine": row.get("draw_this") or row.get("visual", ""),
+                }
+                for row in picture_words
+            ]
+        )
+        return
+
+    provider_label = "OpenAI DALL·E" if IMAGE_PROVIDER == "openai" else "Pollinations AI"
+    st.caption(f"Illustrations generated with {provider_label} — cached for faster reloads.")
+
+    with st.spinner("Generating vocabulary illustrations…"):
+        images = batch_load_picture_word_images(picture_words, topic)
+
+    cards: list[str] = []
+    for index, row in enumerate(picture_words):
+        term = html.escape(str(row.get("term", "")).strip())
+        if not term:
+            continue
+        desc = html.escape(str(row.get("draw_this") or row.get("visual") or ""))
+        raw_term = html.unescape(term)
+        img_bytes = images.get(raw_term)
+        if img_bytes:
+            b64 = base64.b64encode(img_bytes).decode("ascii")
+            img_html = (
+                f'<img src="data:image/png;base64,{b64}" alt="{term}" '
+                f'class="alora-picture-word-img" loading="lazy"/>'
+            )
+        else:
+            img_html = (
+                f'<div class="alora-picture-word-fallback">'
+                f'<span class="alora-picture-word-emoji">🖼️</span>'
+                f'<p>{desc or "Illustration unavailable"}</p></div>'
+            )
+        cards.append(
+            f'<div class="alora-picture-word-card">'
+            f'{img_html}'
+            f'<p class="alora-picture-word-term">{term}</p>'
+            f'</div>'
+        )
+
+    st.markdown(
+        f'<div class="alora-picture-words-grid">{"".join(cards)}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     """Word Wall, Flashcards, Picture Words, Practice, Self-Test — always visible."""
     vocab = _coerce_dict(data)
@@ -543,18 +607,7 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
             st.write(back)
 
     # --- 3. Picture Words ---
-    st.markdown("### 3. Picture Words — Visual Memory")
-    picture_words = vocab.get("picture_words") or []
-    if picture_words:
-        st.table(
-            [
-                {
-                    "Term": row.get("term", ""),
-                    "Draw / imagine": row.get("draw_this") or row.get("visual", ""),
-                }
-                for row in picture_words
-            ]
-        )
+    _render_picture_words(vocab.get("picture_words") or [], topic, key_prefix)
 
     # --- 4. Say · Spell · Use ---
     st.markdown("### 4. Say It · Spell It · Use It")

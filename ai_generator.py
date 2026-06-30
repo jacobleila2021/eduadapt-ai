@@ -167,7 +167,7 @@ Return ONLY valid JSON with top-level key "vocabulary" containing this object:
   "topic": "...",
   "word_wall": [{{"term": "...", "definition": "...", "emoji": "...", "visual_description": "...", "child_friendly": "explain the word in very simple words a child understands", "example": "a clear example sentence using the term"}}],
   "flashcards": [{{"front": "...", "back": "..."}}],
-  "picture_words": [{{"term": "...", "color_cue": "...", "draw_this": "...", "label": "..."}}],
+  "picture_words": [{{"term": "...", "color_cue": "...", "draw_this": "vivid scene for illustration", "image_prompt": "optional extra detail for AI image", "label": "..."}}],
   "practice": [{{"term": "...", "sentence_blank": "Write a sentence using ________ ..."}}],
   "self_test": {{
     "fill_blanks": ["Meristematic tissue is made of cells that can ________."],

@@ -83,13 +83,30 @@ def export_vocabulary_html(data: Any) -> str:
         )
     parts.append("</table>")
 
-    parts.append("<h2>3. Picture Words</h2><table><tr><th>Term</th><th>Draw / imagine</th></tr>")
+    parts.append("<h2>3. Picture Words</h2>")
+    from image_generation import images_enabled, picture_word_image_data_uri, picture_word_image_url
+
+    topic = vocab.get("topic", "Lesson")
+    parts.append('<div class="picture-words-grid">')
     for row in vocab.get("picture_words") or []:
-        parts.append(
-            f"<tr><td>{html.escape(row.get('term', ''))}</td>"
-            f"<td>{html.escape(row.get('draw_this', '') or row.get('visual', ''))}</td></tr>"
-        )
-    parts.append("</table>")
+        term = row.get("term", "")
+        desc = row.get("draw_this", "") or row.get("visual", "")
+        if images_enabled():
+            src = picture_word_image_data_uri(term, desc, topic) or picture_word_image_url(
+                term, desc, topic
+            )
+            parts.append(
+                f'<div class="picture-word-card">'
+                f'<img src="{html.escape(src)}" alt="{html.escape(term)}" '
+                f'style="max-width:100%;border-radius:12px;"/>'
+                f'<p><strong>{html.escape(term)}</strong></p></div>'
+            )
+        else:
+            parts.append(
+                f'<p><strong>{html.escape(term)}</strong> — '
+                f'{html.escape(desc)}</p>'
+            )
+    parts.append("</div>")
 
     from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
 

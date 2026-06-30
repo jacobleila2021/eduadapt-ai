@@ -434,6 +434,71 @@ def get_custom_css() -> str:
         font-size: 0.92rem !important;
     }}
 
+    .alora-picture-words-grid {{
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.25rem;
+        margin: 1rem 0 1.5rem 0;
+    }}
+
+    @media (max-width: 900px) {{
+        .alora-picture-words-grid {{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }}
+    }}
+
+    @media (max-width: 560px) {{
+        .alora-picture-words-grid {{
+            grid-template-columns: 1fr;
+        }}
+    }}
+
+    .alora-picture-word-card {{
+        background: #FFF9EE;
+        border: 1px solid #e8dcc8;
+        border-radius: 16px;
+        padding: 0.85rem;
+        text-align: center;
+        box-sizing: border-box;
+    }}
+
+    .alora-picture-word-img {{
+        width: 100%;
+        height: auto;
+        max-height: 220px;
+        object-fit: contain;
+        border-radius: 12px;
+        background: #ffffff;
+        display: block;
+        margin: 0 auto 0.65rem auto;
+    }}
+
+    .alora-picture-word-term {{
+        color: {COLOR_DEEP_NAVY};
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 0;
+    }}
+
+    .alora-picture-word-fallback {{
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 0.65rem;
+        padding: 0.75rem;
+        color: #4a6080;
+        font-size: 0.92rem;
+    }}
+
+    .alora-picture-word-emoji {{
+        font-size: 2rem;
+        margin-bottom: 0.35rem;
+    }}
+
     .viewer-header {{
         background: linear-gradient(135deg, #eef9fb 0%, #f8fbfd 100%);
         border-radius: 14px;

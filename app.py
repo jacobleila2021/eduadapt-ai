@@ -233,6 +233,12 @@ def render_api_sidebar() -> None:
             '<div class="sidebar-status-ready">● AI service ready</div>',
             unsafe_allow_html=True,
         )
+        from config import IMAGE_PROVIDER
+
+        if IMAGE_PROVIDER == "openai":
+            st.sidebar.caption("🖼️ Vocabulary images: OpenAI DALL·E")
+        elif IMAGE_PROVIDER not in ("off", "none", "false", "0"):
+            st.sidebar.caption("🖼️ Vocabulary images: Pollinations AI (free)")
     else:
         st.sidebar.markdown(
             '<div class="sidebar-status-warn">○ Setup required</div>',
