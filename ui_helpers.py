@@ -175,11 +175,6 @@ def render_analytics_panel(analytics: dict) -> None:
             """,
             unsafe_allow_html=True,
         )
-    st.caption(
-        "Calculated instantly from your uploaded text: complexity uses word length, "
-        "sentence length, and readability grade; objectives are counted from headings "
-        "and instructional verbs (explain, describe, compare, etc.)."
-    )
 
 
 # Legacy alias for imports

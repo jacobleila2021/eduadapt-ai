@@ -61,12 +61,17 @@ def accent_for_variant(variant: str) -> str:
 
 
 def get_global_dyslexia_css() -> str:
-    """Workspace-wide typography and layout defaults."""
+    """Deprecated — styles are injected via styles.get_custom_css(). Returns marker only."""
+    return ""
+
+
+def get_workspace_css_fragment() -> str:
+    """Raw CSS (no <style> tags) for inclusion in styles.get_custom_css()."""
     return f"""
-    <style>
     {FONT_IMPORTS}
     .main .block-container:has(.alora-workspace-active) {{
         background: {BG_MAIN} !important;
+        padding-bottom: 280px !important;
     }}
     .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] p,
     .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] li,
@@ -77,12 +82,19 @@ def get_global_dyslexia_css() -> str:
     .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] h3,
     .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] h4,
     .main .block-container:has(.alora-workspace-active) [data-testid="stTextArea"] textarea,
-    .main .block-container:has(.alora-workspace-active) [data-testid="stTextInput"] input {{
+    .main .block-container:has(.alora-workspace-active) [data-testid="stTextInput"] input,
+    .main .block-container:has([class*="alora-a11y-"]) [data-testid="stMarkdownContainer"] p,
+    .main .block-container:has([class*="alora-a11y-"]) [data-testid="stMarkdownContainer"] li,
+    .main .block-container:has([class*="alora-a11y-"]) [data-testid="stMarkdownContainer"] span,
+    .main .block-container:has([class*="alora-a11y-"]) .stAlert p,
+    .main .block-container:has([class*="alora-a11y-"]) [data-testid="stTextArea"] textarea,
+    .main .block-container:has([class*="alora-a11y-"]) [data-testid="stTextInput"] input {{
         font-family: {FONT_STACK} !important;
         color: {TEXT_BODY} !important;
         text-align: left !important;
         line-height: 1.75 !important;
         letter-spacing: 0.03em !important;
+        font-size: var(--alora-font, 22px) !important;
     }}
     .main .block-container:has(.alora-workspace-active) h2,
     .main .block-container:has(.alora-workspace-active) h3,
@@ -93,7 +105,19 @@ def get_global_dyslexia_css() -> str:
         background: {BG_MAIN} !important;
         border-radius: 16px !important;
     }}
-    </style>
+    .main .block-container:has(.alora-workspace-active)
+    [data-testid="stHorizontalBlock"]:has([class*="st-key-ws_pill_"]) {{
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999991 !important;
+        background: linear-gradient(180deg, #041B4D, #031638) !important;
+        padding: 0.75rem 1.5rem 1rem 1.5rem !important;
+        margin: 0 !important;
+        box-shadow: 0 -8px 28px rgba(0,0,0,0.35) !important;
+        max-width: 100vw !important;
+    }}
     """
 
 

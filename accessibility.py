@@ -1,13 +1,12 @@
 """
 Accessibility tools — reading ruler, dyslexia-friendly text sizing.
+CSS lives in styles.py; this module only sets dynamic CSS variables via hidden markers.
 """
 
 from __future__ import annotations
 
 import streamlit as st
 import streamlit.components.v1 as components
-
-from lesson_design import FONT_STACK
 
 RULER_COLORS = {
     "Soft Yellow": "#FFF59D",
@@ -17,36 +16,14 @@ RULER_COLORS = {
 }
 
 
-def get_accessibility_css(spec_id: str) -> str:
-    """Font-size CSS scoped to the workspace via a hidden marker class."""
+def _a11y_marker_html(spec_id: str) -> str:
+    """Hidden marker that sets --alora-font for styles defined in styles.py."""
     font_px = int(st.session_state.get(f"lesson_font_{spec_id}", 22))
     marker = f"alora-a11y-{spec_id}"
-    return f"""
-    <style>
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] p,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] li,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] span,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] td,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] th,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] h1,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] h2,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] h3,
-    .main .block-container:has(.{marker}) [data-testid="stMarkdownContainer"] h4,
-    .main .block-container:has(.{marker}) .stAlert p,
-    .main .block-container:has(.{marker}) [data-testid="stTextArea"] textarea,
-    .main .block-container:has(.{marker}) [data-testid="stTextInput"] input {{
-        font-size: {font_px}px !important;
-        line-height: 1.85 !important;
-        letter-spacing: 0.04em !important;
-        font-family: {FONT_STACK} !important;
-        color: #333333 !important;
-        text-align: left !important;
-        line-height: 1.75 !important;
-        letter-spacing: 0.03em !important;
-    }}
-    </style>
-    <div class="{marker}" style="display:none;" aria-hidden="true"></div>
-    """
+    return (
+        f'<div class="{marker}" style="--alora-font:{font_px}px;display:none;" '
+        f'aria-hidden="true"></div>'
+    )
 
 
 def _reading_ruler_html(spec_id: str) -> str:
@@ -102,36 +79,12 @@ def render_accessibility_toolbar(spec_id: str) -> None:
             32,
             22,
             key=f"lesson_font_{spec_id}",
-            help="Applies to lesson text below.",
         )
 
-    st.markdown(get_accessibility_css(spec_id), unsafe_allow_html=True)
+    st.markdown(_a11y_marker_html(spec_id), unsafe_allow_html=True)
     components.html(_reading_ruler_html(spec_id), height=0)
 
 
 def get_workspace_layout_css() -> str:
-    """Bottom tab bar + content padding — workspace only."""
-    return """
-    <style>
-    .main .block-container:has(.alora-workspace-active) {
-        padding-bottom: 280px !important;
-    }
-    .main .block-container:has(.alora-workspace-active)
-    [data-testid="stHorizontalBlock"]:has([class*="st-key-ws_pill_"]) {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 999991 !important;
-        background: linear-gradient(180deg, #041B4D, #031638) !important;
-        padding: 0.75rem 1.5rem 1rem 1.5rem !important;
-        margin: 0 !important;
-        box-shadow: 0 -8px 28px rgba(0,0,0,0.35) !important;
-        max-width: 100vw !important;
-    }
-    .adaptation-lesson-panel [data-testid="stVerticalBlockBorderWrapper"] {
-        background: #FFF9EE !important;
-        border-radius: 16px !important;
-    }
-    </style>
-    """
+    """Deprecated — layout CSS is in styles.get_custom_css()."""
+    return ""

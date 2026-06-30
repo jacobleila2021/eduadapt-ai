@@ -11,6 +11,7 @@ from config import (
     COLOR_TEXT,
     COLOR_WHITE,
 )
+from lesson_design import get_workspace_css_fragment
 
 # Luxury enterprise header (~35% taller than original 96px bar)
 HEADER_HEIGHT_PX = 135
@@ -493,5 +494,8 @@ def get_custom_css() -> str:
         .topnav-tagline, .topnav-right {{ display: none; }}
         .main .block-container {{ padding-top: 6.75rem; }}
     }}
+
+    /* Dyslexia-friendly workspace (injected once — never via st.markdown) */
+    {get_workspace_css_fragment()}
     </style>
     """

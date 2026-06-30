@@ -8,12 +8,11 @@ import re
 
 import streamlit as st
 
-from accessibility import get_workspace_layout_css
 from navigation import category_for_id
 from print_exporter import build_print_html_all, build_print_html_single
 from pill_tabs import render_pill_navigation, render_sub_spec_pills
 from session_state import close_workspace
-from lesson_design import get_global_dyslexia_css, lesson_title_html
+from lesson_design import lesson_title_html
 from viewer_page import render_adaptation_viewer
 
 _TITLE_NOISE = re.compile(
@@ -162,11 +161,7 @@ def render_workspace(
     category_id = st.session_state.get("active_category_id", "")
 
     st.markdown(
-        '<div class="alora-workspace-active" style="display:none;"></div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        get_workspace_layout_css() + get_global_dyslexia_css(),
+        '<div class="alora-workspace-active" style="display:none;" aria-hidden="true"></div>',
         unsafe_allow_html=True,
     )
 
