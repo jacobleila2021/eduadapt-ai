@@ -27,14 +27,15 @@ Numbered list. Format each as:
 **Front:** term | **Back:** definition + example from the lesson.
 
 ## 3. Picture Words (Visual Memory)
-Table with columns: Term | Color Cue | What to Draw/Imagine | Label on Diagram.
-Describe vivid colored scenes students can sketch (e.g. "blue arrow for evaporation rising").
+Table with columns: Term | What to Draw/Imagine.
+Describe vivid scenes students can sketch (e.g. "blue arrow for evaporation rising").
 
 ## 4. Say It · Spell It · Use It
-For each term: pronunciation guide, syllable breakdown, and a fill-in sentence with blank.
+For each term: one numbered fill-in sentence with blank only — no pronunciation or syllable fields.
 
 ## 5. Match & Review (Self-Test)
-Matching exercise (letters → numbers) and 5 fill-in-the-blank sentences. No answer key in this section.
+Part A matching (terms numbered, definitions lettered) and at least 6 fill-in-the-blank sentences using ________.
+Never put answers in brackets in the displayed sentences — store answers only in fill_blank_answers.
 
 ## 6. Quick Reference Chart
 Markdown table: Term | Definition | Synonym | Exam Tip.

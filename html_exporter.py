@@ -83,29 +83,37 @@ def export_vocabulary_html(data: Any) -> str:
         )
     parts.append("</table>")
 
-    parts.append("<h2>3. Picture Words</h2><table><tr><th>Term</th><th>Draw</th><th>Label</th></tr>")
+    parts.append("<h2>3. Picture Words</h2><table><tr><th>Term</th><th>Draw / imagine</th></tr>")
     for row in vocab.get("picture_words") or []:
         parts.append(
             f"<tr><td>{html.escape(row.get('term', ''))}</td>"
-            f"<td>{html.escape(row.get('draw_this', '') or row.get('visual', ''))}</td>"
-            f"<td>{html.escape(row.get('label', ''))}</td></tr>"
+            f"<td>{html.escape(row.get('draw_this', '') or row.get('visual', ''))}</td></tr>"
         )
     parts.append("</table>")
 
+    from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
+
     parts.append("<h2>4. Say · Spell · Use</h2>")
-    for item in vocab.get("practice") or []:
+    practice = _prepare_practice(vocab.get("word_wall") or [], vocab.get("topic", ""))
+    for index, item in enumerate(practice, 1):
+        blank = _clean_practice_blank(item.get("sentence_blank", ""))
         parts.append(
-            f"<p><strong>{html.escape(item.get('term', ''))}</strong> "
-            f"({html.escape(item.get('pronunciation', ''))}) — "
-            f"<em>{html.escape(item.get('sentence_blank', ''))}</em></p>"
+            f"<p><strong>{index}. {html.escape(item.get('term', ''))}</strong> — "
+            f"<em>{html.escape(blank)}</em></p>"
         )
 
     parts.append("<h2>5. Self-Test</h2>")
-    st = vocab.get("self_test") or {}
-    if st.get("matching_prompt"):
-        parts.append(f"<p>{html.escape(str(st['matching_prompt']))}</p>")
-    for sentence in st.get("fill_blanks") or []:
-        parts.append(f"<p>{html.escape(str(sentence))}</p>")
+    st = _prepare_self_test(vocab.get("self_test") or {}, vocab.get("word_wall") or [])
+    if st.get("matching_terms"):
+        parts.append("<p><strong>Part A — Matching</strong></p>")
+        for row in st["matching_terms"]:
+            parts.append(f"<p>{row['n']}. {html.escape(row['term'])}</p>")
+        for row in st.get("matching_definitions") or []:
+            parts.append(f"<p>{row['letter']}. {html.escape(row['text'])}</p>")
+    if st.get("fill_blanks"):
+        parts.append("<p><strong>Part B — Fill in the blank</strong></p>")
+        for index, sentence in enumerate(st["fill_blanks"], 1):
+            parts.append(f"<p>{index}. {html.escape(_clean_fill_blank_display(sentence))}</p>")
 
     parts.append("<h2>6. Quick Reference</h2><table><tr><th>Term</th><th>Definition</th><th>Exam tip</th></tr>")
     for row in vocab.get("reference_chart") or []:

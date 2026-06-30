@@ -197,6 +197,40 @@ def test_fill_blank_display_hides_answers():
     assert "________" in display
 
 
+def test_matching_answer_is_compact():
+    from structured_renderers import _build_matching_section
+
+    wall = [
+        {"term": "Term A", "definition": "Definition A."},
+        {"term": "Term B", "definition": "Definition B."},
+    ]
+    section = _build_matching_section(wall)
+    assert section["matching_terms"]
+    assert section["matching_answer_key"]
+    assert "term" not in section["matching_answer_key"][0]
+
+
+def test_prepare_self_test_has_six_questions():
+    from structured_renderers import _clean_fill_blank_display, _prepare_self_test
+
+    wall = [{"term": f"T{i}", "definition": f"Def {i}."} for i in range(1, 9)]
+    st = _prepare_self_test({}, wall)
+    assert len(st["fill_blanks"]) >= 6
+    assert len(st["fill_blank_answers"]) == len(st["fill_blanks"])
+    assert "(" not in _clean_fill_blank_display(st["fill_blanks"][0])
+
+
+def test_practice_has_no_pronunciation():
+    from structured_renderers import _clean_practice_blank, _prepare_practice
+
+    wall = [{"term": "Meristematic tissue", "definition": "Dividing cells.", "example": "Meristematic tissue grows."}]
+    items = _prepare_practice(wall, "Plants")
+    assert items
+    blank = _clean_practice_blank(items[0]["sentence_blank"])
+    assert "/" not in blank
+    assert "(6)" not in blank
+
+
 def test_sanitize_builds_multiple_self_test_questions():
     from ai_generator import _sanitize_vocabulary
 

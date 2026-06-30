@@ -103,24 +103,29 @@ def export_vocabulary_docx(data: Any) -> bytes:
     for row in vocab.get("picture_words") or []:
         _safe_paragraph(
             doc,
-            f"{row.get('term', '')} — Draw: {row.get('draw_this', '')} — "
-            f"Label: {row.get('label', '')}",
+            f"{row.get('term', '')} — Draw: {row.get('draw_this', '')}",
         )
+
+    from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
 
     _add_heading(doc, "4. Say · Spell · Use", 2)
-    for item in vocab.get("practice") or []:
-        _safe_paragraph(
-            doc,
-            f"{item.get('term', '')} ({item.get('pronunciation', '')}) — "
-            f"{item.get('sentence_blank', '')}",
-        )
+    practice = _prepare_practice(vocab.get("word_wall") or [], vocab.get("topic", ""))
+    for index, item in enumerate(practice, 1):
+        blank = _clean_practice_blank(item.get("sentence_blank", ""))
+        _safe_paragraph(doc, f"{index}. {item.get('term', '')} — {blank}")
 
     _add_heading(doc, "5. Self-Test", 2)
-    self_test = vocab.get("self_test") or {}
-    if self_test.get("matching_prompt"):
-        _safe_paragraph(doc, str(self_test["matching_prompt"]))
-    for sentence in self_test.get("fill_blanks") or []:
-        _safe_paragraph(doc, str(sentence))
+    self_test = _prepare_self_test(vocab.get("self_test") or {}, vocab.get("word_wall") or [])
+    if self_test.get("matching_terms"):
+        _safe_paragraph(doc, "Part A — Matching")
+        for row in self_test["matching_terms"]:
+            _safe_paragraph(doc, f"{row['n']}. {row['term']}")
+        for row in self_test.get("matching_definitions") or []:
+            _safe_paragraph(doc, f"{row['letter']}. {row['text']}")
+    if self_test.get("fill_blanks"):
+        _safe_paragraph(doc, "Part B — Fill in the blank")
+        for index, sentence in enumerate(self_test["fill_blanks"], 1):
+            _safe_paragraph(doc, f"{index}. {_clean_fill_blank_display(sentence)}")
 
     _add_heading(doc, "6. Quick Reference", 2)
     for row in vocab.get("reference_chart") or []:

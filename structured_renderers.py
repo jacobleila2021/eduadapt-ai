@@ -191,6 +191,153 @@ def _clean_fill_blank_display(sentence: str) -> str:
     return text
 
 
+def _clean_practice_blank(text: str) -> str:
+    """Remove IPA guides and syllable counts from practice sentences."""
+    cleaned = str(text or "").strip()
+    cleaned = re.sub(r"—?\s*/[^/]+/\s*", " ", cleaned)
+    cleaned = re.sub(r"\s*\(\d+\)\s*$", "", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    return cleaned
+
+
+def _build_matching_section(word_wall: list[dict]) -> dict:
+    """Structured matching items — answers stored separately for Show Answer only."""
+    import random
+
+    pairs = [
+        (w.get("term", ""), w.get("definition", ""))
+        for w in word_wall[:8]
+        if w.get("term") and w.get("definition")
+    ]
+    if not pairs:
+        return {
+            "matching_terms": [],
+            "matching_definitions": [],
+            "matching_answer_key": [],
+        }
+
+    indexed = list(enumerate(pairs, 1))
+    shuffled = list(indexed)
+    random.shuffle(shuffled)
+    letters = "ABCDEFGH"
+
+    matching_terms = [{"n": n, "term": term} for n, (term, _) in indexed]
+    matching_definitions: list[dict] = []
+    answer_key: list[dict] = []
+    letter_for_number: dict[int, str] = {}
+
+    for slot, (number, (term, definition)) in enumerate(shuffled):
+        letter = letters[slot]
+        matching_definitions.append({"letter": letter, "text": definition[:160]})
+        letter_for_number[number] = letter
+
+    for number, (term, _) in indexed:
+        answer_key.append({"n": number, "letter": letter_for_number.get(number, "")})
+
+    return {
+        "matching_terms": matching_terms,
+        "matching_definitions": matching_definitions,
+        "matching_answer_key": answer_key,
+    }
+
+
+def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
+    """Ensure self-test has clean structured matching and numbered fill-blank answers."""
+    data = dict(self_test or {})
+    matching = _build_matching_section(word_wall)
+    data["matching_terms"] = matching["matching_terms"]
+    data["matching_definitions"] = matching["matching_definitions"]
+    data["matching_answer_key"] = matching["matching_answer_key"]
+    data.pop("matching_prompt", None)
+    data.pop("matching", None)
+
+    target_count = min(8, max(6, len(word_wall)))
+    blanks = list(data.get("fill_blanks") or [])
+    if len(blanks) < target_count:
+        for index in range(len(blanks), target_count):
+            word = word_wall[index % len(word_wall)]
+            definition = (word.get("definition") or word.get("child_friendly") or "").strip()
+            if definition:
+                blanks.append(f"{definition.rstrip('.')}. The vocabulary word is ________.")
+            else:
+                blanks.append("This key term from the lesson is ________.")
+
+    rebuilt: list[str] = []
+    answers: list[str] = []
+    for index, sentence in enumerate(blanks[:target_count], 1):
+        term = (word_wall[(index - 1) % len(word_wall)].get("term") or "").strip()
+        text = _clean_fill_blank_display(str(sentence))
+        if "________" not in text:
+            definition = (word_wall[(index - 1) % len(word_wall)].get("definition") or "").strip()
+            if definition:
+                text = f"{definition.rstrip('.')}. The vocabulary word is ________."
+            else:
+                text = "This key term from the lesson is ________."
+        rebuilt.append(text)
+        answers.append(term)
+
+    data["fill_blanks"] = rebuilt
+    data["fill_blank_answers"] = answers
+    return data
+
+
+def _prepare_practice(word_wall: list[dict], topic: str = "") -> list[dict]:
+    """Numbered say-spell-use items without pronunciation metadata."""
+    items: list[dict] = []
+    for word in word_wall[:8]:
+        term = (word.get("term") or "").strip()
+        if not term:
+            continue
+        example = (word.get("example") or word.get("example_sentence") or "").strip()
+        if example and term.lower() in example.lower():
+            blank = re.sub(re.escape(term), "________", example, count=1, flags=re.IGNORECASE)
+        else:
+            subject = topic or "this topic"
+            blank = f"Write one sentence using ________ to explain {subject}."
+        items.append({"term": term, "sentence_blank": blank})
+    return items
+
+
+def _render_self_test(self_test: dict, word_wall: list[dict], key_prefix: str) -> None:
+    """Match & Review — answers revealed only via Show Answer buttons."""
+    prepared = _prepare_self_test(self_test, word_wall)
+    terms = prepared.get("matching_terms") or []
+    definitions = prepared.get("matching_definitions") or []
+    match_key = prepared.get("matching_answer_key") or []
+    fill_blanks = prepared.get("fill_blanks") or []
+    fill_answers = prepared.get("fill_blank_answers") or []
+
+    if terms and definitions:
+        st.markdown("**Part A — Matching**")
+        st.caption("Match each numbered term to the correct lettered definition.")
+        col_terms, col_defs = st.columns(2)
+        with col_terms:
+            st.markdown("**Terms**")
+            for row in terms:
+                st.markdown(f"{row['n']}. {row['term']}")
+        with col_defs:
+            st.markdown("**Definitions**")
+            for row in definitions:
+                st.markdown(f"{row['letter']}. {row['text']}")
+        if match_key:
+            compact = ", ".join(
+                f"{row['n']} → {row['letter']}"
+                for row in sorted(match_key, key=lambda item: item["n"])
+                if row.get("letter")
+            )
+            if compact:
+                _show_answer_button("Matching", compact, f"{key_prefix}_matching")
+
+    if fill_blanks:
+        st.markdown("**Part B — Fill in the blank**")
+        for index, sentence in enumerate(fill_blanks, 1):
+            display = _clean_fill_blank_display(sentence)
+            st.markdown(f"{index}. {display}")
+            ans = fill_answers[index - 1] if index - 1 < len(fill_answers) else ""
+            if ans:
+                _show_answer_button(f"Q{index}", ans, f"{key_prefix}_ans_{index}")
+
+
 def _wall_term_map(word_wall: list[dict]) -> dict[str, str]:
     return {
         (w.get("term") or "").strip().lower(): (w.get("term") or "").strip()
@@ -308,7 +455,6 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
                 {
                     "Term": row.get("term", ""),
                     "Draw / imagine": row.get("draw_this") or row.get("visual", ""),
-                    "Label": row.get("label", ""),
                 }
                 for row in picture_words
             ]
@@ -316,40 +462,18 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
 
     # --- 4. Say · Spell · Use ---
     st.markdown("### 4. Say It · Spell It · Use It")
-    practice = vocab.get("practice") or vocab.get("say_spell_use") or []
-    for item in practice:
+    practice = _prepare_practice(word_wall, topic) or vocab.get("practice") or []
+    for index, item in enumerate(practice, 1):
         term = item.get("term", "")
-        st.markdown(f"**{term}** — *{item.get('pronunciation', '')}* ({item.get('syllables', '')})")
-        blank = item.get("sentence_blank") or item.get("sentence", "")
+        blank = _clean_practice_blank(item.get("sentence_blank") or item.get("sentence", ""))
+        st.markdown(f"**{index}. {term}**")
         if blank:
             st.markdown(f"_{blank}_")
 
     # --- 5. Self-Test ---
     st.markdown("### 5. Match & Review (Self-Test)")
     self_test = vocab.get("self_test") or {}
-    matching = self_test.get("matching_prompt", "") or self_test.get("matching", "")
-    if matching:
-        st.markdown(matching if isinstance(matching, str) else str(matching))
-        match_key = self_test.get("matching_answer_key") or []
-        if match_key:
-            answer_lines = [
-                f"{row.get('term', '')} → {row.get('letter', '')}"
-                for row in match_key
-                if row.get("term")
-            ]
-            if answer_lines:
-                _show_answer_button(
-                    "Matching",
-                    "\n".join(answer_lines),
-                    f"{key_prefix}_matching",
-                )
-    fill_blanks = self_test.get("fill_blanks") or []
-    for index, sentence in enumerate(fill_blanks, 1):
-        _, ans = _resolve_fill_blank_answer(sentence, index, self_test, word_wall)
-        display = _clean_fill_blank_display(sentence)
-        st.markdown(f"{index}. {display}")
-        if ans:
-            _show_answer_button(f"Q{index}", ans, f"{key_prefix}_ans_{index}")
+    _render_self_test(self_test, word_wall, key_prefix)
 
     # --- 6. Quick Reference ---
     st.markdown("### 6. Quick Reference Chart")
@@ -593,14 +717,22 @@ def vocabulary_to_text(data: Any) -> str:
     for row in vocab.get("picture_words") or []:
         lines.append(f"- {row.get('term', '')}: {row.get('draw_this', '')}")
     lines.append("\n## 4. Say · Spell · Use")
-    for item in vocab.get("practice") or []:
-        lines.append(f"- {item.get('term', '')}: {item.get('sentence_blank', '')}")
+    practice = _prepare_practice(vocab.get("word_wall") or [], vocab.get("topic", ""))
+    for index, item in enumerate(practice, 1):
+        blank = _clean_practice_blank(item.get("sentence_blank", ""))
+        lines.append(f"{index}. {item.get('term', '')}: {blank}")
     lines.append("\n## 5. Self-Test")
-    self_test = vocab.get("self_test") or {}
-    if self_test.get("matching_prompt"):
-        lines.append(str(self_test["matching_prompt"]))
-    for sentence in self_test.get("fill_blanks") or []:
-        lines.append(f"- {sentence}")
+    self_test = _prepare_self_test(vocab.get("self_test") or {}, vocab.get("word_wall") or [])
+    if self_test.get("matching_terms"):
+        lines.append("Part A — Matching")
+        for row in self_test["matching_terms"]:
+            lines.append(f"{row['n']}. {row['term']}")
+        for row in self_test.get("matching_definitions") or []:
+            lines.append(f"{row['letter']}. {row['text']}")
+    if self_test.get("fill_blanks"):
+        lines.append("Part B — Fill in the blank")
+        for index, sentence in enumerate(self_test["fill_blanks"], 1):
+            lines.append(f"{index}. {_clean_fill_blank_display(sentence)}")
     lines.append("\n## 6. Quick Reference")
     for row in vocab.get("reference_chart") or []:
         lines.append(
