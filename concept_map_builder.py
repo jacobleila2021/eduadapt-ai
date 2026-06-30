@@ -51,7 +51,7 @@ def _topic_and_terms(vocab: dict) -> tuple[str, list[str]]:
             term = (row.get("term") or "").strip()
             if term and term not in terms:
                 terms.append(term)
-    return topic, terms[:12]
+    return topic, terms[:10]
 
 
 def _wrap_label(text: str, max_len: int = 14) -> list[str]:
@@ -67,35 +67,83 @@ def _wrap_label(text: str, max_len: int = 14) -> list[str]:
             lines.append(current)
             current = word
     lines.append(current)
-    return lines[:3]
+    return lines[:2]
 
 
 def _hub_size(topic: str) -> tuple[int, int]:
-    lines = _wrap_label(topic, 16)
-    hub_w = min(340, max(180, max(len(line) for line in lines) * 11 + 40))
-    hub_h = max(52, 24 + len(lines) * 24)
+    lines = _wrap_label(topic, 14)
+    hub_w = min(280, max(150, max(len(line) for line in lines) * 9 + 36))
+    hub_h = max(48, 22 + len(lines) * 22)
     return hub_w, hub_h
+
+
+def _box_size(term: str) -> tuple[int, int, list[str]]:
+    lines = _wrap_label(term, 13)
+    box_w = min(170, max(96, max(len(line) for line in lines) * 8 + 28))
+    box_h = max(44, 18 + len(lines) * 18)
+    return box_w, box_h, lines
+
+
+def _hub_border_point(cx: float, cy: float, hw: float, hh: float, angle: float) -> tuple[float, float]:
+    """Intersection of ray from hub centre with hub rectangle border."""
+    dx = math.cos(angle)
+    dy = math.sin(angle)
+    if abs(dx) < 1e-9 and abs(dy) < 1e-9:
+        return cx, cy
+    scale = float("inf")
+    if abs(dx) > 1e-9:
+        scale = min(scale, hw / abs(dx))
+    if abs(dy) > 1e-9:
+        scale = min(scale, hh / abs(dy))
+    return cx + dx * scale, cy + dy * scale
 
 
 def build_vocabulary_concept_map_svg(vocab: Any) -> str:
     """
-    Hub-and-spoke flowchart: navy topic box above the spoke origin; lines radiate
-    from the bottom of the box to term nodes arranged below.
+    Hub-and-spoke map: topic inside the centre navy box; term boxes arranged
+    in a ring around it with labels inside each box (no overlapping text).
     """
     data = _coerce_dict(vocab) or {}
     topic, terms = _topic_and_terms(data)
     if not terms:
         terms = ["Key term 1", "Key term 2", "Key term 3"]
 
-    width, height = 820, 580
-    cx = width // 2
-    topic_lines = _wrap_label(topic, 16)
+    width, height = 920, 760
+    cx, cy = width // 2, height // 2
+    topic_lines = _wrap_label(topic, 14)
     hub_w, hub_h = _hub_size(topic)
     hub_x = cx - hub_w // 2
-    hub_y = 36
+    hub_y = cy - hub_h // 2
+    hw, hh = hub_w / 2, hub_h / 2
 
-    # Spokes radiate from the bottom-centre of the hub box.
-    origin_x, origin_y = cx, hub_y + hub_h
+    count = len(terms)
+    radius = max(250, min(310, 210 + count * 10))
+
+    nodes: list[dict] = []
+    for index, term in enumerate(terms):
+        angle = -math.pi / 2 + (2 * math.pi * index / count)
+        tx = cx + radius * math.cos(angle)
+        ty = cy + radius * math.sin(angle)
+        box_w, box_h, label_lines = _box_size(term)
+        bx = tx - box_w / 2
+        by = ty - box_h / 2
+        ex, ey = _hub_border_point(cx, cy, hw, hh, angle)
+        nodes.append(
+            {
+                "term": term,
+                "angle": angle,
+                "tx": tx,
+                "ty": ty,
+                "bx": bx,
+                "by": by,
+                "box_w": box_w,
+                "box_h": box_h,
+                "label_lines": label_lines,
+                "ex": ex,
+                "ey": ey,
+                "fill": LIGHT_TEAL if index % 2 == 0 else LIGHT_BLUE,
+            }
+        )
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
@@ -106,54 +154,52 @@ def build_vocabulary_concept_map_svg(vocab: Any) -> str:
         f'<rect width="100%" height="100%" fill="#fafcfd"/>',
     ]
 
-    # Central topic box — label inside the navy box.
+    # Lines first (under boxes).
+    for node in nodes:
+        target_y = node["by"] + node["box_h"] / 2
+        target_x = node["tx"]
+        if node["ty"] < cy:
+            target_y = node["by"] + node["box_h"]
+        elif node["ty"] > cy:
+            target_y = node["by"]
+        if node["tx"] < cx - 20:
+            target_x = node["bx"] + node["box_w"]
+        elif node["tx"] > cx + 20:
+            target_x = node["bx"]
+        parts.append(
+            f'<line x1="{node["ex"]:.1f}" y1="{node["ey"]:.1f}" '
+            f'x2="{target_x:.1f}" y2="{target_y:.1f}" stroke="{TEAL}" '
+            f'stroke-width="2" marker-end="url(#arrow)"/>'
+        )
+
+    # Centre hub with topic label inside.
     parts.append(
         f'<rect x="{hub_x}" y="{hub_y}" width="{hub_w}" height="{hub_h}" rx="12" '
         f'fill="{NAVY}" stroke="{TEAL}" stroke-width="2"/>'
     )
-    text_start_y = hub_y + 22 + (hub_h - len(topic_lines) * 24) // 2
+    text_start_y = hub_y + 20 + (hub_h - len(topic_lines) * 22) // 2
     for index, line in enumerate(topic_lines):
-        ty = text_start_y + index * 24
+        ty = text_start_y + index * 22
         parts.append(
             f'<text x="{cx}" y="{ty}" text-anchor="middle" font-family="{FONT}" '
-            f'font-size="15" font-weight="700" fill="#ffffff">{html.escape(line)}</text>'
+            f'font-size="14" font-weight="700" fill="#ffffff">{html.escape(line)}</text>'
         )
 
-    count = len(terms)
-    radius_x = 300
-    radius_y = 185
-    ellipse_cy = origin_y + 195
-    box_w, box_h = 140, 48
-
-    for index, term in enumerate(terms):
-        # Spread terms in the lower arc (avoid overlapping the hub above).
-        if count == 1:
-            angle = math.pi / 2
-        else:
-            angle = math.pi * 0.12 + (math.pi * 0.76) * index / (count - 1)
-        tx = cx + radius_x * math.cos(angle)
-        ty = ellipse_cy + radius_y * math.sin(angle)
-        bx = tx - box_w // 2
-        by = ty - box_h // 2
-        fill = LIGHT_TEAL if index % 2 == 0 else LIGHT_BLUE
-
-        # Line from hub bottom edge toward the term box top.
-        target_x, target_y = tx, by
+    # Term boxes on top with labels centred inside each box.
+    for node in nodes:
         parts.append(
-            f'<line x1="{origin_x}" y1="{origin_y}" x2="{target_x}" y2="{target_y}" '
-            f'stroke="{TEAL}" stroke-width="2" marker-end="url(#arrow)"/>'
+            f'<rect x="{node["bx"]:.1f}" y="{node["by"]:.1f}" '
+            f'width="{node["box_w"]:.1f}" height="{node["box_h"]:.1f}" rx="10" '
+            f'fill="{node["fill"]}" stroke="{TEAL}" stroke-width="2"/>'
         )
-        parts.append(
-            f'<rect x="{bx}" y="{by}" width="{box_w}" height="{box_h}" rx="10" '
-            f'fill="{fill}" stroke="{TEAL}" stroke-width="2"/>'
-        )
-        label_lines = _wrap_label(term, 18)
-        label_start = ty - 6 - (len(label_lines) - 1) * 8
-        for line_index, line in enumerate(label_lines):
-            ly = label_start + line_index * 16
+        line_count = len(node["label_lines"])
+        label_start = node["ty"] - (line_count - 1) * 9
+        for line_index, line in enumerate(node["label_lines"]):
+            ly = label_start + line_index * 18
             parts.append(
-                f'<text x="{tx}" y="{ly}" text-anchor="middle" font-family="{FONT}" '
-                f'font-size="12" font-weight="600" fill="{NAVY}">{html.escape(line)}</text>'
+                f'<text x="{node["tx"]:.1f}" y="{ly:.1f}" text-anchor="middle" '
+                f'dominant-baseline="middle" font-family="{FONT}" font-size="12" '
+                f'font-weight="600" fill="{NAVY}">{html.escape(line)}</text>'
             )
 
     parts.append("</svg>")

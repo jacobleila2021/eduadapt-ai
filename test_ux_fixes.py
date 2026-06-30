@@ -186,6 +186,17 @@ def test_title_drops_how_subtitle():
     assert _clean_title("Photosynthesis") == "Photosynthesis"
 
 
+def test_fill_blank_display_hides_answers():
+    from structured_renderers import _clean_fill_blank_display
+
+    raw = "Meristematic tissue has dividing cells. The vocabulary word is _____ (Meristematic tissue)."
+    display = _clean_fill_blank_display(raw)
+    assert "Meristematic tissue)" not in display
+    assert "(" not in display
+    assert "-----." not in display
+    assert "________" in display
+
+
 def test_sanitize_builds_multiple_self_test_questions():
     from ai_generator import _sanitize_vocabulary
 

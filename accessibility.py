@@ -48,15 +48,17 @@ def _reading_ruler_html(spec_id: str) -> str:
     <script>
     (function() {{
       const cfg = {json.dumps(cfg)};
-      function doc() {{
-        try {{
-          return window.parent.document;
-        }} catch (e) {{
-          return document;
+      function pageDoc() {{
+        const candidates = [window.top, window.parent, window];
+        for (const w of candidates) {{
+          try {{
+            if (w && w.document && w.document.body) return w.document;
+          }} catch (e) {{}}
         }}
+        return document;
       }}
-      function mount() {{
-        const d = doc();
+      function syncBar() {{
+        const d = pageDoc();
         let bar = d.getElementById("alora-ruler-bar");
         if (!bar) {{
           bar = d.createElement("div");
@@ -68,24 +70,26 @@ def _reading_ruler_html(spec_id: str) -> str:
         bar.style.left = "50%";
         bar.style.transform = "translateX(-50%)";
         bar.style.pointerEvents = "none";
-        bar.style.zIndex = "999999";
+        bar.style.zIndex = "9999999";
         bar.style.borderRadius = "8px";
         bar.style.width = cfg.width + "%";
         bar.style.height = cfg.height + "px";
         bar.style.background = cfg.color;
         bar.style.opacity = String(cfg.opacity);
         bar.style.display = cfg.show ? "block" : "none";
-        if (!window.parent.__aloraRulerMove) {{
-          window.parent.__aloraRulerMove = function(e) {{
-            const b = doc().getElementById("alora-ruler-bar");
-            if (!b || b.style.display === "none") return;
-            const h = b.offsetHeight || cfg.height;
-            b.style.top = Math.max(0, e.clientY - h / 2) + "px";
-          }};
-          d.addEventListener("mousemove", window.parent.__aloraRulerMove);
-        }}
+        bar.dataset.aloraHeight = String(cfg.height);
       }}
-      mount();
+      syncBar();
+      const d = pageDoc();
+      if (!d.__aloraRulerBound) {{
+        d.__aloraRulerBound = true;
+        d.addEventListener("mousemove", function(e) {{
+          const bar = d.getElementById("alora-ruler-bar");
+          if (!bar || bar.style.display === "none") return;
+          const h = parseInt(bar.dataset.aloraHeight || "48", 10) || 48;
+          bar.style.top = Math.max(0, e.clientY - h / 2) + "px";
+        }}, true);
+      }}
     }})();
     </script>
     """
@@ -115,7 +119,7 @@ def render_accessibility_toolbar(spec_id: str) -> None:
         )
 
     st.markdown(_a11y_marker_html(spec_id), unsafe_allow_html=True)
-    components.html(_reading_ruler_html(spec_id), height=0)
+    components.html(_reading_ruler_html(spec_id), height=0, scrolling=False)
 
 
 def get_workspace_layout_css() -> str:

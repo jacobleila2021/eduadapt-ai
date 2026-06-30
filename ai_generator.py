@@ -181,7 +181,8 @@ Return ONLY valid JSON with top-level key "vocabulary" containing this object:
 Requirements: 12–15 word_wall terms, ALL sections filled, real content from lesson.
 - fill_blank_answers MUST be the same length as fill_blanks; each entry is the single correct vocabulary TERM from word_wall (not a definition).
 - Every fill_blanks sentence MUST test a term from THIS lesson's word_wall — never reuse generic math/science examples from other subjects.
-- Provide at least 6 fill_blanks questions, each ending with the correct term in brackets, e.g. "… _____ (Meristematic tissue)."
+- Provide at least 6 fill_blanks questions using ________ as the blank (no answer in brackets in the displayed sentence).
+- Store correct terms only in fill_blank_answers (parallel array); never show answers inline in fill_blanks text.
 - flashcards MUST pair each word_wall term (front) with its definition (back).
 {DEPTH_RULES}"""
 
@@ -240,7 +241,15 @@ def _fill_blank_sentence(word: dict) -> str:
     return f"This key term from the lesson is _____ ({term})."
 
 
-def _build_matching_prompt(word_wall: list[dict]) -> str:
+def _fill_blank_sentence(word: dict) -> str:
+    term = (word.get("term") or "").strip()
+    definition = (word.get("definition") or word.get("child_friendly") or "").strip()
+    if definition:
+        return f"{definition.rstrip('.')}. The vocabulary word is ________."
+    return "This key term from the lesson is ________."
+
+
+def _build_matching_prompt(word_wall: list[dict]) -> tuple[str, list[dict]]:
     import random
 
     pairs = [
@@ -249,18 +258,25 @@ def _build_matching_prompt(word_wall: list[dict]) -> str:
         if w.get("term") and w.get("definition")
     ]
     if not pairs:
-        return "Match each term to its definition from the word wall."
-    definitions = [p[1] for p in pairs]
-    shuffled = list(definitions)
+        return "Match each term to its definition from the word wall.", []
+
+    indexed = list(enumerate(pairs, 1))
+    shuffled = list(indexed)
     random.shuffle(shuffled)
+    letters = "ABCDEFGH"
+    letter_for_term: dict[str, str] = {}
     lines = ["Match each term (1–8) to the correct definition (A–H):", ""]
-    for index, (term, _) in enumerate(pairs, 1):
-        lines.append(f"{index}. {term}")
+    for number, (term, _) in indexed:
+        lines.append(f"{number}. {term}")
     lines.append("")
-    for index, definition in enumerate(shuffled, 1):
-        letter = chr(64 + index)
+    for slot, (_, (term, definition)) in enumerate(shuffled):
+        letter = letters[slot]
+        letter_for_term[term] = letter
         lines.append(f"{letter}. {definition[:140]}")
-    return "\n".join(lines)
+    answer_key = [
+        {"term": term, "letter": letter_for_term.get(term, "")} for term, _ in pairs
+    ]
+    return "\n".join(lines), answer_key
 
 
 def _sanitize_vocabulary(vocab: dict) -> dict:
@@ -289,16 +305,28 @@ def _sanitize_vocabulary(vocab: dict) -> dict:
     for index, sentence in enumerate(blanks[:target_count], 1):
         term = (word_wall[(index - 1) % len(word_wall)].get("term") or "").strip()
         text = str(sentence).strip()
-        if term and not re.search(r"\([^)]+\)\s*\.?\s*$", text):
-            text = text.rstrip(".") + f" _____ ({term})."
+        text = re.sub(r"\s*\([^)]+\)\s*([.!?]?)\s*$", r"\1", text).strip()
+        text = re.sub(r"[_\-]{3,}", "________", text)
+        if "________" not in text:
+            definition = (
+                word_wall[(index - 1) % len(word_wall)].get("definition") or ""
+            ).strip()
+            if definition:
+                text = f"{definition.rstrip('.')}. The vocabulary word is ________."
+            else:
+                text = "This key term from the lesson is ________."
         rebuilt_blanks.append(text)
-        _, ans = _resolve_fill_blank_answer(text, index, self_test, word_wall)
-        validated.append(ans or term)
+        validated.append(term)
 
     self_test["fill_blanks"] = rebuilt_blanks
     self_test["fill_blank_answers"] = validated
     if not self_test.get("matching_prompt"):
-        self_test["matching_prompt"] = _build_matching_prompt(word_wall)
+        prompt, answer_key = _build_matching_prompt(word_wall)
+        self_test["matching_prompt"] = prompt
+        self_test["matching_answer_key"] = answer_key
+    elif not self_test.get("matching_answer_key"):
+        _, answer_key = _build_matching_prompt(word_wall)
+        self_test["matching_answer_key"] = answer_key
     vocab["self_test"] = self_test
 
     return vocab
@@ -387,7 +415,7 @@ def _fallback_vocabulary(context: dict) -> dict:
         "self_test": {
             "matching_prompt": "Match each term (1–5) to its meaning (A–E).",
             "fill_blanks": [
-                f"{w['definition'].rstrip('.')}. The vocabulary word is _____ ({w['term']})."
+                f"{w['definition'].rstrip('.')}. The vocabulary word is ________."
                 for w in word_wall[: min(6, len(word_wall))]
             ],
             "fill_blank_answers": [w["term"] for w in word_wall[: min(6, len(word_wall))]],

@@ -175,6 +175,22 @@ def _extract_blank_answer(sentence: str) -> tuple[str, str]:
     return display, raw
 
 
+def _clean_fill_blank_display(sentence: str) -> str:
+    """Student-facing sentence — no bracket hints or stray dash blanks."""
+    display, _ = _extract_blank_answer(sentence)
+    text = display or str(sentence)
+    text = re.sub(r"\s*\([^)]+\)", "", text)
+    text = re.sub(r"[_\-]{3,}\s*\.", "________.", text)
+    text = re.sub(r"[_\-]{3,}", "________", text)
+    text = re.sub(r"________\s*\.\s*________\.?", "________.", text)
+    text = re.sub(r"\.\s*\.", ".", text)
+    text = re.sub(r"\s+\.", ".", text)
+    text = re.sub(r"\s{2,}", " ", text).strip()
+    if text and not text.endswith((".", "?", "!")):
+        text += "."
+    return text
+
+
 def _wall_term_map(word_wall: list[dict]) -> dict[str, str]:
     return {
         (w.get("term") or "").strip().lower(): (w.get("term") or "").strip()
@@ -314,11 +330,23 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     matching = self_test.get("matching_prompt", "") or self_test.get("matching", "")
     if matching:
         st.markdown(matching if isinstance(matching, str) else str(matching))
+        match_key = self_test.get("matching_answer_key") or []
+        if match_key:
+            answer_lines = [
+                f"{row.get('term', '')} → {row.get('letter', '')}"
+                for row in match_key
+                if row.get("term")
+            ]
+            if answer_lines:
+                _show_answer_button(
+                    "Matching",
+                    "\n".join(answer_lines),
+                    f"{key_prefix}_matching",
+                )
     fill_blanks = self_test.get("fill_blanks") or []
     for index, sentence in enumerate(fill_blanks, 1):
-        display, ans = _resolve_fill_blank_answer(
-            sentence, index, self_test, word_wall
-        )
+        _, ans = _resolve_fill_blank_answer(sentence, index, self_test, word_wall)
+        display = _clean_fill_blank_display(sentence)
         st.markdown(f"{index}. {display}")
         if ans:
             _show_answer_button(f"Q{index}", ans, f"{key_prefix}_ans_{index}")

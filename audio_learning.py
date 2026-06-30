@@ -297,6 +297,25 @@ def _openai_audio_player_html(
         let acc = 0;
         bounds = lengths.map(l => {{ acc += l; return acc / total; }});
       }}
+      function scrollActiveSentence(el) {{
+        if (!el) return;
+        el.scrollIntoView({{behavior: "smooth", block: "center"}});
+        try {{
+          let childWin = window;
+          while (childWin && childWin !== childWin.parent) {{
+            const parentWin = childWin.parent;
+            const frame = childWin.frameElement;
+            if (frame && parentWin) {{
+              const rect = el.getBoundingClientRect();
+              const frameRect = frame.getBoundingClientRect();
+              const target = parentWin.scrollY + frameRect.top + rect.top
+                - (parentWin.innerHeight / 2) + (rect.height / 2);
+              parentWin.scrollTo({{top: Math.max(0, target), behavior: "smooth"}});
+            }}
+            childWin = parentWin;
+          }}
+        }} catch (e) {{}}
+      }}
       function highlight() {{
         if (!audio.duration || !isFinite(audio.duration)) return;
         const frac = audio.currentTime / audio.duration;
@@ -304,7 +323,7 @@ def _openai_audio_player_html(
         if (i < 0) i = lengths.length - 1;
         document.querySelectorAll(".speech-sentence").forEach(el => el.classList.remove("active"));
         const el = document.querySelector('.speech-sentence[data-idx="' + i + '"]');
-        if (el) {{ el.classList.add("active"); el.scrollIntoView({{behavior: "smooth", block: "center"}}); }}
+        if (el) {{ el.classList.add("active"); scrollActiveSentence(el); }}
       }}
       function applySpeed() {{
         audio.playbackRate = parseFloat(document.getElementById("speed-select").value) || 1;
@@ -458,12 +477,32 @@ def _audio_player_html(
             || voices[0];
       }}
 
+      function scrollActiveSentence(el) {{
+        if (!el) return;
+        el.scrollIntoView({{behavior: "smooth", block: "center"}});
+        try {{
+          let childWin = window;
+          while (childWin && childWin !== childWin.parent) {{
+            const parentWin = childWin.parent;
+            const frame = childWin.frameElement;
+            if (frame && parentWin) {{
+              const rect = el.getBoundingClientRect();
+              const frameRect = frame.getBoundingClientRect();
+              const target = parentWin.scrollY + frameRect.top + rect.top
+                - (parentWin.innerHeight / 2) + (rect.height / 2);
+              parentWin.scrollTo({{top: Math.max(0, target), behavior: "smooth"}});
+            }}
+            childWin = parentWin;
+          }}
+        }} catch (e) {{}}
+      }}
+
       function highlight(i) {{
         document.querySelectorAll(".speech-sentence").forEach(el => el.classList.remove("active"));
         const el = document.querySelector('.speech-sentence[data-idx="' + i + '"]');
         if (el) {{
           el.classList.add("active");
-          el.scrollIntoView({{behavior: "smooth", block: "center"}});
+          scrollActiveSentence(el);
         }}
       }}
 
@@ -640,13 +679,10 @@ def render_audio_learning_panel(
             unsafe_allow_html=True,
         )
         components.html(
-            _openai_controls_html(b64, sentences, speed, storage_key, font_px),
-            height=130,
-            scrolling=False,
-        )
-        components.html(
-            _transcript_html(sentences, font_px),
-            height=420 if auditory_mode else 360,
+            _openai_audio_player_html(
+                b64, sentences, speed, spec_id, storage_key, f"{font_px}px", font_px
+            ),
+            height=620 if auditory_mode else 560,
             scrolling=True,
         )
         return
