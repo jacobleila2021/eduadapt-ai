@@ -165,6 +165,9 @@ def render_workspace(
         unsafe_allow_html=True,
     )
 
+    # Render adaptation tabs first so active highlighting updates before heavy content loads.
+    render_bottom_adaptation_bar(category_id, spec_id)
+
     st.button(
         "← Back to Dashboard",
         key="back_to_dashboard",
@@ -201,5 +204,3 @@ def render_workspace(
         hide_downloads=True,
         lesson_title=lesson_title,
     )
-
-    render_bottom_adaptation_bar(category_id, spec_id)

@@ -741,28 +741,6 @@ def render_lesson(data: Any) -> None:
 
     sections = lesson.get("sections") or []
 
-    big_idea = lesson.get("big_idea", "")
-    if big_idea:
-        st.markdown(
-            section_card_html("Big Idea", _plain_lesson_text(big_idea), "introduction"),
-            unsafe_allow_html=True,
-        )
-
-    if sections:
-        nav_links: list[str] = []
-        for idx, section in enumerate(sections):
-            title = (section.get("title") or f"Section {idx + 1}").strip()
-            variant = classify_section(title, section.get("box", ""), idx)
-            accent = accent_for_variant(variant)
-            nav_links.append(
-                f'<a class="lesson-jump-link" href="#sec_{idx}" style="color:{accent};">'
-                f"↓ {html.escape(title)}</a>"
-            )
-        st.markdown(
-            f'<div class="lesson-jump-nav">{" &nbsp;·&nbsp; ".join(nav_links)}</div>',
-            unsafe_allow_html=True,
-        )
-
     svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
     has_good_mermaid = _valid_mermaid(mermaid)
@@ -780,6 +758,13 @@ def render_lesson(data: Any) -> None:
         # Never show a blank/placeholder: build a real diagram from the lesson itself.
         st.markdown("#### 📊 Concept Diagram")
         _render_svg(_fallback_lesson_diagram(lesson))
+
+    big_idea = lesson.get("big_idea", "")
+    if big_idea:
+        st.markdown(
+            section_card_html("Big Idea", _plain_lesson_text(big_idea), "introduction"),
+            unsafe_allow_html=True,
+        )
 
     for idx, section in enumerate(sections):
         title = section.get("title", "") or f"Section {idx + 1}"

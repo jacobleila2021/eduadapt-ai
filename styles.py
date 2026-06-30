@@ -386,10 +386,10 @@ def get_custom_css() -> str:
     div[class*="st-key-pill_"] button[kind="primary"],
     div[class*="st-key-ws_pill_"] button[kind="primary"],
     div[class*="st-key-subpill_"] button[kind="primary"] {{
-        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #062456 100%) !important;
         color: {COLOR_WHITE} !important;
-        border: 2px solid #93c5fd !important;
-        box-shadow: 0 0 18px rgba(37, 99, 235, 0.55), 0 4px 14px rgba(29, 78, 216, 0.35) !important;
+        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
+        box-shadow: 0 0 14px rgba(20, 217, 229, 0.45), 0 4px 14px rgba(4, 27, 77, 0.35) !important;
     }}
 
     div[class*="st-key-pill_"] button[kind="secondary"],
@@ -402,25 +402,7 @@ def get_custom_css() -> str:
     }}
 
     .lesson-jump-nav {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.65rem 1.25rem;
-        margin: 0.75rem 0 1.25rem 0;
-        padding: 0.85rem 1rem;
-        background: {COLOR_WHITE};
-        border: 1px solid #dbeafe;
-        border-radius: 12px;
-    }}
-
-    .lesson-jump-link {{
-        font-weight: 700;
-        text-decoration: none;
-        font-family: 'Inter', sans-serif;
-        font-size: 1rem;
-    }}
-
-    .lesson-jump-link:hover {{
-        text-decoration: underline;
+        display: none;
     }}
 
     .exam-print-header p {{
@@ -493,6 +475,36 @@ def get_custom_css() -> str:
         text-align: center;
     }}
 
+    .main .block-container:has(.alora-workspace-active)
+    [data-testid="stMarkdownContainer"]:has(.bottom-tabs-label) {{
+        position: fixed !important;
+        bottom: 11.75rem !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999992 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        pointer-events: none;
+    }}
+
+    .main .block-container:has(.alora-workspace-active) .bottom-tabs-label {{
+        color: rgba(255, 255, 255, 0.88) !important;
+        margin: 0 !important;
+    }}
+
+    .main .block-container:has(.alora-workspace-active)
+    [data-testid="stHorizontalBlock"]:has([class*="st-key-subpill_"]) {{
+        position: fixed !important;
+        bottom: 9.5rem !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999991 !important;
+        background: linear-gradient(180deg, #041B4D, #031638) !important;
+        padding: 0.35rem 1.5rem 0.5rem 1.5rem !important;
+        margin: 0 !important;
+        max-width: 100vw !important;
+    }}
+
     .workspace-banner h2 {{
         color: {COLOR_WHITE} !important;
         margin: 0 0 0.35rem 0;
@@ -548,4 +560,19 @@ def get_custom_css() -> str:
     /* Dyslexia-friendly workspace (injected once — never via st.markdown) */
     {get_workspace_css_fragment()}
     </style>
+    <script>
+    (function () {{
+      function highlightPill(btn) {{
+        var root = btn.closest('.main') || document;
+        root.querySelectorAll('[class*="st-key-ws_pill_"] button[kind="primary"], [class*="st-key-pill_"] button[kind="primary"], [class*="st-key-subpill_"] button[kind="primary"]').forEach(function (el) {{
+          el.setAttribute('kind', 'secondary');
+        }});
+        btn.setAttribute('kind', 'primary');
+      }}
+      document.addEventListener('pointerdown', function (event) {{
+        var btn = event.target.closest('[class*="st-key-ws_pill_"] button, [class*="st-key-pill_"] button, [class*="st-key-subpill_"] button');
+        if (btn) highlightPill(btn);
+      }}, true);
+    }})();
+    </script>
     """
