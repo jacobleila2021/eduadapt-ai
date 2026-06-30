@@ -10,6 +10,7 @@ import re
 # ---- Palette ----
 BG_MAIN = "#FFF9EE"
 TEXT_BODY = "#333333"
+BORDER_SUBTLE = "#E8E0CF"
 SOFT_YELLOW = "#FFF59D"
 
 ACCENT_INTRO = "#059669"  # Emerald Green — Introduction
