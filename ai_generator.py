@@ -178,7 +178,7 @@ Return ONLY valid JSON with top-level key "vocabulary" containing this object:
 }}
 
 Requirements: 12–15 word_wall terms, ALL sections filled, real content from lesson.
-- fill_blank_answers MUST be the same length as fill_blanks; each entry is the single correct vocabulary TERM from word_wall (not a definition).
+- fill_blank_answers MUST be the same length as fill_blanks; each entry is the word or phrase that correctly completes THAT blank (e.g. "divide", "minerals", or a vocabulary term).
 - Every fill_blanks sentence MUST test a term from THIS lesson's word_wall — never reuse generic math/science examples from other subjects.
 - practice: numbered sentence_blank only — no pronunciation or syllable fields.
 - Provide at least 6 fill_blanks questions using ________ as the blank (no answer in brackets in the displayed sentence).

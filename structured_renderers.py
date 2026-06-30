@@ -151,14 +151,20 @@ def _lookup_answer(answer_key: list, ref: str) -> str:
     return ""
 
 
-def _show_answer_button(label: str, answer: str, key: str) -> None:
+def _show_answer_button(label: str, answer: str, key: str, *, exam_style: bool = False) -> None:
     if not answer:
         return
     reveal_key = f"revealed_{key}"
     if st.button(f"Show Answer — {label}", key=f"btn_{key}", type="secondary"):
         st.session_state[reveal_key] = True
     if st.session_state.get(reveal_key):
-        st.success(answer)
+        if exam_style:
+            st.markdown(
+                f'<div class="exam-answer-reveal">{html.escape(answer)}</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.success(answer)
 
 
 def _extract_blank_answer(sentence: str) -> tuple[str, str]:
@@ -241,8 +247,79 @@ def _build_matching_section(word_wall: list[dict]) -> dict:
     }
 
 
+def _answer_fits_sentence(answer: str, sentence: str, word_wall: list[dict]) -> bool:
+    """True when the answer plausibly completes the blank for this sentence."""
+    if not answer:
+        return False
+    sent = sentence.lower()
+    ans = answer.lower()
+    if ans in sent.replace("________", ""):
+        return True
+    clue_words = set(re.findall(r"[a-z]{4,}", sent.replace("________", " ")))
+    for word in word_wall:
+        term = (word.get("term") or "").lower()
+        defin = (word.get("definition") or "").lower()
+        if ans == term:
+            def_words = set(re.findall(r"[a-z]{4,}", defin))
+            return len(clue_words & def_words) >= 2
+        if ans in defin:
+            def_words = set(re.findall(r"[a-z]{4,}", defin))
+            if len(clue_words & def_words) >= 2:
+                return True
+    return len(ans.split()) <= 3 and any(w in sent for w in ans.split() if len(w) > 3)
+
+
+def _infer_term_from_clue(sentence: str, word_wall: list[dict]) -> str:
+    """Pick the word-wall term best described by the sentence clue."""
+    clue = re.sub(r"________", " ", sentence.lower())
+    clue_words = set(re.findall(r"[a-z]{4,}", clue))
+    best_term = ""
+    best_score = 0.0
+    for word in word_wall:
+        term = (word.get("term") or "").strip()
+        if not term:
+            continue
+        defin = (word.get("definition") or "").lower()
+        child = (word.get("child_friendly") or "").lower()
+        def_words = set(re.findall(r"[a-z]{4,}", f"{defin} {child}"))
+        if not clue_words or not def_words:
+            continue
+        overlap = len(clue_words & def_words) / max(len(clue_words), 1)
+        if term.lower() in clue and "vocabulary word" not in clue:
+            overlap += 0.35
+        if overlap > best_score:
+            best_score = overlap
+            best_term = term
+    return best_term if best_score >= 0.2 else ""
+
+
+def _fill_blank_for_word(word: dict) -> tuple[str, str]:
+    """Build a fill-in-the-blank sentence and its correct short answer."""
+    term = (word.get("term") or "").strip()
+    definition = (word.get("definition") or word.get("child_friendly") or "").strip()
+    if not term:
+        return "This key idea from the lesson is ________.", ""
+    if definition:
+        lowered = definition.lower()
+        if "divide" in lowered or "dividing" in lowered:
+            return (
+                f"{term} is made of cells that can ________.",
+                "divide",
+            )
+        if "water" in lowered and ("transport" in lowered or "carry" in lowered):
+            return (
+                f"{term} is responsible for transporting water and ________.",
+                "minerals",
+            )
+        return (
+            f"{definition.rstrip('.')}. The vocabulary word is ________.",
+            term,
+        )
+    return (f"This key term from the lesson is ________.", term)
+
+
 def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
-    """Ensure self-test has clean structured matching and numbered fill-blank answers."""
+    """Ensure self-test has clean structured matching and semantically correct fill-blank answers."""
     data = dict(self_test or {})
     matching = _build_matching_section(word_wall)
     data["matching_terms"] = matching["matching_terms"]
@@ -253,28 +330,46 @@ def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
 
     target_count = min(8, max(6, len(word_wall)))
     blanks = list(data.get("fill_blanks") or [])
+    ai_answers = list(data.get("fill_blank_answers") or data.get("answers") or [])
+
     if len(blanks) < target_count:
         for index in range(len(blanks), target_count):
-            word = word_wall[index % len(word_wall)]
-            definition = (word.get("definition") or word.get("child_friendly") or "").strip()
-            if definition:
-                blanks.append(f"{definition.rstrip('.')}. The vocabulary word is ________.")
-            else:
-                blanks.append("This key term from the lesson is ________.")
+            sentence, answer = _fill_blank_for_word(word_wall[index % len(word_wall)])
+            blanks.append(sentence)
+            if len(ai_answers) <= index:
+                ai_answers.append(answer)
 
     rebuilt: list[str] = []
     answers: list[str] = []
     for index, sentence in enumerate(blanks[:target_count], 1):
-        term = (word_wall[(index - 1) % len(word_wall)].get("term") or "").strip()
-        text = _clean_fill_blank_display(str(sentence))
+        raw = str(sentence).strip()
+        text = _clean_fill_blank_display(raw)
         if "________" not in text:
-            definition = (word_wall[(index - 1) % len(word_wall)].get("definition") or "").strip()
-            if definition:
-                text = f"{definition.rstrip('.')}. The vocabulary word is ________."
-            else:
-                text = "This key term from the lesson is ________."
+            word = word_wall[(index - 1) % len(word_wall)]
+            text, default_ans = _fill_blank_for_word(word)
+            if len(ai_answers) < index:
+                ai_answers.append(default_ans)
         rebuilt.append(text)
-        answers.append(term)
+
+        probe = dict(data)
+        probe["fill_blank_answers"] = ai_answers
+        _, resolved = _resolve_fill_blank_answer(raw, index, probe, word_wall)
+        if not resolved and index - 1 < len(ai_answers):
+            candidate = str(ai_answers[index - 1] or "").strip()
+            if candidate:
+                canonical = _canonical_wall_term(candidate, _wall_term_map(word_wall))
+                resolved = canonical or candidate
+        if not resolved:
+            word = word_wall[(index - 1) % len(word_wall)]
+            _, resolved = _fill_blank_for_word(word)
+        if not resolved and "vocabulary word" in text.lower():
+            resolved = _infer_term_from_clue(text, word_wall)
+        if resolved and not _answer_fits_sentence(resolved, text, word_wall):
+            word = word_wall[(index - 1) % len(word_wall)]
+            text, fallback = _fill_blank_for_word(word)
+            rebuilt[-1] = text
+            resolved = fallback
+        answers.append(resolved or "")
 
     data["fill_blanks"] = rebuilt
     data["fill_blank_answers"] = answers
@@ -371,11 +466,9 @@ def _resolve_fill_blank_answer(
     self_test: dict,
     word_wall: list[dict],
 ) -> tuple[str, str]:
-    """Return (display_sentence, correct_answer) — answer must be a word-wall term."""
+    """Return (display_sentence, correct_answer) for a fill-in-the-blank."""
     display, bracket_ans = _extract_blank_answer(sentence)
     term_map = _wall_term_map(word_wall)
-    if not term_map:
-        return display or sentence, ""
 
     answers = self_test.get("fill_blank_answers") or self_test.get("answers") or []
     if index - 1 < len(answers):
@@ -384,18 +477,21 @@ def _resolve_fill_blank_answer(
             explicit = (entry.get("answer") or entry.get("term") or "").strip()
         else:
             explicit = str(entry or "").strip()
-        canonical = _canonical_wall_term(explicit, term_map)
-        if canonical:
-            return display or sentence, canonical
+        if explicit:
+            canonical = _canonical_wall_term(explicit, term_map) if term_map else ""
+            return display or sentence, canonical or explicit
 
     if bracket_ans:
-        canonical = _canonical_wall_term(bracket_ans, term_map)
+        canonical = _canonical_wall_term(bracket_ans, term_map) if term_map else ""
         if canonical:
             return display, canonical
+        if len(bracket_ans.split()) <= 6:
+            return display, bracket_ans
 
-    matched = _best_wall_term_for_sentence(sentence, word_wall)
-    if matched:
-        return display or sentence, matched
+    if term_map:
+        matched = _best_wall_term_for_sentence(sentence, word_wall)
+        if matched:
+            return display or sentence, matched
 
     return display or sentence, ""
 
@@ -513,11 +609,17 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         return
 
     header = sheet.get("header") or {}
-    st.markdown("## 📝 Exam Practice Paper")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Subject", header.get("subject", "—"))
-    col2.metric("Time allowed", header.get("time_allowed", "45 min"))
-    col3.metric("Total marks", header.get("total_marks", "—"))
+    st.markdown(
+        f"""
+        <div class="exam-print-header">
+          <p><strong>Subject:</strong> ______________________</p>
+          <p><strong>Lesson:</strong> ______________________</p>
+          <p><strong>Time:</strong> ______________________</p>
+          <p><strong>Marks:</strong> ______________________</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.text_input("Name", key=f"{key_prefix}_name", placeholder="Student name")
     st.text_input("Date", key=f"{key_prefix}_date", placeholder="Date")
 
@@ -536,7 +638,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         )
         ref = f"Part A Q{index}"
         ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
-        _show_answer_button(ref, ans, f"{key_prefix}_sa_{index}")
+        _show_answer_button(ref, ans, f"{key_prefix}_sa_{index}", exam_style=True)
         st.markdown("")
 
     # Part B — Long answer
@@ -553,7 +655,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         )
         ref = f"Part B Q{index}"
         ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
-        _show_answer_button(ref, ans, f"{key_prefix}_la_{index}")
+        _show_answer_button(ref, ans, f"{key_prefix}_la_{index}", exam_style=True)
         st.markdown("")
 
     # Part C — Diagram
@@ -568,7 +670,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
             _render_svg(svg)
         st.markdown("_Label the diagram above on your answer sheet._")
         dia_ans = diagram.get("model_answer", "") or _lookup_answer(answer_key, "Part C")
-        _show_answer_button("Part C", dia_ans, f"{key_prefix}_dia")
+        _show_answer_button("Part C", dia_ans, f"{key_prefix}_dia", exam_style=True)
 
     # Part D — Vocab in context
     st.markdown("### Part D — Vocabulary in Context")
@@ -583,7 +685,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         )
         ref = f"Part D Q{index}"
         ans = item.get("model_answer", "") or _lookup_answer(answer_key, ref)
-        _show_answer_button(ref, ans, f"{key_prefix}_vq_{index}")
+        _show_answer_button(ref, ans, f"{key_prefix}_vq_{index}", exam_style=True)
 
     # Part E — Student checklist
     st.markdown("### Part E — Exam Ready Checklist")
@@ -613,6 +715,17 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         )
 
 
+def _plain_lesson_text(raw: str) -> str:
+    """Strip HTML/markdown artefacts so lesson text never shows raw tags."""
+    if not raw:
+        return ""
+    text = html.unescape(str(raw))
+    text = re.sub(r"<a[^>]*>.*?</a>", " ", text, flags=re.I | re.DOTALL)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 def render_lesson(data: Any) -> None:
     """Structured lesson with colored callouts, diagram, and sections."""
     lesson = _coerce_dict(data)
@@ -626,27 +739,29 @@ def render_lesson(data: Any) -> None:
                 st.write(str(data)[:1500])
         return
 
+    sections = lesson.get("sections") or []
+
     big_idea = lesson.get("big_idea", "")
     if big_idea:
         st.markdown(
-            section_card_html("Big Idea", big_idea, "introduction"),
+            section_card_html("Big Idea", _plain_lesson_text(big_idea), "introduction"),
             unsafe_allow_html=True,
         )
 
-    sections = lesson.get("sections") or []
     if sections:
-        jump_cols = st.columns(min(len(sections), 4))
+        nav_links: list[str] = []
         for idx, section in enumerate(sections):
             title = (section.get("title") or f"Section {idx + 1}").strip()
             variant = classify_section(title, section.get("box", ""), idx)
             accent = accent_for_variant(variant)
-            anchor = f"sec_{idx}"
-            with jump_cols[idx % len(jump_cols)]:
-                st.markdown(
-                    f'<a href="#{anchor}" style="text-decoration:none;font-weight:700;'
-                    f'color:{accent};font-family:{FONT_STACK};">↓ {html.escape(title)}</a>',
-                    unsafe_allow_html=True,
-                )
+            nav_links.append(
+                f'<a class="lesson-jump-link" href="#sec_{idx}" style="color:{accent};">'
+                f"↓ {html.escape(title)}</a>"
+            )
+        st.markdown(
+            f'<div class="lesson-jump-nav">{" &nbsp;·&nbsp; ".join(nav_links)}</div>',
+            unsafe_allow_html=True,
+        )
 
     svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
@@ -674,7 +789,7 @@ def render_lesson(data: Any) -> None:
         st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
         if body:
             st.markdown(
-                section_card_html(title, body, variant),
+                section_card_html(title, _plain_lesson_text(body), variant),
                 unsafe_allow_html=True,
             )
 

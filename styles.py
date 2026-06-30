@@ -386,10 +386,60 @@ def get_custom_css() -> str:
     div[class*="st-key-pill_"] button[kind="primary"],
     div[class*="st-key-ws_pill_"] button[kind="primary"],
     div[class*="st-key-subpill_"] button[kind="primary"] {{
-        background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #062456 100%) !important;
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
         color: {COLOR_WHITE} !important;
-        border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
-        box-shadow: 0 0 20px rgba(20, 217, 229, 0.5), 0 4px 16px rgba(4, 27, 77, 0.4) !important;
+        border: 2px solid #93c5fd !important;
+        box-shadow: 0 0 18px rgba(37, 99, 235, 0.55), 0 4px 14px rgba(29, 78, 216, 0.35) !important;
+    }}
+
+    div[class*="st-key-pill_"] button[kind="secondary"],
+    div[class*="st-key-ws_pill_"] button[kind="secondary"],
+    div[class*="st-key-subpill_"] button[kind="secondary"] {{
+        background: linear-gradient(180deg, #089aa4 0%, #066d75 100%) !important;
+        color: {COLOR_WHITE} !important;
+        border: 2px solid rgba(255, 255, 255, 0.55) !important;
+        box-shadow: 0 4px 16px rgba(4, 27, 77, 0.35) !important;
+    }}
+
+    .lesson-jump-nav {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem 1.25rem;
+        margin: 0.75rem 0 1.25rem 0;
+        padding: 0.85rem 1rem;
+        background: {COLOR_WHITE};
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+    }}
+
+    .lesson-jump-link {{
+        font-weight: 700;
+        text-decoration: none;
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+    }}
+
+    .lesson-jump-link:hover {{
+        text-decoration: underline;
+    }}
+
+    .exam-print-header p {{
+        font-size: 1.1rem;
+        margin: 0.55rem 0;
+        color: #333333;
+        font-weight: 600;
+    }}
+
+    .exam-answer-reveal {{
+        background: #FFF9C4;
+        color: #059669;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1px solid #FDE68A;
+        margin: 0.35rem 0 0.75rem 0;
+        line-height: 1.65;
+        white-space: pre-wrap;
     }}
 
     /* Fallback if st-key classes differ on Cloud */

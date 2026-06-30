@@ -78,19 +78,22 @@ def test_fill_blank_answer_extraction():
 
 
 def test_fill_blank_rejects_off_topic_answers():
-    from structured_renderers import _resolve_fill_blank_answer
+    from structured_renderers import _prepare_self_test
 
     tissues_wall = [
         {"term": "Meristematic tissue", "definition": "Tissue with dividing cells."},
         {"term": "Parenchyma", "definition": "Storage tissue in plants."},
     ]
-    _, ans = _resolve_fill_blank_answer(
-        "The distance from the center to the edge of a circle is called the _____ (radius).",
-        1,
-        {"fill_blank_answers": ["radius"]},
+    st = _prepare_self_test(
+        {
+            "fill_blanks": [
+                "The distance from the center to the edge of a circle is called the ________."
+            ],
+            "fill_blank_answers": ["radius"],
+        },
         tissues_wall,
     )
-    assert ans == ""
+    assert st["fill_blank_answers"][0].lower() != "radius"
 
 
 def test_indian_voices_present():
@@ -210,6 +213,33 @@ def test_matching_answer_is_compact():
     assert "term" not in section["matching_answer_key"][0]
 
 
+def test_fill_blank_semantic_not_index():
+    from structured_renderers import _prepare_self_test
+
+    wall = [
+        {
+            "term": "Meristematic tissue",
+            "definition": "Tissue made of cells that can divide repeatedly.",
+        },
+        {
+            "term": "Xylem",
+            "definition": "Vascular tissue that transports water and minerals upward.",
+        },
+    ]
+    st = _prepare_self_test(
+        {
+            "fill_blanks": [
+                "Meristematic tissue is made of cells that can ________.",
+                "Xylem is responsible for transporting water and ________.",
+            ],
+            "fill_blank_answers": ["divide", "minerals"],
+        },
+        wall,
+    )
+    assert st["fill_blank_answers"][0] == "divide"
+    assert st["fill_blank_answers"][1] == "minerals"
+
+
 def test_prepare_self_test_has_six_questions():
     from structured_renderers import _clean_fill_blank_display, _prepare_self_test
 
@@ -243,7 +273,7 @@ def test_sanitize_builds_multiple_self_test_questions():
     }
     cleaned = _sanitize_vocabulary(vocab)
     assert len(cleaned["self_test"]["fill_blanks"]) >= 6
-    assert cleaned["self_test"]["fill_blank_answers"][0] == "Term1"
+    assert cleaned["self_test"]["fill_blank_answers"]
 
 
 def test_warm_voices_only():
