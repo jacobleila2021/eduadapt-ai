@@ -147,10 +147,16 @@ def render_adaptation_viewer(
             unsafe_allow_html=True,
         )
 
+    st.markdown("#### 🔊 Adaptive Audio Learning")
+
     auditory_mode = st.toggle(
         "Auditory Learning Mode",
         value=st.session_state.get("auditory_mode", False),
-        help="Larger transcript text and listening-focused layout.",
+        help=(
+            "Turns on a listening-first layout: larger transcript text (26px), "
+            "more spacing in the reading passage, and a taller audio panel — "
+            "ideal when you want to listen rather than read on screen."
+        ),
         key=f"auditory_toggle_{spec_id}",
     )
     st.session_state.auditory_mode = auditory_mode
@@ -158,7 +164,7 @@ def render_adaptation_viewer(
     render_accessibility_toolbar(spec_id)
 
     render_audio_learning_panel(
-        title, content, spec_id, api_key, auditory_mode=auditory_mode
+        title, content, spec_id, api_key, auditory_mode=auditory_mode, show_heading=False
     )
 
     st.markdown("---")

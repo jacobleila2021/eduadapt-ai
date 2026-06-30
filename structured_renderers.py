@@ -25,8 +25,6 @@ from lesson_design import (
     classify_section,
     section_card_html,
 )
-
-_SECTION_ACCENTS = [ACCENT_INTRO, ACCENT_INFO, ACCENT_STORY]
 _BOX_RENDERERS = {
     "teal": lambda t: st.info(t),
     "blue": lambda t: st.info(t),
@@ -122,15 +120,26 @@ def _fallback_lesson_diagram(lesson: dict) -> str:
     )
 
 
-def _word_illustration_svg(term: str, emoji: str, color: str) -> str:
-    safe = html.escape(term[:24])
-    return f"""
-    <svg xmlns="http://www.w3.org/2000/svg" width="280" height="140" viewBox="0 0 280 140" role="img" aria-label="{safe}">
-      <rect x="8" y="8" width="264" height="124" rx="14" fill="{color}" stroke="{BORDER_SUBTLE}" stroke-width="1"/>
-      <text x="140" y="58" text-anchor="middle" font-size="36">{emoji}</text>
-      <text x="140" y="98" text-anchor="middle" font-size="14" fill="{TEXT_BODY}" font-family="Verdana,sans-serif">{safe}</text>
-    </svg>
-    """
+def _word_wall_card_html(word: dict) -> str:
+    emoji = word.get("emoji", "📌")
+    term = html.escape(word.get("term", "Term"))
+    definition = html.escape(word.get("definition", ""))
+    child_note = html.escape(
+        word.get("child_friendly") or word.get("visual_description") or ""
+    )
+    example = html.escape(word.get("example") or word.get("example_sentence") or "")
+    body_parts = [f"<strong>Definition:</strong> {definition}"]
+    if child_note:
+        body_parts.append(f"<strong>In simple words:</strong> {child_note}")
+    if example:
+        body_parts.append(f"<strong>Example:</strong> <em>{example}</em>")
+    body = "<br/>".join(body_parts)
+    return (
+        f'<article class="alora-word-wall-card">'
+        f'<p class="alora-word-wall-term">{emoji} {term}</p>'
+        f'<div class="alora-word-wall-body">{body}</div>'
+        f"</article>"
+    )
 
 
 def _lookup_answer(answer_key: list, ref: str) -> str:
@@ -259,47 +268,11 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     if not word_wall:
         st.warning("No word wall terms generated.")
     else:
-        cols = st.columns(2)
-        for index, word in enumerate(word_wall):
-            with cols[index % 2]:
-                emoji = word.get("emoji", "📌")
-                term = word.get("term", "Term")
-                st.markdown(
-                    f'<div style="background:{BG_MAIN};padding:16px;border-radius:16px;'
-                    f'border:1px solid {BORDER_SUBTLE};margin-bottom:0.75rem;">'
-                    f'<div style="color:{TEXT_BODY};font-weight:700;font-size:1.15rem;'
-                    f'font-family:{FONT_STACK};margin-bottom:0.5rem;">'
-                    f'{emoji} {html.escape(term)}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    _word_illustration_svg(term, emoji, BG_MAIN),
-                    unsafe_allow_html=True,
-                )
-                definition = word.get("definition", "")
-                child_note = word.get("child_friendly") or word.get("visual_description") or ""
-                example = word.get("example") or word.get("example_sentence") or ""
-                st.markdown(
-                    f'<div style="background:{BG_MAIN};padding:12px 0 0 0;'
-                    f'color:{TEXT_BODY};font-weight:500;font-size:1rem;line-height:1.75;'
-                    f'letter-spacing:0.03em;font-family:{FONT_STACK};">'
-                    f'<strong style="color:{TEXT_BODY};">Definition:</strong> '
-                    f'{html.escape(definition)}'
-                    + (
-                        f'<br/><strong style="color:{TEXT_BODY};">In simple words:</strong> '
-                        f'{html.escape(child_note)}'
-                        if child_note
-                        else ""
-                    )
-                    + (
-                        f'<br/><strong style="color:{TEXT_BODY};">Example:</strong> '
-                        f'<em style="color:{TEXT_BODY};">{html.escape(example)}</em>'
-                        if example
-                        else ""
-                    )
-                    + "</div></div>",
-                    unsafe_allow_html=True,
-                )
+        cards = "".join(_word_wall_card_html(word) for word in word_wall)
+        st.markdown(
+            f'<div class="alora-word-wall">{cards}</div>',
+            unsafe_allow_html=True,
+        )
 
     # --- 2. Flashcards ---
     st.markdown("### 2. Flashcards — Term → Meaning")
@@ -370,11 +343,9 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     st.markdown("---")
     st.markdown("### 7. Concept Map")
     st.caption("Study how all vocabulary terms connect to the main topic.")
-    from concept_map_builder import build_vocabulary_concept_map_svg, render_concept_map_streamlit
+    from concept_map_builder import render_concept_map_streamlit
 
     render_concept_map_streamlit(vocab)
-    with st.expander("Print-style flowchart (full diagram)", expanded=False):
-        _render_svg(build_vocabulary_concept_map_svg(vocab))
 
 
 def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:

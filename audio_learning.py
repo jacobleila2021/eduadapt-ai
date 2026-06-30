@@ -559,6 +559,8 @@ def render_audio_learning_panel(
     spec_id: str,
     api_key: str,
     auditory_mode: bool = False,
+    *,
+    show_heading: bool = True,
 ) -> None:
     """Premium neural audio (OpenAI) with reliable Play/Pause/Resume/Stop/Speed and a
     Streamlit-controlled voice selector. Falls back to browser TTS when no API key."""
@@ -587,7 +589,8 @@ def render_audio_learning_panel(
         '<div class="alora-audio-stick" aria-hidden="true"></div>',
         unsafe_allow_html=True,
     )
-    st.markdown("#### 🔊 Adaptive Audio Learning")
+    if show_heading:
+        st.markdown("#### 🔊 Adaptive Audio Learning")
 
     voice_labels = list(VOICE_OPTIONS.keys())
     ctrl1, ctrl2 = st.columns(2)

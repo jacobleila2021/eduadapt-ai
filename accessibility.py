@@ -5,6 +5,8 @@ CSS lives in styles.py; this module only sets dynamic CSS variables via hidden m
 
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -27,32 +29,63 @@ def _a11y_marker_html(spec_id: str) -> str:
 
 
 def _reading_ruler_html(spec_id: str) -> str:
-    """Mouse-following reading ruler overlay (works across the whole page)."""
+    """Mouse-following reading ruler overlay on the main Streamlit page."""
     show = st.session_state.get(f"show_ruler_{spec_id}", False)
     color_name = st.session_state.get(f"ruler_color_{spec_id}", "Soft Yellow")
     opacity = float(st.session_state.get(f"ruler_opacity_{spec_id}", 0.45))
     width = int(st.session_state.get(f"ruler_width_{spec_id}", 100))
     height = int(st.session_state.get(f"ruler_height_{spec_id}", 48))
     hex_color = RULER_COLORS.get(color_name, "#FFF59D")
+    cfg = {
+        "show": bool(show),
+        "color": hex_color,
+        "opacity": opacity,
+        "width": width,
+        "height": height,
+    }
 
     return f"""
-    <div id="alora-ruler-root" style="position:fixed;inset:0;pointer-events:none;z-index:9999;">
-      <div id="alora-ruler-bar" style="
-        display:{'block' if show else 'none'};
-        position:fixed;left:50%;transform:translateX(-50%);
-        width:{width}%;height:{height}px;background:{hex_color};
-        opacity:{opacity};border-radius:8px;pointer-events:none;
-        top:40%;"></div>
-    </div>
     <script>
     (function() {{
-      const bar = document.getElementById("alora-ruler-bar");
-      if (!bar) return;
-      document.addEventListener("mousemove", function(e) {{
-        if (bar.style.display === "none") return;
-        const h = bar.offsetHeight || {height};
-        bar.style.top = Math.max(0, e.clientY - h / 2) + "px";
-      }});
+      const cfg = {json.dumps(cfg)};
+      function doc() {{
+        try {{
+          return window.parent.document;
+        }} catch (e) {{
+          return document;
+        }}
+      }}
+      function mount() {{
+        const d = doc();
+        let bar = d.getElementById("alora-ruler-bar");
+        if (!bar) {{
+          bar = d.createElement("div");
+          bar.id = "alora-ruler-bar";
+          bar.setAttribute("aria-hidden", "true");
+          d.body.appendChild(bar);
+        }}
+        bar.style.position = "fixed";
+        bar.style.left = "50%";
+        bar.style.transform = "translateX(-50%)";
+        bar.style.pointerEvents = "none";
+        bar.style.zIndex = "999999";
+        bar.style.borderRadius = "8px";
+        bar.style.width = cfg.width + "%";
+        bar.style.height = cfg.height + "px";
+        bar.style.background = cfg.color;
+        bar.style.opacity = String(cfg.opacity);
+        bar.style.display = cfg.show ? "block" : "none";
+        if (!window.parent.__aloraRulerMove) {{
+          window.parent.__aloraRulerMove = function(e) {{
+            const b = doc().getElementById("alora-ruler-bar");
+            if (!b || b.style.display === "none") return;
+            const h = b.offsetHeight || cfg.height;
+            b.style.top = Math.max(0, e.clientY - h / 2) + "px";
+          }};
+          d.addEventListener("mousemove", window.parent.__aloraRulerMove);
+        }}
+      }}
+      mount();
     }})();
     </script>
     """

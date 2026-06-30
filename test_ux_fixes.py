@@ -186,6 +186,21 @@ def test_title_drops_how_subtitle():
     assert _clean_title("Photosynthesis") == "Photosynthesis"
 
 
+def test_sanitize_builds_multiple_self_test_questions():
+    from ai_generator import _sanitize_vocabulary
+
+    vocab = {
+        "word_wall": [
+            {"term": f"Term{i}", "definition": f"Definition for term {i}."}
+            for i in range(1, 9)
+        ],
+        "self_test": {"fill_blanks": ["Only one question _____ (Term1)."]},
+    }
+    cleaned = _sanitize_vocabulary(vocab)
+    assert len(cleaned["self_test"]["fill_blanks"]) >= 6
+    assert cleaned["self_test"]["fill_blank_answers"][0] == "Term1"
+
+
 def test_warm_voices_only():
     assert set(VOICE_OPTIONS.keys()) == {"Female", "Male"}
 

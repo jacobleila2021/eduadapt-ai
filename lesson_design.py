@@ -10,7 +10,7 @@ import re
 # ---- Palette ----
 BG_MAIN = "#FFF9EE"
 TEXT_BODY = "#333333"
-BORDER_SUBTLE = "#E8E0CF"
+SOFT_YELLOW = "#FFF59D"
 
 ACCENT_INTRO = "#059669"  # Emerald Green — Introduction
 ACCENT_INFO = "#1E3A8A"  # Dark Royal Blue — Information / Learn
@@ -118,9 +118,59 @@ def get_workspace_css_fragment() -> str:
         box-shadow: 0 -8px 28px rgba(0,0,0,0.35) !important;
         max-width: 100vw !important;
     }}
-    .main .block-container:has(.alora-workspace-active) .alora-lesson-title p {{
-        color: {TEXT_BODY} !important;
+    .main .block-container:has(.alora-workspace-active) .alora-lesson-title p,
+    .main .block-container:has(.alora-workspace-active) .alora-lesson-subtitle {{
+        color: {SOFT_YELLOW} !important;
         opacity: 1 !important;
+        font-weight: 600 !important;
+    }}
+    .alora-word-wall {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
+        margin: 1rem 0 1.5rem 0;
+    }}
+    @media (max-width: 768px) {{
+        .alora-word-wall {{
+            grid-template-columns: 1fr;
+        }}
+    }}
+    .alora-word-wall-card {{
+        background: {BG_MAIN};
+        border: 1px solid {BORDER_SUBTLE};
+        border-radius: 18px;
+        padding: 1.35rem 1.5rem 1.5rem 1.5rem;
+        min-height: 320px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        box-sizing: border-box;
+    }}
+    .alora-word-wall-term {{
+        color: {TEXT_BODY};
+        font-weight: 700;
+        font-size: 1.2rem;
+        line-height: 1.45;
+        font-family: {FONT_STACK};
+        margin: 0;
+    }}
+    .alora-word-wall-body {{
+        color: {TEXT_BODY};
+        font-weight: 500;
+        font-size: 1rem;
+        line-height: 1.85;
+        letter-spacing: 0.03em;
+        font-family: {FONT_STACK};
+        flex: 1;
+    }}
+    .alora-word-wall-body strong {{
+        color: {TEXT_BODY};
+        font-weight: 700;
+    }}
+    .alora-word-wall-emoji {{
+        font-size: 2rem;
+        line-height: 1;
+        margin: 0.15rem 0 0.35rem 0;
     }}
     .main .block-container:has(.alora-workspace-active)
     div[data-testid="element-container"]:has(.alora-audio-stick),
@@ -170,8 +220,8 @@ def section_card_html(title: str, body: str, variant: str) -> str:
 def lesson_title_html(title: str, subtitle: str = "", variant: str = "introduction") -> str:
     accent = accent_for_variant(variant)
     sub = (
-        f'<p style="color:{TEXT_BODY};font-size:1.1rem;margin:0.5rem 0 0 0;'
-        f'font-family:{FONT_STACK};line-height:1.7;font-weight:600;">'
+        f'<p class="alora-lesson-subtitle" style="color:{SOFT_YELLOW};font-size:1.1rem;'
+        f'margin:0.5rem 0 0 0;font-family:{FONT_STACK};line-height:1.7;font-weight:600;">'
         f'{html.escape(subtitle)}</p>'
         if subtitle
         else ""
