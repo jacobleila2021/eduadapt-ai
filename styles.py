@@ -560,19 +560,4 @@ def get_custom_css() -> str:
     /* Dyslexia-friendly workspace (injected once — never via st.markdown) */
     {get_workspace_css_fragment()}
     </style>
-    <script>
-    (function () {{
-      function highlightPill(btn) {{
-        var root = btn.closest('.main') || document;
-        root.querySelectorAll('[class*="st-key-ws_pill_"] button[kind="primary"], [class*="st-key-pill_"] button[kind="primary"], [class*="st-key-subpill_"] button[kind="primary"]').forEach(function (el) {{
-          el.setAttribute('kind', 'secondary');
-        }});
-        btn.setAttribute('kind', 'primary');
-      }}
-      document.addEventListener('pointerdown', function (event) {{
-        var btn = event.target.closest('[class*="st-key-ws_pill_"] button, [class*="st-key-pill_"] button, [class*="st-key-subpill_"] button');
-        if (btn) highlightPill(btn);
-      }}, true);
-    }})();
-    </script>
     """

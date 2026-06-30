@@ -439,6 +439,10 @@ def main() -> None:
 
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
+    from pill_tabs import inject_pill_instant_highlight
+
+    inject_pill_instant_highlight()
+
     logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
     render_top_nav(logo_path, APP_VERSION)
     render_api_sidebar()

@@ -6,9 +6,56 @@ on_click callbacks run before the rest of the script (keeps adaptations intact).
 from __future__ import annotations
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from navigation import PILL_CATEGORIES, category_for_id, category_for_spec, spec_by_id
 from session_state import VIEW_WORKSPACE, is_workspace, open_adaptation
+
+
+def _pill_instant_highlight_html() -> str:
+    """Instant active-tab feedback via parent document (Streamlit blocks script in st.markdown)."""
+    return """
+    <script>
+    (function () {
+      function pageDoc() {
+        var candidates = [window.top, window.parent, window];
+        for (var i = 0; i < candidates.length; i++) {
+          try {
+            if (candidates[i] && candidates[i].document && candidates[i].document.body) {
+              return candidates[i].document;
+            }
+          } catch (e) {}
+        }
+        return document;
+      }
+      var d = pageDoc();
+      if (d.__aloraPillBound) return;
+      d.__aloraPillBound = true;
+      function highlightPill(btn) {
+        var root = btn.closest(".main") || d;
+        root.querySelectorAll(
+          '[class*="st-key-ws_pill_"] button[kind="primary"], ' +
+          '[class*="st-key-pill_"] button[kind="primary"], ' +
+          '[class*="st-key-subpill_"] button[kind="primary"]'
+        ).forEach(function (el) {
+          el.setAttribute("kind", "secondary");
+        });
+        btn.setAttribute("kind", "primary");
+      }
+      d.addEventListener("pointerdown", function (event) {
+        var btn = event.target.closest(
+          '[class*="st-key-ws_pill_"] button, [class*="st-key-pill_"] button, [class*="st-key-subpill_"] button'
+        );
+        if (btn) highlightPill(btn);
+      }, true);
+    })();
+    </script>
+    """
+
+
+def inject_pill_instant_highlight() -> None:
+    """Hidden iframe script — must not use st.markdown (scripts render as visible text)."""
+    components.html(_pill_instant_highlight_html(), height=0, scrolling=False)
 
 
 def _open_category(category_id: str) -> None:
