@@ -72,7 +72,7 @@ def get_workspace_css_fragment() -> str:
     {FONT_IMPORTS}
     .main .block-container:has(.alora-workspace-active) {{
         background: {BG_MAIN} !important;
-        padding-bottom: 280px !important;
+        padding-bottom: 320px !important;
     }}
     .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] p,
     .main .block-container:has(.alora-workspace-active) [data-testid="stMarkdownContainer"] li,
@@ -109,15 +109,29 @@ def get_workspace_css_fragment() -> str:
     .main .block-container:has(.alora-workspace-active)
     [data-testid="stHorizontalBlock"]:has([class*="st-key-ws_pill_"]) {{
         position: fixed !important;
-        bottom: 0 !important;
         left: 0 !important;
         right: 0 !important;
         z-index: 999991 !important;
         background: linear-gradient(180deg, #041B4D, #031638) !important;
-        padding: 0.75rem 1.5rem 1rem 1.5rem !important;
+        padding: 0.35rem 1.5rem !important;
         margin: 0 !important;
-        box-shadow: 0 -8px 28px rgba(0,0,0,0.35) !important;
+        box-shadow: 0 -4px 18px rgba(0,0,0,0.28) !important;
         max-width: 100vw !important;
+        width: 100% !important;
+    }}
+    .main .block-container:has(.alora-workspace-active)
+    [data-testid="stHorizontalBlock"]:has([class*="st-key-ws_pill_"]):nth-last-of-type(1) {{
+        bottom: 0 !important;
+        padding-bottom: 1rem !important;
+        box-shadow: 0 -8px 28px rgba(0,0,0,0.35) !important;
+    }}
+    .main .block-container:has(.alora-workspace-active)
+    [data-testid="stHorizontalBlock"]:has([class*="st-key-ws_pill_"]):nth-last-of-type(2) {{
+        bottom: 4.35rem !important;
+    }}
+    .main .block-container:has(.alora-workspace-active)
+    [data-testid="stHorizontalBlock"]:has([class*="st-key-ws_pill_"]):nth-last-of-type(3) {{
+        bottom: 8.7rem !important;
     }}
     .main .block-container:has(.alora-workspace-active) .alora-lesson-title p,
     .main .block-container:has(.alora-workspace-active) .alora-lesson-subtitle {{

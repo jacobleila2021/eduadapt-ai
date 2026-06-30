@@ -385,7 +385,10 @@ def get_custom_css() -> str:
 
     div[class*="st-key-pill_"] button[kind="primary"],
     div[class*="st-key-ws_pill_"] button[kind="primary"],
-    div[class*="st-key-subpill_"] button[kind="primary"] {{
+    div[class*="st-key-subpill_"] button[kind="primary"],
+    div[class*="st-key-pill_"] button[data-testid="baseButton-primary"],
+    div[class*="st-key-ws_pill_"] button[data-testid="baseButton-primary"],
+    div[class*="st-key-subpill_"] button[data-testid="baseButton-primary"] {{
         background: linear-gradient(180deg, {COLOR_DEEP_NAVY} 0%, #062456 100%) !important;
         color: {COLOR_WHITE} !important;
         border: 2px solid {COLOR_ELECTRIC_CYAN} !important;
@@ -394,7 +397,10 @@ def get_custom_css() -> str:
 
     div[class*="st-key-pill_"] button[kind="secondary"],
     div[class*="st-key-ws_pill_"] button[kind="secondary"],
-    div[class*="st-key-subpill_"] button[kind="secondary"] {{
+    div[class*="st-key-subpill_"] button[kind="secondary"],
+    div[class*="st-key-pill_"] button[data-testid="baseButton-secondary"],
+    div[class*="st-key-ws_pill_"] button[data-testid="baseButton-secondary"],
+    div[class*="st-key-subpill_"] button[data-testid="baseButton-secondary"] {{
         background: linear-gradient(180deg, #089aa4 0%, #066d75 100%) !important;
         color: {COLOR_WHITE} !important;
         border: 2px solid rgba(255, 255, 255, 0.55) !important;
@@ -543,7 +549,7 @@ def get_custom_css() -> str:
     .main .block-container:has(.alora-workspace-active)
     [data-testid="stMarkdownContainer"]:has(.bottom-tabs-label) {{
         position: fixed !important;
-        bottom: 11.75rem !important;
+        bottom: 13.25rem !important;
         left: 0 !important;
         right: 0 !important;
         z-index: 999992 !important;

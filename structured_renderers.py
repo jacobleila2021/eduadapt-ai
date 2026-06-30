@@ -30,6 +30,7 @@ from image_generation import (
     IMAGE_PROVIDER,
     batch_load_picture_word_images,
     images_enabled,
+    picture_word_image_url,
 )
 _BOX_RENDERERS = {
     "teal": lambda t: st.info(t),
@@ -512,6 +513,77 @@ def _render_svg(svg: str, height: int = 260) -> None:
     )
 
 
+def _lesson_study_rows(lesson: dict) -> tuple[str, list[dict]]:
+    """Key section titles for Study Diagram AI illustrations."""
+    topic = (lesson.get("topic") or lesson.get("title") or "").strip()
+    if not topic:
+        topic = (lesson.get("big_idea") or "Lesson")[:60].strip()
+    skip = {"introduction", "summary", "practice", "exam focus", "check", "review", "overview"}
+    rows: list[dict] = []
+    for section in lesson.get("sections") or []:
+        title = (section.get("title") or "").strip()
+        if not title or title.lower() in skip:
+            continue
+        body = (section.get("body") or "").strip()[:220]
+        rows.append(
+            {
+                "term": title,
+                "draw_this": body or f"clear labelled educational diagram of {title}",
+            }
+        )
+    return topic, rows[:8]
+
+
+def _render_image_grid(
+    rows: list[dict],
+    topic: str,
+    *,
+    limit: int = 8,
+    spinner_label: str = "Generating illustrations…",
+) -> None:
+    """Shared grid for Picture Words and Study Diagram — uses URLs if server fetch fails."""
+    if not rows:
+        return
+    with st.spinner(spinner_label):
+        images = batch_load_picture_word_images(rows, topic, limit=limit)
+
+    cards: list[str] = []
+    for row in rows[:limit]:
+        term = html.escape(str(row.get("term", "")).strip())
+        if not term:
+            continue
+        raw_term = html.unescape(term)
+        desc = str(row.get("draw_this") or row.get("visual") or row.get("image_prompt") or "")
+        img_bytes = images.get(raw_term)
+        if img_bytes:
+            b64 = base64.b64encode(img_bytes).decode("ascii")
+            img_html = (
+                f'<img src="data:image/png;base64,{b64}" alt="{term}" '
+                f'class="alora-picture-word-img" loading="lazy"/>'
+            )
+        elif images_enabled():
+            url = html.escape(picture_word_image_url(raw_term, desc, topic))
+            img_html = (
+                f'<img src="{url}" alt="{term}" '
+                f'class="alora-picture-word-img" loading="lazy"/>'
+            )
+        else:
+            img_html = (
+                f'<div class="alora-picture-word-fallback">'
+                f'<span class="alora-picture-word-emoji">🖼️</span>'
+                f'<p>{html.escape(desc or "Illustration unavailable")}</p></div>'
+            )
+        cards.append(
+            f'<div class="alora-picture-word-card">{img_html}'
+            f'<p class="alora-picture-word-term">{term}</p></div>'
+        )
+
+    st.markdown(
+        f'<div class="alora-picture-words-grid">{"".join(cards)}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str) -> None:
     """Picture Words — AI-generated illustrations instead of text-only draw prompts."""
     st.markdown("### 3. Picture Words — Visual Memory")
@@ -533,41 +605,7 @@ def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str
 
     provider_label = "OpenAI DALL·E" if IMAGE_PROVIDER == "openai" else "Pollinations AI"
     st.caption(f"Illustrations generated with {provider_label} — cached for faster reloads.")
-
-    with st.spinner("Generating vocabulary illustrations…"):
-        images = batch_load_picture_word_images(picture_words, topic)
-
-    cards: list[str] = []
-    for index, row in enumerate(picture_words):
-        term = html.escape(str(row.get("term", "")).strip())
-        if not term:
-            continue
-        desc = html.escape(str(row.get("draw_this") or row.get("visual") or ""))
-        raw_term = html.unescape(term)
-        img_bytes = images.get(raw_term)
-        if img_bytes:
-            b64 = base64.b64encode(img_bytes).decode("ascii")
-            img_html = (
-                f'<img src="data:image/png;base64,{b64}" alt="{term}" '
-                f'class="alora-picture-word-img" loading="lazy"/>'
-            )
-        else:
-            img_html = (
-                f'<div class="alora-picture-word-fallback">'
-                f'<span class="alora-picture-word-emoji">🖼️</span>'
-                f'<p>{desc or "Illustration unavailable"}</p></div>'
-            )
-        cards.append(
-            f'<div class="alora-picture-word-card">'
-            f'{img_html}'
-            f'<p class="alora-picture-word-term">{term}</p>'
-            f'</div>'
-        )
-
-    st.markdown(
-        f'<div class="alora-picture-words-grid">{"".join(cards)}</div>',
-        unsafe_allow_html=True,
-    )
+    _render_image_grid(picture_words, topic, spinner_label="Generating vocabulary illustrations…")
 
 
 def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
@@ -793,6 +831,7 @@ def render_lesson(data: Any) -> None:
         return
 
     sections = lesson.get("sections") or []
+    topic_name, study_rows = _lesson_study_rows(lesson)
 
     svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
@@ -802,14 +841,28 @@ def render_lesson(data: Any) -> None:
     if has_good_mermaid:
         st.markdown("#### 📊 Concept Diagram")
         _render_mermaid(mermaid)
+    elif images_enabled() and topic_name:
+        st.markdown("#### 📊 Concept Diagram")
+        overview = [
+            {
+                "term": topic_name,
+                "draw_this": f"overview concept map of {topic_name} for students",
+            }
+        ]
+        _render_image_grid(overview, topic_name, limit=1, spinner_label="Generating concept diagram…")
+    elif not has_good_mermaid:
+        st.markdown("#### 📊 Concept Diagram")
+        _render_svg(_fallback_lesson_diagram(lesson))
 
-    if has_good_svg:
+    if images_enabled() and study_rows:
+        st.markdown("#### 🎨 Study Diagram")
+        st.caption("AI illustrations for each core lesson section.")
+        _render_image_grid(study_rows, topic_name, spinner_label="Generating study diagrams…")
+    elif has_good_svg:
         st.markdown("#### 🎨 Study Diagram")
         _render_svg(svg)
-
-    if not has_good_mermaid and not has_good_svg:
-        # Never show a blank/placeholder: build a real diagram from the lesson itself.
-        st.markdown("#### 📊 Concept Diagram")
+    elif study_rows and not has_good_mermaid and not images_enabled():
+        st.markdown("#### 🎨 Study Diagram")
         _render_svg(_fallback_lesson_diagram(lesson))
 
     big_idea = lesson.get("big_idea", "")
