@@ -8,7 +8,6 @@ from __future__ import annotations
 import html
 import json
 import re
-import base64
 from typing import Any
 
 import streamlit as st
@@ -25,12 +24,6 @@ from lesson_design import (
     accent_for_variant,
     classify_section,
     section_card_html,
-)
-from image_generation import (
-    IMAGE_PROVIDER,
-    batch_load_picture_word_images,
-    images_enabled,
-    picture_word_image_url,
 )
 _BOX_RENDERERS = {
     "teal": lambda t: st.info(t),
@@ -494,78 +487,18 @@ def _render_svg(svg: str, height: int = 260) -> None:
     )
 
 
-def _render_image_grid(
-    rows: list[dict],
-    topic: str,
-    *,
-    limit: int = 8,
-    spinner_label: str = "Generating illustrations…",
-) -> None:
-    """Shared grid for Picture Words and Study Diagram — uses URLs if server fetch fails."""
-    if not rows:
-        return
-    with st.spinner(spinner_label):
-        images = batch_load_picture_word_images(rows, topic, limit=limit)
-
-    cards: list[str] = []
-    for row in rows[:limit]:
-        term = html.escape(str(row.get("term", "")).strip())
-        if not term:
-            continue
-        raw_term = html.unescape(term)
-        desc = str(row.get("draw_this") or row.get("visual") or row.get("image_prompt") or "")
-        img_bytes = images.get(raw_term)
-        if img_bytes:
-            b64 = base64.b64encode(img_bytes).decode("ascii")
-            img_html = (
-                f'<img src="data:image/png;base64,{b64}" alt="{term}" '
-                f'class="alora-picture-word-img" loading="lazy"/>'
-            )
-        elif images_enabled():
-            url = html.escape(picture_word_image_url(raw_term, desc, topic))
-            img_html = (
-                f'<img src="{url}" alt="{term}" '
-                f'class="alora-picture-word-img" loading="lazy"/>'
-            )
-        else:
-            img_html = (
-                f'<div class="alora-picture-word-fallback">'
-                f'<span class="alora-picture-word-emoji">🖼️</span>'
-                f'<p>{html.escape(desc or "Illustration unavailable")}</p></div>'
-            )
-        cards.append(
-            f'<div class="alora-picture-word-card">{img_html}'
-            f'<p class="alora-picture-word-term">{term}</p></div>'
-        )
-
-    st.markdown(
-        f'<div class="alora-picture-words-grid">{"".join(cards)}</div>',
-        unsafe_allow_html=True,
-    )
-
-
 def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str) -> None:
-    """Picture Words — AI-generated illustrations instead of text-only draw prompts."""
-    st.markdown("### 3. Picture Words — Visual Memory")
+    """Picture Words — coloured vocabulary flowchart (replaces AI images)."""
+    st.markdown("### 3. Picture Words — Visual Flowchart")
     if not picture_words:
         st.caption("No picture vocabulary generated.")
         return
 
-    if not images_enabled():
-        st.table(
-            [
-                {
-                    "Term": row.get("term", ""),
-                    "Draw / imagine": row.get("draw_this") or row.get("visual", ""),
-                }
-                for row in picture_words
-            ]
-        )
-        return
+    from flowchart_builder import build_vocabulary_flowchart
 
-    provider_label = "OpenAI DALL·E" if IMAGE_PROVIDER == "openai" else "Pollinations AI"
-    st.caption(f"Illustrations generated with {provider_label} — cached for faster reloads.")
-    _render_image_grid(picture_words, topic, spinner_label="Generating vocabulary illustrations…")
+    vocab_stub = {"topic": topic, "picture_words": picture_words}
+    st.caption("Colour-coded flowchart linking each term to the lesson topic.")
+    _render_mermaid(build_vocabulary_flowchart(vocab_stub), height=480)
 
 
 def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
@@ -792,24 +725,15 @@ def render_lesson(data: Any) -> None:
 
     sections = lesson.get("sections") or []
 
-    svg = lesson.get("svg_diagram") or lesson.get("svg", "")
-    mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
-    has_good_mermaid = _valid_mermaid(mermaid)
+    from flowchart_builder import resolve_lesson_concept_flowchart, resolve_lesson_study_flowchart
 
-    if has_good_mermaid:
-        st.markdown("#### 📊 Concept Diagram")
-        _render_mermaid(mermaid)
-    else:
-        st.markdown("#### 📊 Concept Diagram")
-        from study_diagram_builder import build_study_diagram_svg
-
-        _render_svg(build_study_diagram_svg(lesson))
+    st.markdown("#### 📊 Concept Diagram")
+    st.caption("Colour-coded flowchart of the main lesson ideas.")
+    _render_mermaid(resolve_lesson_concept_flowchart(lesson), height=460)
 
     st.markdown("#### 🎨 Study Diagram")
-    st.caption("Labelled diagram built from this lesson's sections and key facts.")
-    from study_diagram_builder import resolve_study_diagram_svg
-
-    _render_svg(resolve_study_diagram_svg(lesson))
+    st.caption("Section flowchart with labelled facts from this lesson.")
+    _render_mermaid(resolve_lesson_study_flowchart(lesson), height=520)
 
     big_idea = lesson.get("big_idea", "")
     if big_idea:

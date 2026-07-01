@@ -26,9 +26,8 @@ One HTML card per term (10–15 terms). Each card MUST use a different soft back
 Numbered list. Format each as:
 **Front:** term | **Back:** definition + example from the lesson.
 
-## 3. Picture Words (Visual Memory)
-Table with columns: Term | What to Draw/Imagine.
-Describe vivid scenes students can sketch (e.g. "blue arrow for evaporation rising").
+## 3. Picture Words (Visual Flowchart)
+One coloured ```mermaid flowchart linking the topic to each key term with short fact labels (no external images).
 
 ## 4. Say It · Spell It · Use It
 For each term: one numbered fill-in sentence with blank only — no pronunciation or syllable fields.

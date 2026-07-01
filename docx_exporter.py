@@ -99,30 +99,11 @@ def export_vocabulary_docx(data: Any) -> bytes:
             f"FRONT: {card.get('front', '')}  →  BACK: {card.get('back', '')}",
         )
 
-    _add_heading(doc, "3. Picture Words", 2)
-    from image_generation import batch_load_picture_word_images, images_enabled
+    _add_heading(doc, "3. Picture Words — Visual Flowchart", 2)
+    from flowchart_builder import build_vocabulary_flowchart, flowchart_to_text
 
-    topic = vocab.get("topic", "Lesson")
-    picture_rows = vocab.get("picture_words") or []
-    if images_enabled() and picture_rows:
-        images = batch_load_picture_word_images(picture_rows, topic)
-        for row in picture_rows:
-            term = row.get("term", "")
-            _safe_paragraph(doc, term)
-            img = images.get(term)
-            if img:
-                try:
-                    doc.add_picture(io.BytesIO(img), width=Inches(2.2))
-                except Exception:
-                    _safe_paragraph(doc, f"Draw: {row.get('draw_this', '')}")
-            else:
-                _safe_paragraph(doc, f"Draw: {row.get('draw_this', '')}")
-    else:
-        for row in picture_rows:
-            _safe_paragraph(
-                doc,
-                f"{row.get('term', '')} — Draw: {row.get('draw_this', '')}",
-            )
+    _safe_paragraph(doc, flowchart_to_text(build_vocabulary_flowchart(vocab)))
+    _safe_paragraph(doc, "Tip: Open the online Vocabulary tab for the full coloured flowchart.")
 
     from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
 

@@ -83,30 +83,12 @@ def export_vocabulary_html(data: Any) -> str:
         )
     parts.append("</table>")
 
-    parts.append("<h2>3. Picture Words</h2>")
-    from image_generation import images_enabled, picture_word_image_data_uri, picture_word_image_url
+    parts.append("<h2>3. Picture Words — Visual Flowchart</h2>")
+    from flowchart_builder import build_vocabulary_flowchart, flowchart_to_text
 
-    topic = vocab.get("topic", "Lesson")
-    parts.append('<div class="picture-words-grid">')
-    for row in vocab.get("picture_words") or []:
-        term = row.get("term", "")
-        desc = row.get("draw_this", "") or row.get("visual", "")
-        if images_enabled():
-            src = picture_word_image_data_uri(term, desc, topic) or picture_word_image_url(
-                term, desc, topic
-            )
-            parts.append(
-                f'<div class="picture-word-card">'
-                f'<img src="{html.escape(src)}" alt="{html.escape(term)}" '
-                f'style="max-width:100%;border-radius:12px;"/>'
-                f'<p><strong>{html.escape(term)}</strong></p></div>'
-            )
-        else:
-            parts.append(
-                f'<p><strong>{html.escape(term)}</strong> — '
-                f'{html.escape(desc)}</p>'
-            )
-    parts.append("</div>")
+    fc = build_vocabulary_flowchart(vocab)
+    parts.append(f"<pre style='background:#f0f4f8;padding:1rem;border-radius:8px;'>{html.escape(flowchart_to_text(fc))}</pre>")
+    parts.append("<p><em>Open the online tab for the full interactive coloured flowchart.</em></p>")
 
     from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
 

@@ -239,6 +239,8 @@ def render_api_sidebar() -> None:
             st.sidebar.caption("🖼️ Vocabulary images: OpenAI DALL·E")
         elif IMAGE_PROVIDER not in ("off", "none", "false", "0"):
             st.sidebar.caption("🖼️ Vocabulary images: Pollinations AI (free)")
+        else:
+            st.sidebar.caption("📊 Visuals: coloured flowcharts")
     else:
         st.sidebar.markdown(
             '<div class="sidebar-status-warn">○ Setup required</div>',

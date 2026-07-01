@@ -38,6 +38,38 @@ def test_narration_vocabulary_reads_definitions_only():
     assert "Front" not in text and "Back" not in text
 
 
+def test_vocabulary_flowchart_has_terms():
+    from flowchart_builder import build_vocabulary_flowchart
+
+    vocab = {
+        "topic": "Plant Tissues",
+        "picture_words": [
+            {"term": "Meristematic", "draw_this": "Cells that divide"},
+            {"term": "Epithelial", "draw_this": "Covers body surfaces"},
+        ],
+        "word_wall": [{"term": "Meristematic", "definition": "Dividing cells."}],
+    }
+    chart = build_vocabulary_flowchart(vocab)
+    assert "flowchart" in chart.lower()
+    assert "Meristematic" in chart
+    assert "classDef" in chart
+
+
+def test_lesson_flowchart_grouped():
+    from flowchart_builder import build_lesson_flowchart
+
+    lesson = {
+        "topic": "Tissues",
+        "sections": [
+            {"title": "Meristematic Tissue", "body": "Plant cells that divide at growing tips."},
+            {"title": "Epithelial Tissue", "body": "Animal tissue covering organs."},
+        ],
+    }
+    chart = build_lesson_flowchart(lesson)
+    assert "flowchart" in chart.lower()
+    assert "Meristematic" in chart or "Epithelial" in chart
+
+
 def test_fallback_lesson_diagram_is_real_svg():
     from structured_renderers import _fallback_lesson_diagram, _valid_svg_diagram
 

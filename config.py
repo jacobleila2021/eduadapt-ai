@@ -35,8 +35,8 @@ TIME_SAVED_PERCENT = 95
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-# Picture Words illustrations: pollinations (free) | openai (DALL·E 2, paid) | off
-IMAGE_PROVIDER = os.getenv("IMAGE_PROVIDER", "pollinations").strip().lower()
+# Picture Words illustrations: off (use flowcharts) | pollinations | openai
+IMAGE_PROVIDER = os.getenv("IMAGE_PROVIDER", "off").strip().lower()
 
 MAX_LESSON_CHARS = 50000
 MAX_CHUNK_CHARS = 14000

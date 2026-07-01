@@ -39,9 +39,20 @@ def _render_mermaid(diagram: str, height: int = 420) -> None:
                     primaryColor: "#e6f7f8",
                     primaryTextColor: "#0B2E59",
                     primaryBorderColor: "#008C95",
+                    secondaryColor: "#e3f2fd",
+                    tertiaryColor: "#ecfdf5",
                     lineColor: "#008C95",
-                    secondaryColor: "#f0f4f8",
-                    tertiaryColor: "#fff"
+                    fontFamily: "Lexend, Arial, sans-serif",
+                    fontSize: "14px",
+                    nodeBorder: "#008C95",
+                    clusterBkg: "#f0f4f8",
+                    titleColor: "#0B2E59",
+                    edgeLabelBackground: "#ffffff"
+                }},
+                flowchart: {{
+                    htmlLabels: true,
+                    curve: "basis",
+                    padding: 18
                 }}
             }});
         </script>
