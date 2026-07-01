@@ -52,7 +52,9 @@ def test_vocabulary_flowchart_has_terms():
     chart = build_vocabulary_flowchart(vocab)
     assert "flowchart" in chart.lower()
     assert "Meristematic" in chart
-    assert "classDef" in chart
+    assert "classDef hub" in chart
+    assert "<br" not in chart
+    assert '(["' not in chart
 
 
 def test_lesson_flowchart_grouped():

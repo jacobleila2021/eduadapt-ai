@@ -12,49 +12,70 @@ _MERMAID_PATTERN = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL | re.IGNOREC
 
 
 def _render_mermaid(diagram: str, height: int = 420) -> None:
-    """Render a Mermaid diagram via CDN (flowcharts, concept maps)."""
+    """Render a Mermaid flowchart via CDN with explicit mermaid.run (Mermaid 10+)."""
     diagram_id = f"mermaid_{uuid.uuid4().hex[:8]}"
-    # Avoid breaking out of the pre tag; mermaid syntax must stay unescaped.
-    safe = diagram.strip().replace("</", "<\\/")
+    safe = diagram.strip().replace("</", "<\\/").replace("`", "'")
     components.html(
         f"""
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
         <style>
-          body {{ margin: 0; }}
-          .mermaid {{
+          body {{ margin: 0; background: #fafcfd; }}
+          #{diagram_id} {{
             display: flex;
             justify-content: center;
             align-items: center;
-            text-align: center;
             width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            box-sizing: border-box;
           }}
           .mermaid svg {{ margin: 0 auto; max-width: 100%; height: auto; }}
+          .mermaid-fallback {{
+            color: #0B2E59;
+            font-family: Lexend, Arial, sans-serif;
+            font-size: 14px;
+            padding: 1rem;
+            white-space: pre-wrap;
+          }}
         </style>
         <pre class="mermaid" id="{diagram_id}">{safe}</pre>
         <script>
+          (async function () {{
             mermaid.initialize({{
-                startOnLoad: true,
-                theme: "base",
-                themeVariables: {{
-                    primaryColor: "#e6f7f8",
-                    primaryTextColor: "#0B2E59",
-                    primaryBorderColor: "#008C95",
-                    secondaryColor: "#e3f2fd",
-                    tertiaryColor: "#ecfdf5",
-                    lineColor: "#008C95",
-                    fontFamily: "Lexend, Arial, sans-serif",
-                    fontSize: "14px",
-                    nodeBorder: "#008C95",
-                    clusterBkg: "#f0f4f8",
-                    titleColor: "#0B2E59",
-                    edgeLabelBackground: "#ffffff"
-                }},
-                flowchart: {{
-                    htmlLabels: true,
-                    curve: "basis",
-                    padding: 18
-                }}
+              startOnLoad: false,
+              securityLevel: "loose",
+              theme: "base",
+              themeVariables: {{
+                primaryColor: "#e6f7f8",
+                primaryTextColor: "#0B2E59",
+                primaryBorderColor: "#008C95",
+                secondaryColor: "#e3f2fd",
+                tertiaryColor: "#ecfdf5",
+                lineColor: "#008C95",
+                fontFamily: "Lexend, Arial, sans-serif",
+                fontSize: "14px",
+                nodeBorder: "#008C95",
+                clusterBkg: "#f0f4f8",
+                titleColor: "#0B2E59",
+                edgeLabelBackground: "#ffffff"
+              }},
+              flowchart: {{
+                htmlLabels: false,
+                curve: "basis",
+                padding: 16,
+                useMaxWidth: true
+              }}
             }});
+            const el = document.getElementById("{diagram_id}");
+            try {{
+              await mermaid.run({{ nodes: [el] }});
+            }} catch (err) {{
+              el.outerHTML =
+                '<div class="mermaid-fallback">Flowchart preview unavailable. '
+                + 'Please regenerate adaptations or refresh the page.</div>';
+              console.error("Mermaid render error:", err);
+            }}
+          }})();
         </script>
         """,
         height=height,
