@@ -505,6 +505,11 @@ def get_custom_css() -> str:
         margin-bottom: 0.35rem;
     }}
 
+    .alora-study-diagram svg {{
+        max-width: 100%;
+        height: auto;
+    }}
+
     .viewer-header {{
         background: linear-gradient(135deg, #eef9fb 0%, #f8fbfd 100%);
         border-radius: 14px;

@@ -9,7 +9,7 @@ VISUAL LESSON RULES (for every lesson adaptation in this batch — not vocabular
 Students must SEE the lesson, not only read text. Each lesson version MUST include:
 1. Colored HTML "Big Idea" box (teal #008C95 border, light teal background).
 2. At least ONE valid ```mermaid code block (flowchart, mindmap, or sequenceDiagram).
-3. At least ONE inline colored SVG diagram (<svg width="300" height="200" ...>) labeling key parts in navy #0B2E59 and teal #008C95.
+3. At least ONE inline coloured SVG study diagram (720×480+) with grouped labelled boxes, arrows, and 6+ <text> labels naming lesson parts in navy #0B2E59 and teal #008C95.
 4. Color-coded stage labels via HTML (e.g. red=Introduction, blue=Explain, green=Practice, orange=Check).
 5. A "Visual Summary" section with a markdown table linking color/icon to each main idea.
 Use HTML + markdown together. Do NOT use external image URLs.

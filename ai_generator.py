@@ -33,8 +33,10 @@ DEPTH REQUIREMENTS (critical):
 - Each section body: minimum 80 words with concrete facts, examples, and steps.
 - Students must be able to pass an exam using ONLY this material.
 - Include worked examples where the subject requires them.
-- DIAGRAM-FIRST: every adaptation MUST include mermaid_diagram AND svg_diagram (never text-only boxes).
-- DIAGRAM QUALITY: diagrams must be meaningful and educational (e.g. water cycle, food chain, timeline, fraction model, labelled body system). The svg_diagram MUST contain multiple <text> labels naming the parts. NEVER output a single circle, random shapes, decorative art, national flags, or graphics unrelated to the lesson topic.
+- DIAGRAM-FIRST: every adaptation MUST include mermaid_diagram AND svg_diagram.
+- MERMAID: flowchart/mindmap of the whole lesson process or classification (4+ labelled nodes).
+- SVG STUDY DIAGRAM: svg_diagram MUST be valid inline SVG with xmlns, width 720+, height 400+, at least 6 <text> labels naming REAL lesson parts (e.g. "Meristematic tissue", "Xylem", "Evaporation"). Use #0B2E59 and #008C95. Include grouped boxes, arrows, and bullet facts — never a single circle or decorative art.
+- SECTION TITLES in sections[] MUST match the labels used in svg_diagram so the Study Diagram aligns with lesson content.
 - ACCURACY: all diagram and content facts must be scientifically and historically correct.
 - Each learner version must be MEASURABLY DIFFERENT: reading level, structure, vocabulary, layout, diagram density.
 """
@@ -133,7 +135,7 @@ Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value
 {{
   "big_idea": "clear summary sentence",
   "mermaid_diagram": "flowchart TD with 4+ nodes, valid mermaid, no code fences",
-  "svg_diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'>labeled shapes in #008C95 and #0B2E59</svg>",
+  "svg_diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='720' height='480'>grouped labelled boxes with arrows and 6+ <text> labels from THIS lesson</svg>",
   "sections": [
     {{"title": "Introduction", "body": "80+ words", "box": "teal"}},
     {{"title": "Core Concept 1", "body": "80+ words with facts", "box": "blue"}},

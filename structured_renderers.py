@@ -101,30 +101,10 @@ def _valid_svg_diagram(svg: str) -> bool:
 
 
 def _fallback_lesson_diagram(lesson: dict) -> str:
-    """Deterministic hub-and-spoke SVG built from the lesson's own sections.
+    """Deterministic labelled study SVG from lesson sections (never a blank box)."""
+    from study_diagram_builder import build_study_diagram_svg
 
-    Guarantees a real, labelled educational diagram (never a blank box) when the
-    AI fails to return a valid mermaid/svg diagram.
-    """
-    from concept_map_builder import build_vocabulary_concept_map_svg
-
-    topic = (
-        lesson.get("topic")
-        or lesson.get("title")
-        or (lesson.get("big_idea") or "Lesson")[:40]
-    )
-    terms = []
-    for section in lesson.get("sections") or []:
-        t = (section.get("title") or "").strip()
-        if t and t.lower() not in {x.lower() for x in terms}:
-            terms.append(t)
-    if not terms:
-        for kp in lesson.get("key_points") or lesson.get("objectives") or []:
-            if isinstance(kp, str) and kp.strip():
-                terms.append(kp.strip()[:24])
-    return build_vocabulary_concept_map_svg(
-        {"topic": topic, "word_wall": [{"term": t} for t in terms[:8]]}
-    )
+    return build_study_diagram_svg(lesson)
 
 
 def _word_wall_card_html(word: dict) -> str:
@@ -507,31 +487,11 @@ def _render_svg(svg: str, height: int = 260) -> None:
     if not svg or not svg.strip():
         return
     st.markdown(
-        f'<div style="display:flex;justify-content:center;align-items:center;'
-        f'max-width:100%;overflow-x:auto;padding:1rem 0;">{svg.strip()}</div>',
+        f'<div class="alora-study-diagram" style="display:flex;justify-content:center;'
+        f'align-items:center;max-width:100%;overflow-x:auto;padding:1rem 0;">'
+        f'{svg.strip()}</div>',
         unsafe_allow_html=True,
     )
-
-
-def _lesson_study_rows(lesson: dict) -> tuple[str, list[dict]]:
-    """Key section titles for Study Diagram AI illustrations."""
-    topic = (lesson.get("topic") or lesson.get("title") or "").strip()
-    if not topic:
-        topic = (lesson.get("big_idea") or "Lesson")[:60].strip()
-    skip = {"introduction", "summary", "practice", "exam focus", "check", "review", "overview"}
-    rows: list[dict] = []
-    for section in lesson.get("sections") or []:
-        title = (section.get("title") or "").strip()
-        if not title or title.lower() in skip:
-            continue
-        body = (section.get("body") or "").strip()[:220]
-        rows.append(
-            {
-                "term": title,
-                "draw_this": body or f"clear labelled educational diagram of {title}",
-            }
-        )
-    return topic, rows[:8]
 
 
 def _render_image_grid(
@@ -831,39 +791,25 @@ def render_lesson(data: Any) -> None:
         return
 
     sections = lesson.get("sections") or []
-    topic_name, study_rows = _lesson_study_rows(lesson)
 
     svg = lesson.get("svg_diagram") or lesson.get("svg", "")
     mermaid = lesson.get("mermaid_diagram") or lesson.get("mermaid", "")
     has_good_mermaid = _valid_mermaid(mermaid)
-    has_good_svg = _valid_svg_diagram(svg)
 
     if has_good_mermaid:
         st.markdown("#### 📊 Concept Diagram")
         _render_mermaid(mermaid)
-    elif images_enabled() and topic_name:
+    else:
         st.markdown("#### 📊 Concept Diagram")
-        overview = [
-            {
-                "term": topic_name,
-                "draw_this": f"overview concept map of {topic_name} for students",
-            }
-        ]
-        _render_image_grid(overview, topic_name, limit=1, spinner_label="Generating concept diagram…")
-    elif not has_good_mermaid:
-        st.markdown("#### 📊 Concept Diagram")
-        _render_svg(_fallback_lesson_diagram(lesson))
+        from study_diagram_builder import build_study_diagram_svg
 
-    if images_enabled() and study_rows:
-        st.markdown("#### 🎨 Study Diagram")
-        st.caption("AI illustrations for each core lesson section.")
-        _render_image_grid(study_rows, topic_name, spinner_label="Generating study diagrams…")
-    elif has_good_svg:
-        st.markdown("#### 🎨 Study Diagram")
-        _render_svg(svg)
-    elif study_rows and not has_good_mermaid and not images_enabled():
-        st.markdown("#### 🎨 Study Diagram")
-        _render_svg(_fallback_lesson_diagram(lesson))
+        _render_svg(build_study_diagram_svg(lesson))
+
+    st.markdown("#### 🎨 Study Diagram")
+    st.caption("Labelled diagram built from this lesson's sections and key facts.")
+    from study_diagram_builder import resolve_study_diagram_svg
+
+    _render_svg(resolve_study_diagram_svg(lesson))
 
     big_idea = lesson.get("big_idea", "")
     if big_idea:

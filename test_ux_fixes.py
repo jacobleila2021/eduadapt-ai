@@ -50,6 +50,47 @@ def test_fallback_lesson_diagram_is_real_svg():
     assert "Evaporation" in svg
 
 
+def test_study_diagram_grouped_tissues():
+    from study_diagram_builder import build_study_diagram_svg, svg_text_label_count
+
+    lesson = {
+        "topic": "Plant and Animal Tissues",
+        "sections": [
+            {
+                "title": "Meristematic Tissue",
+                "body": "Plant tissue made of cells that can divide. Found at growing tips.",
+            },
+            {
+                "title": "Permanent Tissue",
+                "body": "Plant tissue that has lost the ability to divide, including parenchyma and collenchyma.",
+            },
+            {
+                "title": "Epithelial Tissue",
+                "body": "Animal tissue that covers body surfaces and lines organs.",
+            },
+            {
+                "title": "Connective Tissue",
+                "body": "Animal tissue that connects and supports other tissues, such as blood and bone.",
+            },
+        ],
+    }
+    svg = build_study_diagram_svg(lesson)
+    assert svg_text_label_count(svg) >= 6
+    assert "Meristematic" in svg
+    assert "Epithelial" in svg
+    assert "Plant" in svg or "Animal" in svg
+
+
+def test_study_diagram_extracts_list_labels():
+    from study_diagram_builder import _extract_fact_labels
+
+    labels = _extract_fact_labels(
+        "Permanent tissues include parenchyma, collenchyma, and sclerenchyma.",
+        "Permanent Tissue",
+    )
+    assert any("parenchyma" in label.lower() for label in labels)
+
+
 def test_fill_blank_answer_extraction():
     from structured_renderers import _extract_blank_answer, _resolve_fill_blank_answer
 
