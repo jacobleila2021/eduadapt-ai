@@ -53,7 +53,7 @@ def render_top_nav(logo_path: str | None = None, version: str = "") -> None:
     )
 
 
-def render_sidebar(version: str) -> None:
+def render_sidebar(version: str, build_id: str = "") -> None:
     """Premium sidebar — multimodal, adaptive, AI blocks."""
     st.sidebar.markdown(
         """
@@ -81,9 +81,11 @@ def render_sidebar(version: str) -> None:
         """,
         unsafe_allow_html=True,
     )
+    build_line = f'<p class="sidebar-meta">Build: {build_id}</p>' if build_id else ""
     st.sidebar.markdown(
         f"""
-        <p class="sidebar-meta">Version: {version}</p>
+        <p class="sidebar-meta">Version: v{version}</p>
+        {build_line}
         <div class="sidebar-creator">
           <span class="sidebar-creator-label">Creator</span>
           <span class="sidebar-creator-name">Leila Jacob</span>

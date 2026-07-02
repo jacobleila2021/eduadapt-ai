@@ -8,3 +8,7 @@ serverAddress = "127.0.0.1"
 
 [client]
 showErrorDetails = true
+
+# Redeploy marker — Streamlit Cloud rebuild trigger (v2.16.0)
+[theme]
+base = "light"

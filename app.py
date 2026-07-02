@@ -39,7 +39,7 @@ try:
     )
     from structured_renderers import content_to_export
     from styles import get_custom_css
-    from version import APP_VERSION
+    from version import APP_VERSION, BUILD_ID
     from workspace_page import render_workspace
     from ui_helpers import (
         render_analytics_panel,
@@ -450,7 +450,7 @@ def main() -> None:
     logo_path = str(ALORA_LOGO) if ALORA_LOGO.exists() else None
     render_top_nav(logo_path, APP_VERSION)
     render_api_sidebar()
-    render_sidebar(APP_VERSION)
+    render_sidebar(APP_VERSION, BUILD_ID)
 
     # Workspace route — must run before dashboard (dashboard upload must not run first)
     if should_render_workspace():
