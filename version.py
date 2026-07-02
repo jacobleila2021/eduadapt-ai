@@ -1,2 +1,2 @@
-APP_VERSION = "2.16.0"
-BUILD_ID = "20260628-inspection"
+APP_VERSION = "2.16.1"
+BUILD_ID = "20260628-colors-fix"
