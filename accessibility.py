@@ -1,6 +1,6 @@
 """
 Accessibility tools — reading ruler, dyslexia-friendly text sizing.
-CSS lives in styles.py; font size is applied via JS on the main block container.
+CSS lives in styles.py; font size and ruler are applied via JS on the parent page.
 """
 
 from __future__ import annotations
@@ -40,29 +40,32 @@ def _a11y_sync_html(spec_id: str) -> str:
     <script>
     (function() {{
       const cfg = {json.dumps(cfg)};
+      function topWin() {{
+        try {{ return window.top || window.parent || window; }} catch (e) {{ return window; }}
+      }}
       function pageDoc() {{
-        const candidates = [window.top, window.parent, window];
-        for (const w of candidates) {{
-          try {{
-            if (w && w.document && w.document.body) return w.document;
-          }} catch (e) {{}}
-        }}
+        const w = topWin();
+        try {{
+          if (w && w.document && w.document.body) return w.document;
+        }} catch (e) {{}}
         return document;
       }}
       function mainRoot(d) {{
         return (
           d.querySelector('[data-testid="stMain"] .block-container') ||
           d.querySelector('.main .block-container') ||
-          d.querySelector('.block-container')
+          d.querySelector('.block-container') ||
+          d.body
         );
       }}
-      function syncFont(d) {{
+      function syncAll() {{
+        const w = topWin();
+        const active = w.__aloraA11yCfg || cfg;
+        const d = pageDoc();
         const root = mainRoot(d);
         if (root) {{
-          root.style.setProperty("--alora-font", cfg.fontPx + "px");
+          root.style.setProperty("--alora-font", active.fontPx + "px");
         }}
-      }}
-      function syncBar(d) {{
         let bar = d.getElementById("alora-ruler-bar");
         if (!bar) {{
           bar = d.createElement("div");
@@ -76,21 +79,28 @@ def _a11y_sync_html(spec_id: str) -> str:
         bar.style.pointerEvents = "none";
         bar.style.zIndex = "9999999";
         bar.style.borderRadius = "8px";
-        bar.style.width = cfg.width + "%";
-        bar.style.height = cfg.height + "px";
-        bar.style.background = cfg.color;
-        bar.style.opacity = String(cfg.opacity);
-        bar.style.display = cfg.show ? "block" : "none";
-        bar.dataset.aloraHeight = String(cfg.height);
+        bar.style.boxSizing = "border-box";
+        bar.style.width = active.width + "%";
+        bar.style.height = active.height + "px";
+        bar.style.background = active.color;
+        bar.style.opacity = String(active.opacity);
+        bar.style.display = active.show ? "block" : "none";
+        bar.dataset.aloraHeight = String(active.height);
+      }}
+      const w = topWin();
+      w.__aloraA11yCfg = cfg;
+      syncAll();
+      if (!w.__aloraA11yPoll) {{
+        w.__aloraA11yPoll = setInterval(syncAll, 350);
       }}
       const d = pageDoc();
-      syncFont(d);
-      syncBar(d);
       if (!d.__aloraRulerMoveBound) {{
         d.__aloraRulerMoveBound = true;
         d.addEventListener("mousemove", function(e) {{
+          const tw = topWin();
+          const active = tw.__aloraA11yCfg || {{}};
           const bar = d.getElementById("alora-ruler-bar");
-          if (!bar || bar.style.display === "none") return;
+          if (!bar || !active.show) return;
           const h = parseInt(bar.dataset.aloraHeight || "48", 10) || 48;
           bar.style.top = Math.max(0, e.clientY - h / 2) + "px";
         }}, true);
@@ -102,7 +112,7 @@ def _a11y_sync_html(spec_id: str) -> str:
 
 def render_accessibility_toolbar(spec_id: str) -> None:
     """Reading ruler + font size controls."""
-    with st.expander("♿ Reading Ruler & Text Size", expanded=False):
+    with st.expander("📏 Reading Ruler & Text Size", expanded=False):
         st.checkbox("Show reading ruler overlay", key=f"show_ruler_{spec_id}")
         c1, c2 = st.columns(2)
         with c1:
@@ -123,7 +133,7 @@ def render_accessibility_toolbar(spec_id: str) -> None:
             key=f"lesson_font_{spec_id}",
         )
 
-    components.html(_a11y_sync_html(spec_id), height=0, scrolling=False)
+    components.html(_a11y_sync_html(spec_id), height=64, scrolling=False)
 
 
 def get_workspace_layout_css() -> str:

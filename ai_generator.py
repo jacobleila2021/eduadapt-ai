@@ -46,16 +46,56 @@ DIFFERENTIATION (minimum 80% unique from standard version):
 - ADHD: short 2-minute chunks, checkpoints, movement breaks, numbered steps only.
 - Autism Support: predictable routine, literal language, calm transitions, same color pattern every section.
 - Visual Learner: 2+ diagrams, minimal prose, icon labels, color-coded stages.
-- Auditory Learner: listen-and-repeat scripts, call-and-response, audio chunk headers.
-- Dyslexia Smart: simplified vocabulary (Grade 3-4), reduced cognitive load, one idea per section, bullet-point section bodies.
+- Auditory Learner: full prose paragraphs (80+ words per section), listen-and-repeat scripts, call-and-response cues, audio chunk headers — NOT bullet lists.
+- Dyslexia Smart: simplified vocabulary (Grade 3-4), rich coloured bullet sections with 6-10 substantive points per section, complete lesson coverage.
 - Dyslexia: bullet points, bold keywords, extra white space cues, no dense paragraphs.
 """
 
+SECTION_TITLE_RULES = """
+SECTION TITLES (critical — applies to ALL adaptations):
+- NEVER use generic placeholders like "Core Concept 1", "Core Concept 2", "Section 3", or "Topic 1".
+- Every section title MUST be the REAL concept name from the lesson (e.g. "Meristematic Tissue", "Evaporation", "Photosynthesis").
+- Titles must be short (2-6 words), complete phrases that make sense on their own.
+- If the lesson has more than 6 concepts, add sections "Concept 7", "Concept 8" etc. ONLY with the actual concept name as title.
+"""
+
 BULLET_SECTION_RULES = """
-SECTION BODY FORMAT (required for ld and auditory adaptations only):
-- Every section "body" MUST be a markdown bullet list: each line starts with "- " (hyphen space).
-- One key concept per bullet. Maximum 12 words per bullet. 4–8 bullets per section.
-- No dense paragraphs — bullets only.
+DYSLEXIA SMART FORMAT (ld adaptation only):
+- Each section body MUST use markdown bullet points (- item) with 6-10 bullets per section.
+- Each bullet: one complete idea, 8-15 words, concrete facts — NOT one-word stubs.
+- Total section body: minimum 80 words. Cover ALL concepts from the source lesson.
+- Bold key terms using **term** markdown inside bullets where helpful.
+"""
+
+AUDITORY_SECTION_RULES = """
+AUDITORY LEARNER FORMAT (auditory adaptation only):
+- Use full prose paragraphs — NO bullet lists.
+- Each section body: minimum 80 words with concrete facts, examples, and listen-and-repeat phrases.
+- Include "Say:" and "Repeat:" call-and-response lines within paragraphs.
+- Cover EVERY concept from the source lesson — chunk into extra sections if needed (Concept 7, 8, etc.).
+"""
+
+VISUAL_PRACTICE_RULES = """
+VISUAL LEARNER PRACTICE FORMAT (visual adaptation only):
+- In the Practice section, format each item as:
+  Q1. [question on one line]
+  A1. [answer on the next line]
+  Q2. [question]
+  A2. [answer]
+- Provide at least 5 numbered Q/A pairs with full answers.
+"""
+
+TEACHER_ANSWER_RULES = """
+TEACHER VERSION (teacher adaptation only):
+Include these extra fields:
+"answer_key": [
+  {{"section": "Practice", "question": "Q1 ...", "model_answer": "Full correct answer", "marks": 2}},
+  {{"section": "Examples", "question": "Worked example 1", "model_answer": "Complete solution", "marks": 3}}
+],
+"teacher_notes": "Differentiation tips, common misconceptions, grouping suggestions.",
+"differentiation_map": "Which groups get which scaffolds."
+- Provide a model_answer for EVERY practice question and worked example in the lesson.
+- Minimum 8 answer_key entries covering all assessable content.
 """
 
 
@@ -136,7 +176,25 @@ def format_openai_error(error: Exception) -> str:
 
 
 def _lesson_prompt(adaptation_id: str, title: str, hint: str) -> str:
-    bullet_rules = BULLET_SECTION_RULES if adaptation_id in ("ld", "auditory") else ""
+    extra_rules = SECTION_TITLE_RULES
+    if adaptation_id == "ld":
+        extra_rules += BULLET_SECTION_RULES
+    elif adaptation_id == "auditory":
+        extra_rules += AUDITORY_SECTION_RULES
+    elif adaptation_id == "visual":
+        extra_rules += VISUAL_PRACTICE_RULES
+    elif adaptation_id == "teacher":
+        extra_rules += TEACHER_ANSWER_RULES
+
+    teacher_fields = ""
+    if adaptation_id == "teacher":
+        teacher_fields = """,
+  "answer_key": [
+    {{"section": "Practice", "question": "...", "model_answer": "...", "marks": 2}}
+  ],
+  "teacher_notes": "...",
+  "differentiation_map": "..." """
+
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 
 Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value is an object:
@@ -146,8 +204,8 @@ Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value
   "svg_diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='720' height='480'>grouped labelled boxes with arrows and 6+ <text> labels from THIS lesson</svg>",
   "sections": [
     {{"title": "Introduction", "body": "80+ words", "box": "teal"}},
-    {{"title": "Core Concept 1", "body": "80+ words with facts", "box": "blue"}},
-    {{"title": "Core Concept 2", "body": "80+ words", "box": "blue"}},
+    {{"title": "Meristematic Tissue", "body": "80+ words with facts", "box": "blue"}},
+    {{"title": "Permanent Tissue", "body": "80+ words", "box": "blue"}},
     {{"title": "Examples", "body": "worked examples", "box": "green"}},
     {{"title": "Practice", "body": "questions with answers", "box": "green"}},
     {{"title": "Exam Focus", "body": "what to revise for tests", "box": "orange"}},
@@ -159,7 +217,7 @@ Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value
     {{"icon": "🟨", "color_name": "Example", "idea": "..."}},
     {{"icon": "🟪", "color_name": "Vocabulary", "idea": "..."}},
     {{"icon": "🟥", "color_name": "Assessment", "idea": "..."}}
-  ]
+  ]{teacher_fields}
 }}
 
 Adaptation: {title}
@@ -167,7 +225,7 @@ Guidance: {hint}
 
 {DEPTH_RULES}
 {DIFFERENTIATION_RULES}
-{bullet_rules}"""
+{extra_rules}"""
 
 
 def _vocabulary_prompt() -> str:
@@ -274,7 +332,7 @@ def _valid_worksheet(sheet: dict) -> bool:
 def _valid_lesson(lesson: dict) -> bool:
     sections = lesson.get("sections") or []
     has_diagram = bool(lesson.get("mermaid_diagram") or lesson.get("svg_diagram"))
-    return bool(lesson.get("big_idea")) and len(sections) >= 3 and has_diagram
+    return bool(lesson.get("big_idea")) and len(sections) >= 6 and has_diagram
 
 
 def _lesson_fingerprint(lesson: dict) -> set[str]:
@@ -429,16 +487,16 @@ def _generate_one_lesson(
     api_key: str, key: str, title: str, hint: str, user_prompt: str, baseline: dict | None = None
 ) -> tuple:
     client = OpenAI(api_key=api_key)
-    raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=7000)
+    raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=9000)
     lesson = _extract_key(raw, key)
     if not _valid_lesson(lesson):
-        raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=7000)
+        raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=9000)
         lesson = _extract_key(raw, key)
     if baseline and key not in ("standard", "vocabulary", "worksheet"):
         score = _adaptation_difference_score(baseline, lesson)
         if score < 0.80:
             retry_prompt = user_prompt + f"\n\nIMPORTANT: Previous output was only {score:.0%} different from standard. Regenerate with clearly distinct structure, reading level, and diagrams for {title}."
-            raw = _chat(client, _lesson_prompt(key, title, hint), retry_prompt, max_tokens=7000)
+            raw = _chat(client, _lesson_prompt(key, title, hint), retry_prompt, max_tokens=9000)
             lesson = _extract_key(raw, key)
     return key, lesson
 

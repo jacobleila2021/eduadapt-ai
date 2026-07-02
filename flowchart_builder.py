@@ -20,7 +20,7 @@ NODE_CLASSES = [
 ]
 
 
-def _mermaid_safe(text: str, max_len: int = 22) -> str:
+def _mermaid_safe(text: str, max_len: int = 28) -> str:
     """Plain-text label safe for Mermaid rectangle nodes."""
     cleaned = str(text or "")
     cleaned = cleaned.replace("&", "and")
@@ -87,7 +87,7 @@ def build_lesson_flowchart(lesson: dict) -> str:
     from study_diagram_builder import _study_nodes
 
     topic, nodes = _study_nodes(lesson if isinstance(lesson, dict) else {})
-    topic_label = _mermaid_safe(topic, 22)
+    topic_label = _mermaid_safe(topic, 28)
 
     lines = ["flowchart TD", f"  TOP([{topic_label}]):::hub"]
 
@@ -108,14 +108,14 @@ def build_lesson_flowchart(lesson: dict) -> str:
             for i_index, item in enumerate(items[:4]):
                 nid = f"G{g_index}N{i_index}"
                 cls = NODE_CLASSES[(g_index + i_index) % len(NODE_CLASSES)][0]
-                title = _mermaid_safe(item.get("title", ""), 22)
+                title = _mermaid_safe(item.get("title", ""), 28)
                 lines.append(f"  {gid} --> {nid}[{_quoted_label(title)}]:::{cls}")
     else:
         prev = "TOP"
         for index, node in enumerate(nodes[:6]):
             nid = f"S{index}"
             cls = NODE_CLASSES[index % len(NODE_CLASSES)][0]
-            title = _mermaid_safe(node.get("title", ""), 22)
+            title = _mermaid_safe(node.get("title", ""), 28)
             lines.append(f"  {prev} --> {nid}[{_quoted_label(title)}]:::{cls}")
             prev = nid
 
@@ -128,14 +128,14 @@ def build_study_flowchart(lesson: dict) -> str:
     from study_diagram_builder import _study_nodes
 
     topic, nodes = _study_nodes(lesson if isinstance(lesson, dict) else {})
-    topic_label = _mermaid_safe(topic, 22)
+    topic_label = _mermaid_safe(topic, 28)
 
     lines = ["flowchart TD", f"  TOP([{topic_label}]):::hub"]
     prev = "TOP"
-    for index, node in enumerate(nodes[:6]):
+    for index, node in enumerate(nodes[:8]):
         nid = f"ST{index}"
         cls = NODE_CLASSES[index % len(NODE_CLASSES)][0]
-        title = _mermaid_safe(node.get("title", ""), 22)
+        title = _mermaid_safe(node.get("title", ""), 28)
         lines.append(f"  {prev} --> {nid}[{_quoted_label(title)}]:::{cls}")
         prev = nid
 

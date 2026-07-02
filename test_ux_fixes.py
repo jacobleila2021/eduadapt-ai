@@ -100,12 +100,32 @@ def test_bullet_body_formatting():
     assert "<ul" in html_out
 
 
-def test_lesson_prompt_bullets_for_ld():
+def test_lesson_prompt_bullets_for_ld_only():
     from ai_generator import _lesson_prompt
 
-    prompt = _lesson_prompt("ld", "Dyslexia Smart", "hint")
-    assert "bullet" in prompt.lower()
-    assert _lesson_prompt("standard", "Mainstream", "hint").count("bullet") < prompt.count("bullet")
+    ld_prompt = _lesson_prompt("ld", "Dyslexia Smart", "hint")
+    auditory_prompt = _lesson_prompt("auditory", "Auditory", "hint")
+    assert "bullet" in ld_prompt.lower()
+    assert "full prose" in auditory_prompt.lower() or "NO bullet" in auditory_prompt
+    assert _lesson_prompt("standard", "Mainstream", "hint").count("bullet") < ld_prompt.count("bullet")
+
+
+def test_normalize_section_title_replaces_generic():
+    from section_titles import normalize_section_title
+
+    title = normalize_section_title("Core Concept 1", "Meristematic tissue divides rapidly at tips.")
+    assert "Meristematic" in title
+    assert normalize_section_title("Photosynthesis", "Plants make food.") == "Photosynthesis"
+
+
+def test_visual_practice_qa_layout():
+    from lesson_design import format_visual_practice_html
+
+    body = "Q1. What is evaporation?\nA1. Water turning to vapour.\nQ2. What is condensation?\nA2. Vapour forming clouds."
+    html_out = format_visual_practice_html(body)
+    assert "Q1." in html_out
+    assert "A1." in html_out
+    assert "alora-practice-pair" in html_out
 
 
 def test_fallback_lesson_diagram_is_real_svg():
@@ -419,10 +439,12 @@ def test_adaptation_difference_score():
 
 def test_valid_lesson_requires_diagram():
     assert not _valid_lesson({"big_idea": "x", "sections": [{}, {}, {}]})
+    six_sections = [{}] * 6
+    assert not _valid_lesson({"big_idea": "x", "sections": six_sections})
     assert _valid_lesson(
         {
             "big_idea": "x",
-            "sections": [{}, {}, {}],
+            "sections": six_sections,
             "mermaid_diagram": "flowchart TD\nA-->B",
         }
     )

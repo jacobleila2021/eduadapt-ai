@@ -115,12 +115,16 @@ def _extract_fact_labels(body: str, title: str, max_labels: int = 3) -> list[str
     if len(labels) < max_labels:
         first_sentence = re.split(r"(?<=[.!?])\s+", text)[0].strip()
         if first_sentence and len(first_sentence) > 12:
-            snippet = first_sentence[:72] + ("…" if len(first_sentence) > 72 else "")
+            snippet = first_sentence[:55]
+            if len(first_sentence) > 55:
+                snippet = snippet.rsplit(" ", 1)[0] + "…"
             if snippet not in labels:
                 labels.insert(0, snippet)
 
     if not labels:
-        labels.append(f"Key idea: {title}")
+        from section_titles import normalize_section_title
+
+        labels.append(normalize_section_title(title, body))
 
     return labels[:max_labels]
 
@@ -133,11 +137,14 @@ def _study_nodes(lesson: dict) -> tuple[str, list[dict]]:
         if not title or title.lower() in SKIP_SECTIONS:
             continue
         body = (section.get("body") or section.get("content") or "").strip()
+        from section_titles import normalize_section_title
+
+        display_title = normalize_section_title(title, body, len(nodes))
         nodes.append(
             {
-                "title": title,
-                "group": _infer_group(title, body),
-                "labels": _extract_fact_labels(body, title),
+                "title": display_title,
+                "group": _infer_group(display_title, body),
+                "labels": _extract_fact_labels(body, display_title),
             }
         )
     if not nodes:

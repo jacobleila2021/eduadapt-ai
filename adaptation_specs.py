@@ -104,7 +104,7 @@ ADAPTATION_SPECS = [
         "tab": "Dyslexia Smart",
         "title": "Dyslexia Smart",
         "generate": True,
-        "hint": "Big idea first, reduced load, colored visual cues, simplified language (Grade 3–4), chunked steps, labeled SVG diagram. Each section body MUST use markdown bullet points (- item) — one idea per bullet, short sentences.",
+        "hint": "Big idea first, rich coloured layout, simplified language (Grade 3–4), 6–10 bullet points per section with concrete facts, labeled SVG diagram. Complete lesson — every concept from source material.",
     },
     {
         "id": "dyslexia",
@@ -153,14 +153,14 @@ ADAPTATION_SPECS = [
         "tab": "Visual Learner Support",
         "title": "Visual Learner Support",
         "generate": True,
-        "hint": "Heavy diagrams: multiple SVG + mermaid concept map, colour-coded stages, icon markers, minimal dense prose.",
+        "hint": "Heavy diagrams: multiple SVG + mermaid concept map, colour-coded stages, icon markers. Practice section: Q1/A1 format with each question and answer on separate numbered lines.",
     },
     {
         "id": "auditory",
         "tab": "Auditory Learner Support",
         "title": "Auditory Learner Support",
         "generate": True,
-        "hint": "Listen-and-repeat script plus supporting mermaid/SVG visual anchors for each audio chunk. Each section body MUST use markdown bullet points (- item) — one idea per bullet, short sentences.",
+        "hint": "Listen-and-repeat script with full prose paragraphs (80+ words per section), call-and-response cues, audio chunk headers. Complete lesson coverage — NOT bullet lists.",
     },
     {
         "id": "ell",
@@ -188,7 +188,7 @@ ADAPTATION_SPECS = [
         "tab": "Teacher Version",
         "title": "Teacher Version",
         "generate": True,
-        "hint": "Differentiation map, grouping, accommodations, assessment ideas, which visual aids to print.",
+        "hint": "Full lesson plus teacher answer_key for every practice question, differentiation map, grouping, accommodations, assessment ideas, and marking guide.",
     },
     {
         "id": "tutor",

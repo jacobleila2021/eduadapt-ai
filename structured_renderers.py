@@ -23,8 +23,11 @@ from lesson_design import (
     TEXT_BODY,
     accent_for_variant,
     classify_section,
+    dyslexia_luxe_section_card_html,
+    format_visual_practice_html,
     section_card_html,
 )
+from section_titles import normalize_section_title
 _BOX_RENDERERS = {
     "teal": lambda t: st.info(t),
     "blue": lambda t: st.info(t),
@@ -700,15 +703,83 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         )
 
 
-def _plain_lesson_text(raw: str) -> str:
+def _plain_lesson_text(raw: str, *, preserve_lines: bool = False) -> str:
     """Strip HTML/markdown artefacts so lesson text never shows raw tags."""
     if not raw:
         return ""
     text = html.unescape(str(raw))
     text = re.sub(r"<a[^>]*>.*?</a>", " ", text, flags=re.I | re.DOTALL)
     text = re.sub(r"<[^>]+>", " ", text)
+    if preserve_lines:
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+
+def _is_practice_section(title: str) -> bool:
+    return "practice" in (title or "").lower()
+
+
+def _practice_section_card_html(title: str, body: str, variant: str) -> str:
+    """Visual learner practice — numbered Q then A on separate lines."""
+    accent = accent_for_variant(variant)
+    safe_title = html.escape(title)
+    body_html = format_visual_practice_html(body)
+    return f"""
+    <div class="alora-lesson-section alora-practice-section" style="
+        background:{BG_MAIN};
+        border:6px solid {accent};
+        border-radius:16px;
+        padding:28px 32px;
+        margin:1.25rem 0;
+        box-shadow:0 2px 8px rgba(51,51,51,0.06);
+        text-align:left;
+        font-family:{FONT_STACK};
+        color:{TEXT_BODY};">
+      <h3 style="color:{accent};font-weight:700;font-size:1.35rem;margin:0 0 1rem 0;
+          font-family:{FONT_STACK};">📝 {safe_title}</h3>
+      <div class="alora-lesson-body" style="font-size:1.05rem;color:{TEXT_BODY};max-width:52em;">
+        {body_html}
+      </div>
+    </div>
+    """
+
+
+def _render_teacher_answer_key(lesson: dict) -> None:
+    """Teacher Version — answer key expander with marking guide."""
+    answer_key = lesson.get("answer_key") or []
+    if not answer_key:
+        return
+
+    st.markdown("---")
+    with st.expander("📋 Teacher Answer Key & Marking Guide", expanded=True):
+        for index, item in enumerate(answer_key, 1):
+            section = item.get("section", "")
+            question = item.get("question", item.get("question_ref", ""))
+            answer = item.get("model_answer", item.get("answer", ""))
+            marks = item.get("marks", "")
+            marks_label = f" ({marks} marks)" if marks else ""
+            header = f"**{index}. {section}**{marks_label}" if section else f"**{index}.**"
+            st.markdown(header)
+            if question:
+                st.markdown(f"*Q:* {question}")
+            st.markdown(f"*Answer:* {answer}")
+            notes = item.get("marks_notes", "")
+            if notes:
+                st.caption(f"Marking: {notes}")
+            st.markdown("")
+
+        notes = (lesson.get("teacher_notes") or "").strip()
+        if notes:
+            st.markdown("**Teacher Notes**")
+            st.markdown(notes)
+
+        diff_map = (lesson.get("differentiation_map") or "").strip()
+        if diff_map:
+            st.markdown("**Differentiation Map**")
+            st.markdown(diff_map)
 
 
 def render_lesson(data: Any, spec_id: str | None = None) -> None:
@@ -725,7 +796,9 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
         return
 
     sections = lesson.get("sections") or []
-    bullet_mode = spec_id in ("ld", "auditory")
+    bullet_mode = spec_id == "ld"
+    is_visual = spec_id == "visual"
+    is_ld = spec_id == "ld"
 
     from flowchart_builder import (
         estimate_flowchart_height,
@@ -746,32 +819,54 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
 
     big_idea = lesson.get("big_idea", "")
     if big_idea:
-        st.markdown(
-            section_card_html(
-                "Big Idea",
-                _plain_lesson_text(big_idea),
-                "introduction",
-                bullet_mode=bullet_mode,
-            ),
-            unsafe_allow_html=True,
-        )
-
-    for idx, section in enumerate(sections):
-        title = section.get("title", "") or f"Section {idx + 1}"
-        body = section.get("body", "")
-        box = (section.get("box") or "none").lower()
-        variant = classify_section(title, box, idx)
-        st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
-        if body:
+        if is_ld:
+            st.markdown(
+                dyslexia_luxe_section_card_html(
+                    "Big Idea",
+                    _plain_lesson_text(big_idea),
+                    "introduction",
+                    index=0,
+                ),
+                unsafe_allow_html=True,
+            )
+        else:
             st.markdown(
                 section_card_html(
-                    title,
-                    _plain_lesson_text(body),
-                    variant,
+                    "Big Idea",
+                    _plain_lesson_text(big_idea),
+                    "introduction",
                     bullet_mode=bullet_mode,
                 ),
                 unsafe_allow_html=True,
             )
+
+    for idx, section in enumerate(sections):
+        raw_title = section.get("title", "") or f"Section {idx + 1}"
+        body = section.get("body", "")
+        title = normalize_section_title(raw_title, body, idx)
+        box = (section.get("box") or "none").lower()
+        variant = classify_section(title, box, idx)
+        st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
+        if body:
+            keep_lines = (is_visual and _is_practice_section(title)) or is_ld
+            plain_body = _plain_lesson_text(body, preserve_lines=keep_lines)
+            if is_visual and _is_practice_section(title):
+                card = _practice_section_card_html(title, plain_body, variant)
+            elif is_ld:
+                card = dyslexia_luxe_section_card_html(
+                    title, plain_body, variant, index=idx + 1
+                )
+            else:
+                card = section_card_html(
+                    title,
+                    plain_body,
+                    variant,
+                    bullet_mode=bullet_mode,
+                )
+            st.markdown(card, unsafe_allow_html=True)
+
+    if spec_id == "teacher":
+        _render_teacher_answer_key(lesson)
 
     summary = lesson.get("visual_summary") or []
     st.markdown("#### Visual Summary — Colour Key")

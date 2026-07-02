@@ -109,6 +109,15 @@ def get_workspace_css_fragment() -> str:
     .main .block-container:has(.alora-auditory-active) .alora-lesson-section h3 {{
         font-size: 1.5rem !important;
     }}
+    .alora-ld-section {{
+        transition: box-shadow 0.2s ease;
+    }}
+    .alora-ld-section:hover {{
+        box-shadow: 0 8px 28px rgba(51,51,51,0.12) !important;
+    }}
+    #alora-ruler-bar {{
+        transition: background 0.15s ease, opacity 0.15s ease, height 0.15s ease, width 0.15s ease;
+    }}
     .main .block-container:has(.alora-workspace-active) h2,
     .main .block-container:has(.alora-workspace-active) h3,
     .main .block-container:has(.alora-workspace-active) h4 {{
@@ -214,7 +223,93 @@ def get_workspace_css_fragment() -> str:
     """
 
 
-def format_lesson_body_html(body: str, *, bullet_mode: bool = False) -> str:
+_LD_SECTION_THEMES = [
+    ("#059669", "#ecfdf5", "🌟"),
+    ("#1E3A8A", "#dbeafe", "💡"),
+    ("#7c3aed", "#f3e8ff", "📌"),
+    ("#c2410c", "#ffedd5", "🔍"),
+    ("#0F766E", "#ccfbf1", "✨"),
+    ("#db2777", "#fce7f3", "🎯"),
+]
+
+
+def _render_bold_markdown(text: str) -> str:
+    """Convert **bold** markdown to HTML strong tags."""
+    parts = re.split(r"\*\*(.+?)\*\*", text)
+    out: list[str] = []
+    for index, part in enumerate(parts):
+        if index % 2 == 1:
+            out.append(f"<strong>{html.escape(part)}</strong>")
+        else:
+            out.append(html.escape(part))
+    return "".join(out)
+
+
+def format_visual_practice_html(body: str) -> str:
+    """Numbered Q on one line, numbered A on the next — for Visual Learner practice."""
+    text = (body or "").strip()
+    if not text:
+        return ""
+
+    lines = [ln.strip() for ln in re.split(r"\n+", text) if ln.strip()]
+    q_re = re.compile(r"^(?:Q\s*)?(\d+)[.)]\s*(.+)$", re.I)
+    a_re = re.compile(r"^(?:A(?:nswer)?\s*)?(\d+)[.)]\s*(.+)$", re.I)
+    ans_plain = re.compile(r"^Answer\s*[:\-]\s*(.+)$", re.I)
+
+    pairs: list[tuple[str, str, str]] = []
+    pending_q: tuple[str, str] | None = None
+
+    for line in lines:
+        qm = q_re.match(line)
+        am = a_re.match(line)
+        if qm:
+            if pending_q:
+                pairs.append((pending_q[0], pending_q[1], ""))
+            pending_q = (qm.group(1), qm.group(2))
+        elif am:
+            num = am.group(1)
+            ans = am.group(2)
+            if pending_q and pending_q[0] == num:
+                pairs.append((num, pending_q[1], ans))
+                pending_q = None
+            else:
+                pairs.append((num, pending_q[1] if pending_q else f"Question {num}", ans))
+                pending_q = None
+        elif pending_q and ans_plain.match(line):
+            pairs.append((pending_q[0], pending_q[1], ans_plain.match(line).group(1)))
+            pending_q = None
+        elif pending_q:
+            pairs.append((pending_q[0], pending_q[1], line))
+            pending_q = None
+
+    if pending_q:
+        pairs.append((pending_q[0], pending_q[1], ""))
+
+    if not pairs:
+        return format_lesson_body_html(text, bullet_mode=False)
+
+    blocks: list[str] = []
+    for num, question, answer in pairs:
+        blocks.append(
+            f'<div class="alora-practice-pair" style="margin-bottom:1.35rem;padding:1rem 1.25rem;'
+            f'background:#f8fafc;border-radius:12px;border-left:5px solid {ACCENT_INFO};">'
+            f'<p style="font-weight:700;margin:0 0 0.65rem 0;line-height:1.7;">'
+            f'<span style="color:{ACCENT_INFO};font-size:1.1rem;">Q{num}.</span> '
+            f'{_render_bold_markdown(question)}</p>'
+        )
+        if answer:
+            blocks.append(
+                f'<p style="margin:0;padding-left:1.25rem;line-height:1.7;color:{TEXT_BODY};">'
+                f'<span style="color:{ACCENT_INTRO};font-weight:700;">A{num}.</span> '
+                f'{_render_bold_markdown(answer)}</p></div>'
+            )
+        else:
+            blocks.append("</div>")
+
+    return "\n".join(blocks)
+
+
+def format_lesson_body_html(body: str, *, bullet_mode: bool = False, luxury_mode: bool = False) -> str:
     """Plain-text lesson body as paragraphs or bullet list (ld / auditory)."""
     text = (body or "").strip()
     if not text:
@@ -240,13 +335,20 @@ def format_lesson_body_html(body: str, *, bullet_mode: bool = False) -> str:
                 if len(s.strip()) > 6
             ][:8]
         lis = "".join(
-            f'<li style="margin-bottom:0.75rem;">{html.escape(item)}</li>'
+            (
+                f'<li style="margin-bottom:0.85rem;padding-left:0.25rem;line-height:1.85;">'
+                f'<span style="color:{ACCENT_INTRO if luxury_mode else TEXT_BODY};'
+                f'font-weight:700;margin-right:0.35rem;">{"▸" if luxury_mode else "•"}</span>'
+                f'{_render_bold_markdown(item)}</li>'
+            )
             for item in items
             if item
         )
+        list_style = "none" if luxury_mode else "disc"
+        padding = "0.25rem 0 0 0" if luxury_mode else "0 0 0 1.5rem"
         return (
-            f'<ul class="alora-lesson-bullets" style="margin:0;padding-left:1.5rem;'
-            f'list-style:disc;">{lis}</ul>'
+            f'<ul class="alora-lesson-bullets" style="margin:0;padding:{padding};'
+            f'list-style:{list_style};">{lis}</ul>'
         )
 
     safe_body = html.escape(text)
@@ -276,6 +378,36 @@ def section_card_html(title: str, body: str, variant: str, *, bullet_mode: bool 
       <h3 style="color:{accent};font-weight:700;font-size:1.35rem;margin:0 0 1rem 0;
           font-family:{FONT_STACK};">{safe_title}</h3>
       <div class="alora-lesson-body" style="font-size:1.05rem;color:{TEXT_BODY};max-width:48em;">
+        {body_html}
+      </div>
+    </div>
+    """
+
+
+def dyslexia_luxe_section_card_html(
+    title: str, body: str, variant: str, index: int = 0
+) -> str:
+    """Rich coloured card for Dyslexia Smart — substantial layout with emoji and tint."""
+    accent, bg_tint, emoji = _LD_SECTION_THEMES[index % len(_LD_SECTION_THEMES)]
+    safe_title = html.escape(title)
+    body_html = format_lesson_body_html(body, bullet_mode=True, luxury_mode=True)
+    return f"""
+    <div class="alora-ld-section alora-lesson-section" style="
+        background: linear-gradient(145deg, {BG_MAIN} 0%, {bg_tint} 100%);
+        border: 3px solid {accent};
+        border-radius: 20px;
+        padding: 32px 36px;
+        margin: 1.5rem 0;
+        box-shadow: 0 6px 20px rgba(51,51,51,0.1);
+        text-align:left;
+        font-family:{FONT_STACK};
+        color:{TEXT_BODY};">
+      <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1.15rem;">
+        <span style="font-size:2rem;line-height:1;" aria-hidden="true">{emoji}</span>
+        <h3 style="color:{accent};font-weight:700;font-size:1.45rem;margin:0;
+            font-family:{FONT_STACK};">{safe_title}</h3>
+      </div>
+      <div class="alora-lesson-body" style="font-size:1.08rem;color:{TEXT_BODY};max-width:52em;">
         {body_html}
       </div>
     </div>
