@@ -165,11 +165,11 @@ def generate_openai_speech(
     return None
 
 
-def _audio_player_styles(font_px: int = 24) -> str:
-    return f"<style>{get_audio_passage_css(font_px)}</style>"
+def _audio_player_styles(font_px: int = 18, *, auditory_mode: bool = False) -> str:
+    return f"<style>{get_audio_passage_css(font_px, auditory_mode=auditory_mode)}</style>"
 
 
-def _transcript_html(sentences: list[str], font_px: int = 24) -> str:
+def _transcript_html(sentences: list[str], font_px: int = 18, *, auditory_mode: bool = False) -> str:
     """Reading passage only — playback controls live in Streamlit (st.audio / sticky toolbar)."""
     if not sentences:
         sentences = ["No transcript text is available for this adaptation yet."]
@@ -180,7 +180,7 @@ def _transcript_html(sentences: list[str], font_px: int = 24) -> str:
     <div class="alora-audio-root">
       <div class="alora-transcript-card">{blocks}</div>
     </div>
-    {_audio_player_styles(font_px)}
+    {_audio_player_styles(font_px, auditory_mode=auditory_mode)}
     """
 
 
@@ -189,7 +189,9 @@ def _openai_controls_html(
     sentences: list[str],
     speed: float,
     storage_key: str,
-    font_px: int = 24,
+    font_px: int = 18,
+    *,
+    auditory_mode: bool = False,
 ) -> str:
     """Sticky toolbar + hidden audio element (transcript rendered separately)."""
     speed_opts = "".join(
@@ -213,7 +215,7 @@ def _openai_controls_html(
         </div>
       </div>
     </div>
-    {_audio_player_styles(font_px)}
+    {_audio_player_styles(font_px, auditory_mode=auditory_mode)}
     <script>
     (function() {{
       const audio = document.getElementById("alora-audio");
@@ -252,7 +254,9 @@ def _openai_audio_player_html(
     spec_id: str,
     storage_key: str,
     default_font: str,
-    font_px: int = 21,
+    font_px: int = 18,
+    *,
+    auditory_mode: bool = False,
 ) -> str:
     """Native <audio> player (premium neural voice) with timed transcript highlight."""
     if not sentences:
@@ -285,7 +289,7 @@ def _openai_audio_player_html(
         {sentence_blocks}
       </div>
     </div>
-    {_audio_player_styles(font_px)}
+    {_audio_player_styles(font_px, auditory_mode=auditory_mode)}
     <script>
     (function() {{
       const audio = document.getElementById("alora-audio");
@@ -370,7 +374,7 @@ def _audio_player_html(
     voice_avoid = VOICE_OPTIONS[voice_label].get("avoid", [])
     payload = json.dumps(sentences)
     mode_class = "auditory-mode" if auditory_mode else ""
-    font_px = 26 if auditory_mode else 24
+    font_px = 30 if auditory_mode else 18
 
     if not sentences:
         sentences = ["No transcript text is available for this adaptation yet."]
@@ -412,7 +416,7 @@ def _audio_player_html(
         <button type="button" id="btn-resume-no">No — Start over</button>
       </div>
     </div>
-    {_audio_player_styles(font_px)}
+    {_audio_player_styles(font_px, auditory_mode=auditory_mode)}
     <script>
     (function() {{
       const sentences = {payload};
@@ -618,7 +622,7 @@ def render_audio_learning_panel(
     speed = float(st.session_state.get("audio_speed", 1.0))
     sentences = split_sentences(speech_text)
     storage_key = f"alora_audio_{spec_id}_{voice}"
-    font_px = 26 if auditory_mode else 24
+    font_px = 30 if auditory_mode else 18
 
     st.markdown(
         '<div class="alora-audio-sticky-start" aria-hidden="true"></div>',
@@ -680,7 +684,14 @@ def render_audio_learning_panel(
         )
         components.html(
             _openai_audio_player_html(
-                b64, sentences, speed, spec_id, storage_key, f"{font_px}px", font_px
+                b64,
+                sentences,
+                speed,
+                spec_id,
+                storage_key,
+                f"{font_px}px",
+                font_px,
+                auditory_mode=auditory_mode,
             ),
             height=620 if auditory_mode else 560,
             scrolling=True,

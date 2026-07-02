@@ -47,8 +47,15 @@ DIFFERENTIATION (minimum 80% unique from standard version):
 - Autism Support: predictable routine, literal language, calm transitions, same color pattern every section.
 - Visual Learner: 2+ diagrams, minimal prose, icon labels, color-coded stages.
 - Auditory Learner: listen-and-repeat scripts, call-and-response, audio chunk headers.
-- Neurodiversity Support: simplified vocabulary (Grade 3-4), reduced cognitive load, one idea per section.
+- Dyslexia Smart: simplified vocabulary (Grade 3-4), reduced cognitive load, one idea per section, bullet-point section bodies.
 - Dyslexia: bullet points, bold keywords, extra white space cues, no dense paragraphs.
+"""
+
+BULLET_SECTION_RULES = """
+SECTION BODY FORMAT (required for ld and auditory adaptations only):
+- Every section "body" MUST be a markdown bullet list: each line starts with "- " (hyphen space).
+- One key concept per bullet. Maximum 12 words per bullet. 4–8 bullets per section.
+- No dense paragraphs — bullets only.
 """
 
 
@@ -129,6 +136,7 @@ def format_openai_error(error: Exception) -> str:
 
 
 def _lesson_prompt(adaptation_id: str, title: str, hint: str) -> str:
+    bullet_rules = BULLET_SECTION_RULES if adaptation_id in ("ld", "auditory") else ""
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 
 Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value is an object:
@@ -158,7 +166,8 @@ Adaptation: {title}
 Guidance: {hint}
 
 {DEPTH_RULES}
-{DIFFERENTIATION_RULES}"""
+{DIFFERENTIATION_RULES}
+{bullet_rules}"""
 
 
 def _vocabulary_prompt() -> str:

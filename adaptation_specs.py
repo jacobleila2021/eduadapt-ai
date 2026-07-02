@@ -101,10 +101,10 @@ ADAPTATION_SPECS = [
     },
     {
         "id": "ld",
-        "tab": "Neurodiversity Support",
-        "title": "Neurodiversity Support",
+        "tab": "Dyslexia Smart",
+        "title": "Dyslexia Smart",
         "generate": True,
-        "hint": "Big idea first, reduced load, colored visual cues, simplified language (Grade 3–4), chunked steps, labeled SVG diagram.",
+        "hint": "Big idea first, reduced load, colored visual cues, simplified language (Grade 3–4), chunked steps, labeled SVG diagram. Each section body MUST use markdown bullet points (- item) — one idea per bullet, short sentences.",
     },
     {
         "id": "dyslexia",
@@ -160,7 +160,7 @@ ADAPTATION_SPECS = [
         "tab": "Auditory Learner Support",
         "title": "Auditory Learner Support",
         "generate": True,
-        "hint": "Listen-and-repeat script plus supporting mermaid/SVG visual anchors for each audio chunk.",
+        "hint": "Listen-and-repeat script plus supporting mermaid/SVG visual anchors for each audio chunk. Each section body MUST use markdown bullet points (- item) — one idea per bullet, short sentences.",
     },
     {
         "id": "ell",

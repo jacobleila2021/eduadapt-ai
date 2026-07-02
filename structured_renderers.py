@@ -494,11 +494,12 @@ def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str
         st.caption("No picture vocabulary generated.")
         return
 
-    from flowchart_builder import build_vocabulary_flowchart
+    from flowchart_builder import build_vocabulary_flowchart, estimate_flowchart_height
 
     vocab_stub = {"topic": topic, "picture_words": picture_words}
+    chart = build_vocabulary_flowchart(vocab_stub)
     st.caption("Colour-coded flowchart linking each term to the lesson topic.")
-    _render_mermaid(build_vocabulary_flowchart(vocab_stub), height=480)
+    _render_mermaid(chart, height=estimate_flowchart_height(chart))
 
 
 def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
@@ -710,7 +711,7 @@ def _plain_lesson_text(raw: str) -> str:
     return text
 
 
-def render_lesson(data: Any) -> None:
+def render_lesson(data: Any, spec_id: str | None = None) -> None:
     """Structured lesson with colored callouts, diagram, and sections."""
     lesson = _coerce_dict(data)
     if not lesson or not (lesson.get("sections") or lesson.get("big_idea")):
@@ -724,21 +725,34 @@ def render_lesson(data: Any) -> None:
         return
 
     sections = lesson.get("sections") or []
+    bullet_mode = spec_id in ("ld", "auditory")
 
-    from flowchart_builder import resolve_lesson_concept_flowchart, resolve_lesson_study_flowchart
+    from flowchart_builder import (
+        estimate_flowchart_height,
+        resolve_lesson_concept_flowchart,
+        resolve_lesson_study_flowchart,
+    )
+
+    concept_chart = resolve_lesson_concept_flowchart(lesson)
+    study_chart = resolve_lesson_study_flowchart(lesson)
 
     st.markdown("#### 📊 Concept Diagram")
     st.caption("Colour-coded flowchart of the main lesson ideas.")
-    _render_mermaid(resolve_lesson_concept_flowchart(lesson), height=460)
+    _render_mermaid(concept_chart, height=estimate_flowchart_height(concept_chart))
 
     st.markdown("#### 🎨 Study Diagram")
     st.caption("Section flowchart with labelled facts from this lesson.")
-    _render_mermaid(resolve_lesson_study_flowchart(lesson), height=520)
+    _render_mermaid(study_chart, height=estimate_flowchart_height(study_chart))
 
     big_idea = lesson.get("big_idea", "")
     if big_idea:
         st.markdown(
-            section_card_html("Big Idea", _plain_lesson_text(big_idea), "introduction"),
+            section_card_html(
+                "Big Idea",
+                _plain_lesson_text(big_idea),
+                "introduction",
+                bullet_mode=bullet_mode,
+            ),
             unsafe_allow_html=True,
         )
 
@@ -750,7 +764,12 @@ def render_lesson(data: Any) -> None:
         st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
         if body:
             st.markdown(
-                section_card_html(title, _plain_lesson_text(body), variant),
+                section_card_html(
+                    title,
+                    _plain_lesson_text(body),
+                    variant,
+                    bullet_mode=bullet_mode,
+                ),
                 unsafe_allow_html=True,
             )
 

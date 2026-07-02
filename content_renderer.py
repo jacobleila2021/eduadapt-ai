@@ -8,17 +8,31 @@ import uuid
 import streamlit as st
 import streamlit.components.v1 as components
 
+from flowchart_builder import estimate_flowchart_height
+
 _MERMAID_PATTERN = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
+_DYSLEXIA_FONT = (
+    '"OpenDyslexic", "Atkinson Hyperlegible", "Lexend", Verdana, sans-serif'
+)
 
-def _render_mermaid(diagram: str, height: int = 420) -> None:
+
+def _render_mermaid(diagram: str, height: int | None = None) -> None:
     """Render a Mermaid flowchart via CDN with explicit mermaid.run (Mermaid 10+)."""
     diagram_id = f"mermaid_{uuid.uuid4().hex[:8]}"
     safe = diagram.strip().replace("</", "<\\/").replace("`", "'")
+    frame_height = height if height is not None else estimate_flowchart_height(safe)
     components.html(
         f"""
         <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
         <style>
+          @font-face {{
+            font-family: 'OpenDyslexic';
+            src: url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic-regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }}
           body {{ margin: 0; background: #fafcfd; }}
           #{diagram_id} {{
             display: flex;
@@ -26,14 +40,19 @@ def _render_mermaid(diagram: str, height: int = 420) -> None:
             align-items: center;
             width: 100%;
             min-height: 120px;
-            padding: 12px;
+            padding: 20px 16px;
             box-sizing: border-box;
           }}
-          .mermaid svg {{ margin: 0 auto; max-width: 100%; height: auto; }}
+          .mermaid svg {{
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+            display: block;
+          }}
           .mermaid-fallback {{
             color: #0B2E59;
-            font-family: Lexend, Arial, sans-serif;
-            font-size: 14px;
+            font-family: {_DYSLEXIA_FONT};
+            font-size: 16px;
             padding: 1rem;
             white-space: pre-wrap;
           }}
@@ -52,8 +71,8 @@ def _render_mermaid(diagram: str, height: int = 420) -> None:
                 secondaryColor: "#e3f2fd",
                 tertiaryColor: "#ecfdf5",
                 lineColor: "#008C95",
-                fontFamily: "Lexend, Arial, sans-serif",
-                fontSize: "14px",
+                fontFamily: {_DYSLEXIA_FONT},
+                fontSize: "16px",
                 nodeBorder: "#008C95",
                 clusterBkg: "#f0f4f8",
                 titleColor: "#0B2E59",
@@ -62,8 +81,10 @@ def _render_mermaid(diagram: str, height: int = 420) -> None:
               flowchart: {{
                 htmlLabels: false,
                 curve: "basis",
-                padding: 16,
-                useMaxWidth: true
+                padding: 28,
+                useMaxWidth: true,
+                nodeSpacing: 65,
+                rankSpacing: 85
               }}
             }});
             const el = document.getElementById("{diagram_id}");
@@ -78,7 +99,7 @@ def _render_mermaid(diagram: str, height: int = 420) -> None:
           }})();
         </script>
         """,
-        height=height,
+        height=frame_height,
         scrolling=True,
     )
 

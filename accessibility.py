@@ -1,6 +1,6 @@
 """
 Accessibility tools — reading ruler, dyslexia-friendly text sizing.
-CSS lives in styles.py; this module only sets dynamic CSS variables via hidden markers.
+CSS lives in styles.py; font size is applied via JS on the main block container.
 """
 
 from __future__ import annotations
@@ -18,18 +18,9 @@ RULER_COLORS = {
 }
 
 
-def _a11y_marker_html(spec_id: str) -> str:
-    """Hidden marker that sets --alora-font for styles defined in styles.py."""
-    font_px = int(st.session_state.get(f"lesson_font_{spec_id}", 24))
-    marker = f"alora-a11y-{spec_id}"
-    return (
-        f'<div class="{marker}" style="--alora-font:{font_px}px;display:none;" '
-        f'aria-hidden="true"></div>'
-    )
-
-
-def _reading_ruler_html(spec_id: str) -> str:
-    """Mouse-following reading ruler overlay on the main Streamlit page."""
+def _a11y_sync_html(spec_id: str) -> str:
+    """Apply font size + reading ruler on the parent Streamlit page (re-synced every rerun)."""
+    font_px = int(st.session_state.get(f"lesson_font_{spec_id}", 18))
     show = st.session_state.get(f"show_ruler_{spec_id}", False)
     color_name = st.session_state.get(f"ruler_color_{spec_id}", "Soft Yellow")
     opacity = float(st.session_state.get(f"ruler_opacity_{spec_id}", 0.45))
@@ -42,6 +33,7 @@ def _reading_ruler_html(spec_id: str) -> str:
         "opacity": opacity,
         "width": width,
         "height": height,
+        "fontPx": font_px,
     }
 
     return f"""
@@ -57,8 +49,20 @@ def _reading_ruler_html(spec_id: str) -> str:
         }}
         return document;
       }}
-      function syncBar() {{
-        const d = pageDoc();
+      function mainRoot(d) {{
+        return (
+          d.querySelector('[data-testid="stMain"] .block-container') ||
+          d.querySelector('.main .block-container') ||
+          d.querySelector('.block-container')
+        );
+      }}
+      function syncFont(d) {{
+        const root = mainRoot(d);
+        if (root) {{
+          root.style.setProperty("--alora-font", cfg.fontPx + "px");
+        }}
+      }}
+      function syncBar(d) {{
         let bar = d.getElementById("alora-ruler-bar");
         if (!bar) {{
           bar = d.createElement("div");
@@ -79,10 +83,11 @@ def _reading_ruler_html(spec_id: str) -> str:
         bar.style.display = cfg.show ? "block" : "none";
         bar.dataset.aloraHeight = String(cfg.height);
       }}
-      syncBar();
       const d = pageDoc();
-      if (!d.__aloraRulerBound) {{
-        d.__aloraRulerBound = true;
+      syncFont(d);
+      syncBar(d);
+      if (!d.__aloraRulerMoveBound) {{
+        d.__aloraRulerMoveBound = true;
         d.addEventListener("mousemove", function(e) {{
           const bar = d.getElementById("alora-ruler-bar");
           if (!bar || bar.style.display === "none") return;
@@ -112,14 +117,13 @@ def render_accessibility_toolbar(spec_id: str) -> None:
             st.slider("Ruler height (px)", 32, 80, 48, key=f"ruler_height_{spec_id}")
         st.slider(
             "Text size (px)",
-            18,
+            16,
             32,
-            24,
+            18,
             key=f"lesson_font_{spec_id}",
         )
 
-    st.markdown(_a11y_marker_html(spec_id), unsafe_allow_html=True)
-    components.html(_reading_ruler_html(spec_id), height=0, scrolling=False)
+    components.html(_a11y_sync_html(spec_id), height=0, scrolling=False)
 
 
 def get_workspace_layout_css() -> str:

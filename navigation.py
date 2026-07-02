@@ -10,7 +10,7 @@ from adaptation_specs import ADAPTATION_SPECS
 PILL_CATEGORIES = [
     {"id": "vocabulary", "label": "Vocabulary Support", "spec_ids": ["vocabulary"]},
     {"id": "mainstream", "label": "Mainstream Support", "spec_ids": ["standard"]},
-    {"id": "neurodiversity", "label": "Neurodiversity Support", "spec_ids": ["ld"]},
+    {"id": "neurodiversity", "label": "Dyslexia Smart", "spec_ids": ["ld"]},
     {"id": "ell", "label": "English Language Support", "spec_ids": ["ell"]},
     {"id": "visual", "label": "Visual Learner Support", "spec_ids": ["visual"]},
     {"id": "auditory", "label": "Auditory Learner Support", "spec_ids": ["auditory"]},

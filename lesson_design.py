@@ -95,7 +95,19 @@ def get_workspace_css_fragment() -> str:
         text-align: left !important;
         line-height: 1.75 !important;
         letter-spacing: 0.03em !important;
-        font-size: var(--alora-font, 24px) !important;
+        font-size: var(--alora-font, 18px) !important;
+        font-weight: var(--alora-weight, 400) !important;
+    }}
+    .main .block-container:has(.alora-auditory-active) .alora-lesson-section,
+    .main .block-container:has(.alora-auditory-active) .alora-lesson-body,
+    .main .block-container:has(.alora-auditory-active) .alora-lesson-bullets li {{
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        line-height: 2 !important;
+        letter-spacing: 0.05em !important;
+    }}
+    .main .block-container:has(.alora-auditory-active) .alora-lesson-section h3 {{
+        font-size: 1.5rem !important;
     }}
     .main .block-container:has(.alora-workspace-active) h2,
     .main .block-container:has(.alora-workspace-active) h3,
@@ -202,14 +214,52 @@ def get_workspace_css_fragment() -> str:
     """
 
 
-def section_card_html(title: str, body: str, variant: str) -> str:
+def format_lesson_body_html(body: str, *, bullet_mode: bool = False) -> str:
+    """Plain-text lesson body as paragraphs or bullet list (ld / auditory)."""
+    text = (body or "").strip()
+    if not text:
+        return ""
+
+    if bullet_mode:
+        items: list[str] = []
+        for line in re.split(r"\n+", text):
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(("- ", "* ", "• ")):
+                items.append(line[2:].strip())
+            elif re.match(r"^\d+[.)]\s+", line):
+                items.append(re.sub(r"^\d+[.)]\s+", "", line).strip())
+            else:
+                items.append(line)
+        if len(items) <= 1:
+            plain = re.sub(r"\s+", " ", text)
+            items = [
+                s.strip()
+                for s in re.split(r"(?<=[.!?])\s+", plain)
+                if len(s.strip()) > 6
+            ][:8]
+        lis = "".join(
+            f'<li style="margin-bottom:0.75rem;">{html.escape(item)}</li>'
+            for item in items
+            if item
+        )
+        return (
+            f'<ul class="alora-lesson-bullets" style="margin:0;padding-left:1.5rem;'
+            f'list-style:disc;">{lis}</ul>'
+        )
+
+    safe_body = html.escape(text)
+    safe_body = re.sub(r"\n\n+", "</p><p>", safe_body)
+    safe_body = safe_body.replace("\n", "<br/>")
+    return f'<p style="margin:0 0 1rem 0;">{safe_body}</p>'
+
+
+def section_card_html(title: str, body: str, variant: str, *, bullet_mode: bool = False) -> str:
     """Themed lesson section card — cream background, coloured accent border."""
     accent = accent_for_variant(variant)
     safe_title = html.escape(title)
-    # Preserve basic paragraph breaks from AI body (plain text / light markdown).
-    safe_body = html.escape(body.strip())
-    safe_body = re.sub(r"\n\n+", "</p><p>", safe_body)
-    safe_body = safe_body.replace("\n", "<br/>")
+    body_html = format_lesson_body_html(body, bullet_mode=bullet_mode)
     return f"""
     <div class="alora-lesson-section" style="
         background:{BG_MAIN};
@@ -225,8 +275,8 @@ def section_card_html(title: str, body: str, variant: str) -> str:
         letter-spacing:0.03em;">
       <h3 style="color:{accent};font-weight:700;font-size:1.35rem;margin:0 0 1rem 0;
           font-family:{FONT_STACK};">{safe_title}</h3>
-      <div style="font-size:1.05rem;color:{TEXT_BODY};max-width:48em;">
-        <p style="margin:0 0 1rem 0;">{safe_body}</p>
+      <div class="alora-lesson-body" style="font-size:1.05rem;color:{TEXT_BODY};max-width:48em;">
+        {body_html}
       </div>
     </div>
     """
@@ -250,8 +300,15 @@ def lesson_title_html(title: str, subtitle: str = "", variant: str = "introducti
     """
 
 
-def get_audio_passage_css(font_px: int = 24) -> str:
+def get_audio_passage_css(font_px: int = 18, *, auditory_mode: bool = False) -> str:
     """Reading passage styling — identical across every lesson type."""
+    if auditory_mode:
+        font_px = 30
+        weight = 700
+        line_h = 2.0
+    else:
+        weight = 400
+        line_h = 1.75
     return f"""
     {FONT_IMPORTS}
     .alora-audio-root {{
@@ -265,8 +322,9 @@ def get_audio_passage_css(font_px: int = 24) -> str:
         border: 1px solid {BORDER_SUBTLE};
         border-radius: 16px;
         padding: 28px 32px;
-        line-height: 1.8;
+        line-height: {line_h};
         font-size: {font_px}px;
+        font-weight: {weight};
         letter-spacing: 0.03em;
         min-height: 120px;
         text-align: left;

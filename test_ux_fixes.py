@@ -72,6 +72,42 @@ def test_lesson_flowchart_grouped():
     assert "Meristematic" in chart or "Epithelial" in chart
 
 
+def test_study_flowchart_title_only():
+    from flowchart_builder import build_study_flowchart
+
+    lesson = {
+        "topic": "Water Cycle",
+        "sections": [
+            {"title": "Evaporation", "body": "The sun heats water."},
+            {"title": "Condensation", "body": "Vapour forms clouds."},
+            {"title": "Precipitation", "body": "Rain falls."},
+        ],
+    }
+    chart = build_study_flowchart(lesson)
+    assert "flowchart" in chart.lower()
+    assert "Evaporation" in chart
+    assert " - " not in chart
+    assert "stroke-width:3px" in chart
+
+
+def test_bullet_body_formatting():
+    from lesson_design import format_lesson_body_html
+
+    body = "- Water turns to vapour.\n- Clouds form in the sky.\n- Rain falls down."
+    html_out = format_lesson_body_html(body, bullet_mode=True)
+    assert "alora-lesson-bullets" in html_out
+    assert "Water turns to vapour." in html_out
+    assert "<ul" in html_out
+
+
+def test_lesson_prompt_bullets_for_ld():
+    from ai_generator import _lesson_prompt
+
+    prompt = _lesson_prompt("ld", "Dyslexia Smart", "hint")
+    assert "bullet" in prompt.lower()
+    assert _lesson_prompt("standard", "Mainstream", "hint").count("bullet") < prompt.count("bullet")
+
+
 def test_fallback_lesson_diagram_is_real_svg():
     from structured_renderers import _fallback_lesson_diagram, _valid_svg_diagram
 
@@ -234,7 +270,7 @@ def test_nine_version_tabs():
     assert labels == [
         "Vocabulary Support",
         "Mainstream Support",
-        "Neurodiversity Support",
+        "Dyslexia Smart",
         "English Language Support",
         "Visual Learner Support",
         "Auditory Learner Support",

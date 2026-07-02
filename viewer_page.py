@@ -153,13 +153,18 @@ def render_adaptation_viewer(
         "Auditory Learning Mode",
         value=st.session_state.get("auditory_mode", False),
         help=(
-            "Turns on a listening-first layout: larger transcript text (26px), "
-            "more spacing in the reading passage, and a taller audio panel — "
-            "ideal when you want to listen rather than read on screen."
+            "Listening-first layout: larger, bolder lesson text (28px) and a taller "
+            "audio transcript (30px) — ideal when you want to listen rather than read."
         ),
         key=f"auditory_toggle_{spec_id}",
     )
     st.session_state.auditory_mode = auditory_mode
+
+    if auditory_mode:
+        st.markdown(
+            '<div class="alora-auditory-active" style="display:none;" aria-hidden="true"></div>',
+            unsafe_allow_html=True,
+        )
 
     render_accessibility_toolbar(spec_id)
 
@@ -177,7 +182,7 @@ def render_adaptation_viewer(
         elif spec_id == "worksheet":
             render_worksheet(content, key_prefix=f"viewer_{spec_id}")
         elif _coerce_dict(content):
-            render_lesson(_coerce_dict(content))
+            render_lesson(_coerce_dict(content), spec_id=spec_id)
         else:
             from content_renderer import render_rich_content
 
