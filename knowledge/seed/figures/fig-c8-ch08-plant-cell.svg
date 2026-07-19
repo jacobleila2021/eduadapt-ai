@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420">
+  <rect width="100%" height="100%" fill="#FFF9EE"/>
+  <text x="24" y="36" font-family="Arial, sans-serif" font-size="20" fill="#041B4D" font-weight="bold">Plant cell (labelled)</text>
+  <text x="24" y="58" font-family="Arial, sans-serif" font-size="12" fill="#008C95">NCERT Class 8 Science — curated labelled diagram (pilot pack)</text>
+
+  <ellipse cx="360" cy="230" rx="220" ry="140" fill="#E8F7F8" stroke="#008C95" stroke-width="3"/>
+  <ellipse cx="360" cy="230" rx="190" ry="115" fill="#FFF9EE" stroke="#041B4D" stroke-width="2"/>
+  <circle cx="300" cy="210" r="40" fill="#C0E8EC" stroke="#041B4D" stroke-width="2"/>
+  <text x="280" y="215" font-size="12" fill="#041B4D">Nucleus</text>
+  <ellipse cx="430" cy="180" rx="28" ry="18" fill="#7BC96F" stroke="#041B4D"/>
+  <text x="400" y="155" font-size="12" fill="#041B4D">Chloroplast</text>
+  <ellipse cx="420" cy="270" rx="50" ry="35" fill="#DCEEFF" stroke="#041B4D"/>
+  <text x="395" y="275" font-size="12" fill="#041B4D">Vacuole</text>
+  <text x="120" y="120" font-size="13" fill="#041B4D">Cell wall</text>
+  <text x="150" y="250" font-size="13" fill="#041B4D">Cell membrane</text>
+
+</svg>

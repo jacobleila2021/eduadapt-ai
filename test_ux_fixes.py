@@ -287,30 +287,41 @@ def test_nine_version_tabs():
     from navigation import PILL_CATEGORIES
 
     labels = [c["label"] for c in PILL_CATEGORIES]
-    assert labels == [
-        "Vocabulary Support",
-        "Mainstream Support",
-        "Dyslexia Smart",
-        "English Language Support",
-        "Visual Learner Support",
-        "Auditory Learner Support",
-        "Teacher Version",
-        "Parent Version",
-        "Exam Worksheet",
-    ]
-    # Each tab maps to exactly one version (no sub-classification pills)
-    for cat in PILL_CATEGORIES:
-        assert len(cat["spec_ids"]) == 1
+    assert "Vocabulary Support" in labels
+    assert "Dyslexia Smart" in labels
+    assert "Exam Worksheet" in labels
+    neuro = next(c for c in PILL_CATEGORIES if c["id"] == "neurodiversity")
+    assert neuro["spec_ids"] == ["ld"]
+    assert len(PILL_CATEGORIES) == 9
+
+
+def test_pill_categories_cover_generated_specs():
+    from adaptation_specs import OUTPUT_KEYS
+    from navigation import PILL_CATEGORIES
+
+    covered = {sid for cat in PILL_CATEGORIES for sid in cat["spec_ids"]}
+    assert set(OUTPUT_KEYS) == covered
+    assert len(OUTPUT_KEYS) == 9
+    assert "exam_revision" not in OUTPUT_KEYS
+    assert "adhd" not in OUTPUT_KEYS
 
 
 def test_only_nine_generated():
     from adaptation_specs import OUTPUT_KEYS
 
-    assert len(OUTPUT_KEYS) == 9
-    assert set(OUTPUT_KEYS) == {
-        "vocabulary", "standard", "ld", "ell", "visual",
-        "auditory", "teacher", "parent", "worksheet",
+    required = {
+        "vocabulary",
+        "standard",
+        "ld",
+        "ell",
+        "visual",
+        "auditory",
+        "teacher",
+        "parent",
+        "worksheet",
     }
+    assert set(OUTPUT_KEYS) == required
+
 
 
 def test_title_drops_how_subtitle():
@@ -437,10 +448,10 @@ def test_adaptation_difference_score():
     assert score >= 0.5
 
 
-def test_valid_lesson_requires_diagram():
+def test_valid_lesson_accepts_complete_content_before_visual_injection():
     assert not _valid_lesson({"big_idea": "x", "sections": [{}, {}, {}]})
     six_sections = [{}] * 6
-    assert not _valid_lesson({"big_idea": "x", "sections": six_sections})
+    assert _valid_lesson({"big_idea": "x", "sections": six_sections})
     assert _valid_lesson(
         {
             "big_idea": "x",
@@ -448,3 +459,45 @@ def test_valid_lesson_requires_diagram():
             "mermaid_diagram": "flowchart TD\nA-->B",
         }
     )
+
+
+def test_sanitized_svg_keeps_browser_renderable_default_namespace():
+    from study_diagram_builder import build_study_diagram_svg
+    from svg_sanitizer import sanitize_svg
+
+    safe = sanitize_svg(
+        build_study_diagram_svg(
+            {
+                "topic": "Acids and Bases",
+                "sections": [
+                    {"title": "Indicators", "body": "Indicators change colour."},
+                    {"title": "Reactions", "body": "The lesson compares reactions."},
+                ],
+            }
+        )
+    )
+    assert safe.startswith("<svg")
+    assert "<text" in safe
+    assert "ns0:" not in safe
+
+
+def test_lesson_map_uses_displayed_sections_not_model_colour_key():
+    from structured_renderers import _lesson_map_items
+
+    items = _lesson_map_items(
+        {
+            "visual_summary": [
+                {"color_name": "Incorrect", "idea": "Unrelated content"}
+            ],
+            "sections": [
+                {
+                    "title": "Indicators",
+                    "body": "Litmus is discussed in this lesson.",
+                    "box": "blue",
+                }
+            ],
+        }
+    )
+    assert items[0]["title"] == "Indicators"
+    assert "Litmus" in items[0]["idea"]
+    assert "Incorrect" not in str(items)

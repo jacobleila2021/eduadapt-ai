@@ -136,14 +136,44 @@ def generate_openai_speech(
 ) -> bytes | None:
     """Generate expressive neural speech. Tries gpt-4o-mini-tts (accent/tone steerable),
     then falls back to tts-1-hd and tts-1."""
+    result = generate_openai_speech_result(text, voice, api_key, instructions)
+    return result.get("payload") if result.get("ok") else None
+
+
+def generate_openai_speech_result(
+    text: str, voice: str, api_key: str, instructions: str = ""
+) -> dict[str, Any]:
+    """Return a safe v3 envelope; browser TTS is the scoped fallback."""
+    from engines.verified_learning_engine.result_envelope import partial, success
+
     if not text.strip() or not api_key:
-        return None
+        return partial(
+            "audio_generation",
+            "voice_multimodal",
+            "Neural narration is unavailable for this lesson.",
+            code="audio_generation.input_unavailable",
+            recovery="Use browser narration or provide an AI service key.",
+            fallback_used="browser_tts",
+        ).to_dict()
     try:
         from openai import OpenAI
     except Exception:
-        return None
+        return partial(
+            "audio_generation",
+            "voice_multimodal",
+            "Neural narration is unavailable on this deployment.",
+            code="audio_generation.provider_unavailable",
+            recovery="Use browser narration.",
+            fallback_used="browser_tts",
+        ).to_dict()
 
-    client = OpenAI(api_key=api_key)
+    from config import OPENAI_MAX_RETRIES, OPENAI_TIMEOUT_SECONDS
+
+    client = OpenAI(
+        api_key=api_key,
+        timeout=OPENAI_TIMEOUT_SECONDS,
+        max_retries=OPENAI_MAX_RETRIES,
+    )
     attempts = [
         ("gpt-4o-mini-tts", True),
         ("tts-1-hd", False),
@@ -159,10 +189,24 @@ def generate_openai_speech(
             if supports_instructions and instructions:
                 kwargs["instructions"] = instructions
             response = client.audio.speech.create(**kwargs)
-            return response.content
+            return success(
+                "audio_generation",
+                "voice_multimodal",
+                payload=response.content,
+                message="Neural narration generated.",
+                fallback_used="none" if model == attempts[0][0] else model,
+            ).to_dict()
         except Exception:
             continue
-    return None
+    return partial(
+        "audio_generation",
+        "voice_multimodal",
+        "Neural narration is temporarily unavailable.",
+        code="audio_generation.retries_exhausted",
+        recovery="Use browser narration or retry shortly.",
+        fallback_used="browser_tts",
+        retryable=True,
+    ).to_dict()
 
 
 def _audio_player_styles(font_px: int = 18, *, auditory_mode: bool = False) -> str:
@@ -662,6 +706,7 @@ def render_audio_learning_panel(
     meta = VOICE_OPTIONS[voice]
 
     audio_bytes: bytes | None = None
+    audio_result: dict[str, Any] | None = None
     if api_key:
         cache_key = f"_audio_cache_{spec_id}"
         signature = f"{voice}|{hash(speech_text)}"
@@ -670,8 +715,11 @@ def render_audio_learning_panel(
             audio_bytes = cached.get("bytes")
         else:
             with st.spinner(f"Preparing {voice} narration…"):
-                audio_bytes = generate_openai_speech(
+                audio_result = generate_openai_speech_result(
                     speech_text, meta["openai"], api_key, meta.get("instructions", "")
+                )
+                audio_bytes = (
+                    audio_result.get("payload") if audio_result.get("ok") else None
                 )
             if audio_bytes:
                 st.session_state[cache_key] = {"sig": signature, "bytes": audio_bytes}
@@ -700,7 +748,11 @@ def render_audio_learning_panel(
 
     if api_key:
         st.caption(
-            "Premium neural narration is temporarily unavailable — using your browser voice."
+            (
+                (audio_result or {}).get("message")
+                or "Premium neural narration is temporarily unavailable."
+            )
+            + " Using your browser voice."
         )
     st.markdown(
         '<div class="alora-audio-stick" aria-hidden="true"></div>',

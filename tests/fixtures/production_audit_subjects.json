@@ -1,0 +1,60 @@
+{
+  "schema": "alora-production-audit-fixtures/1.0",
+  "authority": "audit-authored adversarial fixtures; not a production curriculum corpus",
+  "subjects": [
+    {
+      "id": "math-linear-equation",
+      "subject": "Mathematics",
+      "grade": "8",
+      "topic": "Linear equations",
+      "source_text": "Solve 2*x + 3 = 11 and verify the solution.",
+      "deterministic_expectation": "x = 4",
+      "must_not_use_science_pilot": true
+    },
+    {
+      "id": "physics-pressure",
+      "subject": "Physics",
+      "grade": "8",
+      "topic": "Pressure",
+      "source_text": "A force of 100 N acts on an area of 0.5 m^2. Calculate pressure using P = F/A.",
+      "deterministic_expectation": "200 Pa",
+      "must_not_use_science_pilot": false
+    },
+    {
+      "id": "chemistry-water",
+      "subject": "Chemistry",
+      "grade": "8",
+      "topic": "Balancing equations",
+      "source_text": "Balance H2 + O2 -> H2O and validate every atom count.",
+      "deterministic_expectation": "2 H2 + O2 -> 2 H2O",
+      "must_not_use_science_pilot": false
+    },
+    {
+      "id": "biology-cell",
+      "subject": "Biology",
+      "grade": "8",
+      "topic": "Cell structure",
+      "source_text": "Compare a plant cell and an animal cell using verified organelle functions.",
+      "deterministic_expectation": "official-source grounding required",
+      "must_not_use_science_pilot": false
+    },
+    {
+      "id": "english-reflection",
+      "subject": "English",
+      "grade": "8",
+      "topic": "Narrative voice",
+      "source_text": "The narrator reflects on social pressure and the current mood of the crowd.",
+      "deterministic_expectation": "passage-bounded analysis; no Physics concepts",
+      "must_not_use_science_pilot": true
+    },
+    {
+      "id": "social-revolution",
+      "subject": "Social Science",
+      "grade": "8",
+      "topic": "Industrial Revolution",
+      "source_text": "Political pressure and social forces influenced the Industrial Revolution.",
+      "deterministic_expectation": "source-grounded history; no Force and Pressure concepts",
+      "must_not_use_science_pilot": true
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420">
+  <rect width="100%" height="100%" fill="#FFF9EE"/>
+  <text x="24" y="36" font-family="Arial, sans-serif" font-size="20" fill="#041B4D" font-weight="bold">Pressure = Force / Area</text>
+  <text x="24" y="58" font-family="Arial, sans-serif" font-size="12" fill="#008C95">NCERT Class 8 Science — curated labelled diagram (pilot pack)</text>
+
+  <rect x="80" y="160" width="80" height="160" fill="#C0E8EC" stroke="#041B4D" stroke-width="2"/>
+  <rect x="400" y="200" width="200" height="120" fill="#E8F7F8" stroke="#041B4D" stroke-width="2"/>
+  <text x="95" y="140" font-size="13" fill="#041B4D">Small area → high P</text>
+  <text x="430" y="180" font-size="13" fill="#041B4D">Large area → low P</text>
+  <text x="100" y="250" font-size="14" fill="#008C95">F</text>
+  <text x="490" y="270" font-size="14" fill="#008C95">F</text>
+  <text x="200" y="380" font-size="16" fill="#041B4D">P = F / A</text>
+
+</svg>

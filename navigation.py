@@ -1,12 +1,13 @@
 """
 Alora AI — adaptation categories and workspace navigation.
+Nine classroom adaptations only (matches generate=True in adaptation_specs).
 """
 
 from __future__ import annotations
 
 from adaptation_specs import ADAPTATION_SPECS
 
-# Exactly 9 version tabs — one spec each, no sub-classification pills.
+# One pill per generated adaptation — decided product set of nine.
 PILL_CATEGORIES = [
     {"id": "vocabulary", "label": "Vocabulary Support", "spec_ids": ["vocabulary"]},
     {"id": "mainstream", "label": "Mainstream Support", "spec_ids": ["standard"]},
@@ -16,7 +17,7 @@ PILL_CATEGORIES = [
     {"id": "auditory", "label": "Auditory Learner Support", "spec_ids": ["auditory"]},
     {"id": "teacher", "label": "Teacher Version", "spec_ids": ["teacher"]},
     {"id": "parent", "label": "Parent Version", "spec_ids": ["parent"]},
-    {"id": "worksheet", "label": "Exam Worksheet", "spec_ids": ["worksheet"]},
+    {"id": "assessment", "label": "Exam Worksheet", "spec_ids": ["worksheet"]},
 ]
 
 

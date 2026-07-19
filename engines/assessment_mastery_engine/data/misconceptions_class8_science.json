@@ -1,0 +1,295 @@
+{
+  "version": "1.0.0",
+  "board": "CBSE",
+  "grade": "8",
+  "subject": "Science",
+  "misconceptions": [
+    {
+      "misconception_id": "misc.force_eq_pressure",
+      "label": "Force and pressure are the same",
+      "concept_id": "c8sci.pressure",
+      "related_concepts": ["c8sci.force", "c8sci.pressure"],
+      "patterns": ["force is pressure", "pressure means force", "same as force", "force = pressure"],
+      "wrong_answer_hints": ["force", "newton only"],
+      "evidence_template": "Learner treats force and pressure as interchangeable.",
+      "intervention_ids": ["int.visual_pfa", "int.worked_pfa", "int.practice_pressure"],
+      "bloom": "understand"
+    },
+    {
+      "misconception_id": "misc.pressure_area_direct",
+      "label": "Larger area always means larger pressure",
+      "concept_id": "c8sci.pressure",
+      "related_concepts": ["c8sci.pressure"],
+      "patterns": ["bigger area more pressure", "larger area higher pressure", "area increases pressure"],
+      "evidence_template": "Learner reverses the P = F/A relationship for area.",
+      "intervention_ids": ["int.worked_pfa", "int.concrete_area"],
+      "bloom": "apply"
+    },
+    {
+      "misconception_id": "misc.friction_always_bad",
+      "label": "Friction is always harmful",
+      "concept_id": "c8sci.friction",
+      "related_concepts": ["c8sci.friction", "c8sci.force"],
+      "patterns": ["friction always bad", "friction useless", "no friction needed"],
+      "evidence_template": "Learner ignores useful roles of friction (walking, holding).",
+      "intervention_ids": ["int.visual_friction", "int.tutor_friction"],
+      "bloom": "understand"
+    },
+    {
+      "misconception_id": "misc.plant_animal_same",
+      "label": "Plant and animal cells are identical",
+      "concept_id": "c8sci.plant_cell",
+      "related_concepts": ["c8sci.plant_cell", "c8sci.animal_cell", "c8sci.cell"],
+      "patterns": ["same cells", "no difference plant animal", "animals have chloroplast"],
+      "evidence_template": "Learner does not distinguish cell wall/chloroplast/vacuole differences.",
+      "intervention_ids": ["int.diagram_cell", "int.compare_cells"],
+      "bloom": "understand"
+    },
+    {
+      "misconception_id": "misc.nucleus_optional",
+      "label": "Nucleus is optional in living cells",
+      "concept_id": "c8sci.nucleus",
+      "related_concepts": ["c8sci.nucleus", "c8sci.cell"],
+      "patterns": ["no need nucleus", "nucleus not important"],
+      "evidence_template": "Learner underestimates nucleus control of cell activities.",
+      "intervention_ids": ["int.diagram_cell", "int.tutor_cell"],
+      "bloom": "remember"
+    },
+    {
+      "misconception_id": "misc.combustion_no_oxygen",
+      "label": "Combustion can occur without oxygen",
+      "concept_id": "c8sci.combustion",
+      "related_concepts": ["c8sci.combustion"],
+      "patterns": ["without oxygen", "no oxygen needed", "burns in vacuum"],
+      "evidence_template": "Learner omits oxygen requirement for combustion.",
+      "intervention_ids": ["int.worked_combustion", "int.visual_triangle"],
+      "bloom": "remember"
+    },
+    {
+      "misconception_id": "misc.ignition_boiling",
+      "label": "Ignition temperature is the boiling point",
+      "concept_id": "c8sci.ignition_temperature",
+      "related_concepts": ["c8sci.ignition_temperature", "c8sci.combustion"],
+      "patterns": ["boiling point", "melting point is ignition"],
+      "evidence_template": "Learner confuses ignition temperature with boiling/melting point.",
+      "intervention_ids": ["int.vocab_ignition", "int.practice_combustion"],
+      "bloom": "remember"
+    },
+    {
+      "misconception_id": "misc.sound_vacuum",
+      "label": "Sound travels through vacuum",
+      "concept_id": "c8sci.sound",
+      "related_concepts": ["c8sci.sound"],
+      "patterns": ["sound in space", "sound vacuum", "no medium needed"],
+      "evidence_template": "Learner believes sound needs no medium.",
+      "intervention_ids": ["int.visual_sound", "int.tutor_sound"],
+      "bloom": "understand"
+    },
+    {
+      "misconception_id": "misc.reflection_refraction",
+      "label": "Reflection and refraction are the same",
+      "concept_id": "c8sci.light_reflection",
+      "related_concepts": ["c8sci.light_reflection", "c8sci.refraction"],
+      "patterns": ["reflection is refraction", "same as bending", "bounce equals bend"],
+      "evidence_template": "Learner conflates bounce (reflection) with medium change (refraction).",
+      "intervention_ids": ["int.diagram_light", "int.compare_light"],
+      "bloom": "understand"
+    },
+    {
+      "misconception_id": "misc.all_microbes_harmful",
+      "label": "All microorganisms are harmful",
+      "concept_id": "c8sci.microorganisms",
+      "related_concepts": ["c8sci.microorganisms", "c8sci.fermentation"],
+      "patterns": ["all microbes bad", "germs only cause disease", "no useful microbes"],
+      "evidence_template": "Learner ignores fermentation, nitrogen fixation, and vaccine uses.",
+      "intervention_ids": ["int.examples_microbes", "int.tutor_micro"],
+      "bloom": "understand"
+    }
+  ],
+  "interventions": [
+    {
+      "intervention_id": "int.visual_pfa",
+      "kind": "visual_explanation",
+      "title": "Visual: P = F/A",
+      "description": "Show force on large vs small area with diagram; keep formula from STEM engine.",
+      "concept_id": "c8sci.pressure",
+      "priority": 10,
+      "accessibility_profiles": ["visual", "dyscalculia", "adhd"]
+    },
+    {
+      "intervention_id": "int.worked_pfa",
+      "kind": "worked_example",
+      "title": "Worked example: pressure",
+      "description": "Step-through calculation with units; official bank practice after.",
+      "concept_id": "c8sci.pressure",
+      "priority": 20
+    },
+    {
+      "intervention_id": "int.concrete_area",
+      "kind": "concrete_activity",
+      "title": "Concrete area activity",
+      "description": "Compare thumb vs palm pressing on soft clay or sponge.",
+      "concept_id": "c8sci.pressure",
+      "priority": 25,
+      "accessibility_profiles": ["dyscalculia", "autism"]
+    },
+    {
+      "intervention_id": "int.practice_pressure",
+      "kind": "additional_practice",
+      "title": "Official pressure practice",
+      "description": "Pull official MCQs for Force and Pressure from question bank.",
+      "concept_id": "c8sci.pressure",
+      "priority": 30
+    },
+    {
+      "intervention_id": "int.diagram_cell",
+      "kind": "visual_explanation",
+      "title": "Plant vs animal cell diagram",
+      "description": "Use NCERT/biology SVG pack; alt-text required.",
+      "concept_id": "c8sci.cell",
+      "priority": 10,
+      "accessibility_profiles": ["visual", "dyslexia"]
+    },
+    {
+      "intervention_id": "int.compare_cells",
+      "kind": "scaffolded_lesson",
+      "title": "Compare cell structures",
+      "description": "Two-column scaffold: plant vs animal features.",
+      "concept_id": "c8sci.plant_cell",
+      "priority": 20
+    },
+    {
+      "intervention_id": "int.tutor_cell",
+      "kind": "ai_tutor_session",
+      "title": "AI Tutor: cell organelles",
+      "description": "Targeted tutor mode on nucleus/chloroplast; facts from knowledge layer.",
+      "concept_id": "c8sci.nucleus",
+      "priority": 40
+    },
+    {
+      "intervention_id": "int.tutor_friction",
+      "kind": "ai_tutor_session",
+      "title": "AI Tutor: useful friction",
+      "description": "Discuss walking/holding examples after concept check.",
+      "concept_id": "c8sci.friction",
+      "priority": 40
+    },
+    {
+      "intervention_id": "int.visual_friction",
+      "kind": "visual_explanation",
+      "title": "Friction benefits vs drawbacks",
+      "description": "Dual list graphic; presentation only.",
+      "concept_id": "c8sci.friction",
+      "priority": 15
+    },
+    {
+      "intervention_id": "int.worked_combustion",
+      "kind": "worked_example",
+      "title": "Combustion requirements",
+      "description": "Fuel + oxygen + ignition temperature triangle.",
+      "concept_id": "c8sci.combustion",
+      "priority": 15
+    },
+    {
+      "intervention_id": "int.visual_triangle",
+      "kind": "visual_explanation",
+      "title": "Fire triangle visual",
+      "description": "Accessible diagram of combustion conditions.",
+      "concept_id": "c8sci.combustion",
+      "priority": 10,
+      "accessibility_profiles": ["visual", "adhd"]
+    },
+    {
+      "intervention_id": "int.vocab_ignition",
+      "kind": "vocabulary_support",
+      "title": "Ignition temperature glossary",
+      "description": "Contrast ignition vs melting vs boiling with examples.",
+      "concept_id": "c8sci.ignition_temperature",
+      "priority": 15,
+      "accessibility_profiles": ["ell", "dyslexia"]
+    },
+    {
+      "intervention_id": "int.practice_combustion",
+      "kind": "additional_practice",
+      "title": "Official combustion items",
+      "description": "Official bank items for Combustion and Flame.",
+      "concept_id": "c8sci.combustion",
+      "priority": 30
+    },
+    {
+      "intervention_id": "int.visual_sound",
+      "kind": "visual_explanation",
+      "title": "Sound needs a medium",
+      "description": "Bell-in-jar style explanation (verified curriculum).",
+      "concept_id": "c8sci.sound",
+      "priority": 15
+    },
+    {
+      "intervention_id": "int.tutor_sound",
+      "kind": "ai_tutor_session",
+      "title": "AI Tutor: sound waves",
+      "description": "Short tutor check on vacuum misconception.",
+      "concept_id": "c8sci.sound",
+      "priority": 40
+    },
+    {
+      "intervention_id": "int.diagram_light",
+      "kind": "visual_explanation",
+      "title": "Reflection vs refraction diagram",
+      "description": "Side-by-side ray diagrams from knowledge figures.",
+      "concept_id": "c8sci.light_reflection",
+      "priority": 10,
+      "accessibility_profiles": ["visual"]
+    },
+    {
+      "intervention_id": "int.compare_light",
+      "kind": "scaffolded_lesson",
+      "title": "Compare reflection and refraction",
+      "description": "Fill-in table with verified definitions.",
+      "concept_id": "c8sci.refraction",
+      "priority": 20
+    },
+    {
+      "intervention_id": "int.examples_microbes",
+      "kind": "concrete_activity",
+      "title": "Useful vs harmful microbes",
+      "description": "Sort cards: curd/yeast vs disease examples from NCERT.",
+      "concept_id": "c8sci.microorganisms",
+      "priority": 15
+    },
+    {
+      "intervention_id": "int.tutor_micro",
+      "kind": "ai_tutor_session",
+      "title": "AI Tutor: microorganisms",
+      "description": "Formative dialogue on friend and foe roles.",
+      "concept_id": "c8sci.microorganisms",
+      "priority": 40
+    },
+    {
+      "intervention_id": "int.teacher_support",
+      "kind": "teacher_intervention",
+      "title": "Teacher check-in",
+      "description": "Flag learner for small-group reteach.",
+      "concept_id": "",
+      "priority": 80,
+      "accessibility_profiles": ["executive_function", "twice_exceptional"]
+    },
+    {
+      "intervention_id": "int.parent_home",
+      "kind": "parent_support",
+      "title": "Home practice suggestion",
+      "description": "Short retrieval practice (5–10 min) using official items only.",
+      "concept_id": "",
+      "priority": 90
+    },
+    {
+      "intervention_id": "int.ef_checklist",
+      "kind": "executive_function_supports",
+      "title": "EF checklist",
+      "description": "Step checklist for multi-step science problems.",
+      "concept_id": "",
+      "priority": 35,
+      "accessibility_profiles": ["adhd", "executive_function", "autism"]
+    }
+  ]
+}

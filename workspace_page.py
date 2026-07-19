@@ -14,6 +14,7 @@ from pill_tabs import render_pill_navigation, render_sub_spec_pills
 from session_state import close_workspace
 from lesson_design import lesson_title_html
 from viewer_page import render_adaptation_viewer
+from publication_gate import publication_block_reason
 
 _TITLE_NOISE = re.compile(
     r"\b(lesson|grade|class|year|student|learner|adapted?|adaptation|version|final|draft|copy|v\d+|worksheet|notes?|sample|demo|test|placeholder|example|untitled|document|doc|file)\b",
@@ -156,6 +157,18 @@ def render_workspace(
     content_for_spec,
 ) -> None:
     """Full-screen dedicated workspace for one adaptation."""
+    block_reason = publication_block_reason(
+        adaptations,
+        package=st.session_state.get("vlie_package"),
+        quality=st.session_state.get("quality"),
+    )
+    if block_reason:
+        st.error(
+            "This lesson is quarantined and cannot be viewed or exported: "
+            f"{block_reason}"
+        )
+        return
+
     spec_id = active_spec["id"]
     lesson_title = lesson_display_title()
     category_id = st.session_state.get("active_category_id", "")
@@ -189,17 +202,56 @@ def render_workspace(
         content_for_spec,
     )
 
-    render_adaptation_viewer(
-        spec_id=spec_id,
-        title=active_spec["title"],
-        content=content,
-        download_filename=download_filename,
-        zip_bytes=zip_bytes,
-        base_name=base_name,
-        api_key=api_key,
-        inline=True,
-        hide_downloads=True,
-        lesson_title=lesson_title,
+    # Optional LXP Phases 1–2 chrome (default off — preserves existing viewer UX)
+    use_lxp = st.toggle(
+        "LXP Reader (Phases 1–2)",
+        value=bool(st.session_state.get("lxp_reader_enabled", False)),
+        key="lxp_reader_enabled",
+        help="Premium reading workspace: themes, notes, progress, AI panel. Uses verified engines only.",
     )
+    if use_lxp:
+        from ui.lxp import render_lxp_reader
+
+        generation_meta = (
+            adaptations.get("_meta", {}) if isinstance(adaptations, dict) else {}
+        )
+        knowledge = generation_meta.get("knowledge") or {}
+        context = generation_meta.get("lesson_context") or {}
+        learner_id = str(st.session_state.get("learner_id") or st.session_state.get("user_id") or "anonymous")
+        render_lxp_reader(
+            lesson_text=lesson_text or "",
+            topic=lesson_title or active_spec.get("title") or "",
+            learner_id=learner_id,
+            adaptations=adaptations if isinstance(adaptations, dict) else None,
+            meta={
+                "lesson_id": spec_id,
+                "active_spec_id": spec_id,
+                "active_spec_title": active_spec.get("title") or spec_id,
+                "base_name": base_name,
+                "api_key": api_key,
+                "board": knowledge.get("board"),
+                "grade": context.get("grade_level") or knowledge.get("grade"),
+                "subject": knowledge.get("subject"),
+                "chapter": knowledge.get("chapter"),
+                "curriculum_resolution": generation_meta.get(
+                    "curriculum_resolution"
+                )
+                or {},
+                "pipeline_result": generation_meta.get("pipeline_result") or {},
+            },
+        )
+    else:
+        render_adaptation_viewer(
+            spec_id=spec_id,
+            title=active_spec["title"],
+            content=content,
+            download_filename=download_filename,
+            zip_bytes=zip_bytes,
+            base_name=base_name,
+            api_key=api_key,
+            inline=True,
+            hide_downloads=True,
+            lesson_title=lesson_title,
+        )
 
     render_bottom_adaptation_bar(category_id, spec_id)

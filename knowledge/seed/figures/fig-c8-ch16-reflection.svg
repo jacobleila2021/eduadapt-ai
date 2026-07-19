@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420">
+  <rect width="100%" height="100%" fill="#FFF9EE"/>
+  <text x="24" y="36" font-family="Arial, sans-serif" font-size="20" fill="#041B4D" font-weight="bold">Laws of reflection</text>
+  <text x="24" y="58" font-family="Arial, sans-serif" font-size="12" fill="#008C95">NCERT Class 8 Science — curated labelled diagram (pilot pack)</text>
+
+  <line x1="360" y1="80" x2="360" y2="360" stroke="#041B4D" stroke-width="4"/>
+  <text x="370" y="100" font-size="13" fill="#041B4D">Mirror</text>
+  <line x1="360" y1="220" x2="360" y2="80" stroke="#999" stroke-dasharray="6"/>
+  <text x="368" y="150" font-size="12" fill="#666">Normal</text>
+  <line x1="120" y1="320" x2="360" y2="220" stroke="#008C95" stroke-width="3"/>
+  <line x1="360" y1="220" x2="600" y2="320" stroke="#14D9E5" stroke-width="3"/>
+  <text x="140" y="345" font-size="13" fill="#008C95">Incident ray</text>
+  <text x="500" y="345" font-size="13" fill="#041B4D">Reflected ray</text>
+
+</svg>

@@ -191,6 +191,7 @@ def _clean_practice_blank(text: str) -> str:
 
 def _build_matching_section(word_wall: list[dict]) -> dict:
     """Structured matching items — answers stored separately for Show Answer only."""
+    import hashlib
     import random
 
     pairs = [
@@ -207,7 +208,9 @@ def _build_matching_section(word_wall: list[dict]) -> dict:
 
     indexed = list(enumerate(pairs, 1))
     shuffled = list(indexed)
-    random.shuffle(shuffled)
+    seed_text = "\n".join(f"{term}\t{definition}" for term, definition in pairs)
+    seed = int(hashlib.sha256(seed_text.encode("utf-8")).hexdigest()[:16], 16)
+    random.Random(seed).shuffle(shuffled)
     letters = "ABCDEFGH"
 
     matching_terms = [{"n": n, "term": term} for n, (term, _) in indexed]
@@ -314,6 +317,16 @@ def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
     target_count = min(8, max(6, len(word_wall)))
     blanks = list(data.get("fill_blanks") or [])
     ai_answers = list(data.get("fill_blank_answers") or data.get("answers") or [])
+    if not word_wall:
+        data["fill_blanks"] = [
+            _clean_fill_blank_display(str(sentence))
+            for sentence in blanks
+            if str(sentence).strip()
+        ]
+        data["fill_blank_answers"] = [
+            str(answer or "").strip() for answer in ai_answers
+        ][: len(data["fill_blanks"])]
+        return data
 
     if len(blanks) < target_count:
         for index in range(len(blanks), target_count):
@@ -480,29 +493,31 @@ def _resolve_fill_blank_answer(
 
 
 def _render_svg(svg: str, height: int = 260) -> None:
-    if not svg or not svg.strip():
+    from svg_sanitizer import sanitize_svg
+
+    safe_svg = sanitize_svg(svg)
+    if not safe_svg:
         return
     st.markdown(
         f'<div class="alora-study-diagram" style="display:flex;justify-content:center;'
         f'align-items:center;max-width:100%;overflow-x:auto;padding:1rem 0;">'
-        f'{svg.strip()}</div>',
+        f'{safe_svg}</div>',
         unsafe_allow_html=True,
     )
 
 
 def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str) -> None:
-    """Picture Words — coloured vocabulary flowchart (replaces AI images)."""
-    st.markdown("### 3. Picture Words — Visual Flowchart")
+    """Picture Words — polished deterministic lesson visual."""
+    st.markdown("### 3. Picture Words — Lesson Visual")
     if not picture_words:
         st.caption("No picture vocabulary generated.")
         return
 
-    from flowchart_builder import build_vocabulary_flowchart, estimate_flowchart_height
+    from flowchart_builder import build_vocabulary_visual_svg
 
     vocab_stub = {"topic": topic, "picture_words": picture_words}
-    chart = build_vocabulary_flowchart(vocab_stub)
-    st.caption("Colour-coded flowchart linking each term to the lesson topic.")
-    _render_mermaid(chart, height=estimate_flowchart_height(chart))
+    st.caption("A clear, colour-coded visual built from this lesson.")
+    _render_svg(build_vocabulary_visual_svg(vocab_stub))
 
 
 def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
@@ -718,6 +733,36 @@ def _plain_lesson_text(raw: str, *, preserve_lines: bool = False) -> str:
     return text
 
 
+def _lesson_map_items(lesson: dict) -> list[dict]:
+    """Build an accurate visual index from the sections actually displayed."""
+    items: list[dict] = []
+    for index, section in enumerate(lesson.get("sections") or []):
+        if not isinstance(section, dict):
+            continue
+        body = _plain_lesson_text(section.get("body") or "")
+        raw_title = section.get("title") or f"Section {index + 1}"
+        title = normalize_section_title(raw_title, body, index)
+        if not body:
+            continue
+        first_sentence = re.split(r"(?<=[.!?])\s+", body)[0].strip()
+        if len(first_sentence) > 92:
+            first_sentence = first_sentence[:89].rsplit(" ", 1)[0] + "…"
+        variant = classify_section(
+            title, str(section.get("box") or "none").lower(), index
+        )
+        items.append(
+            {
+                "icon": f"{index + 1:02d}",
+                "title": title,
+                "idea": first_sentence,
+                "hex": accent_for_variant(variant),
+            }
+        )
+        if len(items) >= 5:
+            break
+    return items
+
+
 def _is_practice_section(title: str) -> bool:
     return "practice" in (title or "").lower()
 
@@ -800,22 +845,32 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     is_visual = spec_id == "visual"
     is_ld = spec_id == "ld"
 
-    from flowchart_builder import (
-        estimate_flowchart_height,
-        resolve_lesson_concept_flowchart,
-        resolve_lesson_study_flowchart,
-    )
+    verified = lesson.get("verified_visuals") or []
+    if verified:
+        st.markdown("#### Lesson Visuals")
+        from pathlib import Path
 
-    concept_chart = resolve_lesson_concept_flowchart(lesson)
-    study_chart = resolve_lesson_study_flowchart(lesson)
+        for vis in verified:
+            caption = vis.get("caption") or "Lesson visual"
+            st.markdown(f"**{caption}**")
+            for path in vis.get("asset_paths") or []:
+                p = Path(path)
+                if p.is_file():
+                    st.image(str(p), caption=caption)
+            if vis.get("iframe_url"):
+                try:
+                    st.components.v1.iframe(vis["iframe_url"], height=360, scrolling=True)
+                except Exception:
+                    st.markdown(f"[Open interactive]({vis['iframe_url']})")
 
-    st.markdown("#### 📊 Concept Diagram")
-    st.caption("Colour-coded flowchart of the main lesson ideas.")
-    _render_mermaid(concept_chart, height=estimate_flowchart_height(concept_chart))
+    # When no subject engine provides a specialised visual, show Alora's
+    # deterministic, content-labelled study diagram (never an AI sketch).
+    if not verified:
+        from study_diagram_builder import resolve_study_diagram_svg
 
-    st.markdown("#### 🎨 Study Diagram")
-    st.caption("Section flowchart with labelled facts from this lesson.")
-    _render_mermaid(study_chart, height=estimate_flowchart_height(study_chart))
+        st.markdown("#### Lesson Visual")
+        st.caption("A labelled study diagram built directly from this lesson.")
+        _render_svg(resolve_study_diagram_svg(lesson))
 
     big_idea = lesson.get("big_idea", "")
     if big_idea:
@@ -868,28 +923,27 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     if spec_id == "teacher":
         _render_teacher_answer_key(lesson)
 
-    summary = lesson.get("visual_summary") or []
-    st.markdown("#### Visual Summary — Colour Key")
-    legend_defaults = [
-        {"icon": "🟦", "color_name": "Topic", "idea": "Main lesson theme", "hex": "#334155"},
-        {"icon": "🟩", "color_name": "Concept", "idea": "Core ideas to learn", "hex": "#0F766E"},
-        {"icon": "🟨", "color_name": "Example", "idea": "Worked examples", "hex": "#F59E0B"},
-        {"icon": "🟪", "color_name": "Vocabulary", "idea": "Key terms", "hex": "#8B5CF6"},
-        {"icon": "🟥", "color_name": "Assessment", "idea": "Exam focus points", "hex": "#EF4444"},
-    ]
-    items = summary if summary else legend_defaults
+    items = _lesson_map_items(lesson)
+    st.markdown("#### Lesson Map")
+    st.caption("A section-by-section guide generated from the lesson shown above.")
     cols = st.columns(min(len(items), 5) or 1)
     for index, item in enumerate(items[:5]):
         with cols[index % len(cols)]:
-            icon = item.get("icon", "🔵")
+            icon = item.get("icon", f"{index + 1:02d}")
             idea = item.get("idea", "")
-            color = item.get("color_name", "")
+            title = item.get("title", "")
             hex_color = item.get("hex", "#0F766E")
             st.markdown(
                 f'<div style="background:{BG_MAIN};border-left:6px solid {hex_color};'
-                f'padding:0.75rem;border-radius:16px;color:{TEXT_BODY};">'
-                f'{icon} <strong style="color:{TEXT_BODY};">{html.escape(color)}</strong><br/>'
-                f'<span style="font-size:0.95rem;color:{TEXT_BODY};">{html.escape(idea)}</span></div>',
+                f'padding:0.9rem;min-height:128px;border-radius:16px;color:{TEXT_BODY};'
+                f'box-shadow:0 5px 18px rgba(11,46,89,0.08);">'
+                f'<span style="display:inline-block;color:{hex_color};font-weight:800;'
+                f'font-size:0.78rem;letter-spacing:0.08em;margin-bottom:0.45rem;">'
+                f'{html.escape(str(icon))}</span><br/>'
+                f'<strong style="color:{TEXT_BODY};line-height:1.25;">'
+                f'{html.escape(title)}</strong><br/>'
+                f'<span style="display:block;margin-top:0.4rem;font-size:0.86rem;'
+                f'line-height:1.45;color:{TEXT_BODY};">{html.escape(idea)}</span></div>',
                 unsafe_allow_html=True,
             )
 

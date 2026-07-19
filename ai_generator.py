@@ -19,8 +19,14 @@ except ImportError:  # older/newer openai SDK layouts on Streamlit Cloud
         RateLimitError = Exception
 
 from adaptation_specs import ADAPTATION_SPECS, OUTPUT_KEYS
-from config import ENV_PATH, MAX_LESSON_CHARS
+from config import (
+    ENV_PATH,
+    MAX_LESSON_CHARS,
+    OPENAI_MAX_RETRIES,
+    OPENAI_TIMEOUT_SECONDS,
+)
 from lesson_processor import build_lesson_context, context_to_prompt
+from knowledge.prompts import RAG_RULES
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file, reload_env
 
 LESSON_KEYS = [k for k in OUTPUT_KEYS if k not in ("vocabulary", "worksheet")]
@@ -33,12 +39,28 @@ DEPTH REQUIREMENTS (critical):
 - Each section body: minimum 80 words with concrete facts, examples, and steps.
 - Students must be able to pass an exam using ONLY this material.
 - Include worked examples where the subject requires them.
-- DIAGRAM-FIRST: every adaptation MUST include mermaid_diagram AND svg_diagram.
-- MERMAID: flowchart/mindmap of the whole lesson process or classification (4+ labelled nodes).
-- SVG STUDY DIAGRAM: svg_diagram MUST be valid inline SVG with xmlns, width 720+, height 400+, at least 6 <text> labels naming REAL lesson parts (e.g. "Meristematic tissue", "Xylem", "Evaporation"). Use #0B2E59 and #008C95. Include grouped boxes, arrows, and bullet facts — never a single circle or decorative art.
-- SECTION TITLES in sections[] MUST match the labels used in svg_diagram so the Study Diagram aligns with lesson content.
+- DIAGRAMS: follow VISUALIZATION PRIORITY in the user prompt. Prefer empty mermaid_diagram and svg_diagram (""): Alora injects built coloured flowcharts. If verified engine/NCERT visuals exist, leave both empty. Do not invent complex SVG.
 - ACCURACY: all diagram and content facts must be scientifically and historically correct.
 - Each learner version must be MEASURABLY DIFFERENT: reading level, structure, vocabulary, layout, diagram density.
+"""
+
+ENGINE_RULES = """
+VERIFIED KNOWLEDGE FIRST (mandatory when ENGINE_ARTIFACTS are provided):
+- Use ONLY the provided ENGINE_ARTIFACTS for equations, balancing, numeric answers, plotted functions, and physics diagrams.
+- NEVER invent coefficients, balanced equations, exact solutions, graph shapes, or scientific diagrams when artifacts/verified visuals exist.
+- You may explain, simplify language, and adapt reading level — but do NOT change computed results.
+- If a STEM fact is missing from ENGINE_ARTIFACTS, write NEED_ENGINE:{type}:{request} instead of guessing.
+- Prefer verified_visuals (NCERT figures, Matplotlib, Schemdraw, GeoGebra, RDKit, physics diagrams) over AI-drawn mermaid/SVG.
+"""
+
+RAG_CITATION_RULES = """
+SOURCE GROUNDING:
+- The uploaded SOURCE_CLAIMS are authoritative. Do not add factual claims that are absent from them.
+- Add source_refs containing valid uploaded block IDs to structured metadata for every section, definition, example, question, answer, teacher note, and parent note.
+- source_refs are internal QA metadata only. Never print "Source:", "Source detail:", block IDs, claim IDs, file paths, or reference notes in learner/teacher-facing text.
+- RETRIEVED_SOURCES are optional enrichment. Cite them only when present and never claim official curriculum alignment without them.
+- Missing external curriculum citations is not an error; continue from the uploaded source.
+- Official answer-bank values and deterministic ENGINE_ARTIFACTS must be copied unchanged.
 """
 
 DIFFERENTIATION_RULES = """
@@ -175,7 +197,9 @@ def format_openai_error(error: Exception) -> str:
     return f"OpenAI request failed: {error}"
 
 
-def _lesson_prompt(adaptation_id: str, title: str, hint: str) -> str:
+def _lesson_prompt(
+    adaptation_id: str, title: str, hint: str, *, suppress_ai_diagrams: bool = False
+) -> str:
     extra_rules = SECTION_TITLE_RULES
     if adaptation_id == "ld":
         extra_rules += BULLET_SECTION_RULES
@@ -195,13 +219,21 @@ def _lesson_prompt(adaptation_id: str, title: str, hint: str) -> str:
   "teacher_notes": "...",
   "differentiation_map": "..." """
 
+    if suppress_ai_diagrams:
+        diagram_fields = """  "mermaid_diagram": "",
+  "svg_diagram": "",
+  "diagram_source": "deterministic_engines","""
+    else:
+        diagram_fields = """  "mermaid_diagram": "flowchart TD with 4+ nodes, valid mermaid, no code fences",
+  "svg_diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='720' height='480'>grouped labelled boxes with arrows and 6+ <text> labels from THIS lesson</svg>",
+  "diagram_source": "ai_illustration","""
+
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 
 Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value is an object:
 {{
   "big_idea": "clear summary sentence",
-  "mermaid_diagram": "flowchart TD with 4+ nodes, valid mermaid, no code fences",
-  "svg_diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='720' height='480'>grouped labelled boxes with arrows and 6+ <text> labels from THIS lesson</svg>",
+{diagram_fields}
   "sections": [
     {{"title": "Introduction", "body": "80+ words", "box": "teal"}},
     {{"title": "Meristematic Tissue", "body": "80+ words with facts", "box": "blue"}},
@@ -224,6 +256,8 @@ Adaptation: {title}
 Guidance: {hint}
 
 {DEPTH_RULES}
+{ENGINE_RULES}
+{RAG_CITATION_RULES}
 {DIFFERENTIATION_RULES}
 {extra_rules}"""
 
@@ -254,6 +288,8 @@ Requirements: 12–15 word_wall terms, ALL sections filled, real content from le
 - Store correct terms only in fill_blank_answers (parallel array); never show answers inline in fill_blanks text.
 - Do not include matching_prompt text with answers — matching is built automatically from word_wall.
 - flashcards MUST pair each word_wall term (front) with its definition (back).
+{ENGINE_RULES}
+{RAG_CITATION_RULES}
 {DEPTH_RULES}"""
 
 
@@ -280,6 +316,12 @@ Return ONLY valid JSON with top-level key "worksheet":
 }}
 
 CRITICAL ANSWER RULES:
+- SUBJECT SCOPE: Every question must assess ONLY the TOPIC, GRADE, objectives, vocabulary,
+  facts, and processes in the uploaded lesson. Never mix questions from another chapter or
+  subject. Ignore any retrieved artifact whose topic does not directly match this lesson.
+- DIAGRAM SCOPE: Only Part C may ask the learner to draw or label a diagram. Do not ask for
+  diagrams in short, long, or vocabulary questions. Alora will attach a source-grounded
+  concept organiser to Part C after lesson generation.
 - SHORT answers (Part A) model_answer = 1–2 sentences MAX. Never a paragraph.
 - LONG answers (Part B) model_answer = full paragraph, minimum 5 complete sentences, detailed and age-appropriate.
 - Provide a model_answer for EVERY question AND a matching answer_key entry for Part A, Part B, Part D (refs like "Part A Q1", "Part B Q1", "Part D Q1").
@@ -288,6 +330,8 @@ CRITICAL ANSWER RULES:
 Requirements:
 - 8 short_answer, 4 long_answer (exam-level), 6 vocab_questions
 - Questions must test ALL major concepts from the lesson analysis
+{ENGINE_RULES}
+{RAG_CITATION_RULES}
 {DEPTH_RULES}"""
 
 
@@ -331,8 +375,10 @@ def _valid_worksheet(sheet: dict) -> bool:
 
 def _valid_lesson(lesson: dict) -> bool:
     sections = lesson.get("sections") or []
-    has_diagram = bool(lesson.get("mermaid_diagram") or lesson.get("svg_diagram"))
-    return bool(lesson.get("big_idea")) and len(sections) >= 6 and has_diagram
+    # Visuals are attached deterministically after generation. Requiring a
+    # model-authored diagram here incorrectly rejected otherwise complete
+    # adaptations and replaced them with raw extractive fallbacks.
+    return bool(lesson.get("big_idea")) and len(sections) >= 6
 
 
 def _lesson_fingerprint(lesson: dict) -> set[str]:
@@ -430,16 +476,27 @@ def _fallback_worksheet(context: dict, vocab: dict) -> dict:
     for index, fact in enumerate(facts[:8], 1):
         short.append(
             {
-                "question": f"Explain: {fact[:120]}",
+                "question": f"Using the uploaded source, explain: {fact[:120]}",
                 "marks": 2,
                 "lines": 4,
+                "model_answer": fact[:500],
             }
         )
     if len(short) < 4:
         short.extend(
             [
-                {"question": "Name two key ideas from this topic.", "marks": 2, "lines": 3},
-                {"question": "Why is this topic important?", "marks": 2, "lines": 3},
+                {
+                    "question": "Name two key ideas stated in the uploaded source.",
+                    "marks": 2,
+                    "lines": 3,
+                    "model_answer": "; ".join(facts[:2])[:500],
+                },
+                {
+                    "question": "Summarise the main idea of the uploaded source.",
+                    "marks": 2,
+                    "lines": 3,
+                    "model_answer": str((facts or [context.get("topic", "")])[0])[:500],
+                },
             ]
         )
     return {
@@ -455,17 +512,20 @@ def _fallback_worksheet(context: dict, vocab: dict) -> dict:
                 "question": f"Describe {context.get('topic', 'this topic')} in detail with examples.",
                 "marks": 8,
                 "lines": 10,
+                "model_answer": " ".join(facts[:4])[:1200],
             },
             {
-                "question": "How would you apply these concepts in a real-world situation?",
+                "question": "Compare two ideas from the uploaded source.",
                 "marks": 6,
                 "lines": 8,
+                "model_answer": " ".join(facts[1:4])[:1000],
             },
         ],
         "diagram_question": {
-            "question": "Draw and label a diagram for this topic.",
+            "question": "Create a labelled organizer using only ideas from the uploaded source.",
             "marks": 4,
             "svg_diagram": "",
+            "model_answer": "A correct organizer includes: " + ", ".join(terms[:6]),
         },
         "vocab_questions": [
             {"question": f"Use '{term}' correctly in a sentence.", "marks": 2}
@@ -478,33 +538,334 @@ def _fallback_worksheet(context: dict, vocab: dict) -> dict:
         ],
         "teacher_differentiation": "Assign Parts A–B to all; Part D with word bank for ELL.",
         "answer_key": [
-            {"question_ref": "Part A Q1", "model_answer": "See lesson objectives.", "marks_notes": "2 marks"}
+            {
+                "question_ref": f"Short answer {index}",
+                "model_answer": row.get("model_answer") or "",
+                "marks_notes": f"{row.get('marks', 2)} marks",
+            }
+            for index, row in enumerate(short[:8], 1)
         ],
     }
 
 
 def _generate_one_lesson(
-    api_key: str, key: str, title: str, hint: str, user_prompt: str, baseline: dict | None = None
+    api_key: str,
+    key: str,
+    title: str,
+    hint: str,
+    user_prompt: str,
+    baseline: dict | None = None,
+    *,
+    suppress_ai_diagrams: bool = False,
 ) -> tuple:
-    client = OpenAI(api_key=api_key)
-    raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=9000)
+    client = OpenAI(
+        api_key=api_key,
+        timeout=OPENAI_TIMEOUT_SECONDS,
+        max_retries=OPENAI_MAX_RETRIES,
+    )
+    sys_prompt = _lesson_prompt(key, title, hint, suppress_ai_diagrams=suppress_ai_diagrams)
+    raw = _chat(client, sys_prompt, user_prompt, max_tokens=9000)
     lesson = _extract_key(raw, key)
-    if not _valid_lesson(lesson):
-        raw = _chat(client, _lesson_prompt(key, title, hint), user_prompt, max_tokens=9000)
+    if suppress_ai_diagrams:
+        lesson["diagram_source"] = "deterministic_engines"
+        lesson["mermaid_diagram"] = lesson.get("mermaid_diagram") or ""
+        lesson["svg_diagram"] = lesson.get("svg_diagram") or ""
+    if not _valid_lesson(lesson) and not suppress_ai_diagrams:
+        raw = _chat(client, sys_prompt, user_prompt, max_tokens=9000)
         lesson = _extract_key(raw, key)
+    elif not _valid_lesson(lesson) and suppress_ai_diagrams:
+        # Sections/big_idea retry only — keep AI diagrams empty
+        raw = _chat(client, sys_prompt, user_prompt, max_tokens=9000)
+        lesson = _extract_key(raw, key)
+        lesson["mermaid_diagram"] = ""
+        lesson["svg_diagram"] = ""
+        lesson["diagram_source"] = "deterministic_engines"
     if baseline and key not in ("standard", "vocabulary", "worksheet"):
         score = _adaptation_difference_score(baseline, lesson)
         if score < 0.80:
-            retry_prompt = user_prompt + f"\n\nIMPORTANT: Previous output was only {score:.0%} different from standard. Regenerate with clearly distinct structure, reading level, and diagrams for {title}."
-            raw = _chat(client, _lesson_prompt(key, title, hint), retry_prompt, max_tokens=9000)
+            retry_prompt = (
+                user_prompt
+                + f"\n\nIMPORTANT: Previous output was only {score:.0%} different from standard. "
+                f"Regenerate with clearly distinct structure and reading level for {title}."
+            )
+            raw = _chat(client, sys_prompt, retry_prompt, max_tokens=9000)
             lesson = _extract_key(raw, key)
+            if suppress_ai_diagrams:
+                lesson["mermaid_diagram"] = ""
+                lesson["svg_diagram"] = ""
+                lesson["diagram_source"] = "deterministic_engines"
     return key, lesson
+
+
+def _context_from_universal_profile(profile: dict, lesson_text: str) -> dict:
+    """Project the source-bound v3 profile into the legacy prompt contract."""
+    claims = [
+        row
+        for row in profile.get("claim_ledger") or []
+        if isinstance(row, dict) and row.get("text")
+    ]
+
+    def source_explanation(term: str) -> str:
+        return next(
+            (
+                str(row.get("text"))
+                for row in claims
+                if re.search(rf"\b{re.escape(str(term))}\b", str(row.get("text")), re.I)
+            ),
+            f"{term} appears in the uploaded source.",
+        )
+
+    return {
+        "topic": profile.get("topic") or profile.get("title") or "Uploaded lesson",
+        "title": profile.get("title") or "Uploaded lesson",
+        "grade_level": (profile.get("age_estimate") or {}).get("band") or "adaptive",
+        "learning_objectives": [
+            row.get("objective")
+            for row in profile.get("learning_objectives") or []
+            if isinstance(row, dict) and row.get("objective")
+        ],
+        "key_concepts": [
+            {
+                "name": row.get("concept"),
+                "explanation": source_explanation(str(row.get("concept") or "")),
+                "source_refs": row.get("source_refs") or [],
+            }
+            for row in profile.get("concepts") or []
+            if isinstance(row, dict) and row.get("concept")
+        ],
+        "vocabulary_terms": [
+            row.get("term")
+            for row in profile.get("vocabulary") or []
+            if isinstance(row, dict) and row.get("term")
+        ],
+        "facts_and_processes": [str(row.get("text")) for row in claims[:24]],
+        "difficulty": profile.get("difficulty") or {},
+        "language": profile.get("language") or "unknown",
+        "source_char_count": len(lesson_text),
+        "chunks_processed": 1,
+        "source_bound": True,
+    }
+
+
+def _clean_source_units(profile: dict) -> list[str]:
+    """Turn imperfect PDF extraction into readable, deduplicated source units."""
+    units: list[str] = []
+    seen: set[str] = set()
+    for row in profile.get("claim_ledger") or []:
+        if not isinstance(row, dict) or not row.get("text"):
+            continue
+        text = str(row.get("text") or "")
+        text = re.sub(r"/?square\d*", " ", text, flags=re.I)
+        text = re.sub(r"(?:Figure\s*\d+(?:\.\d+)+\s*){2,}", " ", text, flags=re.I)
+        text = re.sub(r"\bFigure\s*\d+(?:\.\d+)+\b", " ", text, flags=re.I)
+        text = re.sub(r"\bActivity\s*\d+(?:\.\d+)*\b", ". ", text, flags=re.I)
+        text = re.sub(r"(\d+(?:\.\d+)+)(?=[A-Z][a-z])", r"\1. ", text)
+        text = re.sub(r"(?<=[a-z)])(?=[A-Z][a-z])", ". ", text)
+        text = re.sub(r"\s+", " ", text).strip(" .;:-")
+        chunks = re.split(r"(?<=[.!?])\s+", text)
+        for chunk in chunks:
+            chunk = chunk.strip(" .;:-")
+            if len(chunk) < 20:
+                continue
+            if len(chunk) > 360:
+                words = chunk.split()
+                chunks_to_add = [
+                    " ".join(words[start : start + 52])
+                    for start in range(0, len(words), 52)
+                ]
+            else:
+                chunks_to_add = [chunk]
+            for item in chunks_to_add:
+                key = re.sub(r"\W+", "", item).lower()
+                if len(item) >= 20 and key not in seen:
+                    seen.add(key)
+                    units.append(item.rstrip(".") + ".")
+    return units[:36]
+
+
+def _source_fallback_lesson(
+    key: str, profile: dict, source_refs: list[str]
+) -> dict:
+    topic = str(profile.get("topic") or profile.get("title") or "this topic")
+    units = _clean_source_units(profile)
+    if not units:
+        units = [f"Review the readable material provided for {topic}."]
+
+    def excerpt(start: int, count: int = 2) -> str:
+        chosen = units[start : start + count]
+        if not chosen:
+            chosen = units[: min(count, len(units))]
+        return " ".join(chosen)
+
+    sections = [
+        {
+            "title": "Learning Goal",
+            "body": (
+                f"Use the uploaded lesson to identify, explain, and connect the "
+                f"main ideas in {topic}. Focus on accurate terminology and the "
+                f"observations or examples presented in the material."
+            ),
+            "box": "blue",
+            "source_refs": source_refs,
+        },
+        {
+            "title": "Core Ideas",
+            "body": excerpt(0, 3),
+            "box": "teal",
+            "source_refs": source_refs,
+        },
+        {
+            "title": "Guided Explanation",
+            "body": excerpt(3, 3),
+            "box": "cream",
+            "source_refs": source_refs,
+        },
+        {
+            "title": "Source-Based Examples",
+            "body": excerpt(6, 3),
+            "box": "orange",
+            "source_refs": source_refs,
+        },
+        {
+            "title": "Check Your Understanding",
+            "body": (
+                f"Explain this lesson idea in your own words: {excerpt(1, 1)} "
+                f"Then connect it to a second idea from the lesson: {excerpt(4, 1)}"
+            ),
+            "box": "green",
+            "source_refs": source_refs,
+        },
+        {
+            "title": "Review and Next Steps",
+            "body": (
+                f"Review the key terms and evidence in the lesson on {topic}. "
+                f"Use this source-based recap: {excerpt(0, 2)}"
+            ),
+            "box": "purple",
+            "source_refs": source_refs,
+        },
+    ]
+    support = {
+        "ld": "Use one step at a time, a visible checklist, and short focus intervals.",
+        "ell": "Preview vocabulary, use sentence frames, and allow multilingual rehearsal.",
+        "visual": "Map the source ideas into a labelled sequence or comparison.",
+        "auditory": "Read each source idea aloud, pause, and explain it in your own words.",
+        "teacher": "Check each claim against the uploaded source before extending discussion.",
+        "parent": "Ask the learner to explain one source idea and show where it appears.",
+    }.get(key, "Use retrieval practice and source-based examples.")
+    sections[-1]["body"] += f"\n\nLearning support: {support}"
+    return {
+        "title": profile.get("title") or "Uploaded Lesson",
+        "subtitle": key.replace("_", " ").title(),
+        "big_idea": (
+            f"This adaptation develops a clear, source-grounded understanding "
+            f"of {topic}."
+        ),
+        "sections": sections,
+        "mermaid_diagram": "",
+        "svg_diagram": "",
+        "diagram_source": "deterministic_engines",
+        "source_refs": source_refs,
+    }
+
+
+def _apply_v3_output_contract(
+    value: dict,
+    *,
+    key: str,
+    valid_source_refs: list[str],
+    fallback_used: str = "none",
+    retry_history: list[dict] | None = None,
+) -> dict:
+    """Attach valid source provenance to every generated factual unit."""
+    refs = list(dict.fromkeys(valid_source_refs))[:40]
+    default_refs = refs[:8]
+
+    def clean_visible_text(text: str) -> str:
+        lines = []
+        for line in str(text or "").splitlines():
+            if re.match(
+                r"^\s*(?:source(?:\s+detail|\s+reference|\s+refs?)?s?|"
+                r"citation|references?)\s*[:\-]",
+                line,
+                re.I,
+            ):
+                continue
+            line = re.sub(
+                r"\s*(?:\(|\[)?(?:source(?:\s+detail|\s+refs?)?|citation)"
+                r"\s*:\s*(?:blk_|claim_|src_)[^)\]\n]*(?:\)|\])?\s*$",
+                "",
+                line,
+                flags=re.I,
+            )
+            lines.append(line.rstrip())
+        return "\n".join(lines).strip()
+
+    def attach(node):
+        if isinstance(node, dict):
+            has_content = any(
+                name in node
+                for name in (
+                    "body",
+                    "definition",
+                    "child_friendly",
+                    "question",
+                    "model_answer",
+                    "answer",
+                    "back",
+                    "explanation",
+                    "big_idea",
+                    "guidance",
+                    "teacher_guidance",
+                    "parent_guidance",
+                    "teacher_differentiation",
+                    "summary",
+                    "script",
+                )
+            )
+            if has_content:
+                supplied = [
+                    ref for ref in node.get("source_refs") or [] if ref in refs
+                ]
+                node["source_refs"] = supplied or default_refs
+            for field, child in list(node.items()):
+                if isinstance(child, str) and field not in {
+                    "source_ref",
+                    "source_refs",
+                }:
+                    node[field] = clean_visible_text(child)
+                else:
+                    attach(child)
+        elif isinstance(node, list):
+            for index, child in enumerate(node):
+                if isinstance(child, str):
+                    node[index] = clean_visible_text(child)
+                else:
+                    attach(child)
+
+    output = dict(value or {})
+    attach(output)
+    output.setdefault("source_refs", default_refs)
+    output["_contract"] = {
+        "schema_version": "3.0.0",
+        "adaptation_key": key,
+        "grounding_mode": "uploaded_source",
+        "completeness": "fallback" if fallback_used != "none" else "complete",
+        "fallback_used": fallback_used,
+        "retry_history": retry_history or [],
+        "valid_source_refs": refs,
+    }
+    return output
 
 
 def generate_adaptations(
     lesson_text: str,
     override_api_key: str = "",
     on_progress=None,
+    *,
+    source_envelope: dict | None = None,
+    universal_profile: dict | None = None,
+    grounding_mode: str = "uploaded_source",
 ) -> dict:
     """Full pipeline with progress callbacks for Streamlit UI."""
     api_key = get_effective_api_key(override_api_key)
@@ -513,7 +874,11 @@ def generate_adaptations(
             f"OpenAI API key not found. Add it in the sidebar or edit {ENV_PATH}."
         )
 
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(
+        api_key=api_key,
+        timeout=OPENAI_TIMEOUT_SECONDS,
+        max_retries=OPENAI_MAX_RETRIES,
+    )
     model = _get_model()
     merged = {}
 
@@ -522,33 +887,218 @@ def generate_adaptations(
             on_progress(message, fraction)
 
     try:
-        step("Analyzing full lesson (all pages)…", 0.05)
-        context = build_lesson_context(client, lesson_text, model)
-        merged["_meta"] = {"lesson_context": context}
-        user_prompt = context_to_prompt(context, lesson_text[:MAX_LESSON_CHARS])
+        if not source_envelope:
+            from engines.knowledge_ingestion_engine.universal_ingest import (
+                ingest_source_bytes,
+            )
+
+            source_envelope = ingest_source_bytes(
+                "lesson.txt", lesson_text.encode("utf-8")
+            ).to_dict()
+        if not universal_profile:
+            from engines.universal_lesson.profile import (
+                build_universal_lesson_profile,
+            )
+
+            universal_profile = build_universal_lesson_profile(
+                source_envelope
+            ).to_dict()
+        source_refs = [
+            str(block.get("block_id"))
+            for block in source_envelope.get("blocks") or []
+            if isinstance(block, dict) and block.get("block_id")
+        ]
+        step("Running verified STEM engines…", 0.02)
+        from engines.lesson_pipeline import process_lesson_stem
+        from engines.visualization.priority import (
+            has_deterministic_visuals,
+            inject_verified_visuals_into_lesson,
+            select_preferred_visuals,
+            visualization_prompt_rules,
+        )
+
+        topic_hint = " ".join(lesson_text.splitlines()[:5])[:200]
+        stem = process_lesson_stem(lesson_text, topic=topic_hint)
+        merged["_meta"] = {
+            "engine_artifacts": stem["artifacts"],
+            "stem_qa": stem["qa"],
+            "stem_claims_found": stem["claims_found"],
+            "routing_warnings": stem.get("routing_warnings") or [],
+            "preferred_visuals": stem.get("preferred_visuals") or [],
+            "biology_figures": stem.get("biology_figures") or [],
+        }
+
+        step("Building source-linked lesson profile…", 0.05)
+        context = _context_from_universal_profile(universal_profile, lesson_text)
+        merged["_meta"]["lesson_context"] = context
+
+        # Re-match biology figures with better topic from analysis
+        if not merged["_meta"]["biology_figures"]:
+            try:
+                from knowledge.biology_figures import match_biology_figures
+
+                figs = match_biology_figures(
+                    lesson_text, topic=str(context.get("topic") or ""), limit=3
+                )
+                merged["_meta"]["biology_figures"] = figs
+                preferred = select_preferred_visuals(stem["artifacts"], figs, max_visuals=6)
+                merged["_meta"]["preferred_visuals"] = preferred
+                viz = visualization_prompt_rules(preferred)
+                if viz:
+                    base = stem.get("prompt_block") or ""
+                    # Drop prior viz rules if present, then append refreshed ones
+                    stem["prompt_block"] = (base.split("VISUALIZATION")[0].rstrip() + "\n\n" + viz).strip()
+            except Exception:
+                pass
+
+        step("Checking optional curriculum enrichment…", 0.08)
+        from knowledge.service import enrich_worksheet_with_official_bank, prepare_knowledge_for_lesson
+
+        curriculum_resolution = (
+            universal_profile.get("curriculum_resolution") or {}
+        )
+        if curriculum_resolution.get("status") in {
+            "recognized",
+            "user_declared",
+        }:
+            knowledge = prepare_knowledge_for_lesson(lesson_text, context)
+        else:
+            knowledge = {
+                "pilot_id": None,
+                "board": None,
+                "grade": None,
+                "subject": None,
+                "book_title": None,
+                "index": {
+                    "indexed": 0,
+                    "backend": "curriculum_unknown",
+                    "message": "Curriculum enrichment was not requested.",
+                },
+                "rag_hits": [],
+                "official_mcqs": [],
+                "exam_bundle": {},
+                "prompt_block": "",
+                "citations": [],
+                "scope_matched": False,
+                "retrieval_warnings": [],
+                "external_enrichment": {
+                    "status": "no_hits",
+                    "required": False,
+                    "citation_notice": "No curriculum references available.",
+                },
+            }
+        merged["_meta"]["knowledge"] = knowledge
+
+        preferred = merged["_meta"].get("preferred_visuals") or []
+        suppress_ai_diagrams = has_deterministic_visuals(preferred)
+
+        # Teacher-approved factual cache: reuse Computation + Knowledge facts
+        from knowledge.chapter_cache import (
+            apply_approved_facts_to_meta,
+            factual_fingerprint,
+            load_approved_package,
+        )
+
+        topic_name = str(context.get("topic") or topic_hint or "")
+        fp = factual_fingerprint(
+            topic_name,
+            merged["_meta"].get("engine_artifacts") or [],
+            (knowledge.get("citations") if isinstance(knowledge, dict) else None) or [],
+            str(source_envelope.get("source_hash") or ""),
+        )
+        approved = load_approved_package(fp)
+        if approved and approved.get("approved"):
+            merged["_meta"] = apply_approved_facts_to_meta(merged["_meta"], approved)
+            preferred = merged["_meta"].get("preferred_visuals") or preferred
+            suppress_ai_diagrams = has_deterministic_visuals(preferred)
+            if approved.get("stem_prompt_block"):
+                stem["prompt_block"] = approved["stem_prompt_block"]
+            if (approved.get("knowledge") or {}).get("prompt_block"):
+                knowledge = {**knowledge, **approved["knowledge"]}
+                merged["_meta"]["knowledge"] = knowledge
+            step("Reusing teacher-approved chapter facts…", 0.10)
+
+        merged["_meta"]["factual_fingerprint"] = fp
+        merged["_meta"]["chapter_approved"] = bool(approved and approved.get("approved"))
+
+        from engines.universal_lesson.profile import profile_to_prompt_block
+
+        user_prompt = (
+            profile_to_prompt_block(universal_profile)
+            + "\n\n---\n"
+            + context_to_prompt(context, lesson_text[:MAX_LESSON_CHARS])
+        )
+        if stem.get("prompt_block"):
+            user_prompt = user_prompt + "\n\n---\nENGINE_ARTIFACTS:\n" + stem["prompt_block"]
+        if (
+            knowledge.get("prompt_block")
+            and (knowledge.get("external_enrichment") or {}).get("status")
+            == "available"
+        ):
+            user_prompt = user_prompt + "\n\n---\n" + knowledge["prompt_block"]
+        else:
+            user_prompt += (
+                "\n\nOPTIONAL_CURRICULUM_ENRICHMENT: unavailable. "
+                "Continue from the uploaded source. Do not claim official alignment. "
+                "Display: No curriculum references available."
+            )
+        if preferred:
+            user_prompt = user_prompt + "\n\n" + visualization_prompt_rules(preferred)
+        if merged["_meta"].get("chapter_approved"):
+            user_prompt = (
+                user_prompt
+                + "\n\nCHAPTER_FACTS_LOCKED: Teacher-approved factual package in use. "
+                "Change presentation only — do not alter equations, answers, or diagrams."
+            )
 
         step("Building vocabulary study page…", 0.15)
         vocab = {}
+        vocab_fallback = False
         for _ in range(2):
-            raw = _chat(client, _vocabulary_prompt(), user_prompt, max_tokens=7000)
-            vocab = _extract_key(raw, "vocabulary")
+            try:
+                raw = _chat(client, _vocabulary_prompt(), user_prompt, max_tokens=7000)
+                vocab = _extract_key(raw, "vocabulary")
+            except Exception:
+                vocab = {}
             if _valid_vocabulary(vocab):
                 break
         if not _valid_vocabulary(vocab):
             vocab = _fallback_vocabulary(context)
-        merged["vocabulary"] = _sanitize_vocabulary(vocab)
+            vocab_fallback = True
+        merged["vocabulary"] = _apply_v3_output_contract(
+            _sanitize_vocabulary(vocab),
+            key="vocabulary",
+            valid_source_refs=source_refs,
+            fallback_used="source_extractive" if vocab_fallback else "none",
+        )
 
         step("Building exam worksheet…", 0.25)
         terms = [w.get("term", "") for w in merged["vocabulary"].get("word_wall") or []]
         sheet = {}
+        worksheet_fallback = False
         for _ in range(2):
-            raw = _chat(client, _worksheet_prompt(terms), user_prompt, max_tokens=7000)
-            sheet = _extract_key(raw, "worksheet")
+            try:
+                raw = _chat(client, _worksheet_prompt(terms), user_prompt, max_tokens=7000)
+                sheet = _extract_key(raw, "worksheet")
+            except Exception:
+                sheet = {}
             if _valid_worksheet(sheet):
                 break
         if not _valid_worksheet(sheet):
             sheet = _fallback_worksheet(context, merged["vocabulary"])
-        merged["worksheet"] = sheet
+            worksheet_fallback = True
+        if (
+            grounding_mode != "uploaded_source"
+            and (knowledge.get("external_enrichment") or {}).get("status")
+            == "available"
+        ):
+            sheet = enrich_worksheet_with_official_bank(sheet, knowledge)
+        merged["worksheet"] = _apply_v3_output_contract(
+            sheet,
+            key="worksheet",
+            valid_source_refs=source_refs,
+            fallback_used="source_extractive" if worksheet_fallback else "none",
+        )
 
         step("Creating lesson adaptations (parallel)…", 0.30)
         by_id = {s["id"]: s for s in ADAPTATION_SPECS}
@@ -556,15 +1106,31 @@ def generate_adaptations(
         done = 0
 
         std_spec = by_id.get("standard", {})
-        _, baseline_lesson = _generate_one_lesson(
-            api_key,
-            "standard",
-            std_spec.get("title", "standard"),
-            std_spec.get("hint", ""),
-            user_prompt,
-            None,
+        try:
+            _, baseline_lesson = _generate_one_lesson(
+                api_key,
+                "standard",
+                std_spec.get("title", "standard"),
+                std_spec.get("hint", ""),
+                user_prompt,
+                None,
+                suppress_ai_diagrams=suppress_ai_diagrams,
+            )
+        except Exception:
+            baseline_lesson = {}
+        if not _valid_lesson(baseline_lesson):
+            baseline_lesson = _source_fallback_lesson(
+                "standard", universal_profile, source_refs
+            )
+            baseline_fallback = "source_extractive"
+        else:
+            baseline_fallback = "none"
+        merged["standard"] = _apply_v3_output_contract(
+            inject_verified_visuals_into_lesson(baseline_lesson, preferred),
+            key="standard",
+            valid_source_refs=source_refs,
+            fallback_used=baseline_fallback,
         )
-        merged["standard"] = baseline_lesson
         done = 1
         step(f"Lesson adaptations… {done}/{total} complete", 0.30 + (0.65 * done / total))
 
@@ -579,21 +1145,128 @@ def generate_adaptations(
                     by_id.get(key, {}).get("hint", ""),
                     user_prompt,
                     baseline_lesson,
+                    suppress_ai_diagrams=suppress_ai_diagrams,
                 ): key
                 for key in other_keys
             }
             for future in as_completed(futures):
-                key, lesson = future.result()
-                merged[key] = lesson
+                key = futures[future]
+                fallback_used = "none"
+                retry_history: list[dict] = []
+                try:
+                    _, lesson = future.result()
+                except Exception:
+                    lesson = _source_fallback_lesson(
+                        key, universal_profile, source_refs
+                    )
+                    fallback_used = "source_extractive"
+                    retry_history.append(
+                        {"attempts": 2, "status": "failed", "recovery": "source_extractive"}
+                    )
+                if not _valid_lesson(lesson):
+                    lesson = _source_fallback_lesson(
+                        key, universal_profile, source_refs
+                    )
+                    fallback_used = "source_extractive"
+                merged[key] = _apply_v3_output_contract(
+                    inject_verified_visuals_into_lesson(lesson, preferred),
+                    key=key,
+                    valid_source_refs=source_refs,
+                    fallback_used=fallback_used,
+                    retry_history=retry_history,
+                )
                 done += 1
                 step(
                     f"Lesson adaptations… {done}/{total} complete",
                     0.30 + (0.65 * done / total),
                 )
 
+        # Hard QA publish gate
+        from engines.qa.pipeline import validate_lesson_package
+        from knowledge.service import inject_exam_practice_into_lessons
+
+        if grounding_mode != "uploaded_source":
+            merged = inject_exam_practice_into_lessons(merged, knowledge)
+        merged["_meta"]["knowledge"] = knowledge
+        merged["_meta"]["source_envelope"] = source_envelope
+        merged["_meta"]["universal_profile"] = universal_profile
+        merged["_meta"]["grounding_mode"] = grounding_mode
+        merged["_meta"]["curriculum_reference_notice"] = (
+            (knowledge.get("external_enrichment") or {}).get("citation_notice")
+            or ""
+        )
+        for output_key in OUTPUT_KEYS:
+            if output_key not in merged and output_key not in {
+                "vocabulary",
+                "worksheet",
+            }:
+                merged[output_key] = _source_fallback_lesson(
+                    output_key, universal_profile, source_refs
+                )
+            if isinstance(merged.get(output_key), dict):
+                contract = (merged[output_key].get("_contract") or {})
+                merged[output_key] = _apply_v3_output_contract(
+                    merged[output_key],
+                    key=output_key,
+                    valid_source_refs=source_refs,
+                    fallback_used=str(contract.get("fallback_used") or "none"),
+                    retry_history=contract.get("retry_history") or [],
+                )
+
+        # A diagram question must always include the exact diagram students are
+        # asked to label. Build it deterministically from the completed,
+        # source-grounded standard lesson instead of trusting model-authored SVG.
+        worksheet = merged.get("worksheet") or {}
+        diagram_question = worksheet.get("diagram_question") or {}
+        if isinstance(worksheet, dict) and isinstance(diagram_question, dict):
+            from study_diagram_builder import resolve_study_diagram_svg
+
+            diagram_question["question"] = (
+                "Study the source-grounded concept organiser below. Redraw it "
+                "and label each main idea accurately."
+            )
+            diagram_question["svg_diagram"] = resolve_study_diagram_svg(
+                merged.get("standard") or {}
+            )
+            diagram_question["model_answer"] = (
+                "A correct response reproduces the organiser and labels the "
+                "main ideas exactly as shown."
+            )
+            diagram_question["alt_text"] = (
+                f"Labelled concept organiser for "
+                f"{universal_profile.get('topic') or 'the uploaded lesson'}."
+            )
+            worksheet["diagram_question"] = diagram_question
+
+        package_qa = validate_lesson_package(
+            artifacts=stem["artifacts"],
+            preferred_visuals=preferred,
+            knowledge=knowledge,
+            adaptations=merged,
+            grounding_mode=grounding_mode,
+            source_envelope=source_envelope,
+        )
+        merged["_meta"]["publish_qa"] = {
+            "passed": package_qa.passed,
+            "checks": package_qa.checks,
+            "blocked_reason": package_qa.blocked_reason,
+            "publish_blocked": package_qa.publish_blocked,
+            "scorecard": getattr(package_qa, "scorecard", {}) or {},
+        }
+        if package_qa.publish_blocked:
+            # Keep stem_qa aligned with hard gate
+            merged["_meta"]["stem_qa"] = {
+                **(merged["_meta"].get("stem_qa") or {}),
+                "passed": False,
+                "publish_blocked": True,
+                "blocked_reason": package_qa.blocked_reason,
+            }
+
         step("Done!", 1.0)
     except Exception as error:
-        raise RuntimeError(format_openai_error(error)) from error
+        raise RuntimeError(
+            "Adaptation generation could not complete after safe fallbacks."
+        ) from error
 
     return merged
 
@@ -605,6 +1278,23 @@ def quality_report(adaptations: dict) -> dict:
     lesson_ok = sum(
         1 for k in LESSON_KEYS if _valid_lesson(_coerce_dict(adaptations.get(k, {})))
     )
+    stem_qa = (adaptations.get("_meta") or {}).get("stem_qa") or {}
+    publish_qa = (adaptations.get("_meta") or {}).get("publish_qa") or {}
+    stem_passed = stem_qa.get("passed", True)
+    publish_blocked = bool(
+        publish_qa.get("publish_blocked") or stem_qa.get("publish_blocked")
+    )
+    stem_artifacts = len((adaptations.get("_meta") or {}).get("engine_artifacts") or [])
+    preferred_n = len((adaptations.get("_meta") or {}).get("preferred_visuals") or [])
+    biology_n = len((adaptations.get("_meta") or {}).get("biology_figures") or [])
+    knowledge = (adaptations.get("_meta") or {}).get("knowledge") or {}
+    rag_hits = len(knowledge.get("rag_hits") or [])
+    official_mcqs = len(knowledge.get("official_mcqs") or [])
+    base_exam_ready = (
+        _valid_vocabulary(vocab)
+        and _valid_worksheet(sheet)
+        and lesson_ok >= len(LESSON_KEYS) - 2
+    )
     return {
         "pages_analyzed": ctx.get("chunks_processed", 1),
         "source_chars": ctx.get("source_char_count", 0),
@@ -615,9 +1305,16 @@ def quality_report(adaptations: dict) -> dict:
         "worksheet_long_q": len(sheet.get("long_answer") or []),
         "lessons_complete": lesson_ok,
         "lessons_total": len(LESSON_KEYS),
-        "exam_ready": (
-            _valid_vocabulary(vocab)
-            and _valid_worksheet(sheet)
-            and lesson_ok >= len(LESSON_KEYS) - 2
-        ),
+        "stem_artifacts": stem_artifacts,
+        "stem_verified": stem_passed and not publish_blocked,
+        "verified_visuals": preferred_n,
+        "biology_figures": biology_n,
+        "rag_citations": rag_hits,
+        "official_mcqs": official_mcqs,
+        "knowledge_pilot": knowledge.get("pilot_id"),
+        "publish_blocked": publish_blocked,
+        "publish_blocked_reason": publish_qa.get("blocked_reason")
+        or stem_qa.get("blocked_reason"),
+        "exam_ready": base_exam_ready and stem_passed and not publish_blocked,
+        "adaptations_ready": base_exam_ready,
     }

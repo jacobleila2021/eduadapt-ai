@@ -1,5 +1,5 @@
 """
-Extract plain text from teacher-uploaded lesson files (PDF and DOCX).
+Extract curriculum-neutral source content from teacher-uploaded lesson files.
 """
 
 from io import BytesIO
@@ -69,11 +69,22 @@ def extract_lesson_text(filename: str, file_bytes: bytes) -> str:
     Raises:
         ValueError: If the file type is not PDF or DOCX.
     """
-    lower_name = filename.lower()
+    envelope = extract_source_document(filename, file_bytes)
+    if not envelope.ok:
+        issue = (envelope.errors or envelope.warnings or [{}])[0]
+        reason = issue.get("safe_message") or issue.get("reason")
+        recovery = issue.get("recovery")
+        message = str(reason or "No readable educational content was found.")
+        if recovery:
+            message += f" {recovery}"
+        raise ValueError(message)
+    return envelope.text
 
-    if lower_name.endswith(".pdf"):
-        return extract_text_from_pdf(file_bytes)
-    if lower_name.endswith(".docx"):
-        return extract_text_from_docx(file_bytes)
 
-    raise ValueError("Unsupported file type. Please upload a PDF or DOCX file.")
+def extract_source_document(filename: str, file_bytes: bytes):
+    """Return the full v3 source envelope used by the universal pipeline."""
+    from engines.knowledge_ingestion_engine.universal_ingest import (
+        ingest_source_bytes,
+    )
+
+    return ingest_source_bytes(filename, file_bytes)

@@ -14,7 +14,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import httpx
 import streamlit as st
 
-from config import IMAGE_PROVIDER, OPENAI_API_KEY
+from config import (
+    IMAGE_PROVIDER,
+    OPENAI_API_KEY,
+    OPENAI_MAX_RETRIES,
+    OPENAI_TIMEOUT_SECONDS,
+)
 PICTURE_WORD_LIMIT = int(os.getenv("PICTURE_WORD_LIMIT", "10"))
 IMAGE_SIZE = 512
 
@@ -28,10 +33,10 @@ def education_image_prompt(term: str, description: str, topic: str = "") -> str:
     scene = (description or f"a clear diagram showing {term}").strip()
     topic_bit = f" for the lesson topic '{topic}'" if topic else ""
     return (
-        f"Simple colourful educational illustration{topic_bit}, cartoon style, "
-        f"clean white background, child-friendly school textbook art, "
+        f"Publication-quality educational illustration{topic_bit}, refined vector style, "
+        f"clean neutral background, professional digital textbook art, "
         f"showing the concept '{term}': {scene}. "
-        f"No text, no labels, no watermark."
+        f"No decorative clip art, no text, no labels, no watermark."
     )
 
 
@@ -62,7 +67,11 @@ def _openai_image_bytes(prompt: str) -> bytes | None:
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=OPENAI_API_KEY)
+        client = OpenAI(
+            api_key=OPENAI_API_KEY,
+            timeout=OPENAI_TIMEOUT_SECONDS,
+            max_retries=OPENAI_MAX_RETRIES,
+        )
         result = client.images.generate(
             model="dall-e-2",
             prompt=prompt[:1000],

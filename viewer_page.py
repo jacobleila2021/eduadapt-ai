@@ -18,6 +18,7 @@ from structured_renderers import (
 )
 
 from spec_icons import SPEC_ICONS
+from publication_gate import publication_block_reason
 
 
 def render_viewer_downloads(
@@ -29,14 +30,31 @@ def render_viewer_downloads(
     base_name: str,
 ) -> None:
     """Download This Version + Download All Adaptations."""
+    block_reason = publication_block_reason(
+        st.session_state.get("adaptations"),
+        package=st.session_state.get("vlie_package"),
+        quality=st.session_state.get("quality"),
+    )
+    if block_reason:
+        st.error(f"Downloads are disabled because publication QA failed: {block_reason}")
+        return
     st.markdown("---")
     st.markdown("#### Downloads")
     col_one, col_all = st.columns(2)
 
     with col_one:
         st.caption("Option 1 — This version")
+        try:
+            full_export = content_to_export(title, content, spec_id)
+            docx_export = export_tab_docx(title, content, spec_id)
+            html_export = rich_html_export(title, content, spec_id)
+        except Exception:
+            st.error(
+                "**Export** — This adaptation could not be packaged safely."
+            )
+            st.info("Recovery: reopen the adaptation and retry the export.")
+            return
         c1, c2, c3, c4 = st.columns(4)
-        full_export = content_to_export(title, content, spec_id)
         with c1:
             st.download_button(
                 "Text",
@@ -50,7 +68,7 @@ def render_viewer_downloads(
             docx_name = download_filename.rsplit(".", 1)[0] + ".docx"
             st.download_button(
                 "Word",
-                data=export_tab_docx(title, content, spec_id),
+                data=docx_export,
                 file_name=docx_name,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True,
@@ -60,7 +78,7 @@ def render_viewer_downloads(
             html_name = download_filename.rsplit(".", 1)[0] + ".html"
             st.download_button(
                 "Print (HTML)",
-                data=rich_html_export(title, content, spec_id),
+                data=html_export,
                 file_name=html_name,
                 mime="text/html",
                 use_container_width=True,
@@ -70,16 +88,17 @@ def render_viewer_downloads(
             from audio_learning import (
                 VOICE_OPTIONS,
                 extract_speech_text,
-                generate_openai_speech,
+                generate_openai_speech_result,
             )
 
             api_key = st.session_state.get("runtime_api_key", "")
             voice = st.session_state.get("audio_voice", "Female")
             meta = VOICE_OPTIONS.get(voice) or next(iter(VOICE_OPTIONS.values()))
             speech = extract_speech_text(title, content, spec_id)
-            mp3 = generate_openai_speech(
+            audio_result = generate_openai_speech_result(
                 speech, meta["openai"], api_key, meta.get("instructions", "")
             )
+            mp3 = audio_result.get("payload") if audio_result.get("ok") else None
             if mp3:
                 st.download_button(
                     "MP3",
@@ -127,6 +146,18 @@ def render_adaptation_viewer(
     lesson_title: str = "",
 ) -> None:
     """Single adaptation content panel — audio top, lesson body, tabs at page bottom."""
+    block_reason = publication_block_reason(
+        st.session_state.get("adaptations"),
+        package=st.session_state.get("vlie_package"),
+        quality=st.session_state.get("quality"),
+    )
+    if block_reason:
+        st.error(
+            "This lesson is quarantined and cannot be viewed, narrated, or exported: "
+            f"{block_reason}"
+        )
+        return
+
     from audio_learning import render_audio_learning_panel
 
     icon = SPEC_ICONS.get(spec_id, "📘")

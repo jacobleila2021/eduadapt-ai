@@ -1,0 +1,101 @@
+[
+  {
+    "id": "fig-c8-ch08-plant-cell",
+    "chapter": 8,
+    "chapter_title": "Cell \u2014 Structure and Functions",
+    "figure_number": "8.1",
+    "title": "Plant cell (labelled)",
+    "caption": "Typical plant cell showing cell wall, membrane, nucleus, chloroplast and vacuole.",
+    "alt_text": "Diagram of a plant cell with labels for cell wall, cell membrane, nucleus, chloroplast, and large vacuole.",
+    "keywords": [
+      "plant cell",
+      "chloroplast",
+      "vacuole",
+      "nucleus"
+    ],
+    "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-plant-cell.svg",
+    "relative_path": "figures/fig-c8-ch08-plant-cell.svg"
+  },
+  {
+    "id": "fig-c8-ch08-animal-cell",
+    "chapter": 8,
+    "chapter_title": "Cell \u2014 Structure and Functions",
+    "figure_number": "8.2",
+    "title": "Animal cell (labelled)",
+    "caption": "Typical animal cell showing membrane, nucleus, cytoplasm and mitochondria.",
+    "alt_text": "Diagram of an animal cell with nucleus, cytoplasm, cell membrane and mitochondria labelled.",
+    "keywords": [
+      "animal cell",
+      "mitochondria",
+      "nucleus"
+    ],
+    "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-animal-cell.svg",
+    "relative_path": "figures/fig-c8-ch08-animal-cell.svg"
+  },
+  {
+    "id": "fig-c8-ch13-sound-wave",
+    "chapter": 13,
+    "chapter_title": "Sound",
+    "figure_number": "13.1",
+    "title": "Sound wave \u2014 amplitude and wavelength",
+    "caption": "Longitudinal wave representation showing amplitude and wavelength.",
+    "alt_text": "Sine wave labelled with amplitude and wavelength for sound.",
+    "keywords": [
+      "sound",
+      "amplitude",
+      "wavelength",
+      "frequency"
+    ],
+    "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch13-sound-wave.svg",
+    "relative_path": "figures/fig-c8-ch13-sound-wave.svg"
+  },
+  {
+    "id": "fig-c8-ch16-reflection",
+    "chapter": 16,
+    "chapter_title": "Light",
+    "figure_number": "16.1",
+    "title": "Laws of reflection",
+    "caption": "Incident ray, reflected ray and normal at a plane mirror.",
+    "alt_text": "Ray diagram showing incident ray, reflected ray and normal on a mirror.",
+    "keywords": [
+      "reflection",
+      "mirror",
+      "incident ray",
+      "normal"
+    ],
+    "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch16-reflection.svg",
+    "relative_path": "figures/fig-c8-ch16-reflection.svg"
+  },
+  {
+    "id": "fig-c8-ch11-pressure",
+    "chapter": 11,
+    "chapter_title": "Force and Pressure",
+    "figure_number": "11.1",
+    "title": "Pressure = Force / Area",
+    "caption": "Same force on small vs large area \u2014 pressure is higher on smaller area.",
+    "alt_text": "Two blocks showing force on small and large area with pressure labels.",
+    "keywords": [
+      "pressure",
+      "force",
+      "area"
+    ],
+    "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch11-pressure.svg",
+    "relative_path": "figures/fig-c8-ch11-pressure.svg"
+  },
+  {
+    "id": "fig-c8-ch06-flame",
+    "chapter": 6,
+    "chapter_title": "Combustion and Flame",
+    "figure_number": "6.1",
+    "title": "Zones of a candle flame",
+    "caption": "Outer non-luminous (hottest), middle luminous, and inner dark zones.",
+    "alt_text": "Candle flame with three zones labelled: outer, middle and inner.",
+    "keywords": [
+      "flame",
+      "combustion",
+      "ignition"
+    ],
+    "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch06-flame.svg",
+    "relative_path": "figures/fig-c8-ch06-flame.svg"
+  }
+]

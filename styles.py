@@ -50,6 +50,23 @@ def get_custom_css() -> str:
         height: 0;
     }}
 
+    .alora-skip-link {{
+        position: fixed;
+        top: 0.5rem;
+        left: 0.75rem;
+        z-index: 1000000;
+        transform: translateY(-160%);
+        background: {COLOR_WHITE};
+        color: {COLOR_DEEP_NAVY};
+        padding: 0.65rem 1rem;
+        border: 2px solid {COLOR_ELECTRIC_CYAN};
+        border-radius: 8px;
+        font-weight: 700;
+    }}
+    .alora-skip-link:focus {{
+        transform: translateY(0);
+    }}
+
     /* ---- Premium brand signage bar ---- */
     .alora-topnav {{
         position: fixed;
@@ -505,9 +522,24 @@ def get_custom_css() -> str:
         margin-bottom: 0.35rem;
     }}
 
+    .alora-study-diagram {{
+        width: 100%;
+        margin: 1rem 0 1.75rem;
+        padding: 1rem;
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at 10% 10%, rgba(34, 211, 238, 0.10), transparent 32%),
+            linear-gradient(145deg, #ffffff 0%, #f5fbff 100%);
+        border: 1px solid rgba(6, 182, 212, 0.20);
+        box-shadow: 0 18px 46px rgba(4, 27, 77, 0.12);
+        box-sizing: border-box;
+    }}
+
     .alora-study-diagram svg {{
         max-width: 100%;
         height: auto;
+        border-radius: 18px;
+        display: block;
     }}
 
     .viewer-header {{
@@ -625,12 +657,46 @@ def get_custom_css() -> str:
         color: {COLOR_TEXT};
     }}
 
+    [data-testid="stFileUploaderDropzoneInstructions"] span,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] small {{
+        color: #51545d !important;
+    }}
+
+    :where(button, a, input, textarea, select, [tabindex]):focus-visible {{
+        outline: 3px solid {COLOR_ELECTRIC_CYAN} !important;
+        outline-offset: 3px !important;
+    }}
+
+    @media (prefers-reduced-motion: reduce) {{
+        *, *::before, *::after {{
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+        }}
+    }}
+
+    @media (forced-colors: active) {{
+        :where(button, a, input, textarea, select, [tabindex]) {{
+            forced-color-adjust: auto;
+        }}
+        .alora-topnav, .workspace-card, .viewer-header, .alora-study-diagram {{
+            border: 1px solid CanvasText !important;
+        }}
+    }}
+
     @media (max-width: 768px) {{
         .alora-topnav, .topnav-inner {{ height: 100px; }}
         .topnav-title {{ font-size: 1.5rem; }}
         .topnav-logo-img {{ height: 72px; }}
         .topnav-tagline, .topnav-right {{ display: none; }}
         .main .block-container {{ padding-top: 6.75rem; }}
+        .main .block-container:has(.alora-workspace-active) {{
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-bottom: 14rem !important;
+        }}
     }}
 
     /* Dyslexia-friendly workspace (injected once — never via st.markdown) */

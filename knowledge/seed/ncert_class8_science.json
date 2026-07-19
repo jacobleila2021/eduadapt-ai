@@ -1,0 +1,81 @@
+{
+  "pilot_id": "ncert_cbse_class8_science_v1",
+  "board": "CBSE",
+  "grade": "8",
+  "subject": "Science",
+  "book_title": "NCERT Science Textbook for Class VIII",
+  "chunks": [
+    {
+      "id": "c8sci-ch01-001",
+      "chapter": 1,
+      "chapter_title": "Crop Production and Management",
+      "page_start": 1,
+      "source": "NCERT",
+      "keywords": ["agriculture", "kharif", "rabi", "irrigation", "manure", "fertilizer"],
+      "text": "Agriculture is the practice of cultivating plants and rearing animals for food, fibre, and other products. Kharif crops are sown in the rainy season (June to October) and include paddy, maize, soybean, cotton, and groundnut. Rabi crops are sown in winter (October to March) and include wheat, gram, pea, and mustard. Good quality seeds, timely sowing, proper irrigation, and use of manure and fertilizers improve crop yield. Irrigation methods include wells, canals, rivers, tanks, and sprinklers. Weeds compete with crops for nutrients, light, and space and must be removed. Harvesting is cutting of the crop after maturity; threshing separates grains from chaff."
+    },
+    {
+      "id": "c8sci-ch02-001",
+      "chapter": 2,
+      "chapter_title": "Microorganisms: Friend and Foe",
+      "page_start": 18,
+      "source": "NCERT",
+      "keywords": ["bacteria", "virus", "fermentation", "vaccine", "pasteurization"],
+      "text": "Microorganisms are too small to be seen with the naked eye. They include bacteria, fungi, protozoa, and some algae and viruses. Friendly microbes are used in making curd, bread, and alcohol through fermentation. Lactobacillus promotes formation of curd from milk. Yeast converts sugar into alcohol and carbon dioxide. Microbes are used in sewage treatment and nitrogen fixation in legumes. Harmful microbes cause diseases in humans, animals, and plants. Food preservation methods include pasteurization, refrigeration, and chemical preservatives. Vaccines protect against diseases such as cholera, tuberculosis, and hepatitis."
+    },
+    {
+      "id": "c8sci-ch05-001",
+      "chapter": 5,
+      "chapter_title": "Coal and Petroleum",
+      "page_start": 62,
+      "source": "NCERT",
+      "keywords": ["fossil fuels", "coal", "petroleum", "natural gas", "refining"],
+      "text": "Coal, petroleum, and natural gas are fossil fuels formed from dead remains of living organisms buried under earth over millions of years. Coal is used as fuel and in thermal power plants. Petroleum is a dark oily liquid found deep underground; refining separates it into petrol, diesel, kerosene, lubricating oil, paraffin wax, and asphalt. Natural gas is stored under high pressure as compressed natural gas (CNG) for vehicles. Fossil fuels are exhaustible natural resources. Burning fossil fuels releases carbon dioxide and pollutants, contributing to air pollution and climate change."
+    },
+    {
+      "id": "c8sci-ch06-001",
+      "chapter": 6,
+      "chapter_title": "Combustion and Flame",
+      "page_start": 72,
+      "source": "NCERT",
+      "keywords": ["combustion", "ignition temperature", "fuel", "flame", "fire extinguisher"],
+      "text": "Combustion is a chemical process in which a substance reacts with oxygen to give heat and light. A substance that undergoes combustion is called combustible or fuel. Ignition temperature is the lowest temperature at which a substance catches fire. Inflammable substances have very low ignition temperature. A flame has three zones: outer non-luminous zone (hottest, complete combustion), middle luminous zone, and inner dark zone with unburnt vapours. Water extinguishes fire by lowering temperature below ignition temperature. CO2 fire extinguishers cut off oxygen supply. Water must not be used on oil or electrical fires."
+    },
+    {
+      "id": "c8sci-ch08-001",
+      "chapter": 8,
+      "chapter_title": "Cell — Structure and Functions",
+      "page_start": 94,
+      "source": "NCERT",
+      "keywords": ["cell", "nucleus", "cytoplasm", "organelles", "plant cell", "animal cell"],
+      "text": "The cell is the basic structural and functional unit of life. Robert Hooke discovered cells in cork. Cells vary in shape and size. The cell membrane encloses the cytoplasm. The nucleus contains chromosomes with DNA and controls cell activities. Plant cells have a rigid cell wall outside the membrane, chloroplasts for photosynthesis, and a large central vacuole. Animal cells lack cell wall and chloroplasts. Organelles such as mitochondria release energy from food. Unicellular organisms like Amoeba and multicellular organisms like humans are made of cells. Tissues are groups of similar cells performing a function."
+    },
+    {
+      "id": "c8sci-ch11-001",
+      "chapter": 11,
+      "chapter_title": "Force and Pressure",
+      "page_start": 128,
+      "source": "NCERT",
+      "keywords": ["force", "pressure", "friction", "newton", "area"],
+      "text": "A force is a push or pull that can change the state of motion, shape, or direction of an object. Force is measured in newtons (N). Pressure is force per unit area: P = F/A. Smaller area gives higher pressure for the same force, which is why sharp knives cut better. Atmospheric pressure is due to the weight of air. Liquid pressure increases with depth. Friction opposes motion between surfaces in contact. Friction is useful for walking and holding objects but causes wear and energy loss. Rolling friction is less than sliding friction."
+    },
+    {
+      "id": "c8sci-ch13-001",
+      "chapter": 13,
+      "chapter_title": "Sound",
+      "page_start": 154,
+      "source": "NCERT",
+      "keywords": ["sound", "vibration", "frequency", "amplitude", "echo"],
+      "text": "Sound is produced by vibrating objects. Vibrations travel through a medium as waves. Sound cannot travel through vacuum. Frequency is the number of vibrations per second measured in hertz (Hz). Amplitude determines loudness. Higher frequency gives higher pitch. Human audible range is about 20 Hz to 20,000 Hz. Echo is reflection of sound from a hard surface heard after the original sound. Ultrasound has frequency above 20,000 Hz and is used in medical imaging and cleaning. Excessive noise causes health problems; noise pollution should be reduced."
+    },
+    {
+      "id": "c8sci-ch16-001",
+      "chapter": 16,
+      "chapter_title": "Light",
+      "page_start": 188,
+      "source": "NCERT",
+      "keywords": ["light", "reflection", "refraction", "mirror", "lens", "dispersion"],
+      "text": "Light enables us to see objects. Light travels in straight lines. Reflection occurs when light bounces from a surface; laws of reflection state angle of incidence equals angle of reflection. Plane mirrors form virtual, erect, same-size images. Refraction is bending of light when it passes from one medium to another. Lenses converge or diverge light rays. The human eye has cornea, iris, pupil, lens, and retina. Dispersion splits white light into seven colours by a prism. Braille helps visually impaired people read by touch."
+    }
+  ]
+}

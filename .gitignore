@@ -4,6 +4,20 @@ __pycache__/
 .venv/
 venv/
 .streamlit/secrets.toml
+data/knowledge/chroma/
+data/knowledge/ame/learners/
+data/knowledge/aie/
+data/knowledge/ale/
+data/knowledge/laie/
+data/knowledge/atie/
+data/knowledge/vlie/
+data/knowledge/vmle/
+data/knowledge/alcis/
+data/knowledge/lmas/
+data/knowledge/ucf/
+data/knowledge/cef/
+data/knowledge/cmif/
+data/knowledge/lxp/
 
 # Large media / recording artifacts (keep out of git)
 *.mp4

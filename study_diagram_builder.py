@@ -328,6 +328,24 @@ def build_study_diagram_svg(lesson: Any) -> str:
     """Build a labelled, lesson-specific study diagram SVG from section content."""
     data = lesson if isinstance(lesson, dict) else {}
     topic, nodes = _study_nodes(data)
+    if "water cycle" in topic.lower():
+        from flowchart_builder import build_vocabulary_visual_svg
+
+        return build_vocabulary_visual_svg(
+            {
+                "topic": topic,
+                "picture_words": [
+                    {"term": name}
+                    for name in (
+                        "Evaporation",
+                        "Condensation",
+                        "Precipitation",
+                        "Collection",
+                        "Transpiration",
+                    )
+                ],
+            }
+        )
     if not nodes:
         from concept_map_builder import build_vocabulary_concept_map_svg
 
@@ -351,9 +369,5 @@ def build_study_diagram_svg(lesson: Any) -> str:
 
 
 def resolve_study_diagram_svg(lesson: dict) -> str:
-    """Prefer the richest labelled SVG — built diagram or validated AI output."""
-    built = build_study_diagram_svg(lesson)
-    ai_svg = (lesson.get("svg_diagram") or lesson.get("svg") or "").strip()
-    if ai_svg and "<text" in ai_svg.lower() and svg_text_label_count(ai_svg) >= svg_text_label_count(built):
-        return ai_svg
-    return built
+    """Use the deterministic, sanitised builder; never inject model-authored SVG."""
+    return build_study_diagram_svg(lesson)

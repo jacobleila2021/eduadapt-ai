@@ -83,12 +83,13 @@ def export_vocabulary_html(data: Any) -> str:
         )
     parts.append("</table>")
 
-    parts.append("<h2>3. Picture Words — Visual Flowchart</h2>")
-    from flowchart_builder import build_vocabulary_flowchart, flowchart_to_text
+    parts.append("<h2>3. Picture Words — Lesson Visual</h2>")
+    from flowchart_builder import build_vocabulary_visual_svg
+    from svg_sanitizer import sanitize_svg
 
-    fc = build_vocabulary_flowchart(vocab)
-    parts.append(f"<pre style='background:#f0f4f8;padding:1rem;border-radius:8px;'>{html.escape(flowchart_to_text(fc))}</pre>")
-    parts.append("<p><em>Open the online tab for the full interactive coloured flowchart.</em></p>")
+    visual = sanitize_svg(build_vocabulary_visual_svg(vocab))
+    if visual:
+        parts.append(f'<div class="concept-map">{visual}</div>')
 
     from structured_renderers import _clean_practice_blank, _prepare_practice, _prepare_self_test, _clean_fill_blank_display
 
@@ -163,6 +164,11 @@ def export_worksheet_html(data: Any) -> str:
         parts.append(
             f"<p>({diagram.get('marks', 4)} marks) {html.escape(diagram.get('question', ''))}</p>"
         )
+        from svg_sanitizer import sanitize_svg
+
+        safe_svg = sanitize_svg(diagram.get("svg_diagram") or diagram.get("svg") or "")
+        if safe_svg:
+            parts.append(f'<div class="concept-map">{safe_svg}</div>')
 
     parts.append("<h2>Part D — Vocabulary in Context</h2>")
     for index, item in enumerate(sheet.get("vocab_questions") or [], 1):

@@ -4,9 +4,12 @@ Dashboard + dedicated adaptation workspace (never stacked on homepage).
 """
 
 import json
-import traceback
+import logging
+import hashlib
 
 import streamlit as st
+
+logger = logging.getLogger(__name__)
 
 st.set_page_config(
     page_title="Alora AI",
@@ -23,10 +26,11 @@ ALORA_LOGO = PROJECT_ROOT / "assets" / "alora_logo.png"
 
 try:
     from adaptation_specs import ADAPTATION_SPECS
-    from ai_generator import generate_adaptations, quality_report, validate_api_key
+    from engines.verified_learning_engine import VerifiedLearningOrchestrator
+    from ai_generator import quality_report, validate_api_key
     from analytics_engine import build_analytics_report
     from docx_exporter import build_zip_bundle
-    from document_parser import extract_lesson_text
+    from document_parser import extract_lesson_text, extract_source_document
     from config import APP_NAME
     from navigation import category_for_spec, default_spec_for_category
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
@@ -38,6 +42,7 @@ try:
         should_render_workspace,
     )
     from structured_renderers import content_to_export
+    from publication_gate import publication_block_reason
     from styles import get_custom_css
     from version import APP_VERSION, BUILD_ID
     from workspace_page import render_workspace
@@ -49,11 +54,10 @@ try:
         render_top_nav,
     )
 except Exception as import_error:
-    st.error("Alora AI could not start. Details below (share with support if needed):")
-    st.code(traceback.format_exc())
+    logger.exception("Alora AI startup failed")
+    st.error("Alora AI could not start. Please contact your platform administrator.")
     st.info(
-        "Common fix: Streamlit **Settings → Secrets** must include "
-        "`OPENAI_API_KEY`. Also confirm **Manage app → Logs** shows a successful pip install."
+        "Administrators can review the private deployment logs using the incident time shown by the host."
     )
     st.stop()
 
@@ -67,6 +71,8 @@ if "analytics" not in st.session_state:
     st.session_state.analytics = None
 if "upload_name" not in st.session_state:
     st.session_state.upload_name = ""
+if "source_envelope" not in st.session_state:
+    st.session_state.source_envelope = None
 if "runtime_api_key" not in st.session_state:
     st.session_state.runtime_api_key = ""
 if "last_saved_api_key" not in st.session_state:
@@ -96,38 +102,54 @@ def load_api_key_from_env_file() -> None:
         st.session_state.last_saved_api_key = env_key
 
 
-def apply_lesson(name: str, text: str) -> None:
+def apply_lesson(name: str, text: str, source_envelope: dict | None = None) -> None:
     st.session_state.lesson_text = text
     st.session_state.upload_name = name
+    st.session_state.source_envelope = source_envelope
     st.session_state.adaptations = None
     st.session_state.analytics = build_analytics_report(text)
     close_workspace()
 
 
-def _upload_fingerprint(uploaded_file) -> str:
-    return f"{uploaded_file.name}:{uploaded_file.size}"
+def _upload_fingerprint(name: str, file_bytes: bytes) -> str:
+    digest = hashlib.sha256(file_bytes).hexdigest()
+    return f"{name}:{len(file_bytes)}:{digest}"
 
 
 def handle_file_upload(uploaded_file) -> None:
     if uploaded_file is None:
         return
-    fingerprint = _upload_fingerprint(uploaded_file)
-    if st.session_state.get("_processed_upload_key") == fingerprint:
+    if int(getattr(uploaded_file, "size", 0) or 0) > 50 * 1024 * 1024:
+        st.error("The maximum lesson file size is 50 MB.")
         return
     try:
         file_bytes = uploaded_file.read()
-        text = extract_lesson_text(uploaded_file.name, file_bytes)
+        fingerprint = _upload_fingerprint(uploaded_file.name, file_bytes)
+        if st.session_state.get("_processed_upload_key") == fingerprint:
+            return
+        envelope = extract_source_document(uploaded_file.name, file_bytes)
+        if not envelope.ok:
+            issue = (envelope.errors or envelope.warnings or [{}])[0]
+            st.error(
+                f"**{issue.get('stage', 'Extraction').title()}** — "
+                f"{issue.get('safe_message') or issue.get('reason') or 'The file is unreadable.'}"
+            )
+            if issue.get("recovery"):
+                st.info(str(issue["recovery"]))
+            return
+        text = envelope.text
     except ValueError as error:
         st.error(str(error))
         return
-    except Exception as error:
-        st.error(f"Could not read file: {error}")
+    except Exception:
+        logger.exception("Lesson extraction failed")
+        st.error("The lesson could not be read safely.")
         return
     if not text.strip():
-        st.warning("No text found in this file. Try a different PDF or DOCX.")
+        st.warning("No reliable text was found. Upload a clearer scan or plain text.")
         return
     st.session_state._processed_upload_key = fingerprint
-    apply_lesson(uploaded_file.name, text)
+    apply_lesson(uploaded_file.name, text, envelope.to_dict())
     st.success(f"Loaded: **{uploaded_file.name}** ({len(text):,} characters)")
 
 
@@ -139,8 +161,9 @@ def ensure_sample_lesson_exists() -> bool:
 
         create_sample()
         return SAMPLE_LESSON_PATH.exists()
-    except Exception as error:
-        st.error(f"Could not create sample lesson: {error}")
+    except Exception:
+        logger.exception("Sample lesson creation failed")
+        st.error("The sample lesson could not be prepared.")
         return False
 
 
@@ -149,15 +172,17 @@ def load_sample_lesson() -> None:
         return
     try:
         file_bytes = SAMPLE_LESSON_PATH.read_bytes()
-        text = extract_lesson_text(SAMPLE_LESSON_PATH.name, file_bytes)
-    except Exception as error:
-        st.error(f"Could not load sample lesson: {error}")
+        envelope = extract_source_document(SAMPLE_LESSON_PATH.name, file_bytes)
+        text = envelope.text
+    except Exception:
+        logger.exception("Sample lesson extraction failed")
+        st.error("The sample lesson could not be loaded.")
         return
     if not text.strip():
         st.warning("Sample lesson file is empty. Try uploading your own file.")
         return
     st.session_state._processed_upload_key = f"{SAMPLE_LESSON_PATH.name}:sample"
-    apply_lesson(SAMPLE_LESSON_PATH.name, text)
+    apply_lesson(SAMPLE_LESSON_PATH.name, text, envelope.to_dict())
     st.success(f"Loaded: **{SAMPLE_LESSON_PATH.name}** ({len(text):,} characters)")
 
 
@@ -181,33 +206,88 @@ def run_generation() -> None:
             status.caption(message)
 
         try:
-            st.session_state.adaptations = generate_adaptations(
+            vlie = VerifiedLearningOrchestrator(on_progress=on_progress)
+            vlie_result = vlie.process_lesson(
                 st.session_state.lesson_text,
                 override_api_key=st.session_state.runtime_api_key,
-                on_progress=on_progress,
+                generate_adaptations=True,
+                source_envelope=st.session_state.get("source_envelope"),
             )
+            result_envelope = vlie_result.get("pipeline_result") or {}
+            if result_envelope.get("status") in {"failed", "blocked"}:
+                st.error(
+                    f"**{str(result_envelope.get('stage') or 'Generation').replace('_', ' ').title()}** — "
+                    f"{result_envelope.get('message') or 'Generation could not complete.'}"
+                )
+                if result_envelope.get("recovery"):
+                    st.info(f"Recovery: {result_envelope['recovery']}")
+                if result_envelope.get("fallback_used") not in {"", "none", None}:
+                    st.caption(f"Fallback used: {result_envelope['fallback_used']}")
+                return
+            st.session_state.adaptations = vlie_result.get("adaptations")
+            if isinstance(st.session_state.adaptations, dict):
+                st.session_state.adaptations.setdefault("_meta", {})[
+                    "pipeline_result"
+                ] = result_envelope
+            st.session_state.vlie_package = vlie_result.get("package")
+            st.session_state.vlie_run_id = vlie_result.get("run_id")
             st.session_state.quality = quality_report(st.session_state.adaptations)
             st.session_state.active_output_id = "vocabulary"
             st.session_state.active_category_id = "vocabulary"
             close_workspace()
-        except (ValueError, RuntimeError) as error:
-            st.error(str(error))
+        except (ValueError, RuntimeError):
+            logger.exception("Lesson generation failed")
+            st.error("Lesson generation could not complete safely.")
+            st.info("Check the AI service configuration and retry.")
+            return
+        except Exception:
+            logger.exception("Unexpected lesson generation failure")
+            st.error("Lesson generation is temporarily unavailable.")
+            st.info("Retry shortly or contact your platform administrator.")
             return
         finally:
             progress.empty()
             status.empty()
 
     q = st.session_state.get("quality") or {}
-    if q.get("exam_ready"):
+    routing_warnings = (
+        (st.session_state.get("adaptations") or {})
+        .get("_meta", {})
+        .get("routing_warnings", [])
+    )
+    if routing_warnings:
+        first_warning = routing_warnings[0]
+        st.info(
+            f"**{str(first_warning.get('stage') or 'Source review').replace('_', ' ').title()}** — "
+            f"{first_warning.get('message') or 'Some source notation was omitted from verified computation.'} "
+            f"Recovery: {first_warning.get('recovery') or 'Review the source notation.'} "
+            "The source-grounded lesson remains available."
+        )
+    if q.get("publish_blocked"):
+        st.error(
+            "Publish blocked by hard QA gate"
+            + (f": {q.get('publish_blocked_reason')}" if q.get("publish_blocked_reason") else ".")
+            + " Review Verified Engines / Visuals before classroom use."
+        )
+    elif q.get("exam_ready"):
+        stem_n = q.get("stem_artifacts", 0)
+        viz_n = q.get("verified_visuals", 0)
+        stem_msg = f" · {stem_n} verified STEM result(s)" if stem_n else ""
+        viz_msg = f" · {viz_n} verified visual(s)" if viz_n else ""
         st.success(
             f"Ready! {q.get('vocab_terms', 0)} vocab terms, "
-            f"{q.get('worksheet_short_q', 0)} short + {q.get('worksheet_long_q', 0)} long "
-            f"exam questions — select a tab below to open."
+            f"{q.get('worksheet_short_q', 0)} short + {q.get('worksheet_long_q') or 0} long "
+            f"exam questions{stem_msg}{viz_msg} — select a tab below to open."
+        )
+    elif q.get("adaptations_ready") and not q.get("stem_verified", True):
+        st.warning(
+            "Adaptations generated but **STEM / publish QA did not pass**. "
+            "Review the Verified STEM panel before classroom use."
         )
     else:
-        st.warning(
-            "Generation finished but some sections may be thin — try again or use a shorter "
-            "lesson extract."
+        st.info(
+            "Generation complete. Full-length lessons are processed in sections automatically — "
+            "open an adaptation below."
         )
 
 
@@ -222,6 +302,46 @@ def _cloud_api_key_configured() -> bool:
         return is_valid_openai_key(str(st.secrets.get("OPENAI_API_KEY", "")))
     except Exception:
         return False
+
+
+def inject_streamlit_accessibility_repairs() -> None:
+    """Repair framework-generated ARIA gaps that application widgets cannot configure."""
+    import streamlit.components.v1 as components
+
+    components.html(
+        """
+        <script>
+        (() => {
+          const doc = window.parent.document;
+          const repair = () => {
+            const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+            const toggle = doc.querySelector('button[data-testid="stBaseButton-headerNoPadding"]');
+            if (sidebar && sidebar.hasAttribute('aria-expanded')) {
+              const expanded = sidebar.getAttribute('aria-expanded');
+              sidebar.removeAttribute('aria-expanded');
+              if (toggle) toggle.setAttribute('aria-expanded', expanded);
+            }
+            if (toggle && !(toggle.getAttribute('aria-label') || '').trim()) {
+              toggle.setAttribute('aria-label', 'Toggle navigation sidebar');
+              toggle.setAttribute('title', 'Toggle navigation sidebar');
+            }
+            const upload = doc.querySelector('input[data-testid="stFileUploaderDropzoneInput"]');
+            if (upload && !(upload.getAttribute('aria-label') || '').trim()) {
+              upload.setAttribute('aria-label', 'Upload educational source file');
+            }
+            doc.querySelectorAll('[data-testid="stFileUploaderDropzoneInstructions"] span')
+              .forEach(el => el.style.setProperty('color', '#51545d', 'important'));
+          };
+          repair();
+          new MutationObserver(repair).observe(doc.body, {
+            subtree: true, childList: true, attributes: true,
+            attributeFilter: ['aria-expanded', 'aria-label']
+          });
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
 
 def render_api_sidebar() -> None:
@@ -268,8 +388,9 @@ def render_api_sidebar() -> None:
             try:
                 save_api_key_to_env(st.session_state.runtime_api_key)
                 st.session_state.last_saved_api_key = st.session_state.runtime_api_key
-            except Exception as error:
-                st.warning(f"Could not save settings locally: {error}")
+            except Exception:
+                logger.exception("Could not save settings locally")
+                st.warning("Settings could not be saved locally.")
 
         if validate_api_key(st.session_state.runtime_api_key):
             st.caption("Configuration saved.")
@@ -277,7 +398,7 @@ def render_api_sidebar() -> None:
             st.caption("Enter a valid API key to enable generation.")
 
 
-@st.cache_data(show_spinner="Preparing print pack…")
+@st.cache_data(show_spinner="Preparing print pack…", ttl=3600, max_entries=8)
 def _cached_zip_bundle(adaptations_json: str, lesson_text: str, base_name: str) -> bytes:
     adaptations = json.loads(adaptations_json)
     return build_zip_bundle(ADAPTATION_SPECS, adaptations, lesson_text, base_name)
@@ -340,9 +461,25 @@ def render_dashboard() -> None:
             load_sample_lesson()
     with col_upload:
         uploaded = st.file_uploader(
-            "PDF or DOCX (Grades 3–11)",
-            type=["pdf", "docx"],
-            help="Text is extracted in memory — files are not stored on disk.",
+            "Educational source file",
+            type=[
+                "pdf",
+                "docx",
+                "pptx",
+                "txt",
+                "md",
+                "markdown",
+                "html",
+                "htm",
+                "png",
+                "jpg",
+                "jpeg",
+                "webp",
+            ],
+            help=(
+                "PDF, Word, PowerPoint, text, Markdown, HTML, or an image scan. "
+                "Content is extracted in memory and curriculum detection is optional."
+            ),
         )
     if uploaded is not None:
         handle_file_upload(uploaded)
@@ -385,6 +522,18 @@ def render_dashboard() -> None:
         st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.adaptations:
+        block_reason = publication_block_reason(
+            st.session_state.adaptations,
+            package=st.session_state.get("vlie_package"),
+            quality=st.session_state.get("quality"),
+        )
+        if block_reason:
+            st.error(
+                "This lesson is quarantined and cannot be opened, exported, narrated, "
+                f"or published: {block_reason}"
+            )
+            return
+
         st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
         st.subheader("4. Choose an Adaptation")
         st.caption(
@@ -404,6 +553,16 @@ def render_dashboard() -> None:
                     "Exam questions",
                     (q.get("worksheet_short_q") or 0) + (q.get("worksheet_long_q") or 0),
                 )
+                if q.get("stem_artifacts"):
+                    st.caption(
+                        f"STEM: {q.get('stem_artifacts')} engine result(s) · "
+                        f"{'verified' if q.get('stem_verified') else 'needs review'}"
+                    )
+                if q.get("rag_citations"):
+                    st.caption(
+                        f"Knowledge: {q.get('rag_citations')} NCERT citation(s) · "
+                        f"{q.get('official_mcqs', 0)} official MCQ(s) · pilot {q.get('knowledge_pilot', '')}"
+                    )
 
 
 def render_workspace_page() -> None:
@@ -417,6 +576,21 @@ def render_workspace_page() -> None:
         if st.button("← Back to Dashboard", key="ws_missing_back", type="primary"):
             close_workspace()
             clear_stale_url_params()
+            st.rerun()
+        return
+
+    block_reason = publication_block_reason(
+        adaptations,
+        package=st.session_state.get("vlie_package"),
+        quality=st.session_state.get("quality"),
+    )
+    if block_reason:
+        st.error(
+            "This lesson is quarantined and cannot be opened, exported, narrated, "
+            f"or published: {block_reason}"
+        )
+        if st.button("← Back to Dashboard", key="ws_blocked_back", type="primary"):
+            close_workspace()
             st.rerun()
         return
 
@@ -451,19 +625,27 @@ def main() -> None:
     render_top_nav(logo_path, APP_VERSION)
     render_api_sidebar()
     render_sidebar(APP_VERSION, BUILD_ID)
+    st.markdown(
+        '<a class="alora-skip-link" href="#alora-main-content">Skip to lesson content</a>'
+        '<span id="alora-main-content" tabindex="-1"></span>',
+        unsafe_allow_html=True,
+    )
 
     # Workspace route — must run before dashboard (dashboard upload must not run first)
     if should_render_workspace():
         render_workspace_page()
+        inject_streamlit_accessibility_repairs()
         return
 
     if st.session_state.get("app_view") == VIEW_WORKSPACE:
         if st.session_state.adaptations:
             render_workspace_page()
+            inject_streamlit_accessibility_repairs()
             return
         close_workspace()
 
     render_dashboard()
+    inject_streamlit_accessibility_repairs()
 
 
 if __name__ == "__main__":

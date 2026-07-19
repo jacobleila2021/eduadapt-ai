@@ -91,9 +91,7 @@ def build_print_html_all(
         '<div class="toc"><h2>Table of Contents</h2><ol>',
     ]
 
-    printable_categories = [
-        c for c in PILL_CATEGORIES if c["id"] not in ("vocabulary", "worksheet")
-    ]
+    printable_categories = list(PILL_CATEGORIES)
 
     for index, category in enumerate(printable_categories, 1):
         spec = spec_by_id(category["spec_ids"][0])
