@@ -2,6 +2,8 @@
 Render AI-generated lesson content with diagrams, colors, and rich HTML.
 """
 
+from __future__ import annotations
+
 import re
 import uuid
 

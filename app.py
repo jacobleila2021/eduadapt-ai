@@ -3,6 +3,8 @@ Alora AI — Main Streamlit application.
 Dashboard + dedicated adaptation workspace (never stacked on homepage).
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import hashlib

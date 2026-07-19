@@ -2,6 +2,8 @@
 OpenAI integration — chunked long-lesson analysis, parallel adaptations, validated JSON.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re

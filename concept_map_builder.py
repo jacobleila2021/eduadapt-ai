@@ -2,6 +2,8 @@
 Build a printable vocabulary concept map (SVG + Word table) in EduAdapt teal/navy branding.
 """
 
+from __future__ import annotations
+
 import html
 import json
 import math

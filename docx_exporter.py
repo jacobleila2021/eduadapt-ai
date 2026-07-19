@@ -2,6 +2,8 @@
 LD-friendly DOCX and HTML exports with clear sections, spacing, and colours.
 """
 
+from __future__ import annotations
+
 import html
 import io
 import json
