@@ -24,16 +24,27 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 SAMPLE_LESSON_PATH = PROJECT_ROOT / "samples" / "sample_lesson.docx"
 ALORA_LOGO = PROJECT_ROOT / "assets" / "alora_logo.png"
 
+_startup_stage = "application imports"
 try:
+    _startup_stage = "adaptation specifications"
     from adaptation_specs import ADAPTATION_SPECS
+    _startup_stage = "verified learning engine"
     from engines.verified_learning_engine import VerifiedLearningOrchestrator
+    _startup_stage = "adaptation generator"
     from ai_generator import quality_report, validate_api_key
+    _startup_stage = "analytics"
     from analytics_engine import build_analytics_report
+    _startup_stage = "document export"
     from docx_exporter import build_zip_bundle
+    _startup_stage = "document ingestion"
     from document_parser import extract_lesson_text, extract_source_document
+    _startup_stage = "application configuration"
     from config import APP_NAME
+    _startup_stage = "navigation"
     from navigation import category_for_spec, default_spec_for_category
+    _startup_stage = "secrets configuration"
     from secrets_helper import is_valid_openai_key, read_api_key_from_env_file
+    _startup_stage = "session state"
     from session_state import (
         VIEW_WORKSPACE,
         clear_stale_url_params,
@@ -41,11 +52,17 @@ try:
         init_navigation_state,
         should_render_workspace,
     )
+    _startup_stage = "content rendering"
     from structured_renderers import content_to_export
+    _startup_stage = "publication gate"
     from publication_gate import publication_block_reason
+    _startup_stage = "visual styles"
     from styles import get_custom_css
+    _startup_stage = "version metadata"
     from version import APP_VERSION, BUILD_ID
+    _startup_stage = "workspace"
     from workspace_page import render_workspace
+    _startup_stage = "interface components"
     from ui_helpers import (
         render_analytics_panel,
         render_dashboard_intro,
@@ -56,8 +73,16 @@ try:
 except Exception as import_error:
     logger.exception("Alora AI startup failed")
     st.error("Alora AI could not start. Please contact your platform administrator.")
+    missing_component = getattr(import_error, "name", "") or ""
+    reason = (
+        f"Required component unavailable: {missing_component}."
+        if missing_component
+        else f"Component initialization failed ({type(import_error).__name__})."
+    )
+    st.warning(f"Startup stage: **{_startup_stage}**. {reason}")
     st.info(
-        "Administrators can review the private deployment logs using the incident time shown by the host."
+        "Recovery: reboot after checking deployment dependencies and private logs. "
+        "Fallback used: safe startup screen."
     )
     st.stop()
 
