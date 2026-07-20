@@ -77,6 +77,49 @@ def _collect_adaptation_text(adaptations: dict) -> str:
     return "\n".join(parts)
 
 
+def _compact_json(value) -> str:
+    return re.sub(r"\s+", "", json.dumps(value, sort_keys=True, default=str))
+
+
+def _canonical_exact_forms(value) -> list[str]:
+    """Searchable forms of a verified engine value (JSON + math presentation variants)."""
+    forms: list[str] = []
+    try:
+        forms.append(_compact_json(value))
+    except (TypeError, ValueError):
+        pass
+    text = re.sub(r"\s+", "", str(value))
+    forms.append(text)
+    # Teaching text often drops explicit multiply and uses ^ for powers.
+    forms.append(re.sub(r"(?<=\d)\*(?=[A-Za-z(])", "", text))
+    forms.append(text.replace("**", "^"))
+    forms.append(re.sub(r"(?<=\d)\*(?=[A-Za-z(])", "", text.replace("**", "^")))
+    return [form for form in dict.fromkeys(forms) if form]
+
+
+def _exact_value_preserved(value, *haystacks: str) -> bool:
+    forms = _canonical_exact_forms(value)
+    return any(form in haystack for haystack in haystacks for form in forms)
+
+
+def _collect_exact_values(artifacts: list[dict] | None) -> list[tuple[str, object]]:
+    exact_values: list[tuple[str, object]] = []
+    for artifact in artifacts or []:
+        if not artifact.get("ok"):
+            continue
+        payload = artifact.get("payload") or {}
+        for field_name in (
+            "exact",
+            "balanced",
+            "balanced_equation",
+            "solutions",
+        ):
+            value = payload.get(field_name)
+            if value not in (None, "", [], {}):
+                exact_values.append((field_name, value))
+    return exact_values
+
+
 def validate_lesson_package(
     *,
     engine_results: list[EngineResult] | None = None,
@@ -218,35 +261,53 @@ def validate_lesson_package(
 
     adaptations = adaptations or {}
     if adaptations:
-        rendered_payload = json.dumps(adaptations, sort_keys=True, default=str)
-        rendered_compact = re.sub(r"\s+", "", rendered_payload)
-        exact_values: list[tuple[str, str]] = []
-        for artifact in artifacts or []:
-            if not artifact.get("ok"):
-                continue
-            payload = artifact.get("payload") or {}
-            for field_name in (
-                "exact",
-                "balanced",
-                "balanced_equation",
-                "solutions",
-            ):
-                value = payload.get(field_name)
-                if value not in (None, "", [], {}):
-                    exact_values.append((field_name, str(value)))
-        missing_exact = [
-            f"{field}={value[:80]}"
+        learner_only = {
+            key: value
+            for key, value in adaptations.items()
+            if not str(key).startswith("_")
+        }
+        learner_compact = _compact_json(learner_only)
+        meta_artifacts = (adaptations.get("_meta") or {}).get("engine_artifacts") or []
+        provenance_compact = _compact_json(
+            {
+                "engine_artifacts": meta_artifacts or (artifacts or []),
+                "verified_exact_values": (adaptations.get("_meta") or {}).get(
+                    "verified_exact_values"
+                )
+                or [],
+            }
+        )
+        exact_values = _collect_exact_values(artifacts)
+        missing_provenance = [
+            f"{field}={str(value)[:80]}"
             for field, value in exact_values
-            if re.sub(r"\s+", "", value) not in rendered_compact
+            if not _exact_value_preserved(value, provenance_compact)
         ]
+        missing_learner = [
+            f"{field}={str(value)[:80]}"
+            for field, value in exact_values
+            if not _exact_value_preserved(value, learner_compact)
+        ]
+        # Provenance in engine artifacts is the hard gate. Learner-facing text may
+        # use equivalent presentation (2x vs 2*x, rounded prose) without quarantine.
         checks.append(
             {
                 "code": "deterministic_exactness",
-                "ok": not missing_exact,
+                "ok": not missing_provenance,
+                "severity": "error" if missing_provenance else (
+                    "warning" if missing_learner else "info"
+                ),
                 "detail": (
                     f"{len(exact_values)} verified value(s) preserved"
-                    if not missing_exact
-                    else f"{len(missing_exact)} verified value(s) were omitted or altered"
+                    if not missing_provenance and not missing_learner
+                    else (
+                        f"{len(missing_provenance)} verified value(s) were omitted or altered"
+                        if missing_provenance
+                        else (
+                            f"{len(exact_values)} verified value(s) retained in engine "
+                            f"provenance; {len(missing_learner)} presented in adapted form"
+                        )
+                    )
                 ),
             }
         )

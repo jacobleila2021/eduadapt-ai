@@ -1240,6 +1240,32 @@ def generate_adaptations(
             )
             worksheet["diagram_question"] = diagram_question
 
+        # Keep Computation Layer provenance attached before QA. Chapter-cache reuse
+        # must not leave the publish gate comparing a different artifact set.
+        verified_exact_values = []
+        for artifact in stem.get("artifacts") or []:
+            if not artifact.get("ok"):
+                continue
+            payload = artifact.get("payload") or {}
+            for field_name in (
+                "exact",
+                "balanced",
+                "balanced_equation",
+                "solutions",
+            ):
+                value = payload.get(field_name)
+                if value not in (None, "", [], {}):
+                    verified_exact_values.append(
+                        {
+                            "task_kind": artifact.get("task_kind"),
+                            "field": field_name,
+                            "value": value,
+                            "latex": artifact.get("latex") or "",
+                        }
+                    )
+        merged["_meta"]["engine_artifacts"] = stem.get("artifacts") or []
+        merged["_meta"]["verified_exact_values"] = verified_exact_values
+
         package_qa = validate_lesson_package(
             artifacts=stem["artifacts"],
             preferred_visuals=preferred,

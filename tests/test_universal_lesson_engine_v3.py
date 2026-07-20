@@ -32,6 +32,71 @@ def _source(text: str = "Plants use light energy during photosynthesis.") -> dic
     return ingest_source_bytes("lesson.txt", text.encode()).to_dict()
 
 
+def test_statistics_exact_dict_does_not_quarantine_math_lesson():
+    from engines.lesson_pipeline import process_lesson_stem
+    from engines.qa.pipeline import validate_lesson_package
+    from engines.knowledge_ingestion_engine.universal_ingest import ingest_source_bytes
+
+    text = "Mean of 2, 4, 6, 8\nDifferentiate x**2\nSolve 2*x + 4 = 12"
+    stem = process_lesson_stem(text, topic="Mathematics")
+    assert any(
+        (art.get("payload") or {}).get("exact") not in (None, "", [], {})
+        for art in stem.get("artifacts") or []
+    )
+    source = ingest_source_bytes("math.txt", text.encode()).to_dict()
+    ref = source["blocks"][0]["block_id"]
+    adaptations = {
+        "standard": {
+            "big_idea": "Use verified maths results.",
+            "source_refs": [ref],
+            "sections": [
+                {
+                    "title": "Results",
+                    "body": "The mean is 5 and the derivative of x squared is 2x.",
+                    "source_refs": [ref],
+                }
+            ],
+        },
+        "_meta": {
+            "engine_artifacts": stem.get("artifacts") or [],
+            "verified_exact_values": [
+                {
+                    "field": "exact",
+                    "value": (art.get("payload") or {}).get("exact"),
+                }
+                for art in stem.get("artifacts") or []
+                if art.get("ok") and (art.get("payload") or {}).get("exact") not in (
+                    None,
+                    "",
+                    [],
+                    {},
+                )
+            ],
+        },
+    }
+    report = validate_lesson_package(
+        artifacts=stem.get("artifacts") or [],
+        adaptations=adaptations,
+        source_envelope=source,
+        grounding_mode="uploaded_source",
+    )
+    assert report.publish_blocked is False
+    exactness = next(
+        check for check in report.checks if check["code"] == "deterministic_exactness"
+    )
+    assert exactness["ok"] is True
+
+
+def test_canonical_exact_forms_accept_json_and_math_presentation():
+    from engines.qa.pipeline import _exact_value_preserved
+
+    stats = {"mean": 5.0, "median": 5.0, "std": 2.58}
+    haystack = '{"exact":{"mean":5.0,"median":5.0,"std":2.58}}'
+    assert _exact_value_preserved(stats, haystack)
+    assert _exact_value_preserved("2*x", "The derivative is 2x.")
+    assert _exact_value_preserved("[2, 3]", "roots are [2,3]")
+
+
 def test_source_references_remain_internal_metadata():
     output = _apply_v3_output_contract(
         {
