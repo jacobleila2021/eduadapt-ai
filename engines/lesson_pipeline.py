@@ -296,6 +296,32 @@ def process_lesson_stem(lesson_text: str, topic: str = "") -> dict:
         biology_figures = []
 
     preferred_visuals = select_preferred_visuals(artifacts, biology_figures, max_visuals=6)
+
+    # UVIE: merge pedagogy/timeline/map organisers from verified lesson text (additive).
+    try:
+        from engines.universal_visual_intelligence import render_visuals_for_uli
+
+        uvie = render_visuals_for_uli(
+            None,
+            context={
+                "text": lesson_text,
+                "topic": topic,
+                "stem_artifacts": artifacts,
+                "biology_figures": biology_figures,
+                "preferred_visuals": preferred_visuals,
+                "stem_preferred": preferred_visuals,
+            },
+            max_visuals=8,
+        )
+        preferred_visuals = uvie.get("preferred_visuals") or preferred_visuals
+        uvie_payload = {
+            "visuals": uvie.get("visuals") or [],
+            "lxp": uvie.get("lxp") or {},
+            "metadata": uvie.get("metadata") or {},
+        }
+    except Exception:  # noqa: BLE001
+        uvie_payload = {}
+
     viz_rules = visualization_prompt_rules(preferred_visuals)
 
     hard = [r for r in results if r.deterministic and r.layer == "computation"]
@@ -310,6 +336,7 @@ def process_lesson_stem(lesson_text: str, topic: str = "") -> dict:
         "artifacts": artifacts,
         "biology_figures": biology_figures,
         "preferred_visuals": preferred_visuals,
+        "uvie": uvie_payload,
         "qa": {
             "passed": qa.passed,
             "checks": qa.checks,

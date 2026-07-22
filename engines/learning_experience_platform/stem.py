@@ -10,6 +10,8 @@ def stem_interactives(context: dict[str, Any] | None = None) -> dict[str, Any]:
     outputs = context.get("engine_outputs") or {}
     sa = (outputs.get("scientific_accuracy") or {}).get("payload") or {}
     artifacts = list(sa.get("artifacts") or [])
+    preferred = list(sa.get("preferred_visuals") or [])
+    uvie = sa.get("uvie") if isinstance(sa.get("uvie"), dict) else {}
     try:
         from engines.voice_multimodal_learning.multimodal import interactive_bundle
 
@@ -24,6 +26,12 @@ def stem_interactives(context: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "ok": True,
         "verified_artifacts": artifacts[:20],
+        "preferred_visuals": preferred[:12],
+        "uvie": {
+            "visuals": (uvie.get("visuals") or [])[:12],
+            "lxp": uvie.get("lxp") or {},
+            "skeleton_placeholders": ((uvie.get("lxp") or {}).get("placeholders") or [])[:8],
+        },
         "mathematics": bundle.get("math") or bundle.get("mathematics"),
         "physics": bundle.get("physics"),
         "chemistry": bundle.get("chemistry"),

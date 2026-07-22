@@ -34,6 +34,7 @@ class ScientificAccuracyEngine(BaseEngine):
                     "artifacts": stem.get("artifacts") or [],
                     "preferred_visuals": stem.get("preferred_visuals") or [],
                     "biology_figures": stem.get("biology_figures") or [],
+                    "uvie": stem.get("uvie") or {},
                     "prompt_block": stem.get("prompt_block") or "",
                     "has_deterministic_visuals": has_deterministic_visuals(
                         stem.get("preferred_visuals") or []
