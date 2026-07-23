@@ -205,7 +205,7 @@ def get_workspace_css_fragment() -> str:
         line-height: 1;
     }}
     .alora-word-wall-term {{
-        color: {ACCENT_INFO};
+        color: #0B2E59 !important;
         font-weight: 800;
         font-size: 1.85rem;
         line-height: 1.2;
@@ -215,13 +215,16 @@ def get_workspace_css_fragment() -> str:
         text-align: center;
     }}
     .lce-vocab-term {{
-        color: {ACCENT_INFO};
+        color: #0B2E59 !important;
         font-weight: 800;
         font-size: 1.9rem;
         line-height: 1.15;
         text-align: center;
         margin: 0.25rem 0 0.5rem 0;
         font-family: {FONT_STACK};
+    }}
+    .lce-vocab-card h3, .pqle-vocab-card h3, .alora-word-wall-card h3 {{
+        color: #0B2E59 !important;
     }}
     .pqle-vocab-card {{
         background: linear-gradient(180deg, #ffffff 0%, {BG_MAIN} 100%);

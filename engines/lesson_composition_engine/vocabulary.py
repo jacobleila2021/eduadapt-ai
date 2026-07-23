@@ -10,7 +10,10 @@ from engines.lesson_composition_engine.vocab_quality import (
     build_student_definition,
     clean_topic,
     is_junk_term,
+    is_teacher_facing_text,
     normalize_vocab_items,
+    picture_cue_for_term,
+    student_safe_definition,
 )
 
 CARD_COLORS = (
@@ -126,13 +129,20 @@ def compose_vocabulary_card(
     if not part_of_speech:
         part_of_speech = _guess_pos(display)
 
-    # Never keep LXP "not found" / template filler as the learner-facing definition
+    # Never keep LXP "not found" / template filler / teacher objectives
+    definition = student_safe_definition(definition)
+    academic_definition = student_safe_definition(academic_definition)
+    simple_explanation = student_safe_definition(simple_explanation)
+    example_sentence = student_safe_definition(example_sentence)
+    picture = student_safe_definition(picture) if picture and not is_teacher_facing_text(picture) else ""
+
     for bad in (
         "not found in verified glossary",
         "core concept in this lesson",
         "a key lesson term",
-        "key word connected to",
+        "key word connected",
         "ask ai tutor",
+        "students will",
     ):
         if bad in (definition or "").lower():
             definition = ""
@@ -153,16 +163,20 @@ def compose_vocabulary_card(
         academic = build_student_definition(display, "", topic=topic)
         student = academic
     if not example_sentence and display:
-        example_sentence = (
-            f"Scientists use the word {display} when they explain {topic} clearly."
+        example_sentence = academic if academic and not is_teacher_facing_text(academic) else (
+            f"In the water cycle lesson, {display.lower()} helps explain how water moves."
+            if "water" in topic.lower()
+            else f"Scientists use the word {display} when they explain {topic} clearly."
         )
-    if not memory_tip:
+    if not memory_tip or is_teacher_facing_text(memory_tip):
         memory_tip = (
-            f"Picture {display} in the lesson diagram, then say one clear sentence "
-            f"that starts with “{display} is…”."
+            f"Close your eyes and picture {display} in the lesson diagram, "
+            f"then say: “{display} is…” in one sentence."
         )
-    if not lesson_context:
-        lesson_context = f"{display} helps you explain {topic} with accurate vocabulary."
+    if not lesson_context or is_teacher_facing_text(lesson_context):
+        lesson_context = f"You need the word {display} to explain {topic} clearly."
+    if not picture:
+        picture = picture_cue_for_term(display, definition=academic)
 
     return VocabularyCard(
         term=display,

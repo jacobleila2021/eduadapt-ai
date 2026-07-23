@@ -178,9 +178,18 @@ def build_concept_map_svg(
     topic = clean_topic(topic, fallback="Lesson Topic")
     nodes = [str(c).strip() for c in concepts if str(c).strip() and not is_junk_term(str(c))][:8]
     low = topic.lower()
-    if any(k in low for k in ("cycle", "circulat", "life cycle")) or (
-        {"evaporation", "condensation", "precipitation"} & {n.lower() for n in nodes}
-    ):
+    node_keys = {n.lower() for n in nodes}
+    waterish = any(
+        k in low for k in ("water cycle", "earth's water", "evaporat", "precipitat", "condens")
+    ) or ({"evaporation", "condensation", "precipitation"} & node_keys)
+    if waterish:
+        try:
+            from flowchart_builder import _water_cycle_visual_svg
+
+            return _water_cycle_visual_svg(topic)
+        except Exception:  # noqa: BLE001
+            pass
+    if any(k in low for k in ("cycle", "circulat", "life cycle")) or waterish:
         cycle_nodes = nodes or ["Evaporation", "Condensation", "Precipitation", "Collection"]
         # Prefer canonical order when present
         preferred = ["Evaporation", "Condensation", "Precipitation", "Collection", "Runoff", "Transpiration"]

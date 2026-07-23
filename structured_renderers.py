@@ -239,15 +239,83 @@ def _clean_practice_blank(text: str) -> str:
     return cleaned
 
 
-def _build_matching_section(word_wall: list[dict]) -> dict:
+def _student_safe_wall(word_wall: list[dict], *, topic: str = "") -> list[dict]:
+    """Drop teacher-objective text and junk bare terms before matching / cards."""
+    try:
+        from engines.lesson_composition_engine.vocab_quality import (
+            canonical_definition,
+            is_junk_term,
+            is_teacher_facing_text,
+            normalize_vocab_items,
+            picture_cue_for_term,
+            student_safe_definition,
+        )
+    except Exception:  # noqa: BLE001
+        return list(word_wall or [])
+
+    cleaned: list[dict] = []
+    for w in word_wall or []:
+        term = str(w.get("term") or "").strip()
+        if not term or is_junk_term(term):
+            continue
+        definition = student_safe_definition(
+            str(w.get("definition") or w.get("academic_definition") or "")
+        )
+        simple = student_safe_definition(
+            str(w.get("simple_explanation") or w.get("child_friendly") or "")
+        )
+        example = student_safe_definition(
+            str(w.get("example") or w.get("example_sentence") or "")
+        )
+        picture = student_safe_definition(str(w.get("picture") or w.get("draw_this") or ""))
+        if not definition:
+            definition = canonical_definition(term) or simple
+        if not definition:
+            continue
+        if is_teacher_facing_text(definition):
+            definition = canonical_definition(term) or ""
+        if not definition:
+            continue
+        row = dict(w)
+        row["term"] = term
+        row["definition"] = definition
+        row["academic_definition"] = definition
+        row["simple_explanation"] = simple or definition
+        row["child_friendly"] = simple or definition
+        row["example"] = example or definition
+        row["example_sentence"] = example or definition
+        row["picture"] = picture or picture_cue_for_term(term, definition=definition)
+        row["draw_this"] = row["picture"]
+        cleaned.append(row)
+
+    if len(cleaned) < 4 or (
+        topic
+        and any(
+            k in topic.lower()
+            for k in ("water cycle", "evaporat", "precipitat", "condens", "earth's water")
+        )
+        and len(cleaned) < 6
+    ):
+        # Rebuild from canonical water-cycle / claim-safe list when wall is polluted
+        rebuilt = normalize_vocab_items(
+            cleaned or [w.get("term") for w in (word_wall or []) if w.get("term")],
+            topic=topic or "Lesson Vocabulary",
+        )
+        if rebuilt:
+            return rebuilt
+    return cleaned or list(word_wall or [])
+
+
+def _build_matching_section(word_wall: list[dict], *, topic: str = "") -> dict:
     """Structured matching items — answers stored separately for Show Answer only."""
     import hashlib
     import random
 
+    safe_wall = _student_safe_wall(word_wall, topic=topic)
     pairs = [
         (w.get("term", ""), w.get("definition", ""))
-        for w in word_wall[:8]
-        if w.get("term") and w.get("definition")
+        for w in safe_wall[:8]
+        if w.get("term") and w.get("definition") and len(str(w.get("definition"))) > 12
     ]
     if not pairs:
         return {
@@ -333,10 +401,22 @@ def _fill_blank_for_word(word: dict) -> tuple[str, str]:
     """Build a fill-in-the-blank sentence and its correct short answer."""
     term = (word.get("term") or "").strip()
     definition = (word.get("definition") or word.get("child_friendly") or "").strip()
+    try:
+        from engines.lesson_composition_engine.vocab_quality import (
+            canonical_definition,
+            student_safe_definition,
+        )
+
+        definition = student_safe_definition(definition) or canonical_definition(term)
+    except Exception:  # noqa: BLE001
+        if "students will" in definition.lower():
+            definition = ""
     if not term:
         return "This key idea from the lesson is ________.", ""
     if definition:
         lowered = definition.lower()
+        if "students will" in lowered or "learning objective" in lowered:
+            return (f"This key term from the lesson is ________.", term)
         if "divide" in lowered or "dividing" in lowered:
             return (
                 f"{term} is made of cells that can ________.",
@@ -354,10 +434,11 @@ def _fill_blank_for_word(word: dict) -> tuple[str, str]:
     return (f"This key term from the lesson is ________.", term)
 
 
-def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
+def _prepare_self_test(self_test: dict, word_wall: list[dict], *, topic: str = "") -> dict:
     """Ensure self-test has clean structured matching and semantically correct fill-blank answers."""
     data = dict(self_test or {})
-    matching = _build_matching_section(word_wall)
+    word_wall = _student_safe_wall(word_wall, topic=topic)
+    matching = _build_matching_section(word_wall, topic=topic)
     data["matching_terms"] = matching["matching_terms"]
     data["matching_definitions"] = matching["matching_definitions"]
     data["matching_answer_key"] = matching["matching_answer_key"]
@@ -390,11 +471,14 @@ def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
     for index, sentence in enumerate(blanks[:target_count], 1):
         raw = str(sentence).strip()
         text = _clean_fill_blank_display(raw)
-        if "________" not in text:
+        polluted = "students will" in text.lower() or "learning objective" in text.lower()
+        if "________" not in text or polluted:
             word = word_wall[(index - 1) % len(word_wall)]
             text, default_ans = _fill_blank_for_word(word)
             if len(ai_answers) < index:
                 ai_answers.append(default_ans)
+            elif polluted:
+                ai_answers[index - 1] = default_ans
         rebuilt.append(text)
 
         probe = dict(data)
@@ -425,23 +509,33 @@ def _prepare_self_test(self_test: dict, word_wall: list[dict]) -> dict:
 def _prepare_practice(word_wall: list[dict], topic: str = "") -> list[dict]:
     """Numbered say-spell-use items without pronunciation metadata."""
     items: list[dict] = []
-    for word in word_wall[:8]:
-        term = (word.get("term") or "").strip()
-        if not term:
-            continue
-        example = (word.get("example") or word.get("example_sentence") or "").strip()
-        if example and term.lower() in example.lower():
-            blank = re.sub(re.escape(term), "________", example, count=1, flags=re.IGNORECASE)
+    safe = _student_safe_wall(word_wall, topic=topic)
+    for word in safe[:8]:
+        term = str(word.get("term") or "").strip()
+        definition = str(word.get("definition") or "").strip()
+        blank = definition
+        if term and term.lower() in blank.lower():
+            # blank the term once for say-spell-use
+            import re as _re
+
+            blank = _re.sub(_re.escape(term), "________", blank, count=1, flags=_re.I)
+        elif definition:
+            blank = f"{definition.rstrip('.')}. The key word is ________."
         else:
-            subject = topic or "this topic"
-            blank = f"Write one sentence using ________ to explain {subject}."
-        items.append({"term": term, "sentence_blank": blank})
+            blank = f"Write one clear sentence that uses ________ correctly."
+        items.append(
+            {
+                "term": term,
+                "sentence_blank": blank,
+                "sentence": blank,
+            }
+        )
     return items
 
 
-def _render_self_test(self_test: dict, word_wall: list[dict], key_prefix: str) -> None:
+def _render_self_test(self_test: dict, word_wall: list[dict], key_prefix: str, *, topic: str = "") -> None:
     """Match & Review — answers revealed only via Show Answer buttons."""
-    prepared = _prepare_self_test(self_test, word_wall)
+    prepared = _prepare_self_test(self_test, word_wall, topic=topic)
     terms = prepared.get("matching_terms") or []
     definitions = prepared.get("matching_definitions") or []
     match_key = prepared.get("matching_answer_key") or []
@@ -587,7 +681,7 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
 
     # --- 1. Word Wall ---
     st.markdown("### 1. Word Wall — Study First")
-    word_wall = vocab.get("word_wall") or []
+    word_wall = _student_safe_wall(vocab.get("word_wall") or [], topic=str(topic))
     if not word_wall:
         st.warning("No word wall terms generated.")
     else:
@@ -602,14 +696,34 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     # --- 2. Flashcards ---
     st.markdown("### 2. Flashcards — Term → Meaning")
     flashcards = vocab.get("flashcards") or []
+    if not flashcards and word_wall:
+        flashcards = [
+            {"front": w.get("term"), "back": w.get("definition")} for w in word_wall[:8]
+        ]
     for index, card in enumerate(flashcards, 1):
         front = card.get("front") or card.get("term", "")
         back = card.get("back") or card.get("definition", "")
+        try:
+            from engines.lesson_composition_engine.vocab_quality import (
+                canonical_definition,
+                student_safe_definition,
+            )
+
+            back = student_safe_definition(str(back)) or canonical_definition(str(front)) or back
+        except Exception:  # noqa: BLE001
+            if "students will" in str(back).lower():
+                back = str(front)
         with st.expander(f"Card {index}: **{front}** — tap to reveal"):
             st.write(back)
 
     # --- 3. Picture Words ---
-    _render_picture_words(vocab.get("picture_words") or [], topic, key_prefix)
+    picture_words = vocab.get("picture_words") or []
+    if not picture_words and word_wall:
+        picture_words = [
+            {"term": w.get("term"), "draw_this": w.get("picture") or w.get("draw_this")}
+            for w in word_wall[:8]
+        ]
+    _render_picture_words(picture_words, topic, key_prefix)
 
     # --- 4. Say · Spell · Use ---
     st.markdown("### 4. Say It · Spell It · Use It")
@@ -624,7 +738,7 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     # --- 5. Self-Test ---
     st.markdown("### 5. Match & Review (Self-Test)")
     self_test = vocab.get("self_test") or {}
-    _render_self_test(self_test, word_wall, key_prefix)
+    _render_self_test(self_test, word_wall, key_prefix, topic=str(topic))
 
     # --- 6. Quick Reference ---
     st.markdown("### 6. Quick Reference Chart")

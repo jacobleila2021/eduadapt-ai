@@ -328,7 +328,11 @@ def build_study_diagram_svg(lesson: Any) -> str:
     """Build a labelled, lesson-specific study diagram SVG from section content."""
     data = lesson if isinstance(lesson, dict) else {}
     topic, nodes = _study_nodes(data)
-    if "water cycle" in topic.lower():
+    blob = topic.lower() + " ".join(n.get("title", "").lower() for n in nodes)
+    if any(
+        k in blob
+        for k in ("water cycle", "earth's water", "evaporat", "condens", "precipitat")
+    ):
         from flowchart_builder import _water_cycle_visual_svg
 
         return _water_cycle_visual_svg(topic)
