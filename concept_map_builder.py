@@ -100,7 +100,92 @@ def _hub_border_point(cx: float, cy: float, hw: float, hh: float, angle: float) 
     return cx + dx * scale, cy + dy * scale
 
 
+def build_relationship_concept_map_svg(vocab: Any, *, width: int = 920, height: int = 520) -> str:
+    """Publication-quality vertical relationship map from CLG edges (not a keyword cloud)."""
+    data = _coerce_dict(vocab) or {}
+    topic = str(data.get("topic") or "Lesson").strip()
+    edges = list(data.get("concept_map_edges") or data.get("relationships") or [])
+    terms: list[str] = []
+    if edges:
+        # Prefer ordered path from relationship labels / concept chain
+        for edge in edges:
+            if not isinstance(edge, dict):
+                continue
+            label = str(edge.get("label") or "")
+            for part in label.replace(" leads to ", "→").split("→"):
+                name = part.strip()
+                if name and name not in terms:
+                    terms.append(name)
+        if len(terms) < 2:
+            topic2, wall_terms = _topic_and_terms(data)
+            topic = topic or topic2
+            terms = wall_terms
+    else:
+        topic, terms = _topic_and_terms(data)
+
+    if len(terms) < 2:
+        return _build_hub_spoke_concept_map_svg(data)
+
+    terms = terms[:8]
+    colours = [TEAL, NAVY, "#0ea5e9", "#059669", "#0284c7", "#334155", "#0891b2", "#0f766e"]
+    cx = width / 2
+    top = 88
+    box_w, box_h = 280, 56
+    gap = 18
+    needed_h = top + len(terms) * (box_h + gap) + 40
+    height = max(height, needed_h)
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" role="img" aria-label="Concept relationship map">'
+        f"<defs>"
+        f'<marker id="cmap-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
+        f'<path d="M0,0 L8,3 L0,6 Z" fill="{NAVY}"/></marker>'
+        f'<filter id="cmap-shadow" x="-20%" y="-20%" width="140%" height="140%">'
+        f'<feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="{NAVY}" flood-opacity=".12"/>'
+        f"</filter></defs>"
+        f'<rect width="{width}" height="{height}" rx="22" fill="#f8fbfd"/>'
+        f'<rect x="24" y="18" width="{width-48}" height="50" rx="14" fill="{NAVY}"/>'
+        f'<text x="{cx}" y="50" text-anchor="middle" font-family="{FONT}" font-size="20" '
+        f'font-weight="700" fill="#fff">{html.escape(topic[:64])}</text>'
+        f'<text x="{cx}" y="82" text-anchor="middle" font-family="{FONT}" font-size="12" '
+        f'fill="#475569">Concept relationships (not a keyword cloud)</text>',
+    ]
+    y = top
+    for i, term in enumerate(terms):
+        fill = colours[i % len(colours)]
+        x = cx - box_w / 2
+        parts.append(
+            f'<rect x="{x}" y="{y}" width="{box_w}" height="{box_h}" rx="16" fill="{fill}" '
+            f'filter="url(#cmap-shadow)"/>'
+            f'<text x="{cx}" y="{y + box_h/2 + 5}" text-anchor="middle" font-family="{FONT}" '
+            f'font-size="16" font-weight="700" fill="#fff">{html.escape(term[:36])}</text>'
+        )
+        if i < len(terms) - 1:
+            parts.append(
+                f'<line x1="{cx}" y1="{y + box_h}" x2="{cx}" y2="{y + box_h + gap}" '
+                f'stroke="{NAVY}" stroke-width="3" marker-end="url(#cmap-arrow)"/>'
+            )
+        y += box_h + gap
+
+    # Legend
+    parts.append(
+        f'<text x="36" y="{height - 18}" font-family="{FONT}" font-size="12" fill="#64748b">'
+        f"Hierarchy shows teaching sequence and relationships</text>"
+    )
+    parts.append("</svg>")
+    return "\n".join(parts)
+
+
 def build_vocabulary_concept_map_svg(vocab: Any) -> str:
+    """Prefer CLG relationship maps; fall back to hub-and-spoke for legacy walls."""
+    data = _coerce_dict(vocab) or {}
+    if data.get("concept_map_edges") or data.get("relationships"):
+        return build_relationship_concept_map_svg(data)
+    return _build_hub_spoke_concept_map_svg(data)
+
+
+def _build_hub_spoke_concept_map_svg(vocab: Any) -> str:
     """
     Hub-and-spoke map: topic inside the centre navy box; term boxes arranged
     in a ring around it with labels inside each box (no overlapping text).

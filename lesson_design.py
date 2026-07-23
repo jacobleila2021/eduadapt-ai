@@ -174,29 +174,125 @@ def get_workspace_css_fragment() -> str:
     .alora-word-wall-card {{
         background: {BG_MAIN};
         border: 1px solid {BORDER_SUBTLE};
-        border-radius: 18px;
-        padding: 1.35rem 1.5rem 1.5rem 1.5rem;
-        min-height: 320px;
+        border-radius: 22px;
+        padding: 1.5rem 1.35rem 1.6rem 1.35rem;
+        min-height: 340px;
         display: flex;
         flex-direction: column;
-        gap: 0.85rem;
+        align-items: center;
+        text-align: center;
+        gap: 0.65rem;
         box-sizing: border-box;
+        position: relative;
+        box-shadow: 0 10px 28px rgba(11, 46, 89, 0.08);
+    }}
+    .alora-vocab-number {{
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 999px;
+        background: {ACCENT_INTRO};
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: {FONT_STACK};
+        margin-bottom: 0.15rem;
+    }}
+    .alora-vocab-icon {{
+        font-size: 1.35rem;
+        line-height: 1;
     }}
     .alora-word-wall-term {{
-        color: {TEXT_BODY};
-        font-weight: 700;
-        font-size: 1.2rem;
-        line-height: 1.45;
+        color: {ACCENT_INFO};
+        font-weight: 800;
+        font-size: 1.85rem;
+        line-height: 1.2;
         font-family: {FONT_STACK};
-        margin: 0;
+        margin: 0.35rem 0 0.45rem 0;
+        letter-spacing: 0.01em;
+        text-align: center;
+    }}
+    .lce-vocab-term {{
+        color: {ACCENT_INFO};
+        font-weight: 800;
+        font-size: 1.9rem;
+        line-height: 1.15;
+        text-align: center;
+        margin: 0.25rem 0 0.5rem 0;
+        font-family: {FONT_STACK};
+    }}
+    .pqle-vocab-card {{
+        background: linear-gradient(180deg, #ffffff 0%, {BG_MAIN} 100%);
+        border: 1px solid {BORDER_SUBTLE};
+        box-shadow: 0 14px 34px rgba(11, 46, 89, 0.09);
+    }}
+    .lce-vocab-body p, .alora-word-wall-body p {{
+        margin: 0 0 0.45rem 0;
+    }}
+    .lce-vocab-tags .lce-tag, .alora-vocab-meta span {{
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: {ACCENT_INTRO};
+        border: 1px solid {BORDER_SUBTLE};
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        margin-right: 0.25rem;
+        display: inline-block;
+    }}
+    .alora-lesson-section {{
+        margin: 1.35rem 0 1.6rem 0;
+        padding: 0.15rem 0 0.35rem 0;
+    }}
+    .alora-lesson-prose {{
+        font-size: 1.05rem;
+        line-height: 1.75;
+        letter-spacing: 0.015em;
+        color: {TEXT_BODY};
+        max-width: 46rem;
+    }}
+    .alora-vocab-meta {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: center;
+        margin-bottom: 0.35rem;
+    }}
+    .alora-vocab-meta span {{
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: {ACCENT_INTRO};
+        border: 1px solid {BORDER_SUBTLE};
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        font-family: {FONT_STACK};
     }}
     .alora-word-wall-body {{
         color: {TEXT_BODY};
         font-weight: 500;
-        font-size: 1rem;
-        line-height: 1.85;
-        letter-spacing: 0.03em;
+        font-size: 0.98rem;
+        line-height: 1.7;
+        letter-spacing: 0.02em;
         font-family: {FONT_STACK};
+        width: 100%;
+        text-align: left;
+    }}
+    .alora-vocab-def {{
+        margin: 0 0 0.55rem 0;
+        font-size: 1.02rem;
+    }}
+    .alora-vocab-simple, .alora-vocab-example, .alora-vocab-tip, .alora-vocab-ctx {{
+        margin: 0 0 0.45rem 0;
+    }}
+    .alora-vocab-extras {{
+        margin-top: 0.55rem;
+        font-size: 0.86rem;
+        color: {TEXT_BODY};
+        opacity: 0.82;
+        line-height: 1.55;
+    }}
+    .alora-word-wall-body strong {{
         flex: 1;
     }}
     .alora-word-wall-body strong {{

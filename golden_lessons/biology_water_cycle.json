@@ -1,0 +1,51 @@
+{
+  "id": "biology_water_cycle",
+  "subject": "biology",
+  "topic": "The Water Cycle",
+  "pqi_target": 95,
+  "min_sections": 10,
+  "min_vocab_cards": 5,
+  "required_roles": [
+    "concept",
+    "process",
+    "simple_explanation",
+    "summary",
+    "reflection"
+  ],
+  "lesson": {
+    "big_idea": "Water moves through evaporation, condensation, and precipitation in a continuous cycle. Each stage changes water's form without destroying it.",
+    "sections": [
+      {
+        "title": "Opening",
+        "role": "hook",
+        "body": "Follow a drop of water around the Earth."
+      },
+      {
+        "title": "Concept",
+        "role": "concept",
+        "body": "The water cycle is a continuous process."
+      },
+      {
+        "title": "Process",
+        "role": "process",
+        "body": "Evaporation, condensation, precipitation."
+      },
+      {
+        "title": "Understanding",
+        "role": "simple_explanation",
+        "body": "Heat turns liquid water into vapour; cooling forms clouds."
+      },
+      {
+        "title": "Summary",
+        "role": "summary",
+        "body": "Water changes state and travels."
+      },
+      {
+        "title": "Reflect",
+        "role": "reflection",
+        "body": "Which stage can you observe outdoors?"
+      }
+    ],
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"90\" viewBox=\"0 0 220 90\"><rect width=\"220\" height=\"90\" rx=\"14\" fill=\"#ecfdf5\"/><text x=\"110\" y=\"50\" text-anchor=\"middle\">Evaporation → Condensation → Rain</text></svg>"
+  }
+}

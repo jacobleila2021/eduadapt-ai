@@ -103,24 +103,74 @@ def _fallback_lesson_diagram(lesson: dict) -> str:
     return build_study_diagram_svg(lesson)
 
 
-def _word_wall_card_html(word: dict) -> str:
-    emoji = word.get("emoji", "📌")
-    term = html.escape(word.get("term", "Term"))
-    definition = html.escape(word.get("definition", ""))
-    child_note = html.escape(
-        word.get("child_friendly") or word.get("visual_description") or ""
+def _word_wall_card_html(word: dict, index: int = 0) -> str:
+    """Premium educational flashcard — word dominant, PQLE fields when present."""
+    if word.get("pqle_card") or word.get("lce_card") or word.get("memory_tip") or word.get("academic_definition"):
+        try:
+            from engines.lesson_composition_engine.vocabulary import vocabulary_card_html
+
+            return vocabulary_card_html(word)
+        except Exception:
+            pass
+    term_raw = str(word.get("term") or "Term").strip()
+    term = html.escape(term_raw[:1].upper() + term_raw[1:] if term_raw else "Term")
+    definition = html.escape(word.get("definition") or "")
+    simple = html.escape(
+        word.get("child_friendly")
+        or word.get("simple_explanation")
+        or word.get("visual_description")
+        or ""
     )
+    academic = html.escape(str(word.get("academic_definition") or ""))
     example = html.escape(word.get("example") or word.get("example_sentence") or "")
-    body_parts = [f"<strong>Definition:</strong> {definition}"]
-    if child_note:
-        body_parts.append(f"<strong>In simple words:</strong> {child_note}")
+    memory = html.escape(str(word.get("memory_tip") or ""))
+    context = html.escape(str(word.get("lesson_context") or ""))
+    pos = html.escape(str(word.get("part_of_speech") or "noun"))
+    pronunciation = html.escape(str(word.get("pronunciation") or ""))
+    difficulty = html.escape(str(word.get("difficulty") or "core"))
+    num = int(word.get("card_number") or (index + 1))
+    emoji = html.escape(str(word.get("emoji") or "📘"))
+    related = word.get("related_words") or word.get("synonyms") or []
+    opposite = word.get("opposite_words") or word.get("antonyms") or []
+    synonyms = ", ".join(html.escape(str(s)) for s in related[:3])
+    antonyms = ", ".join(html.escape(str(s)) for s in opposite[:3])
+    related_c = ", ".join(html.escape(str(s)) for s in (word.get("related_concepts") or [])[:3])
+
+    meta_bits = [f'<span class="alora-vocab-pos">{pos}</span>']
+    if pronunciation:
+        meta_bits.append(f'<span class="alora-vocab-ipa">/{pronunciation}/</span>')
+    meta_bits.append(f'<span class="alora-vocab-level">{difficulty}</span>')
+
+    body_parts = []
+    if simple:
+        body_parts.append(f'<p class="alora-vocab-simple"><strong>Student-friendly:</strong> {simple}</p>')
+    if academic and academic != simple:
+        body_parts.append(f'<p class="alora-vocab-def"><strong>Academic:</strong> {academic}</p>')
+    elif definition and definition != simple:
+        body_parts.append(f'<p class="alora-vocab-def"><strong>Academic:</strong> {definition}</p>')
     if example:
-        body_parts.append(f"<strong>Example:</strong> <em>{example}</em>")
-    body = "<br/>".join(body_parts)
+        body_parts.append(f'<p class="alora-vocab-example"><strong>Example:</strong> <em>{example}</em></p>')
+    if memory:
+        body_parts.append(f'<p class="alora-vocab-tip"><strong>Memory tip:</strong> {memory}</p>')
+    if context:
+        body_parts.append(f'<p class="alora-vocab-ctx"><strong>In this lesson:</strong> {context}</p>')
+    extras = []
+    if synonyms:
+        extras.append(f"<span><strong>Related:</strong> {synonyms}</span>")
+    if antonyms:
+        extras.append(f"<span><strong>Opposites:</strong> {antonyms}</span>")
+    if related_c:
+        extras.append(f"<span><strong>Concepts:</strong> {related_c}</span>")
+    if extras:
+        body_parts.append(f'<div class="alora-vocab-extras">{" · ".join(extras)}</div>')
+
     return (
-        f'<article class="alora-word-wall-card">'
-        f'<p class="alora-word-wall-term">{emoji} {term}</p>'
-        f'<div class="alora-word-wall-body">{body}</div>'
+        f'<article class="alora-word-wall-card pqle-vocab-card" data-card="{num}">'
+        f'<div class="alora-vocab-number" aria-hidden="true">{num}</div>'
+        f'<div class="alora-vocab-icon">{emoji}</div>'
+        f'<h3 class="alora-word-wall-term">{term}</h3>'
+        f'<div class="alora-vocab-meta">{"".join(meta_bits)}</div>'
+        f'<div class="alora-word-wall-body">{"".join(body_parts)}</div>'
         f"</article>"
     )
 
@@ -541,7 +591,9 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
     if not word_wall:
         st.warning("No word wall terms generated.")
     else:
-        cards = "".join(_word_wall_card_html(word) for word in word_wall)
+        cards = "".join(
+            _word_wall_card_html(word, index=i) for i, word in enumerate(word_wall)
+        )
         st.markdown(
             f'<div class="alora-word-wall">{cards}</div>',
             unsafe_allow_html=True,

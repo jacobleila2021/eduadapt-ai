@@ -486,6 +486,12 @@ class VerifiedLearningOrchestrator:
         package["curriculum_resolution"] = ctx.curriculum_resolution
         package["stage_status"] = ctx.stage_status
         package["grounding_mode"] = "uploaded_source"
+        # ULI 2.3: propagate LessonBundle when feature flag produced it (no-op if absent)
+        adapt_meta = (adaptations or {}).get("_meta") or {}
+        if adapt_meta.get("uli"):
+            package["uli"] = adapt_meta.get("uli")
+        if adapt_meta.get("lesson_bundle"):
+            package["lesson_bundle"] = adapt_meta.get("lesson_bundle")
         package["lifecycle_state"] = (
             "validated" if validation.get("ok") else "review_required"
         )

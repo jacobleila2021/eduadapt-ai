@@ -40,6 +40,23 @@ OPENAI_MAX_RETRIES = int(os.getenv("OPENAI_MAX_RETRIES", "2"))
 # Picture Words illustrations: off (use flowcharts) | pollinations | openai
 IMAGE_PROVIDER = os.getenv("IMAGE_PROVIDER", "off").strip().lower()
 
+# ULI Milestone 2.3 — pipeline wiring (default OFF for backward compatibility)
+ENABLE_ULI_PIPELINE = os.getenv("ENABLE_ULI_PIPELINE", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+# Lesson Composition Engine (LCE) 1.0 — final educational author before ULIQE/render
+# Default ON: compose premium lessons from ULI/SIF/UVIE; set ENABLE_LCE_PIPELINE=false to skip.
+ENABLE_LCE_PIPELINE = os.getenv("ENABLE_LCE_PIPELINE", "true").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
 KNOWLEDGE_DATA_DIR = PROJECT_ROOT / "data" / "knowledge"
 CHROMA_DIR = KNOWLEDGE_DATA_DIR / "chroma"
 PILOT_GRADE = "8"

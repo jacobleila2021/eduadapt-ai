@@ -44,6 +44,10 @@ set "VENV_PIP=.venv\Scripts\pip.exe"
 
 echo Installing dependencies...
 "%VENV_PIP%" install -r requirements.txt -q
+if exist "requirements-engines.txt" (
+  echo Installing optional computation engines...
+  "%VENV_PIP%" install -r requirements-engines.txt -q
+)
 if %errorlevel% neq 0 (
     echo ERROR: pip install failed.
     pause

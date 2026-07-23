@@ -1,0 +1,57 @@
+{
+  "id": "science_force_pressure",
+  "subject": "physics",
+  "topic": "Force and Pressure",
+  "pqi_target": 95,
+  "min_sections": 10,
+  "min_vocab_cards": 6,
+  "required_roles": [
+    "concept",
+    "simple_explanation",
+    "worked_example",
+    "summary",
+    "reflection",
+    "application"
+  ],
+  "lesson": {
+    "big_idea": "Force and pressure help us explain how pushes and pulls act on surfaces. When the same force spreads over a smaller area, pressure rises.",
+    "sections": [
+      {
+        "title": "Opening",
+        "role": "hook",
+        "body": "We meet force as a push or pull."
+      },
+      {
+        "title": "Concept: Force",
+        "role": "concept",
+        "body": "Force changes motion or shape."
+      },
+      {
+        "title": "Understanding Force",
+        "role": "simple_explanation",
+        "body": "A force is a push or a pull. It can start, stop, or change motion."
+      },
+      {
+        "title": "Worked Example",
+        "role": "worked_example",
+        "body": "Compare a sharp pin and a blunt eraser under the same push."
+      },
+      {
+        "title": "Summary",
+        "role": "summary",
+        "body": "Force acts; pressure depends on area."
+      },
+      {
+        "title": "Reflect",
+        "role": "reflection",
+        "body": "Where do you notice pressure at home?"
+      },
+      {
+        "title": "Apply",
+        "role": "application",
+        "body": "Design one safe classroom demo."
+      }
+    ],
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"80\" viewBox=\"0 0 200 80\"><rect x=\"10\" y=\"20\" width=\"180\" height=\"40\" rx=\"12\" fill=\"#e6f7f8\"/><text x=\"100\" y=\"45\" text-anchor=\"middle\">Force → Area → Pressure</text></svg>"
+  }
+}

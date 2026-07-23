@@ -331,7 +331,7 @@ def inject_exam_practice_into_lessons(
         return adaptations
 
     classroom_keys = frozenset(
-        {"standard", "ld", "ell", "visual", "auditory", "teacher"}
+        {"standard", "ld", "ell", "visual", "auditory", "teacher", "adhd", "autism"}
     )
     exam_bundle = (knowledge or {}).get("exam_bundle") or {}
     lines: list[str] = []

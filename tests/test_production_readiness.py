@@ -146,6 +146,18 @@ def test_publication_gate_blocks_every_known_failure_source():
     assert not publication_allowed(adaptations)
     assert not publication_allowed(quality={"publish_blocked": True})
     assert not publication_allowed(package={"vlie_validation": {"ok": False}})
+    eats_blocked = {
+        "_meta": {
+            "eats": {
+                "publication_ready": False,
+                "reject_rendering": True,
+                "overall": 70,
+                "verdict": "reject",
+            }
+        }
+    }
+    assert "Educational Acceptance" in publication_block_reason(eats_blocked)
+    assert not publication_allowed(eats_blocked)
 
 
 def test_viewer_contract_requires_explicit_content_and_identity():

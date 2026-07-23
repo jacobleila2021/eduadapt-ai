@@ -18,21 +18,32 @@ Use HTML + markdown together. Do NOT use external image URLs.
 """
 
 VOCABULARY_FORMAT = """
-VOCABULARY PAGE RULES (key: vocabulary) — separate sections so students can study independently:
+VOCABULARY PAGE RULES (key: vocabulary) — LCE premium flashcards (study independently):
 Structure EXACTLY with these ## headings in order:
 
 ## 1. Word Wall (Study First)
-One HTML card per term (10–15 terms). Each card MUST use a different soft background color and include: term (bold), simple definition, emoji icon, and a one-line "Picture in your mind" visual description (like a colorful image caption).
+10–15 premium vocabulary cards. Each card MUST include ALL of:
+- Large bold Capitalized term (centered)
+- Pronunciation (syllables)
+- Part of speech
+- Definition
+- Simple explanation (child-friendly)
+- Example sentence from the lesson
+- Picture / visual description
+- Synonyms, Antonyms, Related concepts
+- Difficulty and reading level
+- Distinct soft background color (premium flashcard look)
 
 ## 2. Flashcards (Term → Meaning)
 Numbered list. Format each as:
 **Front:** term | **Back:** definition + example from the lesson.
 
-## 3. Picture Words (Visual Flowchart)
-One coloured ```mermaid flowchart linking the topic to each key term with short fact labels (no external images).
+## 3. Picture Words (Visual Concept Map)
+Describe how terms relate to the topic. Alora injects a professional SVG concept map —
+leave mermaid_diagram as "" unless explicitly asked for Mermaid.
 
 ## 4. Say It · Spell It · Use It
-For each term: one numbered fill-in sentence with blank only — no pronunciation or syllable fields.
+For each term: one numbered fill-in sentence with blank only.
 
 ## 5. Match & Review (Self-Test)
 Part A matching (terms numbered, definitions lettered) and at least 6 fill-in-the-blank sentences using ________.
@@ -40,8 +51,6 @@ Never put answers in brackets in the displayed sentences — store answers only 
 
 ## 6. Quick Reference Chart
 Markdown table: Term | Definition | Synonym | Exam Tip.
-
-Include one ```mermaid diagram linking all key terms to the main concept.
 """
 
 WORKSHEET_FORMAT = """
@@ -132,17 +141,17 @@ ADAPTATION_SPECS = [
     },
     {
         "id": "adhd",
-        "tab": "ADHD",
-        "title": "ADHD",
-        "generate": False,
-        "hint": "2-minute colored chunks, numbered steps, checkpoint boxes, movement breaks. Facts unchanged.",
+        "tab": "ADHD Support",
+        "title": "ADHD Support",
+        "generate": True,
+        "hint": "LCE ADHD lens: chunked learning, timers, mini goals, quick checks, movement prompts — full curriculum depth, not a recolored clone.",
     },
     {
         "id": "autism",
         "tab": "Autism Support",
         "title": "Autism Support",
-        "generate": False,
-        "hint": "Predictable structure, explicit transitions, calm tone, consistent color coding, literal language. Facts unchanged.",
+        "generate": True,
+        "hint": "LCE Autism lens: predictable routine, literal language, calm transitions, consistent structure — full exam coverage.",
     },
     {
         "id": "executive",

@@ -31,6 +31,35 @@ def publication_block_reason(
             or "The lesson did not pass verified-content QA."
         )
 
+    lce = meta.get("lce") or {}
+    if lce.get("render_blocked") or (lce.get("pqle") or {}).get("reject_rendering"):
+        return str(
+            lce.get("blocked_reason")
+            or "The lesson did not meet publisher-quality standards (PQI < 95)."
+        )
+    pqi = lce.get("pqi") if isinstance(lce.get("pqi"), dict) else {}
+    if pqi and pqi.get("publication_ready") is False:
+        return (
+            f"Publisher Quality Index below 95 "
+            f"(worst={pqi.get('worst_score')}). Lesson was held for rewrite."
+        )
+
+    # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief
+    eats = meta.get("eats") if isinstance(meta.get("eats"), dict) else {}
+    if eats and (eats.get("reject_rendering") or eats.get("publication_ready") is False):
+        try:
+            from eats.hooks import eats_block_reason
+
+            reason = eats_block_reason(adaptations)
+            if reason:
+                return reason
+        except Exception:
+            overall = eats.get("overall")
+            return (
+                f"Educational Acceptance Testing failed "
+                f"(score={overall}). Lesson held for rewrite."
+            )
+
     package = package or {}
     validation = package.get("vlie_validation") or {}
     if validation and validation.get("ok") is False:

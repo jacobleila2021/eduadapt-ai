@@ -44,7 +44,7 @@ from knowledge.prompts import (
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file, reload_env
 
 CLASSROOM_LESSON_KEYS = frozenset(
-    {"standard", "ld", "ell", "visual", "auditory", "teacher"}
+    {"standard", "ld", "ell", "visual", "auditory", "teacher", "adhd", "autism"}
 )
 LESSON_KEYS = [k for k in OUTPUT_KEYS if k not in ("vocabulary", "worksheet")]
 MAX_PARALLEL_LESSONS = 4
@@ -1226,42 +1226,89 @@ def generate_adaptations(
                 "Change presentation only — do not alter equations, answers, or diagrams."
             )
 
+        # --- Lesson Composition Engine 1.0 (primary educational composition) ---
+        step("Composing lessons with Lesson Composition Engine…", 0.12)
+        lce_package_obj = None
+        lce_adaptations: dict = {}
+        try:
+            from engines.lesson_composition_engine import compose_lesson_package
+
+            lce_package_obj = compose_lesson_package(
+                lesson_text=lesson_text,
+                universal_profile=universal_profile,
+                meta=merged.get("_meta") or {},
+                context=context,
+            )
+            versions = dict(lce_package_obj.versions or {})
+            lce_adaptations = versions
+            if lce_package_obj.vocabulary:
+                lce_adaptations["vocabulary"] = lce_package_obj.vocabulary
+            merged["_meta"]["lce"] = {
+                "ok": True,
+                "version": getattr(lce_package_obj, "schema_version", "1.0.0"),
+                "quality": (
+                    lce_package_obj.quality.to_dict()
+                    if getattr(lce_package_obj, "quality", None)
+                    else {}
+                ),
+                "mutates_curriculum": False,
+                "frequency_vocab_used": False,
+            }
+            if getattr(lce_package_obj, "blueprint", None):
+                merged["_meta"]["lce"]["blueprint"] = lce_package_obj.blueprint.to_dict()
+        except Exception as lce_exc:  # noqa: BLE001
+            merged["_meta"]["lce"] = {
+                "ok": False,
+                "error": str(lce_exc)[:300],
+            }
+            lce_adaptations = {}
+
         step("Building vocabulary study page…", 0.15)
         vocab = {}
         vocab_fallback = False
-        for _ in range(2):
-            try:
-                raw = _chat(client, _vocabulary_prompt(), user_prompt, max_tokens=7000)
-                vocab = _extract_key(raw, "vocabulary")
-            except Exception:
-                vocab = {}
-            if _valid_vocabulary(vocab):
-                break
-        if not _valid_vocabulary(vocab):
-            vocab = _fallback_vocabulary(context)
-            vocab_fallback = True
+        if _valid_vocabulary(lce_adaptations.get("vocabulary") or {}):
+            vocab = lce_adaptations["vocabulary"]
+        else:
+            for _ in range(2):
+                try:
+                    raw = _chat(client, _vocabulary_prompt(), user_prompt, max_tokens=7000)
+                    vocab = _extract_key(raw, "vocabulary")
+                except Exception:
+                    vocab = {}
+                if _valid_vocabulary(vocab):
+                    break
+            if not _valid_vocabulary(vocab):
+                vocab = lce_adaptations.get("vocabulary") or _fallback_vocabulary(context)
+                vocab_fallback = True
         merged["vocabulary"] = _apply_v3_output_contract(
             _sanitize_vocabulary(vocab),
             key="vocabulary",
             valid_source_refs=source_refs,
-            fallback_used="source_extractive" if vocab_fallback else "none",
+            fallback_used="lce" if (lce_adaptations.get("vocabulary") and not vocab_fallback) else (
+                "source_extractive" if vocab_fallback else "none"
+            ),
         )
 
         step("Building exam worksheet…", 0.25)
         terms = [w.get("term", "") for w in merged["vocabulary"].get("word_wall") or []]
         sheet = {}
         worksheet_fallback = False
-        for _ in range(2):
-            try:
-                raw = _chat(client, _worksheet_prompt(terms), user_prompt, max_tokens=7000)
-                sheet = _extract_key(raw, "worksheet")
-            except Exception:
-                sheet = {}
-            if _valid_worksheet(sheet):
-                break
-        if not _valid_worksheet(sheet):
-            sheet = _fallback_worksheet(context, merged["vocabulary"])
-            worksheet_fallback = True
+        if _valid_worksheet(lce_adaptations.get("worksheet") or {}):
+            sheet = lce_adaptations["worksheet"]
+        else:
+            for _ in range(2):
+                try:
+                    raw = _chat(client, _worksheet_prompt(terms), user_prompt, max_tokens=7000)
+                    sheet = _extract_key(raw, "worksheet")
+                except Exception:
+                    sheet = {}
+                if _valid_worksheet(sheet):
+                    break
+            if not _valid_worksheet(sheet):
+                sheet = lce_adaptations.get("worksheet") or _fallback_worksheet(
+                    context, merged["vocabulary"]
+                )
+                worksheet_fallback = True
         if (
             grounding_mode != "uploaded_source"
             and (knowledge.get("external_enrichment") or {}).get("status")
@@ -1280,28 +1327,36 @@ def generate_adaptations(
         total = len(LESSON_KEYS)
         done = 0
 
-        std_spec = by_id.get("standard", {})
-        try:
-            _, baseline_lesson = _generate_one_lesson(
-                api_key,
-                "standard",
-                std_spec.get("title", "standard"),
-                std_spec.get("hint", ""),
-                user_prompt,
-                None,
-                suppress_ai_diagrams=suppress_ai_diagrams,
-            )
-        except Exception:
-            baseline_lesson = {}
-        if not _valid_lesson(
-            baseline_lesson, classroom="standard" in CLASSROOM_LESSON_KEYS
-        ):
-            baseline_lesson = _source_fallback_lesson(
-                "standard", universal_profile, source_refs
-            )
-            baseline_fallback = "classroom_source_fallback"
-        else:
-            baseline_fallback = "none"
+        def _lce_or_generate(key: str, baseline: dict | None = None) -> tuple[dict, str]:
+            """Prefer LCE composition; fall back to Educational Editor LLM / source fallback."""
+            candidate = lce_adaptations.get(key) or {}
+            classroom = key in CLASSROOM_LESSON_KEYS
+            if _valid_lesson(candidate, classroom=classroom) or (
+                key == "parent" and candidate.get("sections") and candidate.get("big_idea")
+            ):
+                return candidate, "lce"
+            try:
+                _, lesson = _generate_one_lesson(
+                    api_key,
+                    key,
+                    by_id.get(key, {}).get("title", key),
+                    by_id.get(key, {}).get("hint", ""),
+                    user_prompt,
+                    baseline,
+                    suppress_ai_diagrams=suppress_ai_diagrams,
+                )
+            except Exception:
+                lesson = {}
+            if not _valid_lesson(lesson, classroom=classroom):
+                if candidate:
+                    return candidate, "lce_recovery"
+                return (
+                    _source_fallback_lesson(key, universal_profile, source_refs),
+                    "classroom_source_fallback",
+                )
+            return lesson, "none"
+
+        baseline_lesson, baseline_fallback = _lce_or_generate("standard")
         merged["standard"] = _apply_v3_output_contract(
             inject_verified_visuals_into_lesson(baseline_lesson, preferred),
             key="standard",
@@ -1312,57 +1367,104 @@ def generate_adaptations(
         step(f"Lesson adaptations… {done}/{total} complete", 0.30 + (0.65 * done / total))
 
         other_keys = [k for k in LESSON_KEYS if k != "standard"]
-        with ThreadPoolExecutor(max_workers=MAX_PARALLEL_LESSONS) as pool:
-            futures = {
-                pool.submit(
-                    _generate_one_lesson,
-                    api_key,
-                    key,
-                    by_id.get(key, {}).get("title", key),
-                    by_id.get(key, {}).get("hint", ""),
-                    user_prompt,
-                    baseline_lesson,
-                    suppress_ai_diagrams=suppress_ai_diagrams,
-                ): key
-                for key in other_keys
-            }
-            for future in as_completed(futures):
-                key = futures[future]
-                fallback_used = "none"
-                retry_history: list[dict] = []
-                try:
-                    _, lesson = future.result()
-                except Exception:
-                    lesson = _source_fallback_lesson(
-                        key, universal_profile, source_refs
-                    )
-                    fallback_used = "classroom_source_fallback"
-                    retry_history.append(
-                        {
-                            "attempts": 2,
-                            "status": "failed",
-                            "recovery": "classroom_source_fallback",
-                        }
-                    )
-                if not _valid_lesson(
-                    lesson, classroom=key in CLASSROOM_LESSON_KEYS
-                ):
-                    lesson = _source_fallback_lesson(
-                        key, universal_profile, source_refs
-                    )
-                    fallback_used = "classroom_source_fallback"
+        # Prefer LCE for all keys first (no extra LLM). Only call LLM for gaps.
+        pending_llm = []
+        for key in other_keys:
+            candidate = lce_adaptations.get(key) or {}
+            classroom = key in CLASSROOM_LESSON_KEYS
+            parent_ok = key == "parent" and candidate.get("sections") and candidate.get("big_idea")
+            if _valid_lesson(candidate, classroom=classroom) or parent_ok:
                 merged[key] = _apply_v3_output_contract(
-                    inject_verified_visuals_into_lesson(lesson, preferred),
+                    inject_verified_visuals_into_lesson(candidate, preferred),
                     key=key,
                     valid_source_refs=source_refs,
-                    fallback_used=fallback_used,
-                    retry_history=retry_history,
+                    fallback_used="lce",
                 )
                 done += 1
                 step(
                     f"Lesson adaptations… {done}/{total} complete",
                     0.30 + (0.65 * done / total),
                 )
+            else:
+                pending_llm.append(key)
+
+        if pending_llm:
+            with ThreadPoolExecutor(max_workers=MAX_PARALLEL_LESSONS) as pool:
+                futures = {
+                    pool.submit(
+                        _generate_one_lesson,
+                        api_key,
+                        key,
+                        by_id.get(key, {}).get("title", key),
+                        by_id.get(key, {}).get("hint", ""),
+                        user_prompt,
+                        baseline_lesson,
+                        suppress_ai_diagrams=suppress_ai_diagrams,
+                    ): key
+                    for key in pending_llm
+                }
+                for future in as_completed(futures):
+                    key = futures[future]
+                    fallback_used = "none"
+                    retry_history: list[dict] = []
+                    try:
+                        _, lesson = future.result()
+                    except Exception:
+                        lesson = lce_adaptations.get(key) or _source_fallback_lesson(
+                            key, universal_profile, source_refs
+                        )
+                        fallback_used = "classroom_source_fallback"
+                        retry_history.append(
+                            {
+                                "attempts": 2,
+                                "status": "failed",
+                                "recovery": fallback_used,
+                            }
+                        )
+                    if not _valid_lesson(
+                        lesson, classroom=key in CLASSROOM_LESSON_KEYS
+                    ):
+                        lesson = lce_adaptations.get(key) or _source_fallback_lesson(
+                            key, universal_profile, source_refs
+                        )
+                        fallback_used = "lce_recovery" if key in lce_adaptations else "classroom_source_fallback"
+                    merged[key] = _apply_v3_output_contract(
+                        inject_verified_visuals_into_lesson(lesson, preferred),
+                        key=key,
+                        valid_source_refs=source_refs,
+                        fallback_used=fallback_used,
+                        retry_history=retry_history,
+                    )
+                    done += 1
+                    step(
+                        f"Lesson adaptations… {done}/{total} complete",
+                        0.30 + (0.65 * done / total),
+                    )
+
+        # Final LCE authorship polish (vocabulary upgrade + distinct adaptive versions)
+        try:
+            from engines.lesson_composition_engine import attach_lce_to_adaptations
+
+            step("LCE editorial polish…", 0.88)
+            # Merge LCE-only adaptive versions (ADHD / Autism / Dyslexia) even when
+            # not in the default generate=True product set.
+            for extra_key in ("adhd", "autism", "dyslexia"):
+                candidate = lce_adaptations.get(extra_key)
+                if isinstance(candidate, dict) and (
+                    candidate.get("sections") or candidate.get("big_idea")
+                ):
+                    merged[extra_key] = _apply_v3_output_contract(
+                        inject_verified_visuals_into_lesson(candidate, preferred),
+                        key=extra_key,
+                        valid_source_refs=source_refs,
+                        fallback_used="lce",
+                    )
+            merged = attach_lce_to_adaptations(
+                merged, lesson_text=lesson_text, reject_on_fail=False
+            )
+        except Exception as lce_attach_exc:  # noqa: BLE001
+            merged.setdefault("_meta", {})
+            merged["_meta"]["lce_attach_error"] = str(lce_attach_exc)[:300]
 
         # Hard QA publish gate
         from engines.qa.pipeline import validate_lesson_package
@@ -1473,6 +1575,21 @@ def generate_adaptations(
                 "publish_blocked": True,
                 "blocked_reason": package_qa.blocked_reason,
             }
+
+        # EATS — post-pipeline educational acceptance (non-breaking; engines untouched)
+        try:
+            from eats import attach_eats_to_adaptations
+
+            ctx = (merged.get("_meta") or {}).get("lesson_context") or {}
+            merged = attach_eats_to_adaptations(
+                merged,
+                subject=str(ctx.get("subject") or ""),
+                topic=str(ctx.get("topic") or ""),
+                auto_revise=True,
+                capture_screenshots=False,
+            )
+        except Exception:
+            merged.setdefault("_meta", {})["eats_error"] = "acceptance_attach_failed"
 
         step("Done!", 1.0)
         try:

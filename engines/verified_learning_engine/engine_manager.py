@@ -13,6 +13,7 @@ from engines.learning_analytics_engine import LearningAnalyticsEngine
 from engines.learning_companion_engine import LearningCompanionEngine
 from engines.learning_experience_platform import LearningExperienceEngine
 from engines.learning_motivation_engine import LearningMotivationEngine
+from engines.lesson_composition_engine import LessonCompositionEngine
 from engines.multi_agent_engine import MultiAgentEngine
 from engines.quality_assurance_engine import QualityAssuranceEngine
 from engines.scientific_accuracy_engine import ScientificAccuracyEngine
@@ -34,6 +35,10 @@ def register_default_engines(registry: EngineRegistry) -> None:
     registry.register(AssessmentEngine(), depends_on=["curriculum"])
     registry.register(AccessibilityEngine(), depends_on=[])
     registry.register(AdaptiveLearningEngine(), depends_on=["accessibility", "curriculum", "assessment"])
+    registry.register(
+        LessonCompositionEngine(),
+        depends_on=["accessibility", "assessment", "adaptive_learning"],
+    )
     registry.register(AITutorEngine(), depends_on=["scientific_accuracy", "adaptive_learning", "assessment", "accessibility"])
     registry.register(
         VoiceMultimodalEngine(),
@@ -48,6 +53,7 @@ def register_default_engines(registry: EngineRegistry) -> None:
             "curriculum",
             "multi_agent",
             "quality_assurance",
+            "lesson_composition",
         ],
     )
     registry.register(LearningAnalyticsEngine(), depends_on=["adaptive_learning", "assessment", "accessibility", "curriculum", "ai_tutor"])

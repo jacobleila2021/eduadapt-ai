@@ -108,16 +108,18 @@ def build_lesson_context(client: OpenAI, lesson_text: str, model: str) -> dict:
 
 
 def context_to_prompt(context: dict, excerpt: str) -> str:
-    """Format extracted context + source excerpt for adaptation prompts."""
-    import json
+    """Format extracted context + source excerpt for adaptation prompts.
 
+    Metadata (grade, raw objective lists) guides composition only — never as
+    content to teach. Prefer key concepts, facts, and the source excerpt.
+    """
     lines = [
         f"TOPIC: {context.get('topic', 'Lesson')}",
-        f"GRADE: {context.get('grade_level', 'Unknown')}",
-        f"SOURCE LENGTH: {context.get('source_char_count', 0):,} characters"
-        f" ({context.get('chunks_processed', 1)} sections analyzed)",
         "",
-        "LEARNING OBJECTIVES:",
+        "COMPOSITION GUIDE (do NOT teach these labels as lesson content):",
+        f"- Audience band hint: {context.get('grade_level', 'match source depth')}",
+        "",
+        "STUDENT-FACING LEARNING GOALS (rewrite into natural student language; never say 'Learning Objectives'):",
         *[f"- {o}" for o in context.get("learning_objectives") or []],
         "",
         "KEY CONCEPTS (must all appear in adaptations):",
@@ -136,10 +138,13 @@ def context_to_prompt(context: dict, excerpt: str) -> str:
         "",
         "LESSON SOURCE EXCERPT:",
         excerpt[:12000],
+        "",
+        "METADATA BAN: Never write paragraphs about Grade Level, Time Allocation, "
+        "Subject labels, or 'Learning Objectives' as topics. Teach the science/ideas only.",
     ])
     if context.get("was_truncated"):
         lines.append(
             "\n[Note: Full document was analyzed in sections above — "
-            "include ALL listed objectives, concepts, and facts in output.]"
+            "include ALL listed concepts and facts in output.]"
         )
     return "\n".join(lines)
