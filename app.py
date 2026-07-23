@@ -627,7 +627,16 @@ def render_workspace_page() -> None:
     filename = f"{base_name}_{active_spec['id']}.txt"
 
     st.session_state._text_bundle_cache = _build_bundle_download()
-    zip_bytes = _zip_bytes()
+    zip_bytes = None
+    try:
+        zip_bytes = _zip_bytes()
+    except Exception:
+        # Never block the learner workspace on export packaging failures.
+        zip_bytes = None
+        st.warning(
+            "Print pack (ZIP) could not be prepared for this lesson. "
+            "You can still read and use the adaptations on screen."
+        )
 
     render_workspace(
         active_spec=active_spec,

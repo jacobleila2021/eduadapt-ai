@@ -194,6 +194,9 @@ def export_lesson_html(data: Any, title: str) -> str:
                 f'<div class="big-idea section-box">💡 Big Idea: {html.escape(lesson["big_idea"])}</div>'
             )
         for section in lesson.get("sections") or []:
+            if not isinstance(section, dict):
+                parts.append(f"<p>{html.escape(str(section))}</p>")
+                continue
             box = (section.get("box") or "teal").lower()
             bg, border = _BOX_COLORS.get(box, _BOX_COLORS["teal"])
             parts.append(f"<h2>{html.escape(section.get('title', ''))}</h2>")
@@ -202,15 +205,31 @@ def export_lesson_html(data: Any, title: str) -> str:
                 f'<div class="section-box" style="background:{bg};border-left:5px solid {border}">'
                 f"{body}</div>"
             )
-        if lesson.get("visual_summary"):
-            parts.append("<h2>Visual Summary</h2><table><tr><th>Icon</th><th>Colour</th><th>Idea</th></tr>")
-            for item in lesson["visual_summary"]:
+        visual_summary = lesson.get("visual_summary")
+        if visual_summary:
+            parts.append("<h2>Visual Summary</h2>")
+            if isinstance(visual_summary, str):
                 parts.append(
-                    f"<tr><td>{html.escape(item.get('icon', ''))}</td>"
-                    f"<td>{html.escape(item.get('color_name', ''))}</td>"
-                    f"<td>{html.escape(item.get('idea', ''))}</td></tr>"
+                    f"<pre style='white-space:pre-wrap'>{html.escape(visual_summary)}</pre>"
                 )
-            parts.append("</table>")
+            elif isinstance(visual_summary, list):
+                parts.append(
+                    "<table><tr><th>Icon</th><th>Colour</th><th>Idea</th></tr>"
+                )
+                for item in visual_summary:
+                    if isinstance(item, dict):
+                        parts.append(
+                            f"<tr><td>{html.escape(str(item.get('icon', '')))}</td>"
+                            f"<td>{html.escape(str(item.get('color_name', '')))}</td>"
+                            f"<td>{html.escape(str(item.get('idea', '')))}</td></tr>"
+                        )
+                    else:
+                        parts.append(
+                            f"<tr><td colspan='3'>{html.escape(str(item))}</td></tr>"
+                        )
+                parts.append("</table>")
+            else:
+                parts.append(f"<p>{html.escape(str(visual_summary))}</p>")
     else:
         parts.append(f"<p>{html.escape(str(data))}</p>")
 

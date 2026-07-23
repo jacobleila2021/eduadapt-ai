@@ -285,10 +285,11 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
     concept_map = build_concept_map_svg(
         topic, [str(c.get("name") or "") for c in concepts]
     )
-    visual_summary = (
-        "| Colour | Idea |\n| --- | --- |\n"
-        "| Teal | Core concept |\n| Navy | Practice |\n| Soft gold | Check understanding |"
-    )
+    visual_summary = [
+        {"icon": "*", "color_name": "Teal", "idea": "Core concept"},
+        {"icon": "*", "color_name": "Navy", "idea": "Practice"},
+        {"icon": "*", "color_name": "Soft gold", "idea": "Check understanding"},
+    ]
 
     lesson = {
         "big_idea": _para(

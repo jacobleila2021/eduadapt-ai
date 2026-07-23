@@ -205,17 +205,19 @@ def export_lesson_docx(data: Any, title: str) -> bytes:
         if lesson.get("big_idea"):
             _add_colored_box(doc, "Big Idea", lesson["big_idea"], TEAL)
         for section in lesson.get("sections") or []:
+            if not isinstance(section, dict):
+                _safe_paragraph(doc, section)
+                continue
             _add_heading(doc, section.get("title", "Section"), 2)
             body = sanitize_docx_text(section.get("body", ""))
             for para in body.split("\n\n"):
                 _safe_paragraph(doc, para)
         if lesson.get("mermaid_diagram"):
-            _safe_paragraph(doc, "[Concept diagram — see online tab or draw from Visual Summary below]")
-        for item in lesson.get("visual_summary") or []:
             _safe_paragraph(
                 doc,
-                f"{item.get('icon', '')} {item.get('color_name', '')}: {item.get('idea', '')}",
+                "[Concept diagram — see online tab or draw from Visual Summary below]",
             )
+        _append_visual_summary_docx(doc, lesson.get("visual_summary"))
     else:
         for para in sanitize_docx_text(str(data)).split("\n\n"):
             _safe_paragraph(doc, para)
@@ -223,6 +225,29 @@ def export_lesson_docx(data: Any, title: str) -> bytes:
     buffer = io.BytesIO()
     doc.save(buffer)
     return buffer.getvalue()
+
+
+def _append_visual_summary_docx(doc: Document, visual_summary: Any) -> None:
+    """Accept list[dict], list[str], or markdown/plain string (never iterate chars)."""
+    if not visual_summary:
+        return
+    if isinstance(visual_summary, str):
+        _add_heading(doc, "Visual Summary", 2)
+        for para in sanitize_docx_text(visual_summary).split("\n"):
+            _safe_paragraph(doc, para)
+        return
+    if not isinstance(visual_summary, list):
+        _safe_paragraph(doc, visual_summary)
+        return
+    _add_heading(doc, "Visual Summary", 2)
+    for item in visual_summary:
+        if isinstance(item, dict):
+            _safe_paragraph(
+                doc,
+                f"{item.get('icon', '')} {item.get('color_name', '')}: {item.get('idea', '')}",
+            )
+        else:
+            _safe_paragraph(doc, item)
 
 
 def export_tab_docx(title: str, content: Any, spec_id: str) -> bytes:
