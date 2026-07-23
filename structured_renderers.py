@@ -846,32 +846,53 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     is_ld = spec_id == "ld"
 
     verified = lesson.get("verified_visuals") or []
+    rendered_verified = False
     if verified:
         st.markdown("#### Lesson Visuals")
         from pathlib import Path
 
         for vis in verified:
+            if not isinstance(vis, dict):
+                continue
             caption = vis.get("caption") or "Lesson visual"
             st.markdown(f"**{caption}**")
-            for path in vis.get("asset_paths") or []:
+            paths = vis.get("asset_paths") or []
+            showed_asset = False
+            for path in paths:
                 p = Path(path)
                 if p.is_file():
                     st.image(str(p), caption=caption)
+                    showed_asset = True
+                    rendered_verified = True
             if vis.get("iframe_url"):
                 try:
                     st.components.v1.iframe(vis["iframe_url"], height=360, scrolling=True)
+                    showed_asset = True
+                    rendered_verified = True
                 except Exception:
                     st.markdown(f"[Open interactive]({vis['iframe_url']})")
+                    showed_asset = True
+                    rendered_verified = True
+            # UVIE organisers often ship svg/mermaid without asset_paths — render them.
+            if not showed_asset:
+                svg = vis.get("svg") or vis.get("svg_diagram") or ""
+                if _valid_svg_diagram(svg):
+                    _render_svg(svg)
+                    rendered_verified = True
+                else:
+                    mermaid = (vis.get("mermaid") or vis.get("mermaid_diagram") or "").strip()
+                    if mermaid and _valid_mermaid(mermaid):
+                        _render_mermaid(mermaid)
+                        rendered_verified = True
 
-    # When no subject engine provides a specialised visual, show Alora's
+    # When no subject engine / UVIE visual actually rendered, show Alora's
     # deterministic, content-labelled study diagram (never an AI sketch).
-    if not verified:
+    if not rendered_verified:
         from study_diagram_builder import resolve_study_diagram_svg
 
         st.markdown("#### Lesson Visual")
         st.caption("A labelled study diagram built directly from this lesson.")
         _render_svg(resolve_study_diagram_svg(lesson))
-
     big_idea = lesson.get("big_idea", "")
     if big_idea:
         if is_ld:

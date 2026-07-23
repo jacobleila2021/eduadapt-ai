@@ -6,7 +6,7 @@ import re
 
 from knowledge.pilot_config import ACTIVE_PILOT
 from knowledge.prompts import (
-    RAG_RULES,
+    enrichment_policy_header,
     official_bank_to_prompt_block,
     rag_hits_to_prompt_block,
 )
@@ -91,11 +91,18 @@ def _build_query(lesson_text: str, context: dict | None) -> str:
     return " ".join(p for p in parts if p).strip()
 
 
-def prepare_knowledge_for_lesson(lesson_text: str, context: dict | None = None) -> dict:
+def prepare_knowledge_for_lesson(
+    lesson_text: str,
+    context: dict | None = None,
+    *,
+    grounding_mode: str = "uploaded_source",
+) -> dict:
     """
     Resolve optional verified enrichment for a source lesson.
     Uploaded-source generation is independent of this result.
+    Curriculum enrichment is an enhancement, not a dependency.
     """
+    policy_header = enrichment_policy_header(grounding_mode)
     if not _scope_matches(lesson_text, context):
         return {
             "pilot_id": None,
@@ -111,9 +118,10 @@ def prepare_knowledge_for_lesson(lesson_text: str, context: dict | None = None) 
             "rag_hits": [],
             "official_mcqs": [],
             "exam_bundle": {},
-            "prompt_block": RAG_RULES,
+            "prompt_block": policy_header,
             "citations": [],
             "scope_matched": False,
+            "grounding_mode": grounding_mode,
             "external_enrichment": {
                 "status": "out_of_scope",
                 "required": False,
@@ -190,7 +198,7 @@ def prepare_knowledge_for_lesson(lesson_text: str, context: dict | None = None) 
                 f"(marks={it.marks}, bloom={it.bloom})"
             )
     bundle_block = "\n".join(bundle_lines) if any(exam_bundle.values()) else ""
-    prompt_parts = [RAG_RULES]
+    prompt_parts = [policy_header]
     if rag_block:
         prompt_parts.append(rag_block)
     if official_block:
@@ -205,6 +213,7 @@ def prepare_knowledge_for_lesson(lesson_text: str, context: dict | None = None) 
         "grade": ACTIVE_PILOT.grade,
         "subject": ACTIVE_PILOT.subject,
         "book_title": ACTIVE_PILOT.book_title,
+        "grounding_mode": grounding_mode,
         "index": index_info,
         "rag_hits": [
             {
@@ -306,14 +315,30 @@ def enrich_worksheet_with_official_bank(worksheet: dict, knowledge: dict) -> dic
     return sheet
 
 
-def inject_exam_practice_into_lessons(adaptations: dict, knowledge: dict) -> dict:
-    """Append Exam Practice section using official bank only."""
+def inject_exam_practice_into_lessons(
+    adaptations: dict,
+    knowledge: dict,
+    *,
+    universal_profile: dict | None = None,
+) -> dict:
+    """Append Exam Practice for classroom adaptations.
+
+    Prefer official bank items when present. When the bank is empty, attach
+    practice-from-source board questions built from uploaded claims (no invented
+    official keys).
+    """
     if not isinstance(adaptations, dict):
         return adaptations
+
+    classroom_keys = frozenset(
+        {"standard", "ld", "ell", "visual", "auditory", "teacher"}
+    )
     exam_bundle = (knowledge or {}).get("exam_bundle") or {}
     lines: list[str] = []
+    official = False
     for bkey, items in exam_bundle.items():
         for it in items or []:
+            official = True
             lines.append(
                 f"- **[{bkey}] {it.get('source', '')}** ({it.get('marks', 1)} marks, "
                 f"{it.get('bloom', '')}): {it.get('question', '')} "
@@ -321,28 +346,77 @@ def inject_exam_practice_into_lessons(adaptations: dict, knowledge: dict) -> dic
             )
     if not lines:
         for it in (knowledge or {}).get("official_mcqs") or []:
+            official = True
             lines.append(
                 f"- **{it.get('source', 'Official')}**: {it.get('question', '')} "
                 f"— *Official answer: {it.get('official_answer', '')}*"
             )
+
+    if not lines:
+        profile = universal_profile or {}
+        claims = []
+        for row in profile.get("claim_ledger") or []:
+            if isinstance(row, dict) and row.get("text"):
+                claims.append(str(row["text"]).strip())
+        if not claims:
+            for unit in profile.get("source_units") or []:
+                if isinstance(unit, str) and unit.strip():
+                    claims.append(unit.strip())
+        topic = str(profile.get("topic") or profile.get("title") or "this topic")
+        if not claims:
+            # Still ensure classroom tabs get an Exam Practice section marker;
+            # generation/fallback already embeds practice-from-source content.
+            claims = [
+                f"Explain the main process in {topic} using accurate lesson terms.",
+                f"Describe how two ideas in {topic} connect, with evidence from the lesson.",
+                f"Define one key term from {topic} and give a classroom example.",
+                f"Outline the steps or stages taught in the lesson on {topic}.",
+                f"Compare two source ideas from {topic} and state one implication.",
+                f"Write a short board-style answer summarising {topic}.",
+            ]
+        for i, claim in enumerate(claims[:6], start=1):
+            marks = 2 if i <= 4 else 5
+            kind = "Short" if i <= 4 else "Long/HOTS"
+            lines.append(
+                f"- **Q{i} ({kind}, {marks} marks, practice-from-source):** "
+                f"Using only the uploaded lesson on {topic}, respond to: {claim[:220]} "
+                f"— *Model cue: restate the claim with lesson terminology; do not invent facts.*"
+            )
+
     if not lines:
         return adaptations
-    intro = (
-        "Practice with official curriculum questions "
-        "(keys from the answer bank — not invented):\n\n"
-    )
+
+    if official:
+        intro = (
+            "Practice with official curriculum questions "
+            "(keys from the answer bank — not invented):\n\n"
+        )
+        title = "Exam Practice (Official)"
+    else:
+        intro = (
+            "Board-style practice grounded in the uploaded source "
+            "(practice-from-source — not an official answer key):\n\n"
+        )
+        title = "Exam Practice"
+
     body = intro + "\n".join(lines[:12])
     out = dict(adaptations)
     for key, lesson in list(out.items()):
-        if key.startswith("_") or key in ("vocabulary", "worksheet") or not isinstance(lesson, dict):
+        if key.startswith("_") or key in ("vocabulary", "worksheet", "parent"):
+            continue
+        if key not in classroom_keys or not isinstance(lesson, dict):
             continue
         sections = list(lesson.get("sections") or [])
         if any(
-            isinstance(s, dict) and "exam practice" in str(s.get("title", "")).lower()
+            isinstance(s, dict)
+            and any(
+                m in str(s.get("title", "")).lower()
+                for m in ("exam practice", "board check", "board practice")
+            )
             for s in sections
         ):
             continue
-        sections.append({"title": "Exam Practice (Official)", "body": body, "box": "orange"})
+        sections.append({"title": title, "body": body, "box": "orange"})
         lesson = dict(lesson)
         lesson["sections"] = sections
         out[key] = lesson

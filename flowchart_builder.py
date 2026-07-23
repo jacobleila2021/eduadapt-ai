@@ -91,89 +91,76 @@ def _svg_label(text: str, limit: int = 36) -> str:
 
 
 def _water_cycle_visual_svg(topic: str) -> str:
-    """Deterministic, labelled water-cycle illustration (not an AI sketch)."""
+    """Closed water-cycle flowchart: Evaporation → Condensation → Precipitation → Collection → Evaporation.
+
+    Transpiration is a side loop into the atmosphere / condensation path.
+    """
     title = _svg_label(topic, 54)
     return f"""
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520"
- role="img" aria-label="Labelled water cycle diagram">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560"
+ role="img" aria-label="Closed water cycle flowchart">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#dff5ff"/><stop offset="1" stop-color="#f8fcff"/>
-    </linearGradient>
-    <linearGradient id="water" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#06b6d4"/>
+      <stop offset="0" stop-color="#e8f6ff"/><stop offset="1" stop-color="#f7fbff"/>
     </linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#0B2E59" flood-opacity=".16"/>
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#0B2E59" flood-opacity=".14"/>
     </filter>
-    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="5"
-      orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#0284c7"/></marker>
-    <marker id="arrow-navy" markerWidth="12" markerHeight="12" refX="10" refY="5"
+    <marker id="arrow-cycle" markerWidth="12" markerHeight="12" refX="10" refY="5"
       orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#0B2E59"/></marker>
+    <marker id="arrow-side" markerWidth="12" markerHeight="12" refX="10" refY="5"
+      orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#059669"/></marker>
   </defs>
-  <rect width="960" height="520" rx="24" fill="url(#sky)"/>
-  <rect x="24" y="20" width="912" height="58" rx="16" fill="#0B2E59" filter="url(#shadow)"/>
-  <text x="480" y="57" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+  <rect width="960" height="560" rx="24" fill="url(#sky)"/>
+  <rect x="24" y="18" width="912" height="56" rx="16" fill="#0B2E59" filter="url(#shadow)"/>
+  <text x="480" y="54" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
     font-size="24" font-weight="700" fill="#fff">{title}</text>
+  <text x="480" y="98" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="14" fill="#334155">Closed cycle: water moves continuously through these stages</text>
 
-  <!-- Sun and energy -->
-  <circle cx="122" cy="142" r="42" fill="#fbbf24" stroke="#f59e0b" stroke-width="5"/>
-  <g stroke="#f59e0b" stroke-width="5" stroke-linecap="round">
-    <path d="M122 82v-22M122 224v-22M62 142H40M204 142h-22
-      M80 100L64 84M180 200l-16-16M164 100l16-16M80 184l-16 16"/>
-  </g>
-  <rect x="48" y="238" width="150" height="42" rx="21" fill="#fff" filter="url(#shadow)"/>
-  <text x="123" y="264" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
-    font-size="15" font-weight="700" fill="#92400e">Sun supplies energy</text>
+  <rect x="360" y="120" width="240" height="64" rx="16" fill="#0284c7" filter="url(#shadow)"/>
+  <text x="480" y="148" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="13" fill="#e0f2fe">1</text>
+  <text x="480" y="168" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="18" font-weight="700" fill="#fff">Evaporation</text>
 
-  <!-- Cloud / condensation -->
-  <g filter="url(#shadow)">
-    <circle cx="498" cy="150" r="42" fill="#fff"/><circle cx="550" cy="142" r="52" fill="#fff"/>
-    <circle cx="603" cy="157" r="38" fill="#fff"/><rect x="462" y="156" width="177" height="48" rx="24" fill="#fff"/>
-  </g>
-  <rect x="480" y="214" width="150" height="40" rx="20" fill="#0B2E59"/>
-  <text x="555" y="240" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
-    font-size="15" font-weight="700" fill="#fff">2 · Condensation</text>
+  <rect x="640" y="250" width="240" height="64" rx="16" fill="#0B2E59" filter="url(#shadow)"/>
+  <text x="760" y="278" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="13" fill="#cbd5e1">2</text>
+  <text x="760" y="298" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="18" font-weight="700" fill="#fff">Condensation</text>
 
-  <!-- Land, plants and collection -->
-  <path d="M0 400 Q170 320 335 390 Q500 462 665 366 Q820 280 960 350V520H0Z"
-    fill="#86c56a"/>
-  <path d="M595 408 Q720 345 960 360V520H520Q550 458 595 408Z" fill="#65a854"/>
-  <path d="M0 428 Q230 390 455 438 Q650 478 960 420V520H0Z" fill="url(#water)"/>
-  <path d="M0 452 Q230 414 455 462 Q650 502 960 444" fill="none"
-    stroke="#bae6fd" stroke-width="8" opacity=".85"/>
-  <rect x="675" y="452" width="178" height="42" rx="21" fill="#fff" filter="url(#shadow)"/>
-  <text x="764" y="478" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
-    font-size="15" font-weight="700" fill="#075985">4 · Collection</text>
+  <rect x="360" y="400" width="240" height="64" rx="16" fill="#0369a1" filter="url(#shadow)"/>
+  <text x="480" y="428" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="13" fill="#e0f2fe">3</text>
+  <text x="480" y="448" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="18" font-weight="700" fill="#fff">Precipitation</text>
 
-  <!-- Evaporation -->
-  <path d="M310 414 C285 350 320 305 350 250" fill="none" stroke="#0284c7"
-    stroke-width="6" stroke-linecap="round" stroke-dasharray="10 9" marker-end="url(#arrow-blue)"/>
-  <path d="M375 425 C360 355 390 315 410 268" fill="none" stroke="#0284c7"
-    stroke-width="4" stroke-linecap="round" stroke-dasharray="9 9" marker-end="url(#arrow-blue)"/>
-  <rect x="240" y="286" width="160" height="42" rx="21" fill="#fff" filter="url(#shadow)"/>
-  <text x="320" y="312" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
-    font-size="15" font-weight="700" fill="#075985">1 · Evaporation</text>
+  <rect x="80" y="250" width="240" height="64" rx="16" fill="#0ea5e9" filter="url(#shadow)"/>
+  <text x="200" y="278" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="13" fill="#e0f2fe">4</text>
+  <text x="200" y="298" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="18" font-weight="700" fill="#fff">Collection</text>
 
-  <!-- Precipitation -->
-  <path d="M585 215 C620 260 650 305 685 350" fill="none" stroke="#0B2E59"
-    stroke-width="6" stroke-linecap="round" marker-end="url(#arrow-navy)"/>
-  <g stroke="#38bdf8" stroke-width="5" stroke-linecap="round">
-    <path d="M520 270l-10 24M552 277l-10 24M584 270l-10 24M616 279l-10 24"/>
-  </g>
-  <rect x="650" y="296" width="164" height="42" rx="21" fill="#fff" filter="url(#shadow)"/>
-  <text x="732" y="322" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
-    font-size="15" font-weight="700" fill="#0B2E59">3 · Precipitation</text>
+  <path d="M560 152 C640 152 700 180 740 250" fill="none" stroke="#0B2E59" stroke-width="5"
+    marker-end="url(#arrow-cycle)"/>
+  <path d="M760 314 C760 360 640 400 600 420" fill="none" stroke="#0B2E59" stroke-width="5"
+    marker-end="url(#arrow-cycle)"/>
+  <path d="M360 432 C280 432 220 380 200 314" fill="none" stroke="#0B2E59" stroke-width="5"
+    marker-end="url(#arrow-cycle)"/>
+  <path d="M200 250 C200 180 320 152 360 152" fill="none" stroke="#0B2E59" stroke-width="5"
+    marker-end="url(#arrow-cycle)"/>
 
-  <!-- Transpiration -->
-  <g transform="translate(820 325)">
-    <rect x="-5" y="20" width="10" height="76" rx="5" fill="#7c4a27"/>
-    <circle cx="-22" cy="20" r="30" fill="#34a853"/><circle cx="20" cy="14" r="34" fill="#3fba63"/>
-  </g>
-  <path d="M820 346 C800 290 830 250 842 220" fill="none" stroke="#059669"
-    stroke-width="4" stroke-dasharray="8 8" marker-end="url(#arrow-blue)"/>
-  <text x="861" y="240" font-family="Lexend,Arial,sans-serif" font-size="13"
-    font-weight="700" fill="#047857">Transpiration</text>
+  <rect x="700" y="120" width="200" height="52" rx="14" fill="#059669" filter="url(#shadow)"/>
+  <text x="800" y="152" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="16" font-weight="700" fill="#fff">Transpiration</text>
+  <path d="M800 172 C820 210 800 230 780 250" fill="none" stroke="#059669" stroke-width="4"
+    stroke-dasharray="8 7" marker-end="url(#arrow-side)"/>
+  <text x="860" y="220" font-family="Lexend,Arial,sans-serif" font-size="12"
+    fill="#047857">side loop → air</text>
+
+  <text x="480" y="530" text-anchor="middle" font-family="Lexend,Arial,sans-serif"
+    font-size="13" fill="#475569">Evaporation → Condensation → Precipitation → Collection → Evaporation</text>
 </svg>""".strip()
 
 

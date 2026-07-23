@@ -329,23 +329,9 @@ def build_study_diagram_svg(lesson: Any) -> str:
     data = lesson if isinstance(lesson, dict) else {}
     topic, nodes = _study_nodes(data)
     if "water cycle" in topic.lower():
-        from flowchart_builder import build_vocabulary_visual_svg
+        from flowchart_builder import _water_cycle_visual_svg
 
-        return build_vocabulary_visual_svg(
-            {
-                "topic": topic,
-                "picture_words": [
-                    {"term": name}
-                    for name in (
-                        "Evaporation",
-                        "Condensation",
-                        "Precipitation",
-                        "Collection",
-                        "Transpiration",
-                    )
-                ],
-            }
-        )
+        return _water_cycle_visual_svg(topic)
     if not nodes:
         from concept_map_builder import build_vocabulary_concept_map_svg
 

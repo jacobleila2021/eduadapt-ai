@@ -28,99 +28,26 @@ from config import (
     OPENAI_TIMEOUT_SECONDS,
 )
 from lesson_processor import build_lesson_context, context_to_prompt
-from knowledge.prompts import RAG_RULES
+from knowledge.prompts import (
+    AUDITORY_SECTION_RULES,
+    BOARD_EXAM_READINESS_RULES,
+    BULLET_SECTION_RULES,
+    CLASSROOM_TEACHING_RULES,
+    DEPTH_RULES,
+    DIFFERENTIATION_RULES,
+    ENGINE_RULES,
+    RAG_CITATION_RULES,
+    SECTION_TITLE_RULES,
+    TEACHER_ANSWER_RULES,
+    VISUAL_PRACTICE_RULES,
+)
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file, reload_env
 
+CLASSROOM_LESSON_KEYS = frozenset(
+    {"standard", "ld", "ell", "visual", "auditory", "teacher"}
+)
 LESSON_KEYS = [k for k in OUTPUT_KEYS if k not in ("vocabulary", "worksheet")]
 MAX_PARALLEL_LESSONS = 4
-
-DEPTH_RULES = """
-DEPTH REQUIREMENTS (critical):
-- Cover EVERY learning objective and key concept from the lesson analysis.
-- Do NOT compress a long lesson into one page. Each lesson adaptation needs 6–10 sections.
-- Each section body: minimum 80 words with concrete facts, examples, and steps.
-- Students must be able to pass an exam using ONLY this material.
-- Include worked examples where the subject requires them.
-- DIAGRAMS: follow VISUALIZATION PRIORITY in the user prompt. Prefer empty mermaid_diagram and svg_diagram (""): Alora injects built coloured flowcharts. If verified engine/NCERT visuals exist, leave both empty. Do not invent complex SVG.
-- ACCURACY: all diagram and content facts must be scientifically and historically correct.
-- Each learner version must be MEASURABLY DIFFERENT: reading level, structure, vocabulary, layout, diagram density.
-"""
-
-ENGINE_RULES = """
-VERIFIED KNOWLEDGE FIRST (mandatory when ENGINE_ARTIFACTS are provided):
-- Use ONLY the provided ENGINE_ARTIFACTS for equations, balancing, numeric answers, plotted functions, and physics diagrams.
-- NEVER invent coefficients, balanced equations, exact solutions, graph shapes, or scientific diagrams when artifacts/verified visuals exist.
-- You may explain, simplify language, and adapt reading level — but do NOT change computed results.
-- If a STEM fact is missing from ENGINE_ARTIFACTS, write NEED_ENGINE:{type}:{request} instead of guessing.
-- Prefer verified_visuals (NCERT figures, Matplotlib, Schemdraw, GeoGebra, RDKit, physics diagrams) over AI-drawn mermaid/SVG.
-"""
-
-RAG_CITATION_RULES = """
-SOURCE GROUNDING:
-- The uploaded SOURCE_CLAIMS are authoritative. Do not add factual claims that are absent from them.
-- Add source_refs containing valid uploaded block IDs to structured metadata for every section, definition, example, question, answer, teacher note, and parent note.
-- source_refs are internal QA metadata only. Never print "Source:", "Source detail:", block IDs, claim IDs, file paths, or reference notes in learner/teacher-facing text.
-- RETRIEVED_SOURCES are optional enrichment. Cite them only when present and never claim official curriculum alignment without them.
-- Missing external curriculum citations is not an error; continue from the uploaded source.
-- Official answer-bank values and deterministic ENGINE_ARTIFACTS must be copied unchanged.
-"""
-
-DIFFERENTIATION_RULES = """
-DIFFERENTIATION (minimum 80% unique from standard version):
-- ADHD: short 2-minute chunks, checkpoints, movement breaks, numbered steps only.
-- Autism Support: predictable routine, literal language, calm transitions, same color pattern every section.
-- Visual Learner: 2+ diagrams, minimal prose, icon labels, color-coded stages.
-- Auditory Learner: full prose paragraphs (80+ words per section), listen-and-repeat scripts, call-and-response cues, audio chunk headers — NOT bullet lists.
-- Dyslexia Smart: simplified vocabulary (Grade 3-4), rich coloured bullet sections with 6-10 substantive points per section, complete lesson coverage.
-- Dyslexia: bullet points, bold keywords, extra white space cues, no dense paragraphs.
-"""
-
-SECTION_TITLE_RULES = """
-SECTION TITLES (critical — applies to ALL adaptations):
-- NEVER use generic placeholders like "Core Concept 1", "Core Concept 2", "Section 3", or "Topic 1".
-- Every section title MUST be the REAL concept name from the lesson (e.g. "Meristematic Tissue", "Evaporation", "Photosynthesis").
-- Titles must be short (2-6 words), complete phrases that make sense on their own.
-- If the lesson has more than 6 concepts, add sections "Concept 7", "Concept 8" etc. ONLY with the actual concept name as title.
-"""
-
-BULLET_SECTION_RULES = """
-DYSLEXIA SMART FORMAT (ld adaptation only):
-- Each section body MUST use markdown bullet points (- item) with 6-10 bullets per section.
-- Each bullet: one complete idea, 8-15 words, concrete facts — NOT one-word stubs.
-- Total section body: minimum 80 words. Cover ALL concepts from the source lesson.
-- Bold key terms using **term** markdown inside bullets where helpful.
-"""
-
-AUDITORY_SECTION_RULES = """
-AUDITORY LEARNER FORMAT (auditory adaptation only):
-- Use full prose paragraphs — NO bullet lists.
-- Each section body: minimum 80 words with concrete facts, examples, and listen-and-repeat phrases.
-- Include "Say:" and "Repeat:" call-and-response lines within paragraphs.
-- Cover EVERY concept from the source lesson — chunk into extra sections if needed (Concept 7, 8, etc.).
-"""
-
-VISUAL_PRACTICE_RULES = """
-VISUAL LEARNER PRACTICE FORMAT (visual adaptation only):
-- In the Practice section, format each item as:
-  Q1. [question on one line]
-  A1. [answer on the next line]
-  Q2. [question]
-  A2. [answer]
-- Provide at least 5 numbered Q/A pairs with full answers.
-"""
-
-TEACHER_ANSWER_RULES = """
-TEACHER VERSION (teacher adaptation only):
-Include these extra fields:
-"answer_key": [
-  {{"section": "Practice", "question": "Q1 ...", "model_answer": "Full correct answer", "marks": 2}},
-  {{"section": "Examples", "question": "Worked example 1", "model_answer": "Complete solution", "marks": 3}}
-],
-"teacher_notes": "Differentiation tips, common misconceptions, grouping suggestions.",
-"differentiation_map": "Which groups get which scaffolds."
-- Provide a model_answer for EVERY practice question and worked example in the lesson.
-- Minimum 8 answer_key entries covering all assessable content.
-"""
 
 
 def _get_model() -> str:
@@ -230,6 +157,10 @@ def _lesson_prompt(
   "svg_diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='720' height='480'>grouped labelled boxes with arrows and 6+ <text> labels from THIS lesson</svg>",
   "diagram_source": "ai_illustration","""
 
+    classroom_policy = ""
+    if adaptation_id in CLASSROOM_LESSON_KEYS:
+        classroom_policy = f"{CLASSROOM_TEACHING_RULES}\n{BOARD_EXAM_READINESS_RULES}"
+
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 
 Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value is an object:
@@ -237,13 +168,13 @@ Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value
   "big_idea": "clear summary sentence",
 {diagram_fields}
   "sections": [
-    {{"title": "Introduction", "body": "80+ words", "box": "teal"}},
-    {{"title": "Meristematic Tissue", "body": "80+ words with facts", "box": "blue"}},
-    {{"title": "Permanent Tissue", "body": "80+ words", "box": "blue"}},
-    {{"title": "Examples", "body": "worked examples", "box": "green"}},
-    {{"title": "Practice", "body": "questions with answers", "box": "green"}},
-    {{"title": "Exam Focus", "body": "what to revise for tests", "box": "orange"}},
-    {{"title": "Summary", "body": "recap all key points", "box": "orange"}}
+    {{"title": "Learning Goal", "body": "120+ words — what students will be able to do", "box": "teal"}},
+    {{"title": "Meristematic Tissue", "body": "120+ words teachable classroom segment", "box": "blue"}},
+    {{"title": "Permanent Tissue", "body": "120+ words teachable classroom segment", "box": "blue"}},
+    {{"title": "Guided Practice", "body": "worked examples with the class", "box": "green"}},
+    {{"title": "Independent Practice", "body": "questions students complete alone", "box": "green"}},
+    {{"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"}},
+    {{"title": "Summary", "body": "recap all key points for revision", "box": "orange"}}
   ],
   "visual_summary": [
     {{"icon": "🟦", "color_name": "Topic", "idea": "..."}},
@@ -258,6 +189,7 @@ Adaptation: {title}
 Guidance: {hint}
 
 {DEPTH_RULES}
+{classroom_policy}
 {ENGINE_RULES}
 {RAG_CITATION_RULES}
 {DIFFERENTIATION_RULES}
@@ -375,12 +307,78 @@ def _valid_worksheet(sheet: dict) -> bool:
     return bool(sheet.get("short_answer")) and len(sheet.get("short_answer") or []) >= 4
 
 
-def _valid_lesson(lesson: dict) -> bool:
+def _section_body_text(section: dict) -> str:
+    if not isinstance(section, dict):
+        return ""
+    return str(section.get("body") or "").strip()
+
+
+def _word_count(text: str) -> int:
+    return len(re.findall(r"\b\w+\b", text or ""))
+
+
+def _has_exam_practice_section(sections: list) -> bool:
+    markers = (
+        "exam practice",
+        "board check",
+        "board practice",
+        "exam focus",
+        "board exam",
+    )
+    for section in sections:
+        if not isinstance(section, dict):
+            continue
+        title = str(section.get("title") or "").lower()
+        if any(m in title for m in markers):
+            return True
+        body = _section_body_text(section).lower()
+        if "exam practice" in body or "board check" in body:
+            return True
+    return False
+
+
+def _stub_bullet_ratio(body: str) -> float:
+    """Fraction of markdown bullets that are too short to teach from."""
+    bullets = re.findall(r"(?m)^\s*[-*]\s+(.+)$", body or "")
+    if len(bullets) < 3:
+        return 0.0
+    stubby = sum(1 for b in bullets if _word_count(b) < 6)
+    return stubby / len(bullets)
+
+
+def _valid_lesson(lesson: dict, *, classroom: bool = False) -> bool:
     sections = lesson.get("sections") or []
     # Visuals are attached deterministically after generation. Requiring a
     # model-authored diagram here incorrectly rejected otherwise complete
     # adaptations and replaced them with raw extractive fallbacks.
-    return bool(lesson.get("big_idea")) and len(sections) >= 6
+    if not lesson.get("big_idea") or len(sections) < 6:
+        return False
+    if not classroom:
+        return True
+
+    bodies = [_section_body_text(s) for s in sections if isinstance(s, dict)]
+    aggregate = " ".join(bodies)
+    if _word_count(aggregate) < 500:
+        return False
+
+    thin_sections = 0
+    for body in bodies:
+        wc = _word_count(body)
+        bullets = re.findall(r"(?m)^\s*[-*]\s+(.+)$", body)
+        bullet_words = sum(_word_count(b) for b in bullets)
+        substantive = wc >= 80 or (len(bullets) >= 6 and bullet_words >= 80)
+        if not substantive:
+            thin_sections += 1
+        if _stub_bullet_ratio(body) > 0.5:
+            return False
+    if thin_sections > 2:
+        return False
+
+    if not _has_exam_practice_section(sections):
+        pq = lesson.get("practice_questions") or []
+        if not (isinstance(pq, list) and len(pq) >= 4):
+            return False
+    return True
 
 
 def _lesson_fingerprint(lesson: dict) -> set[str]:
@@ -566,36 +564,42 @@ def _generate_one_lesson(
         max_retries=OPENAI_MAX_RETRIES,
     )
     sys_prompt = _lesson_prompt(key, title, hint, suppress_ai_diagrams=suppress_ai_diagrams)
+    classroom = key in CLASSROOM_LESSON_KEYS
     raw = _chat(client, sys_prompt, user_prompt, max_tokens=9000)
     lesson = _extract_key(raw, key)
     if suppress_ai_diagrams:
         lesson["diagram_source"] = "deterministic_engines"
         lesson["mermaid_diagram"] = lesson.get("mermaid_diagram") or ""
         lesson["svg_diagram"] = lesson.get("svg_diagram") or ""
-    if not _valid_lesson(lesson) and not suppress_ai_diagrams:
-        raw = _chat(client, sys_prompt, user_prompt, max_tokens=9000)
-        lesson = _extract_key(raw, key)
-    elif not _valid_lesson(lesson) and suppress_ai_diagrams:
-        # Sections/big_idea retry only — keep AI diagrams empty
-        raw = _chat(client, sys_prompt, user_prompt, max_tokens=9000)
-        lesson = _extract_key(raw, key)
-        lesson["mermaid_diagram"] = ""
-        lesson["svg_diagram"] = ""
-        lesson["diagram_source"] = "deterministic_engines"
+
+    def _retry(extra: str = "") -> dict:
+        prompt = user_prompt + extra
+        retry_raw = _chat(client, sys_prompt, prompt, max_tokens=9000)
+        out = _extract_key(retry_raw, key)
+        if suppress_ai_diagrams:
+            out["mermaid_diagram"] = ""
+            out["svg_diagram"] = ""
+            out["diagram_source"] = "deterministic_engines"
+        return out
+
+    if not _valid_lesson(lesson, classroom=classroom):
+        reminder = (
+            "\n\nSTRICT RETRY: Produce a full classroom-teachable lesson (not a condensation). "
+            "Each section ≥120 words or ≥8 substantive bullets totaling ≥120 words. "
+            "Include an Exam Practice / Board Check section with board-style questions and "
+            "model answers grounded only in SOURCE_CLAIMS. Keep exam terminology."
+            if classroom
+            else ""
+        )
+        lesson = _retry(reminder)
     if baseline and key not in ("standard", "vocabulary", "worksheet"):
         score = _adaptation_difference_score(baseline, lesson)
         if score < 0.80:
-            retry_prompt = (
-                user_prompt
-                + f"\n\nIMPORTANT: Previous output was only {score:.0%} different from standard. "
-                f"Regenerate with clearly distinct structure and reading level for {title}."
+            lesson = _retry(
+                f"\n\nIMPORTANT: Previous output was only {score:.0%} different from standard. "
+                f"Regenerate with clearly distinct structure and scaffolds for {title} "
+                f"while keeping the same exam coverage and terminology."
             )
-            raw = _chat(client, sys_prompt, retry_prompt, max_tokens=9000)
-            lesson = _extract_key(raw, key)
-            if suppress_ai_diagrams:
-                lesson["mermaid_diagram"] = ""
-                lesson["svg_diagram"] = ""
-                lesson["diagram_source"] = "deterministic_engines"
     return key, lesson
 
 
@@ -688,87 +692,217 @@ def _clean_source_units(profile: dict) -> list[str]:
 def _source_fallback_lesson(
     key: str, profile: dict, source_refs: list[str]
 ) -> dict:
+    """Classroom-teachable, source-bound fallback — not a thin extractive summary."""
     topic = str(profile.get("topic") or profile.get("title") or "this topic")
     units = _clean_source_units(profile)
     if not units:
         units = [f"Review the readable material provided for {topic}."]
 
-    def excerpt(start: int, count: int = 2) -> str:
-        chosen = units[start : start + count]
-        if not chosen:
-            chosen = units[: min(count, len(units))]
-        return " ".join(chosen)
+    def unit(i: int) -> str:
+        return units[i % len(units)]
+
+    def teach_block(start: int, title: str, box: str) -> dict:
+        chunks = [unit(start + j) for j in range(min(3, len(units)))]
+        body_parts = [
+            f"Teach this segment aloud (about 5–8 minutes). Topic focus: {title}.",
+            "",
+        ]
+        for idx, chunk in enumerate(chunks, start=1):
+            body_parts.append(
+                f"- **Idea {idx}:** {chunk} Ask students to restate the idea in one sentence."
+            )
+        body_parts.extend(
+            [
+                "",
+                f"Check: Point to evidence in the uploaded material that supports each idea about {topic}.",
+                "Scaffold: Preview key terms, then have students use each term in a full sentence.",
+            ]
+        )
+        return {
+            "title": title,
+            "body": "\n".join(body_parts),
+            "box": box,
+            "source_refs": source_refs,
+        }
+
+    concept_titles = []
+    for row in profile.get("key_concepts") or []:
+        if isinstance(row, dict) and row.get("name"):
+            concept_titles.append(str(row["name"]).strip())
+        elif isinstance(row, str) and row.strip():
+            concept_titles.append(row.strip())
+    if not concept_titles:
+        concept_titles = [f"Core idea {i + 1}" for i in range(min(3, len(units)))]
+    concept_titles = concept_titles[:4]
+
+    scaffolds = {
+        "ld": (
+            "Dyslexia Smart scaffolds: use spaced bullets, bold **key terms**, "
+            "one idea per line, and a visible checklist. Keep exam vocabulary; "
+            "add a short gloss in parentheses after each term."
+        ),
+        "ell": (
+            "ELL scaffolds: preview glossary terms, sentence frames "
+            "('The process of ___ is called ___'), and allow rehearsal before writing. "
+            "Keep board terminology."
+        ),
+        "visual": (
+            "Visual scaffolds: map each idea into a labelled sequence on the board; "
+            "students redraw and label before answering."
+        ),
+        "auditory": (
+            "Auditory scaffolds: Say: read each source idea aloud. "
+            "Repeat: students echo, then explain in their own words."
+        ),
+        "teacher": (
+            "Teacher note: verify each claim against the uploaded source before "
+            "extending discussion; use the Exam Practice section for board-style marking."
+        ),
+        "standard": (
+            "Mainstream classroom: teach each segment fully, then circulate during "
+            "independent practice and close with Exam Practice."
+        ),
+    }
+    support = scaffolds.get(
+        key,
+        "Use retrieval practice and source-based examples; do not invent STEM facts.",
+    )
+
+    short_qs = []
+    for i in range(4):
+        claim = unit(i)
+        short_qs.append(
+            f"**Q{i + 1} (Short, 2 marks):** Using the lesson on {topic}, explain: "
+            f"{claim[:180]} "
+            f"**Model answer (practice-from-source):** Restate the claim accurately and "
+            f"name the related term from the material."
+        )
+    long_qs = []
+    for i in range(2):
+        a, b = unit(i + 2), unit(i + 5)
+        long_qs.append(
+            f"**Q{i + 5} (Long/HOTS, 5 marks):** Compare and connect these ideas from "
+            f"the uploaded lesson: (1) {a[:140]} (2) {b[:140]} "
+            f"**Model answer (practice-from-source):** Describe both ideas, explain the "
+            f"link using lesson terms, and give one classroom/real-world implication "
+            f"supported by the source."
+        )
 
     sections = [
         {
             "title": "Learning Goal",
             "body": (
-                f"Use the uploaded lesson to identify, explain, and connect the "
-                f"main ideas in {topic}. Focus on accurate terminology and the "
-                f"observations or examples presented in the material."
+                f"By the end of this lesson, students will accurately explain the main "
+                f"ideas in {topic}, use the lesson's exam terminology correctly, and "
+                f"answer board-style questions using only this adaptation.\n\n"
+                f"- State the learning goal aloud and write it on the board.\n"
+                f"- Preview success criteria: define terms, explain processes, attempt Exam Practice.\n"
+                f"- Source focus: {unit(0)}\n"
+                f"- {support}"
             ),
-            "box": "blue",
-            "source_refs": source_refs,
-        },
-        {
-            "title": "Core Ideas",
-            "body": excerpt(0, 3),
             "box": "teal",
             "source_refs": source_refs,
         },
-        {
-            "title": "Guided Explanation",
-            "body": excerpt(3, 3),
-            "box": "cream",
-            "source_refs": source_refs,
-        },
-        {
-            "title": "Source-Based Examples",
-            "body": excerpt(6, 3),
-            "box": "orange",
-            "source_refs": source_refs,
-        },
-        {
-            "title": "Check Your Understanding",
-            "body": (
-                f"Explain this lesson idea in your own words: {excerpt(1, 1)} "
-                f"Then connect it to a second idea from the lesson: {excerpt(4, 1)}"
-            ),
-            "box": "green",
-            "source_refs": source_refs,
-        },
-        {
-            "title": "Review and Next Steps",
-            "body": (
-                f"Review the key terms and evidence in the lesson on {topic}. "
-                f"Use this source-based recap: {excerpt(0, 2)}"
-            ),
-            "box": "purple",
-            "source_refs": source_refs,
-        },
     ]
-    support = {
-        "ld": "Use one step at a time, a visible checklist, and short focus intervals.",
-        "ell": "Preview vocabulary, use sentence frames, and allow multilingual rehearsal.",
-        "visual": "Map the source ideas into a labelled sequence or comparison.",
-        "auditory": "Read each source idea aloud, pause, and explain it in your own words.",
-        "teacher": "Check each claim against the uploaded source before extending discussion.",
-        "parent": "Ask the learner to explain one source idea and show where it appears.",
-    }.get(key, "Use retrieval practice and source-based examples.")
-    sections[-1]["body"] += f"\n\nLearning support: {support}"
-    return {
+    boxes = ("blue", "cream", "blue", "orange")
+    for idx, title in enumerate(concept_titles):
+        sections.append(teach_block(idx * 2, title, boxes[idx % len(boxes)]))
+
+    sections.extend(
+        [
+            {
+                "title": "Guided Practice",
+                "body": (
+                    f"Work this with the class (8–10 minutes).\n\n"
+                    f"- Read together: {unit(1)}\n"
+                    f"- Model how to turn the idea into a 2-mark answer using lesson terms.\n"
+                    f"- Ask two students to improve the answer using evidence from: {unit(3)}\n"
+                    f"- Check misconceptions; keep ENGINE_ARTIFACTS / official facts unchanged if present.\n"
+                    f"- {support}"
+                ),
+                "box": "green",
+                "source_refs": source_refs,
+            },
+            {
+                "title": "Independent Practice",
+                "body": (
+                    f"Students work alone or in pairs (8–10 minutes).\n\n"
+                    f"- Write a short paragraph explaining: {unit(2)}\n"
+                    f"- Add one labelled sketch or sequence if the topic is visual.\n"
+                    f"- Self-check against: {unit(4)}\n"
+                    f"- Teacher circulates with the checklist: term used? idea complete? evidence cited?\n"
+                    f"- {support}"
+                ),
+                "box": "green",
+                "source_refs": source_refs,
+            },
+            {
+                "title": "Exam Practice",
+                "body": (
+                    "Board-style practice grounded in the uploaded source "
+                    "(practice-from-source — not an official answer key unless marked official).\n\n"
+                    + "\n\n".join(short_qs + long_qs)
+                ),
+                "box": "orange",
+                "source_refs": source_refs,
+            },
+            {
+                "title": "Review and Next Steps",
+                "body": (
+                    f"Close the lesson (3–5 minutes).\n\n"
+                    f"- Recap: {unit(0)} / {unit(1)}\n"
+                    f"- Students name three exam terms from {topic} and one board question they can now attempt.\n"
+                    f"- Homework: revise Exam Practice answers without looking, then check against model cues.\n"
+                    f"- {support}"
+                ),
+                "box": "purple",
+                "source_refs": source_refs,
+            },
+        ]
+    )
+
+    # Ensure ≥6 sections even if concepts were sparse
+    while len(sections) < 6:
+        sections.insert(
+            1,
+            teach_block(len(sections), f"Teach: {topic}", "blue"),
+        )
+
+    answer_key = []
+    if key == "teacher":
+        for i, line in enumerate(short_qs + long_qs, start=1):
+            answer_key.append(
+                {
+                    "section": "Exam Practice",
+                    "question": f"Q{i}",
+                    "model_answer": line.split("**Model answer")[-1].strip(": *"),
+                    "marks": 2 if i <= 4 else 5,
+                }
+            )
+
+    out = {
         "title": profile.get("title") or "Uploaded Lesson",
         "subtitle": key.replace("_", " ").title(),
         "big_idea": (
-            f"This adaptation develops a clear, source-grounded understanding "
-            f"of {topic}."
+            f"Students build a classroom-ready, source-grounded understanding of {topic} "
+            f"and can attempt board-style questions from this adaptation alone."
         ),
         "sections": sections,
         "mermaid_diagram": "",
         "svg_diagram": "",
         "diagram_source": "deterministic_engines",
         "source_refs": source_refs,
+        "practice_questions": [
+            {"question": f"Q{i + 1}", "source_bound": True} for i in range(6)
+        ],
     }
+    if answer_key:
+        out["answer_key"] = answer_key
+        out["teacher_notes"] = support
+        out["differentiation_map"] = (
+            "Apply ld/ell/visual/auditory scaffolds without reducing exam coverage."
+        )
+    return out
 
 
 def _apply_v3_output_contract(
@@ -933,6 +1067,41 @@ def generate_adaptations(
         step("Building source-linked lesson profile…", 0.05)
         context = _context_from_universal_profile(universal_profile, lesson_text)
         merged["_meta"]["lesson_context"] = context
+        merged["_meta"]["source_envelope"] = source_envelope
+        merged["_meta"]["universal_profile"] = universal_profile
+
+        # ULI Milestone 2.3 — feature-flagged (default OFF). Non-blocking.
+        try:
+            from engines.universal_lesson_intelligence.pipeline import (
+                attach_uli_pipeline,
+                is_uli_pipeline_enabled,
+            )
+
+            if is_uli_pipeline_enabled():
+                attach_uli_pipeline(
+                    merged["_meta"],
+                    lesson_text=lesson_text,
+                    source_envelope=source_envelope,
+                    universal_profile=universal_profile,
+                    stem_metadata={
+                        "artifacts": stem.get("artifacts") or [],
+                        "claims_found": stem.get("claims_found"),
+                        "preferred_visuals": stem.get("preferred_visuals") or [],
+                        "routing_warnings": stem.get("routing_warnings") or [],
+                        "biology_figures": stem.get("biology_figures") or [],
+                        "qa": stem.get("qa") or {},
+                    },
+                )
+                uli_accessors = ((merged["_meta"].get("uli") or {}).get("accessors") or {})
+                edu = uli_accessors.get("educational_structure") or {}
+                if edu.get("topic") and not context.get("topic"):
+                    context["topic"] = edu["topic"]
+                    merged["_meta"]["lesson_context"] = context
+        except Exception:
+            merged["_meta"]["uli"] = {
+                "enabled": False,
+                "error": "uli_pipeline_attach_failed",
+            }
 
         # Re-match biology figures with better topic from analysis
         if not merged["_meta"]["biology_figures"]:
@@ -963,7 +1132,11 @@ def generate_adaptations(
             "recognized",
             "user_declared",
         }:
-            knowledge = prepare_knowledge_for_lesson(lesson_text, context)
+            knowledge = prepare_knowledge_for_lesson(
+                lesson_text,
+                context,
+                grounding_mode=grounding_mode,
+            )
         else:
             knowledge = {
                 "pilot_id": None,
@@ -1120,11 +1293,13 @@ def generate_adaptations(
             )
         except Exception:
             baseline_lesson = {}
-        if not _valid_lesson(baseline_lesson):
+        if not _valid_lesson(
+            baseline_lesson, classroom="standard" in CLASSROOM_LESSON_KEYS
+        ):
             baseline_lesson = _source_fallback_lesson(
                 "standard", universal_profile, source_refs
             )
-            baseline_fallback = "source_extractive"
+            baseline_fallback = "classroom_source_fallback"
         else:
             baseline_fallback = "none"
         merged["standard"] = _apply_v3_output_contract(
@@ -1161,15 +1336,21 @@ def generate_adaptations(
                     lesson = _source_fallback_lesson(
                         key, universal_profile, source_refs
                     )
-                    fallback_used = "source_extractive"
+                    fallback_used = "classroom_source_fallback"
                     retry_history.append(
-                        {"attempts": 2, "status": "failed", "recovery": "source_extractive"}
+                        {
+                            "attempts": 2,
+                            "status": "failed",
+                            "recovery": "classroom_source_fallback",
+                        }
                     )
-                if not _valid_lesson(lesson):
+                if not _valid_lesson(
+                    lesson, classroom=key in CLASSROOM_LESSON_KEYS
+                ):
                     lesson = _source_fallback_lesson(
                         key, universal_profile, source_refs
                     )
-                    fallback_used = "source_extractive"
+                    fallback_used = "classroom_source_fallback"
                 merged[key] = _apply_v3_output_contract(
                     inject_verified_visuals_into_lesson(lesson, preferred),
                     key=key,
@@ -1187,8 +1368,11 @@ def generate_adaptations(
         from engines.qa.pipeline import validate_lesson_package
         from knowledge.service import inject_exam_practice_into_lessons
 
-        if grounding_mode != "uploaded_source":
-            merged = inject_exam_practice_into_lessons(merged, knowledge)
+        # Attach exam practice for classroom tabs: official bank when available,
+        # otherwise practice-from-source from the uploaded profile claims.
+        merged = inject_exam_practice_into_lessons(
+            merged, knowledge, universal_profile=universal_profile
+        )
         merged["_meta"]["knowledge"] = knowledge
         merged["_meta"]["source_envelope"] = source_envelope
         merged["_meta"]["universal_profile"] = universal_profile
@@ -1291,6 +1475,20 @@ def generate_adaptations(
             }
 
         step("Done!", 1.0)
+        try:
+            from engines.universal_lesson_intelligence.pipeline import (
+                finalize_lesson_bundle,
+                is_uli_pipeline_enabled,
+            )
+
+            if is_uli_pipeline_enabled():
+                finalize_lesson_bundle(
+                    merged,
+                    lesson_text=lesson_text,
+                    source_envelope=source_envelope,
+                )
+        except Exception:
+            merged.setdefault("_meta", {})["lesson_bundle_error"] = "finalize_failed"
     except Exception as error:
         raise RuntimeError(
             "Adaptation generation could not complete after safe fallbacks."
@@ -1304,7 +1502,12 @@ def quality_report(adaptations: dict) -> dict:
     sheet = _coerce_dict(adaptations.get("worksheet", {}))
     ctx = (adaptations.get("_meta") or {}).get("lesson_context", {})
     lesson_ok = sum(
-        1 for k in LESSON_KEYS if _valid_lesson(_coerce_dict(adaptations.get(k, {})))
+        1
+        for k in LESSON_KEYS
+        if _valid_lesson(
+            _coerce_dict(adaptations.get(k, {})),
+            classroom=k in CLASSROOM_LESSON_KEYS,
+        )
     )
     stem_qa = (adaptations.get("_meta") or {}).get("stem_qa") or {}
     publish_qa = (adaptations.get("_meta") or {}).get("publish_qa") or {}
@@ -1318,6 +1521,9 @@ def quality_report(adaptations: dict) -> dict:
     knowledge = (adaptations.get("_meta") or {}).get("knowledge") or {}
     rag_hits = len(knowledge.get("rag_hits") or [])
     official_mcqs = len(knowledge.get("official_mcqs") or [])
+    uli_meta = (adaptations.get("_meta") or {}).get("uli") or {}
+    uli_certification = uli_meta.get("certification") if uli_meta.get("enabled") else None
+    uli_quality_score = uli_meta.get("quality_score") if uli_meta.get("enabled") else None
     base_exam_ready = (
         _valid_vocabulary(vocab)
         and _valid_worksheet(sheet)
@@ -1345,4 +1551,7 @@ def quality_report(adaptations: dict) -> dict:
         or stem_qa.get("blocked_reason"),
         "exam_ready": base_exam_ready and stem_passed and not publish_blocked,
         "adaptations_ready": base_exam_ready,
+        "uli_enabled": bool(uli_meta.get("enabled")),
+        "uli_certification": uli_certification,
+        "uli_quality_score": uli_quality_score,
     }
