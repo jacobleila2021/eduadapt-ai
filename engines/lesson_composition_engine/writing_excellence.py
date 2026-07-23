@@ -59,9 +59,7 @@ def vary_openings(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
     alts = (
         "Notice how",
         "Here is another way to see",
-        "Hold onto this idea:",
         "A clear classroom example helps:",
-        "Pause and check:",
     )
     alt_i = 0
     for sec in sections:

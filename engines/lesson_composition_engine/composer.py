@@ -87,11 +87,17 @@ def _concept_explain(concept: Mapping[str, Any], pool: list[str]) -> str:
 
 def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
     """Deterministic mainstream lesson from Canonical Lesson Graph."""
-    topic = str(clg.get("topic") or "Lesson")
+    from engines.lesson_composition_engine.vocab_quality import clean_topic, is_junk_term
+
+    topic = clean_topic(str(clg.get("topic") or "Lesson"))
     subject = str(clg.get("subject_key") or "general")
     goals = clg.get("learning_goals") or []
     goal = str((goals[0] or {}).get("text") if goals else f"Understand {topic}.")
-    concepts = list(clg.get("core_concepts") or [])
+    concepts = [
+        c
+        for c in (clg.get("core_concepts") or [])
+        if isinstance(c, dict) and not is_junk_term(str(c.get("name") or ""))
+    ]
     pool = _fact_pool(clg)
     misconceptions = list(clg.get("misconceptions") or [])
     examples = list(clg.get("examples") or [])
@@ -126,8 +132,8 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 "title": stage,
                 "role": stage.lower().replace(" ", "_"),
                 "body": _para(
-                    f"In the {stage.lower()} stage of learning {topic}, we slow down and make meaning first.",
-                    pool[min(i + 1, len(pool) - 1)] if pool else f"Connect {stage.lower()} thinking to {topic}.",
+                    f"We begin with {stage.lower()} so {topic} feels clear and organised.",
+                    pool[min(i + 1, len(pool) - 1)] if pool else f"Connect this {stage.lower()} step to {topic}.",
                 ),
             }
         )
@@ -327,119 +333,60 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
-    terms = list(clg.get("vocabulary") or [])
-    topic = str(clg.get("topic") or "Lesson Vocabulary")
-    # Ensure publisher-grade card count from CLG concepts/facts (never frequency lists)
-    seen = {
-        str((t.get("term") if isinstance(t, dict) else t) or "").strip().lower()
-        for t in terms
-    }
+    from engines.lesson_composition_engine.vocab_quality import (
+        clean_topic,
+        is_junk_term,
+        normalize_vocab_items,
+    )
+
+    topic = clean_topic(str(clg.get("topic") or "Lesson Vocabulary"))
+    claims = [str(f.get("text") or "") for f in (clg.get("facts") or []) if f]
+    claims.extend(str(t) for t in (clg.get("claim_texts") or []) if t)
+
+    raw_terms: list[Any] = list(clg.get("vocabulary") or [])
     for c in clg.get("core_concepts") or []:
         name = str(c.get("name") or "").strip()
-        if name and name.lower() not in seen:
-            seen.add(name.lower())
-            terms.append(
+        if name and not is_junk_term(name):
+            expl = str(c.get("explanation") or "").strip()
+            raw_terms.append(
                 {
                     "term": name,
-                    "definition": str(c.get("explanation") or f"{name} is a core idea in {topic}."),
-                    "example": next(
-                        (
-                            str(f.get("text") or "")
-                            for f in (clg.get("facts") or [])
-                            if name.lower() in str(f.get("text") or "").lower()
-                        ),
-                        "",
-                    ),
-                    "related_concepts": [name],
-                    "lesson_context": f"{name} is taught in {topic}.",
+                    "definition": expl
+                    or next((t for t in claims if name.lower() in t.lower()), ""),
+                    "example": next((t for t in claims if name.lower() in t.lower()), ""),
                 }
             )
-    for fact in (clg.get("facts") or [])[:8]:
-        text = str(fact.get("text") or "")
-        # Pull a meaningful noun phrase already present in claims (source-bound)
-        for concept in clg.get("core_concepts") or []:
-            name = str(concept.get("name") or "")
-            if name and name.lower() in text.lower() and name.lower() not in seen:
-                seen.add(name.lower())
-                terms.append(
-                    {
-                        "term": name,
-                        "definition": text[:220],
-                        "example": text[:180],
-                        "lesson_context": f"Used when explaining {topic}.",
-                    }
-                )
-    # Topic tokens as last resort (still lesson-bound, not frequency corpus)
-    if len(terms) < 8:
-        for token in topic.replace("-", " ").split():
-            clean = token.strip(" .,;:!?")
-            if len(clean) >= 4 and clean.lower() not in seen and clean.lower() not in {"this", "that", "with", "from"}:
-                seen.add(clean.lower())
-                terms.append(
-                    {
-                        "term": clean[:1].upper() + clean[1:],
-                        "definition": f"A key word connected to {topic}.",
-                        "lesson_context": f"Appears in the topic title for {topic}.",
-                    }
-                )
-            if len(terms) >= 8:
-                break
 
-    # Claim-linked support words (source-bound) + deterministic study scaffolds
-    if len(terms) < 8:
-        import re
-
-        for fact in list(clg.get("facts") or []) + [{"text": t} for t in (clg.get("claim_texts") or [])]:
-            text = str(fact.get("text") or "")
-            for token in re.findall(r"\b[A-Za-z][a-zA-Z]{3,}\b", text):
-                key = token.lower()
-                if key in seen or key in {
-                    "this", "that", "with", "from", "have", "will", "when", "which",
-                    "their", "there", "about", "into", "than", "then", "same", "unit",
-                }:
-                    continue
-                seen.add(key)
-                terms.append(
-                    {
-                        "term": token[:1].upper() + token[1:],
-                        "definition": text[:220],
-                        "example": text[:180],
-                        "lesson_context": f"Used in the uploaded evidence for {topic}.",
-                    }
-                )
-                if len(terms) >= 8:
-                    break
-            if len(terms) >= 8:
-                break
-    if len(terms) < 8:
-        for term, definition in (
-            ("Example", f"A worked example that makes {topic} clearer."),
-            ("Evidence", f"Lesson evidence used to explain {topic} accurately."),
-            ("Model", f"A simple model that helps you picture {topic}."),
-            ("Check", f"A quick check that you can explain {topic} in your own words."),
-            ("Apply", f"An application of {topic} in a familiar situation."),
-        ):
-            if term.lower() in seen:
-                continue
-            seen.add(term.lower())
-            terms.append(
-                {
-                    "term": term,
-                    "definition": definition,
-                    "lesson_context": f"Supports learning {topic}.",
-                    "difficulty": "support",
-                }
-            )
-            if len(terms) >= 8:
-                break
-
+    normalized = normalize_vocab_items(raw_terms, topic=topic, claims=claims)
+    # Ensure a solid study set from claim-grounded science terms (never junk fillers)
+    if len(normalized) < 6:
+        extras = []
+        for text in claims:
+            low = text.lower()
+            for term in (
+                "Force",
+                "Pressure",
+                "Area",
+                "Pascal",
+                "Newton",
+                "Evaporation",
+                "Condensation",
+                "Precipitation",
+                "Collection",
+            ):
+                if term.lower() in low and not is_junk_term(term):
+                    extras.append({"term": term, "definition": text, "example": text})
+        normalized = normalize_vocab_items(
+            list(normalized) + extras, topic=topic, claims=claims
+        )
     page = compose_vocabulary_page(
-        terms,
+        normalized,
         topic=topic,
         misconceptions=[str(m.get("label") or "") for m in (clg.get("misconceptions") or [])],
-        context={"topic": topic, "lesson": {"topic": topic}},
+        claims=claims,
+        context={"topic": topic, "claims": claims, "lesson": {"topic": topic}},
     )
-    page["_lce"] = {"frequency_based": False, "provenance": "clg"}
+    page["_lce"] = {"frequency_based": False, "from_clg": True, "provenance": "clg"}
     return page
 
 

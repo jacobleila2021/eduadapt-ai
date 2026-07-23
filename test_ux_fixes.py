@@ -275,7 +275,7 @@ def test_ruler_colors_soft():
 def test_lesson_design_variants():
     from lesson_design import BG_MAIN, TEXT_BODY, accent_for_variant, classify_section
 
-    assert BG_MAIN == "#FFF9EE"
+    assert BG_MAIN == "#F7FAFC"
     assert TEXT_BODY == "#333333"
     assert classify_section("Welcome to today's lesson", "", 0) == "introduction"
     assert classify_section("Explain the water cycle", "teal", 1) == "information"

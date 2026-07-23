@@ -773,19 +773,18 @@ def _source_fallback_lesson(
         claim = unit(i)
         short_qs.append(
             f"**Q{i + 1} (Short, 2 marks):** Using the lesson on {topic}, explain: "
-            f"{claim[:180]} "
-            f"**Model answer (practice-from-source):** Restate the claim accurately and "
-            f"name the related term from the material."
+            f"{claim[:180]}\n"
+            f"*Suggested answer:* Restate the idea accurately and name the related term "
+            f"from the lesson."
         )
     long_qs = []
     for i in range(2):
         a, b = unit(i + 2), unit(i + 5)
         long_qs.append(
             f"**Q{i + 5} (Long/HOTS, 5 marks):** Compare and connect these ideas from "
-            f"the uploaded lesson: (1) {a[:140]} (2) {b[:140]} "
-            f"**Model answer (practice-from-source):** Describe both ideas, explain the "
-            f"link using lesson terms, and give one classroom/real-world implication "
-            f"supported by the source."
+            f"today's lesson: (1) {a[:140]} (2) {b[:140]}\n"
+            f"*Suggested answer:* Describe both ideas, explain the link using lesson terms, "
+            f"and give one real-world implication supported by the source."
         )
 
     sections = [
@@ -839,8 +838,8 @@ def _source_fallback_lesson(
             {
                 "title": "Exam Practice",
                 "body": (
-                    "Board-style practice grounded in the uploaded source "
-                    "(practice-from-source — not an official answer key unless marked official).\n\n"
+                    "Board-style practice using ideas from today's uploaded lesson "
+                    "(teacher-checked answers — not an official board mark scheme).\n\n"
                     + "\n\n".join(short_qs + long_qs)
                 ),
                 "box": "orange",
@@ -875,7 +874,9 @@ def _source_fallback_lesson(
                 {
                     "section": "Exam Practice",
                     "question": f"Q{i}",
-                    "model_answer": line.split("**Model answer")[-1].strip(": *"),
+                    "model_answer": line.split("*Suggested answer:*")[-1].strip()
+                    if "*Suggested answer:*" in line
+                    else line.split("**Model answer")[-1].strip(": *"),
                     "marks": 2 if i <= 4 else 5,
                 }
             )

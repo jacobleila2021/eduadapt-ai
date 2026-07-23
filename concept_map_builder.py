@@ -32,28 +32,34 @@ FONT = "Lexend, Arial, Verdana, sans-serif"
 
 
 def _topic_and_terms(vocab: dict) -> tuple[str, list[str]]:
-    topic = (vocab.get("topic") or "Lesson Topic").strip()
+    try:
+        from engines.lesson_composition_engine.vocab_quality import clean_topic, is_junk_term
+    except Exception:
+        clean_topic = lambda t, fallback="Lesson Topic": t or fallback  # noqa: E731
+        is_junk_term = lambda t: False  # noqa: E731
+
+    topic = clean_topic((vocab.get("topic") or "Lesson Topic").strip())
     terms: list[str] = []
     for word in vocab.get("word_wall") or []:
         term = (word.get("term") or "").strip()
-        if term and term not in terms:
+        if term and term not in terms and not is_junk_term(term):
             terms.append(term)
     if len(terms) < 3:
         for row in vocab.get("reference_chart") or []:
             term = (row.get("term") or "").strip()
-            if term and term not in terms:
+            if term and term not in terms and not is_junk_term(term):
                 terms.append(term)
     if len(terms) < 1:
         for card in vocab.get("flashcards") or []:
             term = (card.get("front") or card.get("term") or "").strip()
-            if term and term not in terms:
+            if term and term not in terms and not is_junk_term(term):
                 terms.append(term)
     if len(terms) < 1:
         for row in vocab.get("picture_words") or []:
             term = (row.get("term") or "").strip()
-            if term and term not in terms:
+            if term and term not in terms and not is_junk_term(term):
                 terms.append(term)
-    return topic, terms[:10]
+    return topic, terms[:8]
 
 
 def _wrap_label(text: str, max_len: int = 14) -> list[str]:

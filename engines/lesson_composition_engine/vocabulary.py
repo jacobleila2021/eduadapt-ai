@@ -6,6 +6,12 @@ import re
 from typing import Any
 
 from engines.lesson_composition_engine.schemas import VocabularyCard
+from engines.lesson_composition_engine.vocab_quality import (
+    build_student_definition,
+    clean_topic,
+    is_junk_term,
+    normalize_vocab_items,
+)
 
 CARD_COLORS = (
     "#e6f7f8",  # teal mist
@@ -119,30 +125,44 @@ def compose_vocabulary_card(
         pronunciation = _syllable_guess(display)
     if not part_of_speech:
         part_of_speech = _guess_pos(display)
+
+    # Never keep LXP "not found" / template filler as the learner-facing definition
+    for bad in (
+        "not found in verified glossary",
+        "core concept in this lesson",
+        "a key lesson term",
+        "key word connected to",
+        "ask ai tutor",
+    ):
+        if bad in (definition or "").lower():
+            definition = ""
+        if bad in (academic_definition or "").lower():
+            academic_definition = ""
+        if bad in (simple_explanation or "").lower():
+            simple_explanation = ""
+
     academic = (academic_definition or definition or "").strip()
     student = (simple_explanation or "").strip()
+    topic = str((context.get("lesson") or {}).get("topic") or context.get("topic") or "")
+    topic = clean_topic(topic, fallback="this topic")
     if not student and academic:
-        student = (
-            f"In simple words, {display.lower()} means: "
-            f"{academic.rstrip('.')}."
-        )
+        student = build_student_definition(display, academic, topic=topic)
     if not academic and student:
         academic = student
+    if not academic:
+        academic = build_student_definition(display, "", topic=topic)
+        student = academic
     if not example_sentence and display:
         example_sentence = (
-            f"In today's lesson, we use the word {display} to explain the main idea clearly."
+            f"Scientists use the word {display} when they explain {topic} clearly."
         )
-    if not academic:
-        academic = f"A key lesson term: {display}."
-        student = student or academic
     if not memory_tip:
         memory_tip = (
-            f"Link {display} to a picture in your mind from this lesson, "
-            f"then say the definition aloud once."
+            f"Picture {display} in the lesson diagram, then say one clear sentence "
+            f"that starts with “{display} is…”."
         )
     if not lesson_context:
-        topic = str((context.get("lesson") or {}).get("topic") or context.get("topic") or "this lesson")
-        lesson_context = f"{display} appears in {topic} as a word you need for clear explanations."
+        lesson_context = f"{display} helps you explain {topic} with accurate vocabulary."
 
     return VocabularyCard(
         term=display,
@@ -172,80 +192,52 @@ def compose_vocabulary_page(
     topic: str = "",
     context: dict[str, Any] | None = None,
     misconceptions: list[str] | None = None,
+    claims: list[str] | None = None,
 ) -> dict[str, Any]:
     """Full vocabulary study page with premium cards + practice scaffolds."""
     context = context or {}
+    topic = clean_topic(topic, fallback=str(context.get("topic") or "Lesson Vocabulary"))
+    context = {**context, "topic": topic, "lesson": {**(context.get("lesson") or {}), "topic": topic}}
+
+    claim_pool = list(claims or [])
+    for c in context.get("claims") or []:
+        if c:
+            claim_pool.append(str(c))
+
+    normalized = normalize_vocab_items(terms, topic=topic, claims=claim_pool)
     cards: list[VocabularyCard] = []
     seen: set[str] = set()
 
-    for i, item in enumerate(terms):
-        if isinstance(item, dict):
-            term = str(item.get("term") or item.get("word") or "").strip()
-            if not term or term.lower() in seen:
-                continue
-            seen.add(term.lower())
-            cards.append(
-                compose_vocabulary_card(
-                    term,
-                    definition=str(item.get("definition") or ""),
-                    simple_explanation=str(
-                        item.get("child_friendly")
-                        or item.get("simple_explanation")
-                        or ""
-                    ),
-                    academic_definition=str(
-                        item.get("academic_definition") or item.get("definition") or ""
-                    ),
-                    example_sentence=str(
-                        item.get("example") or item.get("example_sentence") or ""
-                    ),
-                    memory_tip=str(item.get("memory_tip") or ""),
-                    lesson_context=str(item.get("lesson_context") or ""),
-                    picture=str(
-                        item.get("picture")
-                        or item.get("visual_description")
-                        or item.get("draw_this")
-                        or ""
-                    ),
-                    synonyms=_as_list(
-                        item.get("synonyms") or item.get("synonym") or item.get("related_words")
-                    ),
-                    antonyms=_as_list(
-                        item.get("antonyms") or item.get("antonym") or item.get("opposite_words")
-                    ),
-                    related_concepts=_as_list(item.get("related_concepts")),
-                    difficulty=str(item.get("difficulty") or "core"),
-                    reading_level=str(item.get("reading_level") or "grade_appropriate"),
-                    pronunciation=str(item.get("pronunciation") or ""),
-                    part_of_speech=str(item.get("part_of_speech") or ""),
-                    color_index=i,
-                    emoji=str(item.get("emoji") or ""),
-                    verified=bool(item.get("verified")),
-                    context=context,
-                )
+    for i, item in enumerate(normalized):
+        term = str(item.get("term") or "").strip()
+        if not term or term.lower() in seen or is_junk_term(term):
+            continue
+        seen.add(term.lower())
+        cards.append(
+            compose_vocabulary_card(
+                term,
+                definition=str(item.get("definition") or ""),
+                simple_explanation=str(item.get("simple_explanation") or ""),
+                academic_definition=str(item.get("academic_definition") or item.get("definition") or ""),
+                example_sentence=str(item.get("example_sentence") or item.get("example") or ""),
+                memory_tip=str(item.get("memory_tip") or ""),
+                lesson_context=str(item.get("lesson_context") or ""),
+                picture=str(item.get("picture") or ""),
+                synonyms=_as_list(item.get("synonyms") or item.get("related_words")),
+                antonyms=_as_list(item.get("antonyms") or item.get("opposite_words")),
+                related_concepts=_as_list(item.get("related_concepts")),
+                difficulty=str(item.get("difficulty") or "core"),
+                reading_level=str(item.get("reading_level") or "grade_appropriate"),
+                pronunciation=str(item.get("pronunciation") or ""),
+                part_of_speech=str(item.get("part_of_speech") or ""),
+                color_index=i,
+                emoji=str(item.get("emoji") or ""),
+                verified=bool(item.get("verified")),
+                context=context,
             )
-        else:
-            term = str(item or "").strip()
-            if not term or term.lower() in seen:
-                continue
-            seen.add(term.lower())
-            cards.append(
-                compose_vocabulary_card(term, color_index=i, context=context)
-            )
+        )
 
-    if len(cards) < 5 and topic:
-        # Ensure minimum study set from topic tokens
-        for token in re.findall(r"[A-Za-z][A-Za-z\-]{3,}", topic):
-            if token.lower() not in seen:
-                seen.add(token.lower())
-                cards.append(
-                    compose_vocabulary_card(
-                        token, color_index=len(cards), context=context
-                    )
-                )
-            if len(cards) >= 8:
-                break
-
+    # Do not pad with topic-token junk; quality over quota
     word_wall = [c.to_word_wall_row() for c in cards]
     flashcards = [
         {
@@ -266,14 +258,16 @@ def compose_vocabulary_page(
     practice = [
         {
             "term": c.term,
-            "sentence_blank": (c.example_sentence.replace(c.term, "________", 1)
-                               if c.term in c.example_sentence
-                               else f"Use ________ ({c.term.lower()}) in a clear sentence."),
+            "sentence_blank": (
+                c.example_sentence.replace(c.term, "________", 1)
+                if c.term in c.example_sentence
+                else f"Write one sentence that correctly uses ________ ({c.term})."
+            ),
         }
         for c in cards
     ]
     fill_blanks = [
-        f"The term ________ means: {c.definition}"
+        f"Complete: ________ — {c.definition}"
         for c in cards[:8]
     ]
     fill_answers = [c.term for c in cards[:8]]
@@ -282,26 +276,19 @@ def compose_vocabulary_page(
             "term": c.term,
             "definition": c.definition,
             "synonym": (c.synonyms[0] if c.synonyms else ""),
-            "exam_tip": f"Define {c.term} and give one example.",
+            "exam_tip": f"Define {c.term} and give one example from the lesson.",
         }
         for c in cards
     ]
 
-    # Premium SVG concept map for vocabulary (not Mermaid by default)
     from engines.lesson_composition_engine.diagrams import build_vocabulary_concept_map_svg
 
-    concept_map_svg = build_vocabulary_concept_map_svg(
-        topic or "Lesson Vocabulary",
-        [c.term for c in cards],
-    )
-    flowchart_svg = build_vocabulary_concept_map_svg(
-        topic or "Lesson Vocabulary",
-        [c.term for c in cards],
-        mode="flowchart",
-    )
+    map_terms = [c.term for c in cards if not is_junk_term(c.term)][:8]
+    concept_map_svg = build_vocabulary_concept_map_svg(topic, map_terms)
+    flowchart_svg = build_vocabulary_concept_map_svg(topic, map_terms, mode="flowchart")
 
     return {
-        "topic": topic or "Lesson Vocabulary",
+        "topic": topic,
         "word_wall": word_wall,
         "flashcards": flashcards,
         "picture_words": picture_words,
@@ -312,7 +299,7 @@ def compose_vocabulary_page(
         },
         "reference_chart": reference_chart,
         "vocabulary_cards": [c.to_dict() for c in cards],
-        "mermaid_diagram": "",  # LCE prefers SVG; Mermaid only if requested
+        "mermaid_diagram": "",
         "svg_diagram": concept_map_svg,
         "concept_map_svg": concept_map_svg,
         "flowchart_svg": flowchart_svg,

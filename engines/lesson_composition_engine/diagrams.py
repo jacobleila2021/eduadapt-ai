@@ -114,14 +114,82 @@ def build_educational_flowchart_svg(
     return "".join(parts)
 
 
+def build_process_cycle_svg(topic: str, stages: list[str]) -> str:
+    """Circular process diagram — ideal for water cycle / life cycles / systems."""
+    nodes = [str(s).strip() for s in stages if str(s).strip()][:6]
+    if len(nodes) < 3:
+        nodes = ["Stage 1", "Stage 2", "Stage 3", "Stage 4"]
+    width, height = 640, 480
+    cx, cy = width / 2, height / 2 + 8
+    orbit = 155
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" role="img" '
+        f'aria-label="{_esc(topic)} process cycle">'
+        f'<rect width="100%" height="100%" fill="#f8fafc"/>'
+        f'<text x="{cx}" y="30" text-anchor="middle" font-family="{FONT}" '
+        f'font-size="20" font-weight="700" fill="{NAVY}">{_esc(topic)}</text>'
+        f'<text x="{cx}" y="50" text-anchor="middle" font-family="{UI_FONT}" '
+        f'font-size="12" fill="{MUTED}">Process cycle — follow the arrows in order</text>'
+        f'<circle cx="{cx}" cy="{cy}" r="{orbit}" fill="none" stroke="#cbd5e1" '
+        f'stroke-width="2" stroke-dasharray="6 6"/>'
+    ]
+    positions: list[tuple[float, float]] = []
+    n = len(nodes)
+    for i, label in enumerate(nodes):
+        angle = -math.pi / 2 + (2 * math.pi * i / n)
+        x = cx + orbit * math.cos(angle)
+        y = cy + orbit * math.sin(angle)
+        positions.append((x, y))
+        fill = CARD_FILLS[i % len(CARD_FILLS)]
+        nw, nh = 132, 50
+        parts.append(_rounded_rect(x - nw / 2, y - nh / 2, nw, nh, fill, TEAL, r=14))
+        parts.append(_text_block(x, y - 4, _wrap(label, 14), fill=NAVY, size=13, weight="700"))
+        # arrow toward next node
+        j = (i + 1) % n
+        angle2 = -math.pi / 2 + (2 * math.pi * j / n)
+        # mid-arc point
+        mid = (angle + angle2) / 2
+        if j == 0 and i == n - 1:
+            mid = angle + math.pi / n
+        ax = cx + (orbit - 8) * math.cos(mid)
+        ay = cy + (orbit - 8) * math.sin(mid)
+        parts.append(
+            f'<circle cx="{ax:.1f}" cy="{ay:.1f}" r="5" fill="{TEAL}"/>'
+        )
+    # centre hub
+    parts.append(
+        f'<circle cx="{cx}" cy="{cy}" r="48" fill="{NAVY}" stroke="{TEAL}" stroke-width="3"/>'
+    )
+    parts.append(_text_block(cx, cy - 6, _wrap("Cycle", 10), fill=WHITE, size=13, weight="700"))
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def build_concept_map_svg(
     topic: str,
     concepts: list[str],
     *,
     relationships: list[tuple[str, str, str]] | None = None,
 ) -> str:
-    """Hierarchical radial concept map with legend."""
-    nodes = [str(c).strip() for c in concepts if str(c).strip()][:10]
+    """Hierarchical radial concept map — or process cycle when the topic is cyclic."""
+    from engines.lesson_composition_engine.vocab_quality import clean_topic, is_junk_term
+
+    topic = clean_topic(topic, fallback="Lesson Topic")
+    nodes = [str(c).strip() for c in concepts if str(c).strip() and not is_junk_term(str(c))][:8]
+    low = topic.lower()
+    if any(k in low for k in ("cycle", "circulat", "life cycle")) or (
+        {"evaporation", "condensation", "precipitation"} & {n.lower() for n in nodes}
+    ):
+        cycle_nodes = nodes or ["Evaporation", "Condensation", "Precipitation", "Collection"]
+        # Prefer canonical order when present
+        preferred = ["Evaporation", "Condensation", "Precipitation", "Collection", "Runoff", "Transpiration"]
+        ordered = [p for p in preferred if any(p.lower() == n.lower() for n in cycle_nodes)]
+        for n in cycle_nodes:
+            if not any(n.lower() == o.lower() for o in ordered):
+                ordered.append(n)
+        return build_process_cycle_svg(topic, ordered[:6])
+
     if not nodes:
         nodes = ["Key idea", "Example", "Practice"]
     width, height = 640, 440
@@ -138,7 +206,6 @@ def build_concept_map_svg(
         f'<text x="24" y="{height - 18}" font-family="{UI_FONT}" font-size="11" fill="{MUTED}">'
         f"Legend: centre = topic · outer nodes = concepts · lines = relationships</text>"
     ]
-    # spokes first
     positions: list[tuple[float, float]] = []
     for i, _ in enumerate(nodes):
         angle = -math.pi / 2 + (2 * math.pi * i / max(len(nodes), 1))
@@ -149,16 +216,13 @@ def build_concept_map_svg(
             f'<line x1="{cx}" y1="{cy}" x2="{x:.1f}" y2="{y:.1f}" '
             f'stroke="#94a3b8" stroke-width="1.8"/>'
         )
-    # hub
     parts.append(f'<circle cx="{cx}" cy="{cy}" r="{hub_r}" fill="{NAVY}" stroke="{TEAL}" stroke-width="3"/>')
     parts.append(_text_block(cx, cy - 6, _wrap(topic, 12), fill=WHITE, size=12, weight="700"))
-    # concept nodes
     for i, (label, (x, y)) in enumerate(zip(nodes, positions)):
         fill = CARD_FILLS[i % len(CARD_FILLS)]
         nw, nh = 118, 46
         parts.append(_rounded_rect(x - nw / 2, y - nh / 2, nw, nh, fill, TEAL, r=12))
         parts.append(_text_block(x, y - 4, _wrap(label, 14), fill=NAVY, size=12))
-    # optional relationship labels (first few)
     for a, b, rel in (relationships or [])[:4]:
         if a in nodes and b in nodes:
             ia, ib = nodes.index(a), nodes.index(b)

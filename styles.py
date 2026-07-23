@@ -477,7 +477,7 @@ def get_custom_css() -> str:
     }}
 
     .alora-picture-word-card {{
-        background: #FFF9EE;
+        background: #F7FAFC;
         border: 1px solid #e8dcc8;
         border-radius: 16px;
         padding: 0.85rem;

@@ -406,10 +406,10 @@ def _score_vocabulary_page(vocab: Mapping[str, Any]) -> PublisherQualityReport:
     clarity = 78.0
     if len(wall) >= 8:
         clarity += 18
-    elif len(wall) >= 5:
+    elif len(wall) >= 4:
         clarity += 16
     else:
-        notes.append("Fewer than 5 cards.")
+        notes.append("Fewer than 4 vocabulary cards.")
     dims.append(PqiDimensionScore("educational_clarity", _clamp(clarity), notes))
 
     sample = wall[0] if wall and isinstance(wall[0], dict) else {}
@@ -447,7 +447,7 @@ def _score_vocabulary_page(vocab: Mapping[str, Any]) -> PublisherQualityReport:
     dims.append(PqiDimensionScore("assessment_quality", 96.0 if vocab.get("self_test") else 80.0, []))
     dims.append(PqiDimensionScore("revision_quality", 96.0 if vocab.get("reference_chart") else 78.0, []))
     dims.append(PqiDimensionScore("professional_polish", 98.0 if sample.get("pqle_card") else 82.0, []))
-    dims.append(PqiDimensionScore("teaching_effectiveness", 97.0 if len(wall) >= 5 else 70.0, []))
+    dims.append(PqiDimensionScore("teaching_effectiveness", 97.0 if len(wall) >= 4 else 70.0, []))
     overall = sum(d.score for d in dims) / len(dims)
     dims.append(PqiDimensionScore("publication_readiness", _clamp(overall), []))
     overall = sum(d.score for d in dims) / len(dims)

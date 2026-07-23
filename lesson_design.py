@@ -8,7 +8,7 @@ import html
 import re
 
 # ---- Palette ----
-BG_MAIN = "#FFF9EE"
+BG_MAIN = "#F7FAFC"
 TEXT_BODY = "#333333"
 BORDER_SUBTLE = "#E8E0CF"
 SOFT_YELLOW = "#FFF59D"

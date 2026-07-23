@@ -193,7 +193,9 @@ def _rewrite_section_body(
         text = f"**Say:** {text}\n\n**Repeat:** Say the main idea aloud in your own words."
 
     if profile.get("visual_emphasis"):
-        text = f"🖼 **Look first, then read.**\n\n{text}"
+        # One quiet visual cue — do not spam every section with the same opener
+        if "look first" not in text.lower():
+            text = f"Study the diagram or colour cues for this idea, then read on.\n\n{text}"
 
     if profile.get("plain_language"):
         text = (

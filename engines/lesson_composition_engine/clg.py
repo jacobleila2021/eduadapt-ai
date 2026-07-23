@@ -298,6 +298,16 @@ def build_canonical_lesson_graph(
         or str(profile.get("topic") or profile.get("title") or "")
         or "this lesson"
     ).strip()
+    from engines.lesson_composition_engine.vocab_quality import META_TOPICS, clean_topic
+
+    if topic.lower() in META_TOPICS or topic.lower().startswith("learning objective"):
+        for key in ("lesson_title", "document_title", "source_title", "unit_title"):
+            cand = str(profile.get(key) or "").strip()
+            if cand and cand.lower() not in META_TOPICS:
+                topic = cand
+                break
+    topic = clean_topic(topic, fallback=(topic_hint or "Lesson Topic"))
+
     subject_key = str(
         sif.get("subject_key")
         or (sif.get("analysis") or {}).get("subject_key")
@@ -307,6 +317,12 @@ def build_canonical_lesson_graph(
 
     claims = _claims(uli, profile)
     claim_texts = [str(c.get("text") or "").strip() for c in claims if c.get("text")]
+    # If topic is still meta, try first claim that looks like a title
+    if topic.lower() in META_TOPICS or topic == "Lesson Topic":
+        for text in claim_texts[:6]:
+            if 12 <= len(text) <= 90 and not text.lower().startswith("students will"):
+                topic = clean_topic(text, fallback=topic)
+                break
     concepts = _concept_entries(profile, sif, claims)
     concept_names = [c["name"] for c in concepts]
     vocab = _vocabulary_from_sif_and_concepts(sif, concepts, claims)

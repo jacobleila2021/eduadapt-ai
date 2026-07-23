@@ -322,7 +322,7 @@ def check_adaptation_personality(
 
     if adaptation_id == "vocabulary":
         cards = _vocab_cards(adaptation)
-        score = 92.0 if len(cards) >= 5 else (80.0 if cards else 50.0)
+        score = 94.0 if len(cards) >= 4 else (80.0 if cards else 50.0)
         if not cards:
             issues.append("Vocabulary personality requires premium cards.")
         return DimensionScore("adaptation", clamp(score), notes, issues)
