@@ -22,18 +22,6 @@ PROMPT_LEAK_PHRASES = (
     "uploaded source",
     "assistant:",
     "user:",
-    "system:",
-    "instruction:",
-    "prompt:",
-    "metadata:",
-    "context:",
-    "subject:",
-    "curriculum:",
-    "time:",
-    "render:",
-    "engine:",
-    "internal:",
-    "json:",
     "internal prompt",
     "canonical lesson",
     "intelligence board",
@@ -45,9 +33,10 @@ PROMPT_LEAK_PHRASES = (
     "engine result",
 )
 
-# Authoring labels that leak when used as field headers in student text
+# Authoring labels that leak when used as field headers in student text.
+# Negative lookbehind avoids false positives like "Digestive System:" or "solar system:".
 PROMPT_LEAK_LABELS = (
-    r"(?i)\b(prompt|instruction|system|user|assistant|metadata|context|json|pipeline|llm)\s*:",
+    r"(?i)(?<![A-Za-z]\s)\b(prompt|instruction|system|user|assistant|metadata|context|json|pipeline|llm)\s*:",
     r"(?i)\b(grade\s*level|learning\s*objectives?|source\s*document)\s*:",
     r"(?i)\busing the uploaded source\b",
 )

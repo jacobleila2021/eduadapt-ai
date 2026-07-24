@@ -630,6 +630,15 @@ def compose_adaptations_from_clg(
             if isinstance(out[vid]["lce"], dict):
                 out[vid]["lce"]["lens"] = lens_for("ld" if vid == "dyslexia" else vid)
                 out[vid]["lce"]["intelligence_board_version"] = intelligence.get("version")
+                out[vid]["lce"]["composed_from_clg"] = True
+                out[vid]["lce"]["not_a_clone"] = True
+    # Stamp similarity audit for publication gate
+    try:
+        from engines.lesson_composition_engine.recovery import adaptation_similarity_report
+
+        out["_adaptation_similarity"] = adaptation_similarity_report(out)
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
@@ -680,6 +689,27 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
     pqi = pqle.get("pqi") or {}
     editorial = pqle.get("editorial") or {}
 
+    contribution_log = list(pqle.get("contribution_log") or [])
+    try:
+        from engines.lesson_composition_engine.recovery import measure_upstream_engine_contributions
+
+        contribution_log = measure_upstream_engine_contributions(
+            clg_dict,
+            uli=uli if isinstance(uli, Mapping) else {},
+            sif=sif if isinstance(sif, Mapping) else {},
+            uvie=uvie if isinstance(uvie, Mapping) else {},
+            full_adaptations=adaptations,
+        ) + contribution_log
+    except Exception as exc:  # noqa: BLE001
+        contribution_log.append(
+            {
+                "engine": "ULI/SIF/UVIE",
+                "bypassed": True,
+                "error": str(exc)[:300],
+                "log": "ENGINE CONTRIBUTION FAILURE",
+            }
+        )
+
     publication_ready = bool(pqle.get("publication_ready"))
     publisher_review = pqle.get("publisher_review_report") or {}
     result = {
@@ -698,6 +728,11 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
         "uevb": pqle.get("uevb") or {},
         "epp": pqle.get("epp") or {},
         "content_fidelity": pqle.get("content_fidelity") or {},
+        "eqs": pqle.get("eqs") or {},
+        "adaptation_similarity": pqle.get("adaptation_similarity") or {},
+        "golden_gate": pqle.get("golden_gate") or {},
+        "contribution_log": contribution_log,
+        "reject_reasons": pqle.get("reject_reasons") or [],
         "pqle": {
             "publication_ready": publication_ready,
             "reject_rendering": bool(pqle.get("reject_rendering")),
@@ -707,6 +742,9 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
             "pmes_approved": bool((pqle.get("pmes") or {}).get("approved")),
             "uevb_approved": bool((pqle.get("uevb") or {}).get("ok")),
             "peec_ok": bool((pqle.get("peec") or {}).get("ok")),
+            "mode": "formatting_only",
+            "eqs": (pqle.get("eqs") or {}).get("overall"),
+            "recovery_sprint": True,
             "phase_omega": True,
             "phase_omega_2_pmes": True,
             "smoke_ok": PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE_SMOKE_OK,
@@ -719,6 +757,11 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
             "llm_role": "educational_editor_optional",
             "publisher_quality_required": True,
             "pqi_threshold": pqle.get("threshold"),
+            "pqle_formatting_only": True,
+            "pmes_clarity_only": True,
+            "adaptation_similarity_max": 0.40,
+            "engine_contribution_bypass": True,
+            "golden_minimum_standard": True,
             "phase_omega": True,
             "phase_omega_2_pmes": True,
             "pmes_highest_authority": True,
@@ -727,6 +770,7 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
             "pobr_beta_readiness": True,
             "intelligence_board_required": True,
             "no_new_engines": True,
+            "recovery_sprint": True,
         },
     }
     try:

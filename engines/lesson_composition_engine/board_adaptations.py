@@ -134,6 +134,89 @@ def _body(text: str, *, profile: Mapping[str, Any], title: str) -> str:
     return text.strip()
 
 
+def _author_concept_prose(
+    version_id: str,
+    *,
+    name: str,
+    claim: str,
+    example: str,
+    topic: str,
+) -> str:
+    """Profile-unique instructional authorship — not a shortened clone of the same claim."""
+    from engines.lesson_composition_engine.master_teacher import craft_teaching_paragraph
+
+    claim_s = (claim or f"{name} is defined clearly in this lesson.").strip()
+    ex = (example or f"a familiar situation from {topic}").strip()
+    # Prefer dedicated voice per profile; craft_teaching_paragraph already diverges.
+    prose = craft_teaching_paragraph(
+        claim=claim_s,
+        topic=topic,
+        concept=name,
+        example=ex,
+        profile=version_id,
+    )
+    if version_id == "visual":
+        return (
+            f"Illustration first for {name}: find it on the diagram, then read. "
+            f"{claim_s} Callout: match the labels to this scene — {ex}. "
+            f"Keep your finger on the picture while you explain {name.lower()}."
+        )
+    if version_id == "auditory":
+        return (
+            f"Conversation about {name}: hear the idea, then say it. "
+            f"{claim_s} Memory cue: {ex}. "
+            f"Repeat one clear sentence about {name.lower()} without looking."
+        )
+    if version_id == "ell":
+        return (
+            f"Word: {name}. Short meaning: {claim_s} "
+            f"Sentence frame: “{name} means ____, and an example is ____.” "
+            f"Fill the frame using: {ex}. Say the frame twice."
+        )
+    if version_id == "ld":
+        return (
+            f"- Focus: {name}\n"
+            f"- Fact: {_shorten(claim_s, 16)}\n"
+            f"- Example: {_shorten(ex, 12)}\n"
+            f"- Check: Say {name.lower()} in five words."
+        )
+    if version_id == "dyslexia":
+        return (
+            f"{name}.\n"
+            f"{_shorten(claim_s, 14)}\n"
+            f"Slow line. Circle {name}.\n"
+            f"Whisper: {_shorten(ex, 10)}"
+        )
+    if version_id == "adhd":
+        return (
+            f"Chunk goal — {name}: {_shorten(claim_s, 14)} "
+            f"Do: underline the key fact. Example burst: {_shorten(ex, 10)}. "
+            f"Done check: one sentence, then move."
+        )
+    if version_id == "autism":
+        return (
+            f"Idea: {name}. Fact: {claim_s} "
+            f"Example (same routine every time): {ex}. "
+            f"Check: write one literal sentence about {name.lower()}."
+        )
+    if version_id == "teacher":
+        return (
+            f"Teach {name} with verified evidence: {claim_s} "
+            f"Anticipate confusion; model a strong answer that uses: {ex}. "
+            f"Assess with one oral check and one written sentence."
+        )
+    if version_id == "parent":
+        return (
+            f"Ask at home: What is {name.lower()}? Listen for: {claim_s} "
+            f"Try together: {ex}. Praise a clear explanation."
+        )
+    # mainstream classroom
+    return prose or (
+        f"{claim_s} In class, explain {name.lower()} with one partner check. "
+        f"Worked example: {ex}. Then write two accurate sentences."
+    )
+
+
 def _structure_for(version_id: str) -> list[str]:
     key = PROFILE_AUTHORING.get(version_id, {}).get("structure_key") or version_id
     if key == "standard":
@@ -163,26 +246,97 @@ def compose_adaptation_from_board(
     structure = _structure_for(version_id)
     sections: list[dict[str, Any]] = []
 
+    # Profile-unique lead so adaptations cannot collapse into clones.
+    lead_by_profile = {
+        "standard": f"Today you will master {topic} with clear explanations, examples, and practice.",
+        "visual": f"Start with the picture of {topic}. Every idea below links back to what you see.",
+        "auditory": f"Listen as we talk through {topic}. Say each key idea out loud before you write.",
+        "ell": f"We learn {topic} with short sentences, useful words, and sentence frames you can copy.",
+        "ld": f"We learn {topic} in small clear steps. Read one bullet, then check you understand.",
+        "dyslexia": f"Take {topic} slowly. Short lines, clear words, and one idea at a time.",
+        "adhd": f"Mission: finish {topic} in short bursts. Each chunk has a goal and a quick check.",
+        "autism": f"Today's routine for {topic} stays the same: idea, example, check, next step.",
+        "teacher": f"Teaching notes for {topic}: watch misconceptions, model answers, and check evidence.",
+        "parent": f"Home learning for {topic}: talk, try a real-life example, and praise clear explanations.",
+    }
+    sections.append(
+        {
+            "title": {
+                "standard": "Learning Goal",
+                "visual": "See the Big Picture",
+                "auditory": "Listen First",
+                "ell": "Key Words First",
+                "ld": "Step-by-Step Start",
+                "dyslexia": "Calm Start",
+                "adhd": "Mission Goal",
+                "autism": "Today's Routine",
+                "teacher": "Lesson Intent",
+                "parent": "Home Focus",
+            }.get(version_id, "Learning Goal"),
+            "role": "hook",
+            "body": lead_by_profile.get(version_id) or lead_by_profile["standard"],
+        }
+    )
+
     # Every adaptation with a diagram must teach from it (referenced, explained, used)
     if flowchart_svg or concept_map_svg:
         cap = (visuals[0].get("caption") if visuals else f"Diagram for {topic}")
-        diagram_title = (
-            "See It First"
-            if version_id == "visual"
-            else ("Lesson Diagram" if profile.get("visual_first") else "Using the Diagram")
-        )
+        diagram_bodies = {
+            "visual": (
+                f"Start here: the illustration of {topic}. {cap}. "
+                f"Read every label before any paragraph. You will keep returning to this picture."
+            ),
+            "auditory": (
+                f"Describe the diagram of {topic} out loud. {cap}. "
+                f"Name each label, then listen to yourself and correct any fuzzy words."
+            ),
+            "ell": (
+                f"Diagram words for {topic}: look, point, say. {cap}. "
+                f"Touch each label and say its name slowly."
+            ),
+            "ld": (
+                f"Diagram steps for {topic}:\n- Look at the whole picture\n- Point to each label\n- Match one label to one sentence\n{cap}."
+            ),
+            "dyslexia": (
+                f"Picture guide for {topic}. {cap}. One label at a time. Point. Read. Rest."
+            ),
+            "adhd": (
+                f"30-second diagram mission for {topic}: scan labels, pick one, explain it. {cap}."
+            ),
+            "autism": (
+                f"Same diagram routine for {topic}: 1) Open picture. 2) Read labels in order. 3) Match to the next idea. {cap}."
+            ),
+            "teacher": (
+                f"Use the {topic} diagram as the teaching anchor. {cap}. "
+                f"Cold-call labels before definitions; do not skip the visual check."
+            ),
+            "parent": (
+                f"At home, open the {topic} diagram together. {cap}. "
+                f"Ask your child to point to one label and explain it in their own words."
+            ),
+            "standard": (
+                f"The diagram shows how the ideas in {topic} connect. {cap}. "
+                f"Trace each labelled part, then match it to the explanation that follows."
+            ),
+        }
+        diagram_title = {
+            "visual": "See It First",
+            "auditory": "Speak the Diagram",
+            "ell": "Picture Words",
+            "ld": "Diagram Steps",
+            "dyslexia": "Picture Guide",
+            "adhd": "Diagram Mission",
+            "autism": "Diagram Routine",
+            "teacher": "Visual Anchor",
+            "parent": "Home Diagram",
+            "standard": "Lesson Diagram",
+        }.get(version_id, "Lesson Diagram")
         sections.append(
             {
                 "title": diagram_title,
                 "role": "visual",
                 "box": "visual",
-                "body": _body(
-                    f"The diagram shows how the ideas in {topic} connect. "
-                    f"{cap}. Trace each labelled part, then match it to the explanation that follows. "
-                    f"You will use this diagram again in practice.",
-                    profile=profile,
-                    title="diagram",
-                ),
+                "body": diagram_bodies.get(version_id) or diagram_bodies["standard"],
                 "_trace": {
                     "engines": ["uvie", "lce"],
                     "improves": "diagram",
@@ -278,15 +432,22 @@ def compose_adaptation_from_board(
             }
         )
 
-    # Shared teaching spine from board — ordered uniquely per profile
+    # Shared teaching spine from board — ordered uniquely per profile.
+    # Parent editions are authored only in the home block below (no student clone).
     concept_order = list(concepts)
     if version_id == "visual":
         concept_order = list(reversed(concepts)) if len(concepts) > 1 else concepts
     if version_id == "adhd":
-        # Fewer, tighter concept bursts
         concept_order = concepts[:3]
+    if version_id == "auditory":
+        concept_order = concepts[:4]
+    if version_id == "ell":
+        concept_order = concepts[:4]
 
-    if not any(s.get("title") == "Learning Goal" for s in sections) and version_id not in {"adhd", "autism", "parent"}:
+    if (
+        not any(s.get("title") == "Learning Goal" for s in sections)
+        and version_id not in {"adhd", "autism", "parent", "visual", "auditory", "ell"}
+    ):
         sections.append(
             {
                 "title": "Learning Goal",
@@ -310,154 +471,213 @@ def compose_adaptation_from_board(
             }
         )
 
-    for index, concept in enumerate(concept_order[:5]):
-        name = str(concept.get("name") or f"Idea {index + 1}")
-        claim = board_claim_for(board, name) or str(concept.get("explanation") or lead)
-        example = examples[index] if index < len(examples) else board_claim_for(board, name)
+    if version_id != "parent":
+        for index, concept in enumerate(concept_order[:5]):
+            name = str(concept.get("name") or f"Idea {index + 1}")
+            claim = board_claim_for(board, name) or str(concept.get("explanation") or lead)
+            example = examples[index] if index < len(examples) else board_claim_for(board, name)
+            if isinstance(example, dict):
+                example = str(example.get("text") or example.get("example") or example.get("caption") or "")
+            else:
+                example = str(example or "")
+            authored = _author_concept_prose(
+                version_id, name=name, claim=str(claim), example=example, topic=topic
+            )
 
-        if version_id == "adhd":
-            sections.append(
-                {
-                    "title": f"2-Minute Chunk {index + 1}: {name}",
-                    "role": "concept",
-                    "box": "checkpoint",
-                    "body": _body(claim, profile=profile, title=name),
-                }
-            )
-            sections.append(
-                {
-                    "title": f"Quick Check — {name}",
-                    "role": "practice_question",
-                    "box": "checkpoint",
-                    "body": _body(
-                        f"In one sentence, what is {name.lower()}? Use the evidence you just read.",
-                        profile=profile,
-                        title=name,
-                    ),
-                }
-            )
-            if index == 0 and profile.get("movement"):
+            if version_id == "adhd":
                 sections.append(
                     {
-                        "title": "Movement Break",
-                        "role": "reflection",
+                        "title": f"2-Minute Chunk {index + 1}: {name}",
+                        "role": "concept",
                         "box": "checkpoint",
-                        "body": _body(
-                            "Stand, stretch for twenty seconds, then continue to the next chunk.",
-                            profile=profile,
-                            title="break",
+                        "body": authored,
+                    }
+                )
+                sections.append(
+                    {
+                        "title": f"Quick Check — {name}",
+                        "role": "practice_question",
+                        "box": "checkpoint",
+                        "body": (
+                            f"Timer check: what is {name.lower()} in one sentence? "
+                            f"Use only the chunk evidence — no extra guessing."
                         ),
                     }
                 )
-            continue
+                if index == 0 and profile.get("movement"):
+                    sections.append(
+                        {
+                            "title": "Movement Break",
+                            "role": "reflection",
+                            "box": "checkpoint",
+                            "body": "Stand, stretch for twenty seconds, then continue to the next chunk.",
+                        }
+                    )
+                continue
 
-        concept_title = (
-            f"Teach Step by Step — {name}"
-            if version_id in {"ld", "dyslexia"}
-            else f"Concept: {name}"
-        )
-        sections.append(
-            {
-                "title": concept_title,
-                "role": "concept",
-                "box": "teach",
-                "body": _body(claim, profile=profile, title=name),
-                "_trace": {
-                    "engines": ["kie", "uli", "lce"],
-                    "improves": "explanation",
-                    "misconception": "",
-                    "learner_need": version_id,
-                },
-            }
-        )
-        # Mainstream teaching depth — publisher-grade concept cycle
-        if version_id == "standard":
+            concept_title = {
+                "ld": f"Small Step — {name}",
+                "dyslexia": f"Calm Read — {name}",
+                "visual": f"Picture Idea — {name}",
+                "auditory": f"Say and Hear — {name}",
+                "ell": f"Word Lesson — {name}",
+                "autism": f"Routine Idea — {name}",
+                "teacher": f"Teach — {name}",
+                "standard": f"Concept: {name}",
+            }.get(version_id, f"Concept: {name}")
             sections.append(
                 {
-                    "title": f"Understanding {name}",
-                    "role": "simple_explanation",
-                    "body": _body(
-                        f"{claim} Restate {name.lower()} in one short sentence before you continue.",
-                        profile=profile,
-                        title=name,
-                    ),
-                    "_trace": {"engines": ["lce"], "improves": "explanation", "learner_need": "standard"},
-                }
-            )
-            sections.append(
-                {
-                    "title": f"Worked Example — {name}",
-                    "role": "worked_example",
-                    "body": _body(
-                        f"Read this evidence carefully: {example or claim} "
-                        f"Underline the words that define {name.lower()}, then write two accurate sentences.",
-                        profile=profile,
-                        title=name,
-                    ),
-                    "_trace": {"engines": ["lce"], "improves": "example", "learner_need": "standard"},
-                }
-            )
-            sections.append(
-                {
-                    "title": f"Reflect on {name}",
-                    "role": "reflection",
-                    "body": _body(
-                        f"What part of {name.lower()} feels clear, and what still needs another example? "
-                        "Write one sentence that links this idea to the learning goal.",
-                        profile=profile,
-                        title=name,
-                    ),
-                    "_trace": {"engines": ["lce"], "improves": "reflection", "learner_need": "standard"},
-                }
-            )
-        if version_id not in {"parent"}:
-            sections.append(
-                {
-                    "title": f"Example — {name}",
-                    "role": "real_life_example",
-                    "body": _body(
-                        example or f"Connect {name.lower()} to one clear situation from {topic}.",
-                        profile=profile,
-                        title=name,
-                    ),
-                    "_trace": {"engines": ["lce"], "improves": "example", "learner_need": version_id},
-                }
-            )
-        if index < len(misconceptions) and version_id not in {"parent", "ell"}:
-            misc = misconceptions[index]
-            sections.append(
-                {
-                    "title": f"Watch Out — {name}",
-                    "role": "common_misconception",
-                    "body": _body(
-                        f"{str(misc.get('label') or '').rstrip('.')}. "
-                        f"Correction: {misc.get('correction') or 'Keep the definitions separate.'}",
-                        profile=profile,
-                        title=name,
-                    ),
+                    "title": concept_title,
+                    "role": "concept",
+                    "box": "teach",
+                    "body": authored,
                     "_trace": {
-                        "engines": ["ame", "sif", "lce"],
+                        "engines": ["kie", "uli", "lce"],
                         "improves": "explanation",
-                        "misconception": str(misc.get("label") or ""),
+                        "misconception": "",
                         "learner_need": version_id,
                     },
                 }
             )
-        if version_id not in {"parent"}:
-            assess_body = (
-                f"Look back at the diagram for {topic}. Point to the part that shows {name.lower()}, "
-                f"then explain {name} in your own words with one correct example."
-                if (flowchart_svg or concept_map_svg) and index == 0
-                else f"Explain {name} in your own words, then give one correct example."
-            )
-            sections.append(
-                {
-                    "title": f"Try This — {name}",
-                    "role": "practice_question",
-                    "body": _body(assess_body, profile=profile, title=name),
-                    "_trace": {"engines": ["lce", "ame"], "improves": "assessment", "learner_need": version_id},
-                }
-            )
+            # Mainstream teaching depth — publisher-grade concept cycle
+            if version_id == "standard":
+                sections.append(
+                    {
+                        "title": f"Understanding {name}",
+                        "role": "simple_explanation",
+                        "body": (
+                            f"{claim} Restate {name.lower()} in one short sentence before you continue."
+                        ),
+                        "_trace": {"engines": ["lce"], "improves": "explanation", "learner_need": "standard"},
+                    }
+                )
+                sections.append(
+                    {
+                        "title": f"Worked Example — {name}",
+                        "role": "worked_example",
+                        "body": (
+                            f"Read this evidence carefully: {example or claim} "
+                            f"Underline the words that define {name.lower()}, then write two accurate sentences."
+                        ),
+                        "_trace": {"engines": ["lce"], "improves": "example", "learner_need": "standard"},
+                    }
+                )
+                sections.append(
+                    {
+                        "title": f"Life Link — {name}",
+                        "role": "real_life_example",
+                        "body": (
+                            f"Connect {name.lower()} to everyday life: {example or claim}. "
+                            f"Tell a partner where you would see {name.lower()} outside class."
+                        ),
+                        "_trace": {"engines": ["lce"], "improves": "example", "learner_need": "standard"},
+                    }
+                )
+                sections.append(
+                    {
+                        "title": f"Reflect on {name}",
+                        "role": "reflection",
+                        "body": (
+                            f"What part of {name.lower()} feels clear, and what still needs another example? "
+                            "Write one sentence that links this idea to the learning goal."
+                        ),
+                        "_trace": {"engines": ["lce"], "improves": "reflection", "learner_need": "standard"},
+                    }
+                )
+            elif version_id == "visual":
+                sections.append(
+                    {
+                        "title": f"Diagram Practice — {name}",
+                        "role": "real_life_example",
+                        "body": (
+                            f"On the diagram, circle {name.lower()}. Then sketch a tiny icon for: {example or claim}. "
+                            f"Caption your sketch in eight words or fewer."
+                        ),
+                        "_trace": {"engines": ["uvie", "lce"], "improves": "diagram", "learner_need": "visual"},
+                    }
+                )
+            elif version_id == "auditory":
+                sections.append(
+                    {
+                        "title": f"Story Cue — {name}",
+                        "role": "real_life_example",
+                        "body": (
+                            f"Tell a 20-second story that includes {name.lower()}. "
+                            f"Start from: {example or claim}. End by repeating the accurate definition aloud."
+                        ),
+                        "_trace": {"engines": ["lce"], "improves": "example", "learner_need": "auditory"},
+                    }
+                )
+            elif version_id == "ell":
+                sections.append(
+                    {
+                        "title": f"Frame Practice — {name}",
+                        "role": "practice_question",
+                        "body": (
+                            f"Complete: “{name} means ____.” Then: “An example of {name.lower()} is ____.” "
+                            f"Use these words if helpful: {(example or claim).split()[:6]}"
+                        ),
+                        "_trace": {"engines": ["lce"], "improves": "assessment", "learner_need": "ell"},
+                    }
+                )
+            elif version_id == "teacher":
+                sections.append(
+                    {
+                        "title": f"Misconception Watch — {name}",
+                        "role": "common_misconception",
+                        "body": (
+                            f"When teaching {name.lower()}, listen for fuzzy wording. "
+                            f"Anchor students to: {claim}. Strong example to model: {example or 'a concrete classroom case'}."
+                        ),
+                        "_trace": {"engines": ["ame", "sif", "lce"], "improves": "explanation", "learner_need": "teacher"},
+                    }
+                )
+            elif version_id in {"ld", "dyslexia"}:
+                sections.append(
+                    {
+                        "title": f"Show Me — {name}",
+                        "role": "practice_question",
+                        "body": (
+                            f"Point to the words that mean {name.lower()}. "
+                            f"Then copy one short true sentence about it."
+                            if version_id == "dyslexia"
+                            else f"Bullet check: write three words that belong with {name.lower()}, then one example."
+                        ),
+                    }
+                )
+            if index < len(misconceptions) and version_id not in {"ell", "teacher"}:
+                misc = misconceptions[index]
+                sections.append(
+                    {
+                        "title": f"Watch Out — {name}",
+                        "role": "common_misconception",
+                        "body": (
+                            f"{str(misc.get('label') or '').rstrip('.')}. "
+                            f"Correction: {misc.get('correction') or 'Keep the definitions separate.'}"
+                        ),
+                        "_trace": {
+                            "engines": ["ame", "sif", "lce"],
+                            "improves": "explanation",
+                            "misconception": str(misc.get("label") or ""),
+                            "learner_need": version_id,
+                        },
+                    }
+                )
+            if version_id == "standard":
+                assess_body = (
+                    f"Look back at the diagram for {topic}. Point to the part that shows {name.lower()}, "
+                    f"then explain {name} in your own words with one correct example."
+                    if (flowchart_svg or concept_map_svg) and index == 0
+                    else f"Explain {name} in your own words, then give one correct example."
+                )
+                sections.append(
+                    {
+                        "title": f"Try This — {name}",
+                        "role": "practice_question",
+                        "body": assess_body,
+                        "_trace": {"engines": ["lce", "ame"], "improves": "assessment", "learner_need": version_id},
+                    }
+                )
 
     if version_id == "teacher":
         sections.append(
@@ -564,6 +784,54 @@ def compose_adaptation_from_board(
                 ),
             }
         )
+    elif version_id == "visual":
+        sections.append(
+            {
+                "title": "Picture Check",
+                "role": "summary",
+                "box": "visual",
+                "body": (
+                    f"Close the lesson by redrawing the {topic} diagram from memory. "
+                    f"Label {', '.join(str(c.get('name') or '') for c in concepts[:3]) or 'each part'} without peeking."
+                ),
+            }
+        )
+    elif version_id == "auditory":
+        sections.append(
+            {
+                "title": "Say the Summary",
+                "role": "summary",
+                "box": "listen",
+                "body": (
+                    f"Record a 45-second spoken summary of {topic}. "
+                    "Include each key idea and one example. Play it back once."
+                ),
+            }
+        )
+    elif version_id == "ell":
+        sections.append(
+            {
+                "title": "Word Review",
+                "role": "summary",
+                "box": "glossary",
+                "body": (
+                    f"Review the {topic} words. For each word, say the sentence frame again. "
+                    "Keep the frames for homework."
+                ),
+            }
+        )
+    elif version_id == "teacher":
+        sections.append(
+            {
+                "title": "Exit Ticket Plan",
+                "role": "summary",
+                "box": "teacher",
+                "body": (
+                    f"Collect one accurate sentence on {topic} plus one example. "
+                    "Mark misconceptions against the verified claim list before tomorrow."
+                ),
+            }
+        )
     elif version_id not in {"parent"}:
         sections.append(
             {
@@ -579,31 +847,20 @@ def compose_adaptation_from_board(
                 ),
             }
         )
-        sections.append(
-            {
-                "title": "Think About It",
-                "role": "reflection",
-                "body": _body(
-                    "Which idea feels strongest, and which needs another example? "
-                    "Write one sentence that connects today's learning to something you already knew.",
-                    profile=profile,
-                    title="reflect",
-                ),
-            }
-        )
-        sections.append(
-            {
-                "title": "Apply Your Learning",
-                "role": "application",
-                "box": "practice",
-                "body": _body(
-                    f"Apply {topic} to one new situation from your own experience. "
-                    "Explain your reasoning in three clear sentences using lesson words.",
-                    profile=profile,
-                    title="apply",
-                ),
-            }
-        )
+        if version_id == "standard":
+            sections.append(
+                {
+                    "title": "Apply Your Learning",
+                    "role": "application",
+                    "box": "practice",
+                    "body": _body(
+                        f"Apply {topic} to one new situation from your own experience. "
+                        "Explain your reasoning in three clear sentences using lesson words.",
+                        profile=profile,
+                        title="apply",
+                    ),
+                }
+            )
 
     label = (lens_for(version_id if version_id != "dyslexia" else "ld") or {}).get("title") or version_id
     big = claims[0] if claims else goals[0] if goals else f"Precise ideas help you explain {topic}."

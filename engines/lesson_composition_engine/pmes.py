@@ -1,7 +1,8 @@
-"""Publisher Master Editorial System (PMES) — highest authority over learner content.
+"""Publisher Master Editorial System (PMES) — invisible educational editor.
 
-Phase Omega 2.0: PMES does not score. It comments, rewrites, and rejects until
-a lesson feels publisher-approved. Not a new engine — LCE editorial authority.
+Generation Recovery: PMES improves clarity, grammar, flow, transitions, and
+reading ease. It must NEVER insert editorial/template/teacher-advisory language
+into learner lessons. Students must never know PMES exists.
 """
 
 from __future__ import annotations
@@ -9,7 +10,6 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from engines.lesson_composition_engine.golden import compare_to_golden
-from engines.lesson_composition_engine.master_teacher import apply_master_teacher_pass
 from engines.lesson_composition_engine.publisher_remediation import (
     adaptation_has_generic_diagram,
     blob_of,
@@ -25,7 +25,7 @@ from engines.lesson_composition_engine.publisher_style_guide import (
     style_guide_css,
 )
 
-PMES_VERSION = "2.0.0"
+PMES_VERSION = "2.1.0-recovery"
 MAX_PMES_PASSES = 4
 
 REVIEWERS = (
@@ -243,16 +243,19 @@ def _rewrite_from_comments(
     version_id: str,
     board: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Apply deterministic rewrites that address editorial comments."""
+    """Clarity-only edit. Never invents concepts, scaffolding, or editorial asides."""
     from engines.lesson_composition_engine.diagrams import (
         build_concept_map_svg,
         build_educational_flowchart_svg,
         build_subject_flowchart,
     )
     from engines.lesson_composition_engine.publisher_remediation import remediate_adaptation
+    from engines.lesson_composition_engine.recovery import (
+        clarity_edit_adaptation,
+        educational_meaning_preserved,
+    )
 
-    out = apply_master_teacher_pass(dict(adaptation), version_id=version_id, board=board)
-    topic = str(board.get("topic") or out.get("topic") or "Lesson")
+    topic = str(board.get("topic") or adaptation.get("topic") or "Lesson")
     subject = str(board.get("subject") or "general")
     concepts = [
         str(c.get("name") or "")
@@ -260,92 +263,36 @@ def _rewrite_from_comments(
         if isinstance(c, dict) and c.get("name")
     ]
     claims = list(board.get("verified_claims") or [])
+    before = dict(adaptation)
+    out = clarity_edit_adaptation(dict(adaptation), topic=topic)
 
     joined = " ".join(c.get("comment", "") for c in (critique.get("comments") or [])).lower()
 
+    # Diagram SVG may be enriched for rendering — no template prose injection.
     if "diagram" in joined or "visual" in joined or "decorative" in joined:
-        if len(concepts) >= 2:
-            svg = build_educational_flowchart_svg(
-                topic, concepts[:6], subtitle=f"{subject.title()} key ideas"
-            )
-        else:
-            svg = build_subject_flowchart(subject, topic)
-        out["flowchart_svg"] = svg
-        out["svg_diagram"] = svg
-        out["concept_map_svg"] = build_concept_map_svg(topic, concepts or [topic])
-
-    out["diagram_package"] = _diagram_package(out, topic=topic, concepts=concepts)
-
-    # Ensure diagram teaching section exists
-    roles = {str(s.get("role") or "") for s in _sections(out)}
-    if "visual" not in roles and out.get("flowchart_svg"):
-        pkg = out["diagram_package"]
-        sections = list(out.get("sections") or [])
-        sections.insert(
-            0,
-            {
-                "title": "Using the Diagram",
-                "role": "visual",
-                "box": "visual",
-                "body": (
-                    f"{pkg['explanation']} {pkg['caption']}. "
-                    f"Callouts: {'; '.join(pkg['callouts'][:3])}. "
-                    f"Practice: {pkg['practice_question']}"
-                ),
-            },
-        )
-        out["sections"] = sections
-
-    if "abstract" in joined or "analogy" in joined or "example" in joined or "engagement" in joined:
-        out = apply_master_teacher_pass(out, version_id=version_id, board=board)
-        # Guarantee at least one concrete example section for mainstream-style reviews
-        roles = {str(s.get("role") or "") for s in _sections(out)}
-        if "real_life_example" not in roles and version_id in {
-            "standard",
-            "visual",
-            "ell",
-            "auditory",
-            "teacher",
-            "adhd",
-            "ld",
-            "dyslexia",
-        }:
-            concept = concepts[0] if concepts else topic
-            example = (board.get("examples") or ["a familiar classroom or home situation"])[0]
-            sections = list(out.get("sections") or [])
-            sections.append(
-                {
-                    "title": f"Example — {concept}",
-                    "role": "real_life_example",
-                    "body": (
-                        f"Here is a clear example of {str(concept).lower()}: {example}. "
-                        f"Think of it like a familiar tool — once you can point to it, "
-                        f"the meaning of {str(concept).lower()} stays with you."
-                    ),
-                }
-            )
-            out["sections"] = sections
-        # Inject analogy language into thin concept bodies
-        fixed = []
-        for sec in out.get("sections") or []:
-            if not isinstance(sec, dict):
-                continue
-            row = dict(sec)
-            body = str(row.get("body") or "")
-            if str(row.get("role") or "") == "concept" and "like" not in body.lower() and "example" not in body.lower():
-                row["body"] = (
-                    body.rstrip(".")
-                    + f". For example, connect this idea to something you already know about {topic}."
+        if not str(out.get("flowchart_svg") or "").startswith("<svg"):
+            if len(concepts) >= 2:
+                svg = build_educational_flowchart_svg(
+                    topic, concepts[:6], subtitle=f"{subject.title()} key ideas"
                 )
-            fixed.append(row)
-        out["sections"] = fixed
+            else:
+                svg = build_subject_flowchart(subject, topic)
+            out["flowchart_svg"] = svg
+            out["svg_diagram"] = svg
+            out["concept_map_svg"] = build_concept_map_svg(topic, concepts or [topic])
+        out["diagram_package"] = _diagram_package(out, topic=topic, concepts=concepts)
 
     if "curriculum" in joined and claims:
-        # Inject claim into big idea if missing
         lead = claims[0]
+        if isinstance(lead, dict):
+            lead = str(lead.get("text") or lead.get("claim") or "")
+        else:
+            lead = str(lead or "")
         big = str(out.get("big_idea") or "")
-        if lead.lower()[:40] not in big.lower():
-            out["big_idea"] = f"{lead} {big}".strip()
+        if lead and lead.lower()[:40] not in big.lower():
+            # Prefer verified claim as big idea only when empty/thin — do not invent.
+            if len(big.split()) < 8:
+                out["big_idea"] = lead
 
     if "assessment" in joined and not out.get("practice") and concepts:
         out["practice"] = [
@@ -354,10 +301,13 @@ def _rewrite_from_comments(
         ]
 
     out = remediate_adaptation(out, claims=claims)
-    out["diagram_package"] = _diagram_package(out, topic=topic, concepts=concepts)
+    out = clarity_edit_adaptation(out, topic=topic)
+    if not educational_meaning_preserved(before, out):
+        out = clarity_edit_adaptation(before, topic=topic)
     out.setdefault("lce", {})
     if isinstance(out["lce"], dict):
         out["lce"]["pmes"] = True
+        out["lce"]["pmes_mode"] = "clarity_only"
         out["lce"]["style_guide_version"] = STYLE_GUIDE_VERSION
     return out
 

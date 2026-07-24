@@ -54,33 +54,54 @@ def craft_teaching_paragraph(
     profile: str = "standard",
 ) -> str:
     """Build one teachable paragraph with curiosity → understanding → life → transition."""
-    name = (concept or topic or "this idea").strip()
+    from engines.lesson_composition_engine.recovery import sanitize_concept_label
+
+    topic_s = (topic or "this lesson").strip()
+    name = sanitize_concept_label(concept or topic_s, topic=topic_s)
     claim_s = _clip_sentence(claim or f"{name} is defined clearly in this lesson.")
     curiosity_s = _clip_sentence(
         curiosity
-        or f"Have you ever wondered why {name.lower()} matters when you look at {topic}?"
+        or f"Have you ever wondered why {name.lower()} matters when you study {topic_s}?"
     )
     prior_s = _clip_sentence(
         prior
-        or f"You already know everyday pushes, pulls, or patterns that prepare you for {name.lower()}."
+        or f"You already know everyday patterns that prepare you to understand {name.lower()}."
     )
     analogy_s = _clip_sentence(
         analogy
         or (
-            f"Think of {name.lower()} like a familiar tool: once you name what it does, "
-            f"the rest of {topic} becomes easier to explain."
+            f"Think of {name.lower()} like a familiar idea: once you can say what it does, "
+            f"the rest of {topic_s} becomes easier to explain."
         )
     )
     example_s = _clip_sentence(
         example
-        or f"In real life, {name.lower()} shows up clearly when you connect it to {topic}."
+        or f"In real life, {name.lower()} shows up clearly when you connect it to {topic_s}."
     )
     transition_s = _clip_sentence(
         f"Next, keep this meaning of {name.lower()} in mind as we move one step further."
     )
 
-    if profile in {"adhd", "dyslexia", "ld"}:
-        parts = [curiosity_s, claim_s, example_s]
+    if profile == "adhd":
+        parts = [
+            _clip_sentence(f"Mission for {name}: learn it in one short burst."),
+            claim_s,
+            _clip_sentence(f"Quick win example: {example_s.rstrip('.')}."),
+            _clip_sentence("Pause. Check. Next chunk."),
+        ]
+    elif profile == "dyslexia":
+        parts = [
+            _clip_sentence(f"{name}."),
+            claim_s,
+            _clip_sentence("Read once slowly. Circle the key word."),
+            _clip_sentence(f"Whisper the meaning of {name.lower()} once."),
+        ]
+    elif profile == "ld":
+        parts = [
+            _clip_sentence(f"Step for {name}:"),
+            claim_s,
+            _clip_sentence(f"Show you know: {example_s}"),
+        ]
     elif profile == "autism":
         parts = [
             _clip_sentence(f"First, the idea is {name}."),
@@ -94,6 +115,27 @@ def craft_teaching_paragraph(
             claim_s,
             example_s,
             _clip_sentence(f"Say: “{name} means…” in one short sentence."),
+        ]
+    elif profile == "visual":
+        parts = [
+            _clip_sentence(f"Look for {name.lower()} on the diagram before you read."),
+            claim_s,
+            _clip_sentence(f"Match the picture labels to this example: {example_s}"),
+            _clip_sentence(f"Point to the part that shows {name.lower()}, then explain it."),
+        ]
+    elif profile == "auditory":
+        parts = [
+            _clip_sentence(f"Listen carefully to {name.lower()}."),
+            claim_s,
+            _clip_sentence(f"Say it aloud: {claim_s}"),
+            _clip_sentence(f"Story cue to remember: {example_s}"),
+        ]
+    elif profile == "teacher":
+        parts = [
+            _clip_sentence(f"Model {name} with verified evidence on the board."),
+            claim_s,
+            _clip_sentence(f"Listen for misconceptions; accept answers that use: {example_s}"),
+            _clip_sentence("Exit check: one accurate sentence plus one real example."),
         ]
     elif profile == "parent":
         parts = [
@@ -120,6 +162,8 @@ def enrich_section_body(
     profile: str = "standard",
 ) -> str:
     """If a section body is thin or template-like, rewrite as master-teacher prose."""
+    from engines.lesson_composition_engine.recovery import sanitize_concept_label
+
     text = _scrub(body or "")
     words = text.split()
     low = text.lower()
@@ -131,7 +175,10 @@ def enrich_section_body(
     )
     if not needs and len(words) <= 160:
         return ensure_paragraph_quality(text, idea=title or topic)
-    concept = title.split("—")[-1].split(":")[-1].strip() if title else topic
+    concept = sanitize_concept_label(
+        title.split("—")[-1].split(":")[-1].strip() if title else topic,
+        topic=topic,
+    )
     return craft_teaching_paragraph(
         claim=claim or text,
         topic=topic,
@@ -147,6 +194,11 @@ def apply_master_teacher_pass(
     version_id: str = "standard",
     board: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    from engines.lesson_composition_engine.recovery import (
+        clarity_edit_adaptation,
+        educational_meaning_preserved,
+    )
+
     board = board or {}
     topic = str(adaptation.get("topic") or board.get("topic") or "Lesson")
     claims = list(board.get("verified_claims") or [])
@@ -196,14 +248,19 @@ def apply_master_teacher_pass(
             example0 = str(example0.get("text") or example0.get("example") or example0.get("caption") or "")
         else:
             example0 = str(example0 or "")
+        # Never pass title="opening" — that polluted Water Cycle with nonsense.
         out["big_idea"] = enrich_section_body(
             str(out["big_idea"]),
             topic=topic,
-            title="opening",
+            title=topic,
             claim=claim0,
             example=example0,
             profile=version_id,
         )
+    out = clarity_edit_adaptation(out, topic=topic)
+    if not educational_meaning_preserved(adaptation, out):
+        # Fall back to clarity scrub of original only
+        return clarity_edit_adaptation(dict(adaptation), topic=topic)
     out.setdefault("lce", {})
     if isinstance(out["lce"], dict):
         out["lce"]["master_teacher"] = True

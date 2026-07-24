@@ -86,12 +86,16 @@ def build_lesson_intelligence_board(
     )
     claim_texts = [c for c in claim_texts if not has_teacher_objective_leak(c) and not template_hits(c)]
 
-    concepts_raw = list(clg.get("core_concepts") or profile.get("concepts") or [])
+    concepts_raw = list(clg.get("core_concepts") or [])
+    from_clg = bool(concepts_raw)
+    if not concepts_raw:
+        concepts_raw = list(profile.get("concepts") or profile.get("key_concepts") or [])
     concepts: list[dict[str, Any]] = []
     for item in concepts_raw:
         if isinstance(item, dict):
             name = str(item.get("name") or item.get("title") or "").strip()
-            if name and not is_junk_term(name):
+            # CLG concepts are already curated — do not drop science words like Water/Cycle.
+            if name and (from_clg or not is_junk_term(name)):
                 concepts.append(
                     {
                         "name": name,
@@ -100,8 +104,27 @@ def build_lesson_intelligence_board(
                 )
         else:
             name = str(item or "").strip()
-            if name and not is_junk_term(name):
+            if name and (from_clg or not is_junk_term(name)):
                 concepts.append({"name": name, "explanation": ""})
+
+    # If junk filtering emptied the board, rebuild concepts from verified claims.
+    if not concepts and claim_texts:
+        for claim in claim_texts[:6]:
+            token = ""
+            for word in str(claim).replace(",", " ").split():
+                clean = word.strip(".:;()[]\"'")
+                if len(clean) >= 4 and clean[0].isupper() and not is_junk_term(clean):
+                    token = clean
+                    break
+            if not token:
+                # Fall back to first long token even if common (still teachable)
+                for word in str(claim).split():
+                    clean = word.strip(".:;()[]\"'")
+                    if len(clean) >= 5:
+                        token = clean.title()
+                        break
+            if token:
+                concepts.append({"name": token, "explanation": str(claim)})
 
     misconceptions: list[dict[str, str]] = []
     for item in list(clg.get("misconceptions") or []) + list(
