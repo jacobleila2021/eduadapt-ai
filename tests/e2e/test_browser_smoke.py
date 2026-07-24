@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 import pytest
-from playwright.sync_api import sync_playwright
 
 pytestmark = pytest.mark.e2e
 
@@ -15,6 +14,8 @@ BASE_URL = os.getenv("ALORA_E2E_URL", "").strip()
 @pytest.mark.skipif(not BASE_URL, reason="Set ALORA_E2E_URL for browser tests")
 @pytest.mark.parametrize("browser_name", ["chromium", "firefox", "webkit"])
 def test_alora_shell_cross_browser(browser_name):
+    from playwright.sync_api import sync_playwright
+
     with sync_playwright() as playwright:
         browser_type = getattr(playwright, browser_name)
         browser = browser_type.launch(headless=True)
@@ -45,6 +46,8 @@ def test_alora_shell_cross_browser(browser_name):
 @pytest.mark.skipif(not BASE_URL, reason="Set ALORA_E2E_URL for browser tests")
 @pytest.mark.parametrize("viewport", [(320, 800), (768, 1024), (1440, 1000)])
 def test_responsive_shell_has_no_document_overflow(viewport):
+    from playwright.sync_api import sync_playwright
+
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": viewport[0], "height": viewport[1]})
@@ -65,6 +68,8 @@ def test_responsive_shell_has_no_document_overflow(viewport):
 
 @pytest.mark.skipif(not BASE_URL, reason="Set ALORA_E2E_URL for browser tests")
 def test_dashboard_has_no_critical_or_serious_axe_violations():
+    from playwright.sync_api import sync_playwright
+
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
