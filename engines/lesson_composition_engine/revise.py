@@ -105,7 +105,7 @@ def revise_adaptation_to_publication(
     ).to_dict()
 
     for i in range(max_passes):
-        golden = compare_to_golden(current, subject=subject)
+        golden = compare_to_golden(current, subject=subject, topic=topic)
         report_obj = score_publisher_quality(
             current,
             vocabulary=vocabulary,
@@ -281,7 +281,11 @@ def apply_publisher_quality_excellence(
         if key.startswith("_") or not isinstance(value, dict) or key in {"vocabulary", "worksheet"}:
             continue
         subject = str(clg.get("subject_key") or board.get("subject") or "general")
-        golden = compare_to_golden(value, subject=subject)
+        golden = compare_to_golden(
+            value,
+            subject=subject,
+            topic=str(value.get("topic") or board.get("topic") or clg.get("topic") or ""),
+        )
         golden_deltas[key] = float(golden.get("delta") or 0.0)
     pqi = score_package(working, golden_deltas=golden_deltas)
     editorial = review_package_editorial(working, board=board)

@@ -1,0 +1,91 @@
+{
+  "id": "environmental_waste_cycle",
+  "subject": "environmental_science",
+  "topic": "Waste and Recycling",
+  "stage": "middle",
+  "pqi_target": 98,
+  "min_sections": 10,
+  "min_vocab_cards": 5,
+  "required_roles": [
+    "hook",
+    "visual",
+    "concept",
+    "simple_explanation",
+    "real_life_example",
+    "worked_example",
+    "practice_question",
+    "summary",
+    "reflection",
+    "application"
+  ],
+  "educational_personality": "exceptional classroom teacher; cream textbook; diagram teaches",
+  "lesson": {
+    "big_idea": "Waste management reduces harm by refusing, reducing, reusing, and recycling.",
+    "sections": [
+      {
+        "title": "Have You Wondered?",
+        "role": "hook",
+        "body": "Where does yesterday's plastic bottle go if we toss it carelessly? Waste choices travel farther than we see."
+      },
+      {
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "Follow Refuse \u2192 Reduce \u2192 Reuse \u2192 Recycle. The diagram prioritises prevention before recycling."
+      },
+      {
+        "title": "Concept: Waste Hierarchy",
+        "role": "concept",
+        "body": "The waste hierarchy ranks actions. Preventing waste beats recycling something that did not need to exist."
+      },
+      {
+        "title": "Say It Simply",
+        "role": "simple_explanation",
+        "body": "Best first: don't create waste. Then use less, use again, and recycle what remains."
+      },
+      {
+        "title": "In Real Life",
+        "role": "real_life_example",
+        "body": "Carrying a refillable bottle refuses a new disposable bottle before recycling is even needed."
+      },
+      {
+        "title": "Worked Example",
+        "role": "worked_example",
+        "body": "Sort a lunch scrap pile: food to compost, clean paper to recycle, and a broken toy to repair or reuse."
+      },
+      {
+        "title": "Try This",
+        "role": "practice_question",
+        "body": "Point to Reduce and give one school action that creates less waste."
+      },
+      {
+        "title": "Lesson Summary",
+        "role": "summary",
+        "body": "Smart waste habits follow a hierarchy. Prevention and reuse protect environments better than last-minute recycling alone."
+      },
+      {
+        "title": "Think About It",
+        "role": "reflection",
+        "body": "Which bin at home is fullest, and what does that reveal about your week's choices?"
+      },
+      {
+        "title": "Apply Your Learning",
+        "role": "application",
+        "body": "Design a classroom poster that uses the four diagram steps in the correct order."
+      }
+    ],
+    "diagram_package": {
+      "title": "Waste and Recycling",
+      "caption": "Refuse \u2192 Reduce \u2192 Reuse \u2192 Recycle",
+      "explanation": "This diagram teaches how the ideas in Waste and Recycling connect.",
+      "practice_question": "Point to Recycle and explain why it is not the first choice.",
+      "callouts": [
+        "Label: Refuse",
+        "Label: Reduce",
+        "Label: Reuse",
+        "Label: Recycle"
+      ]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Waste and Recycling\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Waste and Recycling</text><rect x=\"22\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"67\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Refuse</text><line x1=\"112\" y1=\"79\" x2=\"124\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"124\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"169\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Reduce</text><line x1=\"214\" y1=\"79\" x2=\"226\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"226\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"271\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Reuse</text><line x1=\"316\" y1=\"79\" x2=\"328\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"328\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#fff7ed\" stroke=\"#0B2E59\"/><text x=\"373\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Recycle</text></svg>",
+    "flowchart_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Waste and Recycling\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Waste and Recycling</text><rect x=\"22\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"67\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Refuse</text><line x1=\"112\" y1=\"79\" x2=\"124\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"124\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"169\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Reduce</text><line x1=\"214\" y1=\"79\" x2=\"226\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"226\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"271\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Reuse</text><line x1=\"316\" y1=\"79\" x2=\"328\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"328\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#fff7ed\" stroke=\"#0B2E59\"/><text x=\"373\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Recycle</text></svg>"
+  }
+}

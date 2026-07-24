@@ -1,0 +1,90 @@
+{
+  "id": "biology_digestive_system",
+  "subject": "biology",
+  "topic": "Digestive System",
+  "stage": "middle",
+  "pqi_target": 98,
+  "min_sections": 10,
+  "min_vocab_cards": 5,
+  "required_roles": [
+    "hook",
+    "visual",
+    "concept",
+    "simple_explanation",
+    "real_life_example",
+    "worked_example",
+    "practice_question",
+    "summary",
+    "reflection",
+    "application"
+  ],
+  "educational_personality": "exceptional classroom teacher; cream textbook; diagram teaches",
+  "lesson": {
+    "big_idea": "Digestion breaks food into smaller pieces the body can absorb. Each organ has a clear job.",
+    "sections": [
+      {
+        "title": "Have You Wondered?",
+        "role": "hook",
+        "body": "How does a bite of bread become energy your body can use? Digestion is the journey."
+      },
+      {
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "Follow Mouth \u2192 Stomach \u2192 Small intestine. Each stop changes food so nutrients can enter the blood."
+      },
+      {
+        "title": "Concept: Digestion",
+        "role": "concept",
+        "body": "Digestion is the breakdown of food. Mechanical chewing and chemical juices work together."
+      },
+      {
+        "title": "Say It Simply",
+        "role": "simple_explanation",
+        "body": "Your body takes big food pieces and turns them into tiny nutrients it can absorb."
+      },
+      {
+        "title": "In Real Life",
+        "role": "real_life_example",
+        "body": "Chewing a chapati thoroughly helps digestion start in the mouth before the stomach continues the work."
+      },
+      {
+        "title": "Worked Example",
+        "role": "worked_example",
+        "body": "Track a rice grain: teeth crush it, saliva moistens it, the stomach mixes it, and the small intestine absorbs nutrients."
+      },
+      {
+        "title": "Try This",
+        "role": "practice_question",
+        "body": "Point to Small intestine and explain why absorption matters."
+      },
+      {
+        "title": "Lesson Summary",
+        "role": "summary",
+        "body": "Digestion is a team effort. Food is broken down step by step so nutrients can feed your cells."
+      },
+      {
+        "title": "Think About It",
+        "role": "reflection",
+        "body": "Why do doctors ask you to chew slowly? Connect that advice to today's lesson."
+      },
+      {
+        "title": "Apply Your Learning",
+        "role": "application",
+        "body": "Make a labelled journey map of one meal through the digestive system."
+      }
+    ],
+    "diagram_package": {
+      "title": "Digestive System",
+      "caption": "Mouth \u2192 Stomach \u2192 Intestine",
+      "explanation": "This diagram teaches how the ideas in Digestive System connect.",
+      "practice_question": "Point to Mouth and explain two ways digestion begins there.",
+      "callouts": [
+        "Label: Mouth",
+        "Label: Stomach",
+        "Label: Intestine"
+      ]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Digestive System\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Digestive System</text><rect x=\"43\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"98\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Mouth</text><line x1=\"153\" y1=\"79\" x2=\"165\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"165\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"220\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Stomach</text><line x1=\"275\" y1=\"79\" x2=\"287\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"287\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"342\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Intestine</text></svg>",
+    "flowchart_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Digestive System\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Digestive System</text><rect x=\"43\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"98\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Mouth</text><line x1=\"153\" y1=\"79\" x2=\"165\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"165\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"220\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Stomach</text><line x1=\"275\" y1=\"79\" x2=\"287\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"287\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"342\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Intestine</text></svg>"
+  }
+}

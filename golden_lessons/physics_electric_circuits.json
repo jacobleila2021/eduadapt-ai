@@ -1,0 +1,91 @@
+{
+  "id": "physics_electric_circuits",
+  "subject": "physics",
+  "topic": "Electric Circuits",
+  "stage": "middle",
+  "pqi_target": 98,
+  "min_sections": 10,
+  "min_vocab_cards": 5,
+  "required_roles": [
+    "hook",
+    "visual",
+    "concept",
+    "simple_explanation",
+    "real_life_example",
+    "worked_example",
+    "practice_question",
+    "summary",
+    "reflection",
+    "application"
+  ],
+  "educational_personality": "exceptional classroom teacher; cream textbook; diagram teaches",
+  "lesson": {
+    "big_idea": "An electric circuit is a complete path for current. A break anywhere stops the flow.",
+    "sections": [
+      {
+        "title": "Have You Wondered?",
+        "role": "hook",
+        "body": "Why does a torch stay dark when one wire is loose? Electricity needs a complete loop."
+      },
+      {
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "Follow Cell \u2192 Switch \u2192 Bulb \u2192 Wire back to the cell. If any link is open, the bulb stays off."
+      },
+      {
+        "title": "Concept: Circuit",
+        "role": "concept",
+        "body": "A circuit is a closed path that lets electric current travel from the power source through components and back again."
+      },
+      {
+        "title": "Say It Simply",
+        "role": "simple_explanation",
+        "body": "Think of current like a bicycle on a track: it only keeps going if the track is unbroken."
+      },
+      {
+        "title": "In Real Life",
+        "role": "real_life_example",
+        "body": "When fairy lights fail because one bulb is out, that broken bulb opens the series path."
+      },
+      {
+        "title": "Worked Example",
+        "role": "worked_example",
+        "body": "Draw a cell, switch, and bulb in a loop. Open the switch and predict: current stops, so the bulb goes dark."
+      },
+      {
+        "title": "Try This",
+        "role": "practice_question",
+        "body": "Point to the switch on the diagram and explain what open and closed mean for the bulb."
+      },
+      {
+        "title": "Lesson Summary",
+        "role": "summary",
+        "body": "Current needs a complete circuit. A cell supplies energy; wires carry it; a switch can open or close the path."
+      },
+      {
+        "title": "Think About It",
+        "role": "reflection",
+        "body": "Where do you use a switch at home? Explain how it changes the circuit."
+      },
+      {
+        "title": "Apply Your Learning",
+        "role": "application",
+        "body": "Build a safe paper model of a circuit and label each part with its job."
+      }
+    ],
+    "diagram_package": {
+      "title": "Electric Circuits",
+      "caption": "Cell \u2192 Switch \u2192 Bulb \u2192 Wire",
+      "explanation": "This diagram teaches how the ideas in Electric Circuits connect.",
+      "practice_question": "Point to Cell and explain what it provides in the circuit.",
+      "callouts": [
+        "Label: Cell",
+        "Label: Switch",
+        "Label: Bulb",
+        "Label: Wire"
+      ]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Electric Circuits\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Electric Circuits</text><rect x=\"22\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"67\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Cell</text><line x1=\"112\" y1=\"79\" x2=\"124\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"124\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"169\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Switch</text><line x1=\"214\" y1=\"79\" x2=\"226\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"226\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"271\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Bulb</text><line x1=\"316\" y1=\"79\" x2=\"328\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"328\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#fff7ed\" stroke=\"#0B2E59\"/><text x=\"373\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Wire</text></svg>",
+    "flowchart_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Electric Circuits\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Electric Circuits</text><rect x=\"22\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"67\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Cell</text><line x1=\"112\" y1=\"79\" x2=\"124\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"124\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"169\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Switch</text><line x1=\"214\" y1=\"79\" x2=\"226\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"226\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"271\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Bulb</text><line x1=\"316\" y1=\"79\" x2=\"328\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"328\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#fff7ed\" stroke=\"#0B2E59\"/><text x=\"373\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Wire</text></svg>"
+  }
+}

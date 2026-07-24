@@ -1,0 +1,90 @@
+{
+  "id": "chemistry_acids_bases",
+  "subject": "chemistry",
+  "topic": "Acids and Bases",
+  "stage": "middle",
+  "pqi_target": 98,
+  "min_sections": 10,
+  "min_vocab_cards": 5,
+  "required_roles": [
+    "hook",
+    "visual",
+    "concept",
+    "simple_explanation",
+    "real_life_example",
+    "worked_example",
+    "practice_question",
+    "summary",
+    "reflection",
+    "application"
+  ],
+  "educational_personality": "exceptional classroom teacher; cream textbook; diagram teaches",
+  "lesson": {
+    "big_idea": "Acids and bases have different properties. Indicators help us classify them safely.",
+    "sections": [
+      {
+        "title": "Have You Wondered?",
+        "role": "hook",
+        "body": "Why does lemon juice taste sharp while soap feels slippery? Acids and bases behave differently."
+      },
+      {
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "See Acid \u2192 Indicator \u2192 Base. The diagram shows how an indicator reports what you have."
+      },
+      {
+        "title": "Concept: Acids and Bases",
+        "role": "concept",
+        "body": "Acids often taste sour and can turn blue litmus red. Bases often feel soapy and can turn red litmus blue."
+      },
+      {
+        "title": "Say It Simply",
+        "role": "simple_explanation",
+        "body": "An indicator is like a traffic light for chemistry \u2014 its colour tells you acid or base."
+      },
+      {
+        "title": "In Real Life",
+        "role": "real_life_example",
+        "body": "Vinegar on chips is acidic; baking soda used in cleaning is a base."
+      },
+      {
+        "title": "Worked Example",
+        "role": "worked_example",
+        "body": "Dip litmus in lemon water: blue litmus turns red, so the sample behaves as an acid."
+      },
+      {
+        "title": "Try This",
+        "role": "practice_question",
+        "body": "Point to Indicator and explain what a colour change tells you."
+      },
+      {
+        "title": "Lesson Summary",
+        "role": "summary",
+        "body": "Acids and bases have different properties. Indicators help us identify them without tasting unknown chemicals."
+      },
+      {
+        "title": "Think About It",
+        "role": "reflection",
+        "body": "Why is tasting laboratory chemicals never acceptable, even if lemons are safe at home?"
+      },
+      {
+        "title": "Apply Your Learning",
+        "role": "application",
+        "body": "Plan a safe indicator test using kitchen samples a teacher approves."
+      }
+    ],
+    "diagram_package": {
+      "title": "Acids and Bases",
+      "caption": "Acid \u2192 Indicator \u2192 Base",
+      "explanation": "This diagram teaches how the ideas in Acids and Bases connect.",
+      "practice_question": "Point to Acid and give one safe everyday example.",
+      "callouts": [
+        "Label: Acid",
+        "Label: Indicator",
+        "Label: Base"
+      ]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Acids and Bases\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Acids and Bases</text><rect x=\"43\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"98\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Acid</text><line x1=\"153\" y1=\"79\" x2=\"165\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"165\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"220\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Indicator</text><line x1=\"275\" y1=\"79\" x2=\"287\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"287\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"342\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Base</text></svg>",
+    "flowchart_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Acids and Bases\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Acids and Bases</text><rect x=\"43\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"98\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Acid</text><line x1=\"153\" y1=\"79\" x2=\"165\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"165\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"220\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Indicator</text><line x1=\"275\" y1=\"79\" x2=\"287\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"287\" y=\"55\" width=\"110\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"342\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Base</text></svg>"
+  }
+}

@@ -34,22 +34,55 @@ def list_golden_lessons() -> list[dict[str, Any]]:
     return rows
 
 
-def load_golden(lesson_id: str | None = None, *, subject: str = "") -> dict[str, Any] | None:
+def load_golden(lesson_id: str | None = None, *, subject: str = "", topic: str = "") -> dict[str, Any] | None:
     root = _ensure_golden_dir()
     if lesson_id:
         path = root / f"{lesson_id}.json"
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))
-    # Prefer subject match
+
+    subject_l = (subject or "").lower().strip()
+    topic_l = (topic or "").lower().strip()
+    subject_aliases = {
+        "science": ("physics", "biology", "chemistry", "environmental_science"),
+        "maths": ("mathematics",),
+        "math": ("mathematics",),
+        "env": ("environmental_science",),
+        "environmental": ("environmental_science",),
+        "social": ("history", "geography"),
+        "language": ("english",),
+    }
+
+    best: dict[str, Any] | None = None
+    best_score = -1
     for path in sorted(root.glob("*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except Exception:  # noqa: BLE001
             continue
+        score = 0
         sub = str(data.get("subject") or "").lower()
-        if subject and subject.lower() in sub:
-            return data
-    # Fallback first exemplar
+        top = str(data.get("topic") or "").lower()
+        stem = path.stem.lower()
+        if subject_l and subject_l == sub:
+            score += 5
+        elif subject_l and subject_l in subject_aliases and sub in subject_aliases[subject_l]:
+            score += 3
+        elif subject_l and (subject_l in sub or sub in subject_l):
+            score += 2
+        if topic_l:
+            if topic_l == top or topic_l in top or top in topic_l:
+                score += 6
+            else:
+                for token in topic_l.replace("-", " ").split():
+                    if len(token) > 3 and (token in top or token in stem):
+                        score += 2
+                        break
+        if score > best_score:
+            best_score = score
+            best = data
+    if best is not None and best_score > 0:
+        return best
     files = sorted(root.glob("*.json"))
     if not files:
         return None
@@ -72,13 +105,15 @@ def compare_to_golden(
     adaptation: Mapping[str, Any],
     *,
     subject: str = "",
+    topic: str = "",
     golden: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Return a golden_delta in roughly [-8, +8] applied to PQI overall.
     Positive = meets/exceeds exemplar structural quality.
     """
-    golden = golden or load_golden(subject=subject) or {}
+    topic = topic or str(adaptation.get("topic") or "")
+    golden = golden or load_golden(subject=subject, topic=topic) or {}
     if not golden:
         return {"delta": 0.0, "matched": False, "notes": ["No golden exemplar available."]}
 
@@ -113,7 +148,6 @@ def compare_to_golden(
         delta -= 1.5 * min(3, len(missing))
         notes.append(f"Missing golden roles: {', '.join(sorted(missing))}")
 
-    # Vocabulary richness when present on golden
     g_vocab_n = int(golden.get("min_vocab_cards") or 5)
     wall = adaptation.get("word_wall") or []
     if wall:
@@ -128,6 +162,31 @@ def compare_to_golden(
         "matched": True,
         "golden_id": golden.get("id") or golden.get("topic"),
         "notes": notes,
+    }
+
+
+def golden_library_health() -> dict[str, Any]:
+    """Product refinement health — coverage of permanent quality benchmarks."""
+    rows = list_golden_lessons()
+    subjects = sorted({str(r.get("subject") or "") for r in rows if r.get("subject")})
+    required = {
+        "mathematics",
+        "physics",
+        "chemistry",
+        "biology",
+        "geography",
+        "history",
+        "english",
+        "environmental_science",
+    }
+    missing = sorted(required - set(subjects))
+    return {
+        "ok": len(rows) >= 10 and not missing,
+        "count": len(rows),
+        "subjects": subjects,
+        "missing_subjects": missing,
+        "smoke_ok": True,
+        "ids": [r.get("id") for r in rows],
     }
 
 

@@ -77,4 +77,11 @@ Integration · educational authoring · premium UX · adaptation quality · rend
 - Prompt leaks, dictionary vocab, clone adaptations, generic summaries, unused diagrams, and silent browser-TTS downgrades fail publication.
 - Smoke: `CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK` · See `docs/CONTENT_FIDELITY.md`.
 
+## Phase RC1 — Product Refinement
+
+- Feature-complete; **refinement only** (lesson / adaptation / visual / speed / rendering / narration / a11y / reliability / usability).
+- Expand and honour the **golden lesson library** as permanent benchmarks.
+- RC loop: `python -m release --target 100` → inspect → fix → repeat.
+- Smoke: `PRODUCT_REFINEMENT_RC1_SMOKE_OK` · See `docs/RC1_PRODUCT_REFINEMENT.md`.
+
 See `docs/PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE.md`.

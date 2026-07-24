@@ -1,0 +1,91 @@
+{
+  "id": "biology_photosynthesis",
+  "subject": "biology",
+  "topic": "Photosynthesis",
+  "stage": "middle",
+  "pqi_target": 98,
+  "min_sections": 10,
+  "min_vocab_cards": 5,
+  "required_roles": [
+    "hook",
+    "visual",
+    "concept",
+    "simple_explanation",
+    "real_life_example",
+    "worked_example",
+    "practice_question",
+    "summary",
+    "reflection",
+    "application"
+  ],
+  "educational_personality": "exceptional classroom teacher; cream textbook; diagram teaches",
+  "lesson": {
+    "big_idea": "Green plants make food using light, water, and carbon dioxide. Photosynthesis turns those inputs into sugar and oxygen.",
+    "sections": [
+      {
+        "title": "Have You Wondered?",
+        "role": "hook",
+        "body": "Have you ever wondered how a quiet green leaf can feed a whole plant? The answer is photosynthesis."
+      },
+      {
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "Trace Light \u2192 Water + CO\u2082 \u2192 Sugar + Oxygen. The diagram shows the recipe a leaf follows."
+      },
+      {
+        "title": "Concept: Photosynthesis",
+        "role": "concept",
+        "body": "Photosynthesis is the process plants use to make food. Chlorophyll in leaves captures light energy."
+      },
+      {
+        "title": "Say It Simply",
+        "role": "simple_explanation",
+        "body": "In simple words: plants use sunlight to cook sugar from water and carbon dioxide, and they release oxygen."
+      },
+      {
+        "title": "In Real Life",
+        "role": "real_life_example",
+        "body": "A sunny windowsill plant grows faster than one in a dark cupboard because more light means more photosynthesis."
+      },
+      {
+        "title": "Worked Example",
+        "role": "worked_example",
+        "body": "If light is blocked with black paper on one leaf, that patch cannot make food well. Compare it with an uncovered leaf."
+      },
+      {
+        "title": "Try This",
+        "role": "practice_question",
+        "body": "Point to Oxygen on the diagram and explain why forests help the air we breathe."
+      },
+      {
+        "title": "Lesson Summary",
+        "role": "summary",
+        "body": "Photosynthesis needs light, water, and carbon dioxide. It makes sugar for the plant and oxygen for us."
+      },
+      {
+        "title": "Think About It",
+        "role": "reflection",
+        "body": "Where have you seen green plants thriving in strong light? Write one sentence linking that to today's idea."
+      },
+      {
+        "title": "Apply Your Learning",
+        "role": "application",
+        "body": "Design a fair classroom test that changes only one thing \u2014 light, water, or air \u2014 and predict what happens."
+      }
+    ],
+    "diagram_package": {
+      "title": "Photosynthesis",
+      "caption": "Light \u2192 Water+CO2 \u2192 Sugar \u2192 Oxygen",
+      "explanation": "This diagram teaches how the ideas in Photosynthesis connect.",
+      "practice_question": "Point to Sugar and explain what the plant gains from photosynthesis.",
+      "callouts": [
+        "Label: Light",
+        "Label: Water+CO2",
+        "Label: Sugar",
+        "Label: Oxygen"
+      ]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Photosynthesis\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Photosynthesis</text><rect x=\"22\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"67\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Light</text><line x1=\"112\" y1=\"79\" x2=\"124\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"124\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"169\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Water+CO2</text><line x1=\"214\" y1=\"79\" x2=\"226\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"226\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"271\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Sugar</text><line x1=\"316\" y1=\"79\" x2=\"328\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"328\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#fff7ed\" stroke=\"#0B2E59\"/><text x=\"373\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Oxygen</text></svg>",
+    "flowchart_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"440\" height=\"150\" viewBox=\"0 0 440 150\" role=\"img\" aria-label=\"Photosynthesis\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"220\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Photosynthesis</text><rect x=\"22\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"67\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Light</text><line x1=\"112\" y1=\"79\" x2=\"124\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"124\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#0B2E59\"/><text x=\"169\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Water+CO2</text><line x1=\"214\" y1=\"79\" x2=\"226\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"226\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#0B2E59\"/><text x=\"271\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Sugar</text><line x1=\"316\" y1=\"79\" x2=\"328\" y2=\"79\" stroke=\"#008C95\" stroke-width=\"2\"/><rect x=\"328\" y=\"55\" width=\"90\" height=\"48\" rx=\"14\" fill=\"#fff7ed\" stroke=\"#0B2E59\"/><text x=\"373\" y=\"85\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"12\" fill=\"#0B2E59\">Oxygen</text></svg>"
+  }
+}

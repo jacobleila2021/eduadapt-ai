@@ -466,8 +466,12 @@ def compose_adaptation_from_board(
                 "role": "teacher_note",
                 "box": "teacher",
                 "body": _body(
-                    " ".join(board.get("teacher_guidance_seeds") or [])
-                    + " Listen for the misconception notes already placed beside each core idea.",
+                    (
+                        "Warm-up (2 min): ask one curiosity question from the opening. "
+                        "Teach with the diagram first, then one worked example. "
+                        "Exit ticket: one accurate sentence plus one real-life example. "
+                        "Listen for the misconception notes already placed beside each core idea."
+                    ),
                     profile=profile,
                     title="teacher",
                 ),
@@ -509,8 +513,11 @@ def compose_adaptation_from_board(
                 "role": "application",
                 "box": "home",
                 "body": _body(
-                    " ".join(board.get("parent_guidance_seeds") or [])
-                    or f"Ask your child to teach you one idea from {topic} in two minutes.",
+                    (
+                        f"Tonight: ask your child to teach you one idea from {topic} in two minutes. "
+                        "Praise clear wording. If they get stuck, look at the lesson diagram together "
+                        "and ask them to point to one label and explain it."
+                    ),
                     profile=profile,
                     title="home",
                 ),
