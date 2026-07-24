@@ -21,7 +21,24 @@ jobs:
       - run: python -m compileall -q .
       - name: Universal source and typed-routing gates
         run: python -m pytest tests/test_universal_lesson_engine_v3.py --tb=short
-      - run: python -m pytest --ignore=tests/e2e --tb=short
+      - name: Unit and integration suite
+        run: |
+          set -o pipefail
+          python -m pytest --ignore=tests/e2e --tb=short -q 2>&1 | tee pytest-unit.log
+      - name: Surface pytest failure
+        if: failure()
+        run: |
+          {
+            echo "## Unit suite failure"
+            echo '```'
+            tail -n 120 pytest-unit.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'ERROR|FAILED|ImportError|SyntaxError|ModuleNotFoundError|Error collecting' pytest-unit.log \
+            | head -n 40 \
+            | while IFS= read -r line; do
+                echo "::error::$line"
+              done
       - run: python -m pip_audit -r requirements.txt
 
   browser-smoke:
