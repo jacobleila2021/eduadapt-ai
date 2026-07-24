@@ -116,13 +116,13 @@ def _polish_vocabulary(page: dict[str, Any]) -> dict[str, Any]:
         row.setdefault("pmes_flashcard", True)
         row.setdefault("lce_card", True)
         if not row.get("memory_tip"):
-            row["memory_tip"] = f"Draw {term} from the lesson diagram, then say what it means."
+            row["memory_tip"] = f"Say “{term}” once, then point to it on the lesson diagram."
         if not row.get("example_sentence") and row.get("example"):
             row["example_sentence"] = row["example"]
-        if not row.get("pronunciation") and term:
-            # Lightweight pronounceable cue — not invented IPA
-            row["pronunciation"] = "-".join(term.lower().split()[:3]) or term.lower()
-        row.setdefault("audio_label", f"Listen: {term}")
+        row["pronunciation"] = ""
+        row["part_of_speech"] = ""
+        row["audio_label"] = ""
+        row.setdefault("student_flashcard", True)
     page["word_wall"] = wall
     page["publisher_style_css"] = style_guide_css()
     return page

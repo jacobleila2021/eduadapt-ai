@@ -696,6 +696,8 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
         "pmes": pqle.get("pmes") or {},
         "peec": pqle.get("peec") or {},
         "uevb": pqle.get("uevb") or {},
+        "epp": pqle.get("epp") or {},
+        "content_fidelity": pqle.get("content_fidelity") or {},
         "pqle": {
             "publication_ready": publication_ready,
             "reject_rendering": bool(pqle.get("reject_rendering")),
@@ -830,6 +832,7 @@ def _compose_package_from_meta(
             "peec": result.get("peec") or {},
             "uevb": result.get("uevb") or {},
             "epp": result.get("epp") or {},
+            "content_fidelity": result.get("content_fidelity") or {},
             "publication_ready": bool(result.get("ok")),
             "reject_rendering": bool((result.get("pqle") or {}).get("reject_rendering")),
         },

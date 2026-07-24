@@ -199,11 +199,11 @@ class VocabularyCard:
         return asdict(self)
 
     def to_word_wall_row(self) -> dict[str, Any]:
-        """Backward-compatible word_wall row for existing renderers/exporters."""
+        """Student flashcard row — meaning, example, picture, remember, use (no dictionary)."""
         return {
             "term": self.term,
             "definition": self.simple_explanation or self.definition,
-            "academic_definition": self.academic_definition or self.definition,
+            "academic_definition": self.simple_explanation or self.definition,
             "emoji": self.emoji or "📘",
             "visual_description": self.picture or self.simple_explanation,
             "child_friendly": self.simple_explanation or self.definition,
@@ -211,19 +211,24 @@ class VocabularyCard:
             "example": self.example_sentence,
             "example_sentence": self.example_sentence,
             "memory_tip": self.memory_tip,
+            "remember_this": self.memory_tip,
             "lesson_context": self.lesson_context,
-            "pronunciation": self.pronunciation,
-            "part_of_speech": self.part_of_speech,
-            "synonyms": list(self.synonyms),
-            "antonyms": list(self.antonyms),
-            "related_words": list(self.synonyms),
-            "opposite_words": list(self.antonyms),
-            "related_concepts": list(self.related_concepts),
-            "difficulty": self.difficulty,
+            "use_this_word": self.lesson_context,
+            "pronunciation": "",
+            "part_of_speech": "",
+            "audio_label": "",
+            "synonyms": [],
+            "antonyms": [],
+            "related_words": [],
+            "opposite_words": [],
+            "related_concepts": [],
+            "difficulty": "",
             "reading_level": self.reading_level,
             "color": self.color,
             "picture": self.picture,
+            "draw_this": self.picture,
             "verified": self.verified,
+            "student_flashcard": True,
             "lce_card": True,
             "pqle_card": True,
         }

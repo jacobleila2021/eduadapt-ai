@@ -12,6 +12,7 @@ from engines.lesson_composition_engine.publisher_style_guide import (
 )
 from epp.constants import ROBOTIC_TRANSITIONS, SCAFFOLD_LEAKS
 from epp.personas import apply_persona_intent
+from engines.lesson_composition_engine.content_fidelity import simplify_vocabulary_page
 
 
 def _scrub(text: str) -> str:
@@ -69,7 +70,7 @@ def polish_adaptations(
         if str(key).startswith("_") or not isinstance(value, dict):
             continue
         if key == "vocabulary":
-            out[key] = _polish_vocabulary(dict(value), topic=topic)
+            out[key] = simplify_vocabulary_page(dict(value), topic=topic)
             continue
         if key == "worksheet":
             sheet = dict(value)

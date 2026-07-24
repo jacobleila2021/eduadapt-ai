@@ -70,4 +70,11 @@ Integration · educational authoring · premium UX · adaptation quality · rend
 - Pipeline: `… → PMES → PEEC → EPP → UEVB`
 - Smoke: `ALORA_EDUCATIONAL_PRODUCT_PERFECTION_SMOKE_OK` · See `docs/EPP.md`.
 
+## Phase Final — Content Fidelity & Publishing Recovery
+
+- Permanent publishing standard: **if the learner cannot see it, it does not exist.**
+- Repair only — no new engines, scorers, validators, or orchestration layers.
+- Prompt leaks, dictionary vocab, clone adaptations, generic summaries, unused diagrams, and silent browser-TTS downgrades fail publication.
+- Smoke: `CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK` · See `docs/CONTENT_FIDELITY.md`.
+
 See `docs/PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE.md`.

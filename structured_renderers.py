@@ -113,63 +113,40 @@ def _word_wall_card_html(word: dict, index: int = 0) -> str:
         except Exception:
             pass
     term_raw = str(word.get("term") or "Term").strip()
-    term = html.escape(term_raw[:1].upper() + term_raw[1:] if term_raw else "Term")
-    definition = html.escape(word.get("definition") or "")
-    simple = html.escape(
+    display = term_raw.upper() if len(term_raw) <= 28 else (term_raw[:1].upper() + term_raw[1:] if term_raw else "Term")
+    term = html.escape(display)
+    meaning = html.escape(
         word.get("child_friendly")
         or word.get("simple_explanation")
-        or word.get("visual_description")
+        or word.get("definition")
         or ""
     )
-    academic = html.escape(str(word.get("academic_definition") or ""))
     example = html.escape(word.get("example") or word.get("example_sentence") or "")
-    memory = html.escape(str(word.get("memory_tip") or ""))
-    context = html.escape(str(word.get("lesson_context") or ""))
-    pos = html.escape(str(word.get("part_of_speech") or "noun"))
-    pronunciation = html.escape(str(word.get("pronunciation") or ""))
-    difficulty = html.escape(str(word.get("difficulty") or "core"))
+    memory = html.escape(str(word.get("remember_this") or word.get("memory_tip") or ""))
+    use_this = html.escape(str(word.get("use_this_word") or word.get("lesson_context") or ""))
+    picture = html.escape(
+        str(word.get("draw_this") or word.get("picture") or word.get("visual_description") or "")
+    )
     num = int(word.get("card_number") or (index + 1))
     emoji = html.escape(str(word.get("emoji") or "📘"))
-    related = word.get("related_words") or word.get("synonyms") or []
-    opposite = word.get("opposite_words") or word.get("antonyms") or []
-    synonyms = ", ".join(html.escape(str(s)) for s in related[:3])
-    antonyms = ", ".join(html.escape(str(s)) for s in opposite[:3])
-    related_c = ", ".join(html.escape(str(s)) for s in (word.get("related_concepts") or [])[:3])
-
-    meta_bits = [f'<span class="alora-vocab-pos">{pos}</span>']
-    if pronunciation:
-        meta_bits.append(f'<span class="alora-vocab-ipa">/{pronunciation}/</span>')
-    meta_bits.append(f'<span class="alora-vocab-level">{difficulty}</span>')
 
     body_parts = []
-    if simple:
-        body_parts.append(f'<p class="alora-vocab-simple"><strong>Student-friendly:</strong> {simple}</p>')
-    if academic and academic != simple:
-        body_parts.append(f'<p class="alora-vocab-def"><strong>Academic:</strong> {academic}</p>')
-    elif definition and definition != simple:
-        body_parts.append(f'<p class="alora-vocab-def"><strong>Academic:</strong> {definition}</p>')
+    if meaning:
+        body_parts.append(f'<p class="alora-vocab-simple"><strong>Meaning</strong> {meaning}</p>')
     if example:
-        body_parts.append(f'<p class="alora-vocab-example"><strong>Example:</strong> <em>{example}</em></p>')
+        body_parts.append(f'<p class="alora-vocab-example"><strong>Real-life example</strong> <em>{example}</em></p>')
+    if picture:
+        body_parts.append(f'<p class="alora-vocab-pic"><strong>Picture idea</strong> {picture}</p>')
     if memory:
-        body_parts.append(f'<p class="alora-vocab-tip"><strong>Remember:</strong> {memory}</p>')
-    if context:
-        body_parts.append(f'<p class="alora-vocab-ctx"><strong>In this lesson:</strong> {context}</p>')
-    extras = []
-    if synonyms:
-        extras.append(f"<span><strong>Related:</strong> {synonyms}</span>")
-    if antonyms:
-        extras.append(f"<span><strong>Opposites:</strong> {antonyms}</span>")
-    if related_c:
-        extras.append(f"<span><strong>Concepts:</strong> {related_c}</span>")
-    if extras:
-        body_parts.append(f'<div class="alora-vocab-extras">{" · ".join(extras)}</div>')
+        body_parts.append(f'<p class="alora-vocab-tip"><strong>Remember this</strong> {memory}</p>')
+    if use_this:
+        body_parts.append(f'<p class="alora-vocab-ctx"><strong>Use this word</strong> {use_this}</p>')
 
     return (
-        f'<article class="alora-word-wall-card pqle-vocab-card" data-card="{num}">'
+        f'<article class="alora-word-wall-card pqle-vocab-card student-flashcard" data-card="{num}">'
         f'<div class="alora-vocab-number" aria-hidden="true">{num}</div>'
         f'<div class="alora-vocab-icon">{emoji}</div>'
         f'<h3 class="alora-word-wall-term">{term}</h3>'
-        f'<div class="alora-vocab-meta">{"".join(meta_bits)}</div>'
         f'<div class="alora-word-wall-body">{"".join(body_parts)}</div>'
         f"</article>"
     )

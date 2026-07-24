@@ -765,32 +765,12 @@ def render_audio_learning_panel(
         )
         return
 
-    if api_key:
+    # Production default is neural voice only — never silently downgrade to browser TTS
+    st.warning("High-quality narration is temporarily unavailable.")
+    if not api_key:
         st.caption(
-            (
-                (audio_result or {}).get("message")
-                or "Premium neural narration is temporarily unavailable."
-            )
-            + " Using your browser voice."
+            "Add an OpenAI API key in the sidebar or .env (OPENAI_API_KEY) to enable premium neural narration."
         )
-    else:
-        st.caption(
-            "Premium neural narration needs an OpenAI API key in the sidebar or .env "
-            "(OPENAI_API_KEY). Browser voice is active until a key is available."
-        )
-    st.markdown(
-        '<div class="alora-audio-stick" aria-hidden="true"></div>',
-        unsafe_allow_html=True,
-    )
-    components.html(
-        _audio_player_html(
-            sentences,
-            voice,
-            speed,
-            auditory_mode,
-            spec_id,
-            storage_key,
-        ),
-        height=560 if auditory_mode else 500,
-        scrolling=True,
-    )
+    elif audio_result and audio_result.get("message"):
+        st.caption(str(audio_result.get("message")))
+    return

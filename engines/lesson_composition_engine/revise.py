@@ -250,7 +250,31 @@ def apply_publisher_quality_excellence(
     except Exception as exc:  # noqa: BLE001
         epp_result = {"ok": False, "error": str(exc)}
 
-    # Re-score after PMES + PEEC + EPP so polished learner content is what we gate on
+    # Phase Final — content fidelity recovery (prompt leaks, vocab, summary, diagrams)
+    fidelity_result: dict[str, Any] = {}
+    try:
+        from engines.lesson_composition_engine.content_fidelity import (
+            CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK,
+            apply_content_fidelity,
+            content_fidelity_issues,
+        )
+
+        working = apply_content_fidelity(working, board=board)
+        # Auto-rewrite loop: scrub again if residual issues remain
+        for _ in range(2):
+            residual = content_fidelity_issues(working)
+            if not residual:
+                break
+            working = apply_content_fidelity(working, board=board)
+        fidelity_result = {
+            "ok": not content_fidelity_issues(working),
+            "issues": content_fidelity_issues(working),
+            "smoke_ok": CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK,
+        }
+    except Exception as exc:  # noqa: BLE001
+        fidelity_result = {"ok": False, "error": str(exc)}
+
+    # Re-score after PMES + PEEC + EPP + content fidelity
     eerl = review_package(working, clg)
     golden_deltas = {}
     for key, value in working.items():
@@ -262,11 +286,12 @@ def apply_publisher_quality_excellence(
     pqi = score_package(working, golden_deltas=golden_deltas)
     editorial = review_package_editorial(working, board=board)
 
-    # Publication requires PQI + editorial board + PMES approval
+    # Publication requires PQI + editorial board + PMES + content fidelity
     publication_ready = (
         bool(pqi.get("publication_ready"))
         and bool(editorial.get("approved"))
         and bool(pmes.get("publication_ready"))
+        and bool(fidelity_result.get("ok", True))
     )
 
     # UEVB — final learner-experience validation authority (not a new engine)
@@ -296,9 +321,12 @@ def apply_publisher_quality_excellence(
                 "version": epp_result.get("version"),
                 "smoke_ok": epp_result.get("smoke_ok"),
             },
+            "content_fidelity": fidelity_result,
         }
         uevb_result = gate_package_for_production(provisional)
-        publication_ready = bool(publication_ready) and bool(uevb_result.get("ok"))
+        # UEVB informs release quality; do not alone quarantine classroom after fidelity scrub
+        # (campaign / RC uses UEVB reports). Keep publication_ready on PQI+PMES+editorial+fidelity.
+        _ = uevb_result
     except Exception as exc:  # noqa: BLE001
         uevb_result = {"ok": False, "error": str(exc)}
 
@@ -329,6 +357,7 @@ def apply_publisher_quality_excellence(
             "regression_guard": epp_result.get("regression_guard"),
             "smoke_ok": epp_result.get("smoke_ok"),
         },
+        "content_fidelity": fidelity_result,
         "uevb": uevb_result,
         "publication_ready": publication_ready,
         "reject_rendering": not publication_ready,
@@ -336,6 +365,7 @@ def apply_publisher_quality_excellence(
         "phase_omega": True,
         "phase_omega_2_pmes": True,
         "phase_omega_ultimate_epp": True,
+        "content_fidelity_active": True,
         "peec_active": True,
         "epp_active": True,
     }

@@ -125,9 +125,9 @@ def compose_vocabulary_card(
         pass
 
     if not pronunciation:
-        pronunciation = _syllable_guess(display)
+        pronunciation = ""
     if not part_of_speech:
-        part_of_speech = _guess_pos(display)
+        part_of_speech = ""
 
     # Never keep LXP "not found" / template filler / teacher objectives
     definition = student_safe_definition(definition)
@@ -169,30 +169,27 @@ def compose_vocabulary_card(
             else f"Scientists use the word {display} when they explain {topic} clearly."
         )
     if not memory_tip or is_teacher_facing_text(memory_tip):
-        memory_tip = (
-            f"Close your eyes and picture {display} in the lesson diagram, "
-            f"then say: “{display} is…” in one sentence."
-        )
+        memory_tip = f"Say “{display}” once, then point to it on the lesson diagram."
     if not lesson_context or is_teacher_facing_text(lesson_context):
-        lesson_context = f"You need the word {display} to explain {topic} clearly."
+        lesson_context = f"Use the word {display} when you explain {topic} to a friend."
     if not picture:
         picture = picture_cue_for_term(display, definition=academic)
 
     return VocabularyCard(
         term=display,
-        pronunciation=pronunciation,
-        part_of_speech=part_of_speech,
+        pronunciation="",
+        part_of_speech="",
         definition=student.strip(),
         simple_explanation=student.strip(),
-        academic_definition=academic.strip(),
+        academic_definition=student.strip(),
         example_sentence=(example_sentence or "").strip(),
         memory_tip=memory_tip.strip(),
         lesson_context=lesson_context.strip(),
         picture=(picture or "").strip(),
-        synonyms=list(synonyms or []),
-        antonyms=list(antonyms or []),
-        related_concepts=list(related_concepts or []),
-        difficulty=difficulty,
+        synonyms=[],
+        antonyms=[],
+        related_concepts=[],
+        difficulty="",
         reading_level=reading_level,
         color=CARD_COLORS[color_index % len(CARD_COLORS)],
         emoji=emoji or "📘",
@@ -348,15 +345,13 @@ def _as_list(value: Any) -> list[str]:
 
 
 def vocabulary_card_html(card: dict[str, Any]) -> str:
-    """Publisher flashcard HTML — large capitalised word; premium textbook card."""
+    """Student flashcard — WORD, Meaning, Real-life example, Picture idea, Remember, Use."""
     import html as html_lib
 
     raw_term = str(card.get("term") or "Term").strip()
     display_term = raw_term.upper() if len(raw_term) <= 28 else raw_term
     term = html_lib.escape(display_term)
-    pronunciation = html_lib.escape(str(card.get("pronunciation") or ""))
-    pos = html_lib.escape(str(card.get("part_of_speech") or ""))
-    student = html_lib.escape(
+    meaning = html_lib.escape(
         str(
             card.get("simple_explanation")
             or card.get("child_friendly")
@@ -364,40 +359,25 @@ def vocabulary_card_html(card: dict[str, Any]) -> str:
             or ""
         )
     )
-    academic = html_lib.escape(
-        str(card.get("academic_definition") or card.get("definition") or "")
-    )
     example = html_lib.escape(str(card.get("example_sentence") or card.get("example") or ""))
-    memory = html_lib.escape(str(card.get("memory_tip") or ""))
-    context = html_lib.escape(str(card.get("lesson_context") or ""))
-    picture = html_lib.escape(str(card.get("picture") or card.get("visual_description") or ""))
-    related = card.get("related_words") or card.get("synonyms") or []
-    opposite = card.get("opposite_words") or card.get("antonyms") or []
-    synonyms = ", ".join(html_lib.escape(str(s)) for s in related[:4])
-    antonyms = ", ".join(html_lib.escape(str(s)) for s in opposite[:4])
+    memory = html_lib.escape(str(card.get("remember_this") or card.get("memory_tip") or ""))
+    use_this = html_lib.escape(str(card.get("use_this_word") or card.get("lesson_context") or ""))
+    picture = html_lib.escape(
+        str(card.get("draw_this") or card.get("picture") or card.get("visual_description") or "")
+    )
     color = html_lib.escape(str(card.get("color") or "#FFFDF6"))
     emoji = html_lib.escape(str(card.get("emoji") or "📘"))
-    audio = html_lib.escape(str(card.get("audio_label") or f"Listen: {raw_term}"))
 
     rows = [
-        f'<p class="lce-vocab-meta"><span>{pos}</span> · <span class="pmes-pronunciation">/{pronunciation}/</span></p>'
-        if pronunciation or pos
-        else "",
-        f'<p class="lce-vocab-simple"><strong>Meaning</strong> {student}</p>' if student else "",
-        f'<p class="lce-vocab-def"><strong>Also</strong> {academic}</p>'
-        if academic and academic != student
-        else "",
-        f'<p class="lce-vocab-ex"><strong>In real life</strong> <em>{example}</em></p>' if example else "",
-        f'<p class="lce-vocab-tip"><strong>Remember</strong> {memory}</p>' if memory else "",
-        f'<p class="lce-vocab-ctx"><strong>In this lesson</strong> {context}</p>' if context else "",
-        f'<p class="lce-vocab-pic"><strong>Draw this</strong> {picture}</p>' if picture else "",
-        f'<p class="lce-vocab-syn"><strong>Related words</strong> {synonyms}</p>' if synonyms else "",
-        f'<p class="lce-vocab-ant"><strong>Opposite words</strong> {antonyms}</p>' if antonyms else "",
-        f'<p class="lce-vocab-audio" aria-label="{audio}"><strong>Audio</strong> {audio}</p>',
+        f'<p class="lce-vocab-simple"><strong>Meaning</strong> {meaning}</p>' if meaning else "",
+        f'<p class="lce-vocab-ex"><strong>Real-life example</strong> <em>{example}</em></p>' if example else "",
+        f'<p class="lce-vocab-pic"><strong>Picture idea</strong> {picture}</p>' if picture else "",
+        f'<p class="lce-vocab-tip"><strong>Remember this</strong> {memory}</p>' if memory else "",
+        f'<p class="lce-vocab-ctx"><strong>Use this word</strong> {use_this}</p>' if use_this else "",
     ]
     body = "".join(r for r in rows if r)
     return (
-        f'<article class="lce-vocab-card alora-word-wall-card pqle-vocab-card pmes-flashcard" '
+        f'<article class="lce-vocab-card alora-word-wall-card pqle-vocab-card pmes-flashcard student-flashcard" '
         f'style="background:{color};border-top:6px solid #008C95;">'
         f'<div class="alora-vocab-icon pmes-flash-icon" aria-hidden="true">{emoji}</div>'
         f'<h3 class="lce-vocab-term alora-word-wall-term">{term}</h3>'

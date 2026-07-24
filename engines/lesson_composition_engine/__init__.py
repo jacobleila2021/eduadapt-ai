@@ -37,6 +37,10 @@ from engines.lesson_composition_engine.publisher_quality import (
     score_package,
     score_publisher_quality,
 )
+from engines.lesson_composition_engine.content_fidelity import (
+    CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK,
+    apply_content_fidelity,
+)
 from engines.lesson_composition_engine.publisher_remediation import (
     ALORA_PUBLISHER_REMEDIATION_SMOKE_OK,
 )
@@ -57,6 +61,7 @@ __all__ = [
     "LCE_SMOKE_OK",
     "PUBLISHER_QUALITY_LESSON_EXCELLENCE_SMOKE_OK",
     "ALORA_PUBLISHER_REMEDIATION_SMOKE_OK",
+    "CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK",
     "PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE_SMOKE_OK",
     "PHASE_OMEGA_2_PMES_SMOKE_OK",
     "PUBLISHER_QUALITY_THRESHOLD",
@@ -69,6 +74,7 @@ __all__ = [
     "LessonCompositionEngine",
     "compose_lesson_package",
     "attach_lce_to_adaptations",
+    "apply_content_fidelity",
     "build_canonical_lesson_graph",
     "build_lesson_intelligence_board",
     "review_adaptation",

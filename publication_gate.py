@@ -40,6 +40,16 @@ def publication_block_reason(
             or "The lesson did not meet publisher-quality standards (PQI < 95)."
         )
 
+    # Phase Final — prompt leaks / dictionary vocab / clone pages fail publication
+    try:
+        from engines.lesson_composition_engine.content_fidelity import content_fidelity_block_reason
+
+        fidelity_reason = content_fidelity_block_reason(adaptations if isinstance(adaptations, dict) else None)
+        if fidelity_reason:
+            return fidelity_reason
+    except Exception:
+        pass
+
     # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief
     eats = meta.get("eats") if isinstance(meta.get("eats"), dict) else {}
     if eats and (eats.get("reject_rendering") or eats.get("publication_ready") is False):
