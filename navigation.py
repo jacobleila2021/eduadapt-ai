@@ -12,6 +12,8 @@ PILL_CATEGORIES = [
     {"id": "vocabulary", "label": "Vocabulary Support", "spec_ids": ["vocabulary"]},
     {"id": "mainstream", "label": "Mainstream Support", "spec_ids": ["standard"]},
     {"id": "neurodiversity", "label": "Dyslexia Smart", "spec_ids": ["ld"]},
+    {"id": "adhd", "label": "ADHD Support", "spec_ids": ["adhd"]},
+    {"id": "autism", "label": "Autism Support", "spec_ids": ["autism"]},
     {"id": "ell", "label": "English Language Support", "spec_ids": ["ell"]},
     {"id": "visual", "label": "Visual Learner Support", "spec_ids": ["visual"]},
     {"id": "auditory", "label": "Auditory Learner Support", "spec_ids": ["auditory"]},

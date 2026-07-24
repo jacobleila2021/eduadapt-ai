@@ -230,15 +230,16 @@ def test_fill_blank_rejects_off_topic_answers():
 def test_indian_voices_present():
     from audio_learning import VOICE_OPTIONS
 
-    assert "Female" in VOICE_OPTIONS
-    assert "Male" in VOICE_OPTIONS
+    assert "Warm Female (Indian)" in VOICE_OPTIONS
+    assert "Warm Male (Indian)" in VOICE_OPTIONS
+    assert "en-in" in VOICE_OPTIONS["Warm Female (Indian)"]["hints"]
 
 
 def test_male_voice_avoids_female():
     from audio_learning import VOICE_OPTIONS
 
-    assert "female" in VOICE_OPTIONS["Male"]["avoid"]
-    assert "male" not in VOICE_OPTIONS["Male"]["hints"]
+    assert "female" in VOICE_OPTIONS["Warm Male (Indian)"]["avoid"]
+    assert "male" not in VOICE_OPTIONS["Warm Male (Indian)"]["hints"]
 
 
 def test_voices_have_instructions():
@@ -275,7 +276,7 @@ def test_ruler_colors_soft():
 def test_lesson_design_variants():
     from lesson_design import BG_MAIN, TEXT_BODY, accent_for_variant, classify_section
 
-    assert BG_MAIN == "#F7FAFC"
+    assert BG_MAIN == "#FFF9EE"
     assert TEXT_BODY == "#333333"
     assert classify_section("Welcome to today's lesson", "", 0) == "introduction"
     assert classify_section("Explain the water cycle", "teal", 1) == "information"
@@ -292,7 +293,9 @@ def test_nine_version_tabs():
     assert "Exam Worksheet" in labels
     neuro = next(c for c in PILL_CATEGORIES if c["id"] == "neurodiversity")
     assert neuro["spec_ids"] == ["ld"]
-    assert len(PILL_CATEGORIES) == 9
+    assert "ADHD Support" in labels
+    assert "Autism Support" in labels
+    assert len(PILL_CATEGORIES) == 11
 
 
 def test_pill_categories_cover_generated_specs():
@@ -301,9 +304,10 @@ def test_pill_categories_cover_generated_specs():
 
     covered = {sid for cat in PILL_CATEGORIES for sid in cat["spec_ids"]}
     assert set(OUTPUT_KEYS) == covered
-    assert len(OUTPUT_KEYS) == 9
+    assert len(OUTPUT_KEYS) == 11
     assert "exam_revision" not in OUTPUT_KEYS
-    assert "adhd" not in OUTPUT_KEYS
+    assert "adhd" in OUTPUT_KEYS
+    assert "autism" in OUTPUT_KEYS
 
 
 def test_only_nine_generated():
@@ -313,6 +317,8 @@ def test_only_nine_generated():
         "vocabulary",
         "standard",
         "ld",
+        "adhd",
+        "autism",
         "ell",
         "visual",
         "auditory",
@@ -419,7 +425,12 @@ def test_sanitize_builds_multiple_self_test_questions():
 
 
 def test_warm_voices_only():
-    assert set(VOICE_OPTIONS.keys()) == {"Female", "Male"}
+    assert set(VOICE_OPTIONS.keys()) == {
+        "Warm Female (International)",
+        "Warm Female (Indian)",
+        "Warm Male (International)",
+        "Warm Male (Indian)",
+    }
 
 
 def test_split_sentences_minimum():

@@ -8,13 +8,15 @@ from typing import Any
 def adaptations_for_legacy_renderer(
     adaptations: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Preserve the nine public keys and existing renderer payload shapes."""
+    """Preserve public adaptation keys and existing renderer payload shapes."""
     source = adaptations or {}
     output = dict(source)
     for key in (
         "vocabulary",
         "standard",
         "ld",
+        "adhd",
+        "autism",
         "ell",
         "visual",
         "auditory",
