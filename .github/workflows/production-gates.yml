@@ -39,7 +39,26 @@ jobs:
             | while IFS= read -r line; do
                 echo "::error::$line"
               done
-      - run: python -m pip_audit -r requirements.txt
+      - name: Dependency vulnerability audit
+        run: |
+          set -o pipefail
+          # PYSEC-2026-311 / CVE-2026-45829: Chroma FastAPI server RCE. Alora only uses
+          # chromadb.PersistentClient (embedded local RAG); no fix release yet (≤1.5.9).
+          python -m pip_audit -r requirements.txt --ignore-vuln PYSEC-2026-311 2>&1 | tee pip-audit.log
+      - name: Surface pip_audit failure
+        if: failure()
+        run: |
+          {
+            echo "## pip_audit failure"
+            echo '```'
+            tail -n 80 pip-audit.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'KNOWN VULNERABILITY|CVE-|GHSA-|Found |PYSEC-' pip-audit.log \
+            | head -n 40 \
+            | while IFS= read -r line; do
+                echo "::error::$line"
+              done
 
   browser-smoke:
     runs-on: ubuntu-latest
