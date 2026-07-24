@@ -47,5 +47,5 @@ jobs:
       - name: Run browser and responsive gates
         env:
           ALORA_E2E_URL: http://127.0.0.1:8501
-          ALORA_EXPECTED_VERSION: "3.0.0"
+          ALORA_EXPECTED_VERSION: "3.1.1"
         run: python -m pytest tests/e2e -m e2e --tb=short
