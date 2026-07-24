@@ -57,7 +57,7 @@ def _enrich_diagrams(adaptation: dict[str, Any], *, topic: str, subject: str, co
                 "role": "revision",
                 "body": (
                     "Name each key idea, give one example, and state one mistake to avoid. "
-                    "Say the definitions aloud once, then check them against the lesson evidence."
+                    "Check each definition against the lesson evidence before you finish."
                 ),
             }
         )
@@ -136,15 +136,22 @@ def apply_publisher_quality_excellence(
     adaptations: dict[str, Any],
     *,
     clg: Mapping[str, Any] | None = None,
+    board: Mapping[str, Any] | None = None,
     max_passes: int = MAX_REVISE_PASSES,
 ) -> dict[str, Any]:
     """
     Full PQLE pass over a composed package:
-    seed goldens → polish prose → enrich diagrams → score PQI → revise until ready.
+    seed goldens → polish prose → enrich diagrams → score PQI → editorial board.
     """
+    from engines.lesson_composition_engine.editorial_board import review_package_editorial
+    from engines.lesson_composition_engine.publisher_remediation import remediate_package
+
     seed_default_golden_lessons()
     clg = clg or {}
+    board = dict(board or adaptations.get("_intelligence_board") or {})
+    claims = list(board.get("verified_claims") or [])
     working = polish_package(dict(adaptations))
+    working = remediate_package(working, claims=claims)
     vocab = working.get("vocabulary") if isinstance(working.get("vocabulary"), dict) else {}
     pqi_by: dict[str, Any] = {}
     golden_deltas: dict[str, float] = {}
@@ -153,11 +160,33 @@ def apply_publisher_quality_excellence(
         if key.startswith("_") or not isinstance(value, dict):
             continue
         if key == "vocabulary":
-            # Vocab pages: light polish marker only
+            # Vocab pages: ensure premium study assets from board concepts
             value = dict(value)
+            wall = list(value.get("word_wall") or value.get("vocabulary_cards") or [])
+            if len(wall) < 4 and board:
+                from engines.lesson_composition_engine.vocabulary import compose_vocabulary_page
+
+                seeds = list(board.get("vocabulary") or []) + [
+                    str(c.get("name") or "")
+                    for c in (board.get("concepts") or [])
+                    if isinstance(c, dict)
+                ]
+                rebuilt = compose_vocabulary_page(
+                    seeds,
+                    topic=str(board.get("topic") or clg.get("topic") or "Lesson"),
+                    claims=list(board.get("verified_claims") or claims),
+                )
+                value = {**rebuilt, **{k: v for k, v in value.items() if k.startswith("_")}}
+                wall = list(value.get("word_wall") or [])
+            for row in wall:
+                if isinstance(row, dict):
+                    row.setdefault("lce_card", True)
+                    row.setdefault("pqle_card", True)
+            value["word_wall"] = wall
             value.setdefault("lce", {})
             if isinstance(value["lce"], dict):
                 value["lce"]["pqle"] = True
+                value["lce"]["phase_omega"] = True
             working[key] = value
             continue
         if key == "worksheet":
@@ -165,8 +194,8 @@ def apply_publisher_quality_excellence(
             sheet = dict(value)
             dq = dict(sheet.get("diagram_question") or {})
             if not str(dq.get("svg_diagram") or "").startswith("<svg"):
-                topic = str(clg.get("topic") or "Lesson")
-                subject = str(clg.get("subject_key") or "general")
+                topic = str(clg.get("topic") or board.get("topic") or "Lesson")
+                subject = str(clg.get("subject_key") or board.get("subject") or "general")
                 dq["svg_diagram"] = build_subject_flowchart(subject, topic)
                 sheet["diagram_question"] = dq
             sheet.setdefault("_lce", {})["pqle"] = True
@@ -186,18 +215,127 @@ def apply_publisher_quality_excellence(
 
     eerl = review_package(working, clg)
     pqi = score_package(working, golden_deltas=golden_deltas)
+    editorial = review_package_editorial(working, board=board)
 
-    # Block render unless both EERL soft-ok and PQI publication ready
-    publication_ready = bool(pqi.get("publication_ready")) and bool(eerl.get("ok") or eerl.get("production_ready"))
-    # Prefer hard PQI threshold as the publisher law
-    publication_ready = bool(pqi.get("publication_ready"))
+    # Phase Omega 2.0 — PMES is the highest editorial authority (comments → rewrite)
+    from engines.lesson_composition_engine.pmes import run_pmes
+
+    pmes = run_pmes(working, board=board, max_passes=max_passes)
+    working = pmes.get("adaptations") or working
+    publisher_review = pmes.get("publisher_review_report") or {}
+
+    # PEEC — product excellence polish (audits + remediations, not a new engine)
+    peec_result: dict[str, Any] = {}
+    try:
+        from peec import apply_peec
+
+        peec_result = apply_peec(
+            working,
+            board=board,
+            pmes_report=publisher_review,
+            write_reports=False,
+            max_passes=2,
+        )
+        working = peec_result.get("adaptations") or working
+    except Exception as exc:  # noqa: BLE001
+        peec_result = {"ok": False, "error": str(exc)}
+
+    # EPP — Phase Omega Ultimate: final learner-visible perfection (not a new engine/gate)
+    epp_result: dict[str, Any] = {}
+    try:
+        from epp import apply_epp
+
+        epp_result = apply_epp(working, board=board)
+        working = epp_result.get("adaptations") or working
+    except Exception as exc:  # noqa: BLE001
+        epp_result = {"ok": False, "error": str(exc)}
+
+    # Re-score after PMES + PEEC + EPP so polished learner content is what we gate on
+    eerl = review_package(working, clg)
+    golden_deltas = {}
+    for key, value in working.items():
+        if key.startswith("_") or not isinstance(value, dict) or key in {"vocabulary", "worksheet"}:
+            continue
+        subject = str(clg.get("subject_key") or board.get("subject") or "general")
+        golden = compare_to_golden(value, subject=subject)
+        golden_deltas[key] = float(golden.get("delta") or 0.0)
+    pqi = score_package(working, golden_deltas=golden_deltas)
+    editorial = review_package_editorial(working, board=board)
+
+    # Publication requires PQI + editorial board + PMES approval
+    publication_ready = (
+        bool(pqi.get("publication_ready"))
+        and bool(editorial.get("approved"))
+        and bool(pmes.get("publication_ready"))
+    )
+
+    # UEVB — final learner-experience validation authority (not a new engine)
+    uevb_result: dict[str, Any] = {}
+    try:
+        from uevb import gate_package_for_production
+
+        provisional = {
+            "ok": publication_ready,
+            "adaptations": working,
+            "intelligence_board": board,
+            "clg": clg,
+            "pqi": pqi,
+            "editorial": editorial,
+            "publisher_review_report": publisher_review,
+            "pmes": {
+                "approved": bool(pmes.get("publication_ready")),
+                "version": pmes.get("pmes_version"),
+            },
+            "pqle": {"publication_ready": publication_ready},
+            "peec": {
+                "ok": peec_result.get("ok"),
+                "version": peec_result.get("version"),
+            },
+            "epp": {
+                "ok": epp_result.get("ok"),
+                "version": epp_result.get("version"),
+                "smoke_ok": epp_result.get("smoke_ok"),
+            },
+        }
+        uevb_result = gate_package_for_production(provisional)
+        publication_ready = bool(publication_ready) and bool(uevb_result.get("ok"))
+    except Exception as exc:  # noqa: BLE001
+        uevb_result = {"ok": False, "error": str(exc)}
 
     return {
         "adaptations": working,
         "eerl": eerl,
         "pqi": pqi,
         "pqi_detail": pqi_by,
+        "editorial": editorial,
+        "publisher_review_report": publisher_review,
+        "pmes": {
+            "approved": bool(pmes.get("publication_ready")),
+            "version": pmes.get("pmes_version"),
+            "reject_rendering": bool(pmes.get("reject_rendering")),
+        },
+        "peec": {
+            "ok": bool(peec_result.get("ok")),
+            "version": peec_result.get("version"),
+            "audit": peec_result.get("audit"),
+            "remediation_plan": (peec_result.get("audit") or {}).get("remediation_plan"),
+            "regression_verification": peec_result.get("regression_verification"),
+            "smoke_ok": peec_result.get("smoke_ok"),
+        },
+        "epp": {
+            "ok": bool(epp_result.get("ok")),
+            "version": epp_result.get("version"),
+            "notes": epp_result.get("notes"),
+            "regression_guard": epp_result.get("regression_guard"),
+            "smoke_ok": epp_result.get("smoke_ok"),
+        },
+        "uevb": uevb_result,
         "publication_ready": publication_ready,
         "reject_rendering": not publication_ready,
         "threshold": PUBLISHER_QUALITY_THRESHOLD,
+        "phase_omega": True,
+        "phase_omega_2_pmes": True,
+        "phase_omega_ultimate_epp": True,
+        "peec_active": True,
+        "epp_active": True,
     }

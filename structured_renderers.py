@@ -151,7 +151,7 @@ def _word_wall_card_html(word: dict, index: int = 0) -> str:
     if example:
         body_parts.append(f'<p class="alora-vocab-example"><strong>Example:</strong> <em>{example}</em></p>')
     if memory:
-        body_parts.append(f'<p class="alora-vocab-tip"><strong>Memory tip:</strong> {memory}</p>')
+        body_parts.append(f'<p class="alora-vocab-tip"><strong>Remember:</strong> {memory}</p>')
     if context:
         body_parts.append(f'<p class="alora-vocab-ctx"><strong>In this lesson:</strong> {context}</p>')
     extras = []
@@ -1054,11 +1054,45 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     # When no subject engine / UVIE visual actually rendered, show Alora's
     # deterministic, content-labelled study diagram (never an AI sketch).
     if not rendered_verified:
-        from study_diagram_builder import resolve_study_diagram_svg
-
         st.markdown("#### Lesson Visual")
-        st.caption("A labelled study diagram built directly from this lesson.")
-        _render_svg(resolve_study_diagram_svg(lesson))
+        pkg = lesson.get("diagram_package") if isinstance(lesson.get("diagram_package"), dict) else {}
+        svg = str(
+            pkg.get("svg")
+            or lesson.get("flowchart_svg")
+            or lesson.get("svg_diagram")
+            or lesson.get("concept_map_svg")
+            or ""
+        )
+        if _valid_svg_diagram(svg):
+            title = html.escape(str(pkg.get("title") or lesson.get("topic") or "Lesson diagram"))
+            caption = html.escape(str(pkg.get("caption") or "A labelled teaching diagram for this lesson."))
+            explain = html.escape(str(pkg.get("explanation") or ""))
+            practice = html.escape(str(pkg.get("practice_question") or ""))
+            callouts = pkg.get("callouts") or []
+            callout_html = "".join(
+                f'<li>{html.escape(str(c))}</li>' for c in callouts[:5]
+            )
+            st.markdown(
+                f'<figure class="pmes-diagram-figure">'
+                f'<figcaption><strong>{title}</strong></figcaption>'
+                f"</figure>",
+                unsafe_allow_html=True,
+            )
+            _render_svg(svg)
+            st.markdown(
+                f'<div class="pmes-diagram-figure">'
+                f'<p class="pmes-diagram-explain"><em>{caption}</em></p>'
+                + (f'<p class="pmes-diagram-explain">{explain}</p>' if explain else "")
+                + (f'<ul>{callout_html}</ul>' if callout_html else "")
+                + (f'<p class="pmes-diagram-practice"><strong>Try this</strong> {practice}</p>' if practice else "")
+                + "</div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            from study_diagram_builder import resolve_study_diagram_svg
+
+            st.caption("A labelled study diagram built directly from this lesson.")
+            _render_svg(resolve_study_diagram_svg(lesson))
     big_idea = lesson.get("big_idea", "")
     if big_idea:
         if is_ld:

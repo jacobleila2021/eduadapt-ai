@@ -19,27 +19,29 @@ def _print_css() -> str:
     return """
   @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap');
   @page { margin: 1.5cm; }
-  body { font-family: Lexend, Arial, sans-serif; font-size: 12pt; line-height: 1.75;
-         color: #041B4D; max-width: 820px; margin: 0 auto; padding: 1rem; }
+  body { font-family: Lexend, Georgia, serif; font-size: 12pt; line-height: 1.75;
+         color: #0B2E59; max-width: 820px; margin: 0 auto; padding: 1rem;
+         background: #FFF9EE; }
   h1 { color: #008C95; page-break-before: always; border-bottom: 3px solid #008C95;
-       padding-bottom: 0.4rem; }
+       padding-bottom: 0.4rem; font-family: Georgia, serif; }
   h1:first-of-type { page-break-before: avoid; }
-  h2 { color: #041B4D; page-break-after: avoid; }
+  h2 { color: #0B2E59; page-break-after: avoid; font-family: Georgia, serif; }
   .cover { text-align: center; padding: 4rem 2rem; page-break-after: always;
-            background: linear-gradient(135deg, #041B4D, #0a3d6e); color: white;
+            background: linear-gradient(135deg, #0B2E59, #008C95); color: white;
             border-radius: 12px; margin-bottom: 2rem; }
   .cover h1 { color: white; border: none; font-size: 2.2rem; }
-  .cover .sub { color: #14D9E5; font-size: 1.1rem; margin-top: 1rem; }
+  .cover .sub { color: #E6F7F8; font-size: 1.1rem; margin-top: 1rem; }
   .toc { page-break-after: always; margin-bottom: 2rem; }
   .toc li { margin: 0.5rem 0; }
   .section { page-break-before: always; }
   .card { padding: 1rem; margin: 0.75rem 0; border-radius: 8px;
-          border-left: 5px solid #008C95; page-break-inside: avoid; }
+          border-left: 5px solid #008C95; page-break-inside: avoid;
+          background: #FFFDF6; }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #041B4D; color: white; padding: 0.5rem; }
-  td { border: 1px solid #ccc; padding: 0.5rem; }
+  th { background: #0B2E59; color: white; padding: 0.5rem; }
+  td { border: 1px solid #E2D6C2; padding: 0.5rem; }
   @media print {
-    body { background: white; }
+    body { background: #FFF9EE; }
     .no-print { display: none; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }

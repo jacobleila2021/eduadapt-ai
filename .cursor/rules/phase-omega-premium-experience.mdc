@@ -1,0 +1,73 @@
+---
+description: Phase Omega — freeze new engines; optimise only learner-facing educational experience
+alwaysApply: true
+---
+
+# Phase Omega — Premium Educational Experience
+
+## Engine freeze
+
+- Do **not** create new intelligence engines unless a demonstrated learner-facing gap cannot be solved by integrating existing ones.
+- Metadata, internal scores, and engine execution have **zero** educational value unless they change what the learner reads, sees, hears, or practices.
+
+## Golden principle
+
+For every engine contribution ask: **How does this improve what the learner reads?**  
+If there is no visible improvement, the integration is incomplete — fix the integration, do not add engines.
+
+## Authoring law
+
+1. LCE is the Educational Composer (conductor), not a template assembler.
+2. Build a **Lesson Intelligence Board** before writing any paragraph.
+3. Every adaptation must be a **different educational experience** (sequence, load, examples, visuals, assessment) — never clone + wrap.
+4. No authoring/scaffold language in student HTML (`Notice how`, `core idea`, `Checkpoint`, `Students will`, `Memory tip`, `Picture`, etc.).
+5. Cream textbook UI (`#FFF9EE`), publisher-quality visuals that teach, vocabulary cards that teach.
+6. Optimise only the educational experience of the learner.
+
+## Allowed work
+
+Integration · educational authoring · premium UX · adaptation quality · rendering quality · publisher-grade production · golden library · editorial acceptance.
+
+## Phase Omega 2.0 — PMES
+
+- **Publisher Master Editorial System** is the highest authority before render.
+- PMES **comments and rewrites** — it does not merely score.
+- Global style guide (`publisher_style_guide.py`) governs writing, colour, typography, diagrams, vocabulary.
+- Vocabulary cards are premium flashcards; diagrams must teach (caption + practice).
+- See `docs/PHASE_OMEGA_2_PMES.md`.
+
+## UEVB — final production gate
+
+- **Universal Educational Validation & Benchmarking** validates learner experience before production.
+- Not a new intelligence engine — corpus, differentiation, engine contribution, visual audit, release gate.
+- See `docs/UEVB.md`. Smoke: `UNIVERSAL_EDUCATIONAL_VALIDATION_BENCHMARKING_SMOKE_OK`.
+
+## PEEC — product excellence
+
+- **Product Excellence & Experience Completion** audits and remediates the learner experience (writing, UX, adaptations, visuals, accessibility).
+- Not a new intelligence engine. See `docs/PEEC.md`.
+- Smoke: `PRODUCT_EXCELLENCE_EXPERIENCE_COMPLETION_SMOKE_OK`.
+
+## POBR — beta readiness
+
+- **Product Optimisation & Beta Readiness** prepares commercial beta (workflows, exports, PDF/save, UX/performance/a11y audits).
+- Not a new intelligence engine. See `docs/POBR.md`.
+- Smoke: `PRODUCT_OPTIMISATION_BETA_READINESS_SMOKE_OK`.
+
+## RCPR — Release Candidate (architecture freeze)
+
+- Architecture is **frozen** (UCF, CEF, CMIF, ULI/ULIQE, SIF/SICS, subject packs, UVIE, LCE, PQLE, PMES, EATS, UEVB, PEEC, POBR).
+- Allowed only: bug fixes · performance · integration · rendering · educational quality.
+- **No new engines, intelligence frameworks, or validation systems.**
+- RC campaign: `python -m release --target 100` · smoke: `RELEASE_CANDIDATE_PRODUCTION_READINESS_SMOKE_OK`
+- Tag when Critical/High clear: **ALORA-AI-RC1**. See `docs/RCPR.md`.
+
+## EPP — Phase Omega Ultimate (Educational Product Perfection)
+
+- **Educational Product Perfection** is the final learner-visible polish — not an engine, framework, or gate.
+- Golden rule: metadata that never reaches the learner is a defect; surface board intelligence into explanations, examples, activities, visuals, assessments.
+- Allowed work only: educational quality · writing · engagement · adaptations · visuals · accessibility · rendering · UX · performance · reliability.
+- Pipeline: `… → PMES → PEEC → EPP → UEVB`
+- Smoke: `ALORA_EDUCATIONAL_PRODUCT_PERFECTION_SMOKE_OK` · See `docs/EPP.md`.
+
+See `docs/PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE.md`.

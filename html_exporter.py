@@ -29,7 +29,7 @@ def _page(title: str, body: str) -> str:
     font-family: Lexend, Arial, Verdana, sans-serif;
     font-size: 17px; line-height: 1.85; letter-spacing: 0.02em;
     color: #0B2E59; max-width: 820px; margin: 0 auto; padding: 2rem 1.5rem;
-    background: #fafcfd;
+    background: #FFF9EE;
   }}
   h1 {{ color: #008C95; font-size: 1.75rem; border-bottom: 4px solid #008C95;
         padding-bottom: 0.5rem; margin-bottom: 1.5rem; }}
@@ -47,7 +47,7 @@ def _page(title: str, body: str) -> str:
   .concept-map {{ text-align: center; margin: 1.5rem auto 2rem; page-break-inside: avoid; }}
   .concept-map svg {{ max-width: 100%; height: auto; display: block; margin: 0 auto; }}
   @media print {{
-    body {{ font-size: 13pt; background: white; }}
+    body {{ font-size: 13pt; background: #FFF9EE; }}
     h2 {{ page-break-before: auto; }}
     .concept-map svg {{
       -webkit-print-color-adjust: exact;
@@ -72,7 +72,7 @@ def export_vocabulary_html(data: Any) -> str:
             f'<div class="card" style="background:{bg}">'
             f'<h3>{html.escape(word.get("emoji", "📌"))} {html.escape(word.get("term", ""))}</h3>'
             f'<p>{html.escape(word.get("definition", ""))}</p>'
-            f'<p><em>Picture:</em> {html.escape(word.get("visual_description", ""))}</p></div>'
+            f'<p><em>Draw this:</em> {html.escape(word.get("visual_description") or word.get("picture") or "")}</p></div>'
         )
 
     parts.append("<h2>2. Flashcards</h2><table><tr><th>Front</th><th>Back</th></tr>")

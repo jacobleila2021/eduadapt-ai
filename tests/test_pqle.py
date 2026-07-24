@@ -112,7 +112,7 @@ def test_vocabulary_pqle_fields_and_dominant_term():
     assert card.get("academic_definition") or card.get("definition")
     html = vocabulary_card_html(card)
     assert "lce-vocab-term" in html or "alora-word-wall-term" in html
-    assert "Memory tip" in html or "memory" in html.lower()
+    assert "Remember" in html or "memory" in html.lower() or "Draw this" in html
 
 
 def test_adaptation_personalities_distinct():

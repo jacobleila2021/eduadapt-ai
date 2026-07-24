@@ -222,7 +222,7 @@ def test_adaptive_versions_are_distinct():
     assert (adhd.get("sections") or [{}])[0].get("title") != (standard.get("sections") or [{}])[0].get("title") or (
         adhd.get("sections") or [{}])[0].get("body") != (standard.get("sections") or [{}])[0].get("body")
     rewritten = compose_adaptive_version(standard, "ell", vocabulary_terms=["force", "pressure"])
-    assert "Key words" in str(rewritten.get("sections"))
+    assert "Key Words" in str(rewritten.get("sections")) or "Important words" in str(rewritten.get("sections"))
 
 
 def test_accessibility_does_not_collapse_depth():

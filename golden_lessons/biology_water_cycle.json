@@ -2,50 +2,70 @@
   "id": "biology_water_cycle",
   "subject": "biology",
   "topic": "The Water Cycle",
-  "pqi_target": 95,
+  "pqi_target": 98,
   "min_sections": 10,
-  "min_vocab_cards": 5,
+  "min_vocab_cards": 6,
   "required_roles": [
+    "hook",
+    "visual",
     "concept",
     "process",
     "simple_explanation",
+    "real_life_example",
     "summary",
     "reflection"
   ],
   "lesson": {
-    "big_idea": "Water moves through evaporation, condensation, and precipitation in a continuous cycle. Each stage changes water's form without destroying it.",
+    "big_idea": "Water travels the Earth in a continuous cycle — evaporating, condensing, and falling again — without being used up.",
     "sections": [
       {
-        "title": "Opening",
+        "title": "Follow One Drop",
         "role": "hook",
-        "body": "Follow a drop of water around the Earth."
+        "body": "Have you ever wondered where rain comes from after a sunny morning? Follow one drop of water around the Earth."
       },
       {
-        "title": "Concept",
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "The cycle diagram shows evaporation, condensation, precipitation, and collection. Trace the arrows so the journey feels clear."
+      },
+      {
+        "title": "Concept: Water Cycle",
         "role": "concept",
-        "body": "The water cycle is a continuous process."
+        "body": "The water cycle is a continuous process. Water changes form, but the amount of water on Earth stays in balance."
       },
       {
-        "title": "Process",
+        "title": "Process Stages",
         "role": "process",
-        "body": "Evaporation, condensation, precipitation."
+        "body": "Heat lifts liquid water as vapour. Cooling forms clouds. Rain, snow, or hail return water to land and sea."
       },
       {
-        "title": "Understanding",
+        "title": "Understanding Simply",
         "role": "simple_explanation",
-        "body": "Heat turns liquid water into vapour; cooling forms clouds."
+        "body": "Sunlight evaporates water. Cool air condenses vapour into droplets. Precipitation brings water home again."
       },
       {
-        "title": "Summary",
+        "title": "In Real Life",
+        "role": "real_life_example",
+        "body": "Steam above a hot cup is a tiny reminder of evaporation — like the cycle, only closer to your hands."
+      },
+      {
+        "title": "Lesson Summary",
         "role": "summary",
-        "body": "Water changes state and travels."
+        "body": "Evaporation, condensation, and precipitation keep water moving. You can explain one stage and feel ready to revise."
       },
       {
-        "title": "Reflect",
+        "title": "Think About It",
         "role": "reflection",
-        "body": "Which stage can you observe outdoors?"
+        "body": "Which stage have you seen this week — steam, clouds, or rain?"
       }
     ],
-    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"90\" viewBox=\"0 0 220 90\"><rect width=\"220\" height=\"90\" rx=\"14\" fill=\"#ecfdf5\"/><text x=\"110\" y=\"50\" text-anchor=\"middle\">Evaporation → Condensation → Rain</text></svg>"
+    "diagram_package": {
+      "title": "The Water Cycle",
+      "caption": "Evaporation → Condensation → Precipitation → Collection",
+      "explanation": "This diagram reduces overload by showing one clear loop.",
+      "practice_question": "Point to condensation and say what is happening to the water.",
+      "callouts": ["Evaporation", "Condensation", "Precipitation", "Collection"]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"420\" height=\"180\" viewBox=\"0 0 420 180\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><text x=\"210\" y=\"28\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">The Water Cycle</text><circle cx=\"210\" cy=\"100\" r=\"54\" fill=\"none\" stroke=\"#008C95\" stroke-width=\"3\"/><text x=\"210\" y=\"70\" text-anchor=\"middle\" fill=\"#0B2E59\">Condensation</text><text x=\"300\" y=\"110\" fill=\"#0B2E59\">Precipitation</text><text x=\"210\" y=\"150\" text-anchor=\"middle\" fill=\"#0B2E59\">Collection</text><text x=\"110\" y=\"110\" fill=\"#0B2E59\">Evaporation</text></svg>"
   }
 }

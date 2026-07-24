@@ -60,6 +60,17 @@ AI_PHRASES = (
     "without further ado",
     "in this article",
     "as previously mentioned",
+    "is a core idea in this lesson",
+    "worth mastering because it helps you explain",
+    "we begin with",
+    "feels clear and organised",
+    "worked example: identify where",
+    "appears in the lesson evidence",
+    "practice: explain",
+    "a useful way to remember",
+    "connect it to a familiar situation",
+    "students will",
+    "learners will",
 )
 
 ADAPTATION_SIGNATURES: dict[str, tuple[str, ...]] = {

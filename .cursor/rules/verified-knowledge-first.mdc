@@ -1,0 +1,32 @@
+---
+description: AdaptEd/Alora three-layer OS — Knowledge, Computation, Teaching. Deterministic First; LLM never invents STEM.
+alwaysApply: true
+---
+
+# Deterministic Engine First · AI Explanation Second
+
+## Three intelligence layers (mandatory)
+
+1. **Knowledge Layer** — NCERT, CBSE, Exemplar, question banks, RAG, vector DB (source of truth).
+2. **Computation Layer** — SymPy, ChemPy, RDKit, GeoGebra, Matplotlib, Schemdraw, validators (correctness).
+3. **Teaching Layer** — Multi-agent AI explains, adapts, personalizes, tutors (never changes computed/official results).
+
+Alora is an **AI Orchestrator**, not a chatbot that invents equations, graphs, or answers.
+
+## Platform law
+
+Never use an LLM to generate facts, equations, calculations, balancing, graphs, or scientific diagrams when deterministic libraries or official answers exist.
+
+## Engineering rules
+
+1. Route STEM / official-answer tasks through `engines/router.py` (Subject Tool Router) — never bypass.
+2. Chemistry: balance via ChemPy/SymPy; **atom-count validation required** before display/publish.
+3. Teaching / `ai_generator.py` may only change presentation; inject `EngineResult` payloads unchanged.
+4. RAG: LLM must not answer curriculum from memory — retrieve + cite Knowledge Layer.
+5. QA: reject lessons when `engines.qa.pipeline.validate_engine_results` fails.
+
+## See also
+
+- `docs/THREE_LAYER_SCIENTIFIC_COMPUTING_ARCHITECTURE.md` (primary)
+- `docs/VERIFIED_LEARNING_ENGINE_ARCHITECTURE.md`
+- `docs/SCIENTIFIC_ACCURACY_ENGINE_ARCHITECTURE.md`

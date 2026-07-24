@@ -10,14 +10,20 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from engines.lesson_composition_engine.adaptive_writing import compose_adaptive_version
+from engines.lesson_composition_engine.board_adaptations import compose_adaptation_from_board
 from engines.lesson_composition_engine.clg import build_canonical_lesson_graph
 from engines.lesson_composition_engine.diagrams import (
     build_concept_map_svg,
+    build_educational_flowchart_svg,
     build_subject_flowchart,
     prefer_svg_over_mermaid,
 )
 from engines.lesson_composition_engine.eerl import review_package
+from engines.lesson_composition_engine.intelligence_board import (
+    PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE_SMOKE_OK,
+    build_lesson_intelligence_board,
+    integration_failures,
+)
 from engines.lesson_composition_engine.lenses import LENS_CONTRACTS, lens_for, subject_arc
 from engines.lesson_composition_engine.schemas import (
     ADAPTIVE_VERSION_IDS,
@@ -55,6 +61,13 @@ def _para(*sentences: str) -> str:
     return ensure_paragraph_quality(dedupe_sentences(text))
 
 
+def _student_goal(goal: str, *, topic: str) -> str:
+    from engines.lesson_composition_engine.publisher_remediation import studentize_goal
+
+    text = studentize_goal(goal, topic=topic)
+    return text if text.endswith((".", "!", "?")) else text + "."
+
+
 def _fact_pool(clg: Mapping[str, Any]) -> list[str]:
     facts = [str(f.get("text") or "") for f in (clg.get("facts") or []) if f]
     claims = [str(c) for c in (clg.get("claim_texts") or []) if c]
@@ -79,9 +92,14 @@ def _concept_explain(concept: Mapping[str, Any], pool: list[str]) -> str:
             expl if expl.endswith((".", "!", "?")) else expl + ".",
             support or f"Keep the meaning of {name} precise when you explain it.",
         )
+    if support:
+        return _para(
+            support if support.endswith((".", "!", "?")) else support + ".",
+            f"Use that evidence to explain {name} in your own words.",
+        )
     return _para(
-        f"{name} is a core idea in this lesson.",
-        support or f"Use the lesson evidence to explain {name} in your own words.",
+        f"{name} is defined by the lesson evidence.",
+        f"Say what {name.lower()} means in one clear sentence before you continue.",
     )
 
 
@@ -111,29 +129,30 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
             "role": "hook",
             "box": "hook",
             "body": _para(
-                goal if goal.endswith((".", "!", "?")) else goal + ".",
-                f"As you read, notice how each idea connects back to {topic}.",
+                _student_goal(goal, topic=topic),
+                f"Each idea below connects back to {topic}.",
             ),
         },
         {
             "title": "Lesson Introduction",
             "role": "hook",
             "body": _para(
-                f"Today we study {topic} with careful classroom language and clear examples.",
-                pool[0] if pool else f"Stay close to the uploaded evidence about {topic}.",
+                pool[0] if pool else f"This lesson helps you explain {topic} with accurate terms.",
+                pool[1] if len(pool) > 1 else f"Stay close to the uploaded evidence about {topic}.",
             ),
         },
     ]
 
-    # Subject teaching arc framing
+    # Subject teaching arc framing — use claims, not empty stage chatter
     for i, stage in enumerate(arc[:3]):
+        fact = pool[min(i + 1, len(pool) - 1)] if pool else ""
         sections.append(
             {
                 "title": stage,
                 "role": stage.lower().replace(" ", "_"),
                 "body": _para(
-                    f"We begin with {stage.lower()} so {topic} feels clear and organised.",
-                    pool[min(i + 1, len(pool) - 1)] if pool else f"Connect this {stage.lower()} step to {topic}.",
+                    fact or f"Focus on the {stage.lower()} part of {topic}.",
+                    f"Connect this {stage.lower()} step to the definitions you will use later.",
                 ),
             }
         )
@@ -142,7 +161,7 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
         name = str(concept.get("name") or f"Concept {i+1}")
         sections.append(
             {
-                "title": f"Core Idea: {name}",
+                "title": f"Concept: {name}",
                 "role": "concept",
                 "box": "teach",
                 "body": _concept_explain(concept, pool),
@@ -155,7 +174,7 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 "role": "simple_explanation",
                 "body": _para(
                     _concept_explain(concept, pool),
-                    f"Say the definition of {name} once in your own words before moving on.",
+                    f"Restate {name} in one short sentence before you continue.",
                 ),
             }
         )
@@ -169,8 +188,8 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 "title": f"{name} in Everyday Life",
                 "role": "real_life_example",
                 "body": _para(
-                    f"A useful way to remember {name} is to connect it to a familiar situation.",
                     ex or f"Look for {name.lower()} in a simple classroom or home example linked to {topic}.",
+                    f"Say one sentence that connects {name.lower()} to that situation.",
                 ),
             }
         )
@@ -181,31 +200,42 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                     "title": f"See {name}",
                     "role": "visual",
                     "body": _para(
-                        f"Study the diagram that supports {name}: {cap}.",
+                        f"The diagram for {name} shows: {cap}.",
                         "Match each labelled part to the explanation you just read.",
                     ),
                     "visual_ids": [str(visuals[i].get("visual_id") or "")],
                 }
             )
+        support = ""
+        for text in pool:
+            if name.lower() in text.lower():
+                support = text
+                break
+        if not support and pool:
+            support = pool[min(i, len(pool) - 1)]
         sections.append(
             {
                 "title": f"Worked Example — {name}",
                 "role": "worked_example",
                 "body": _para(
-                    f"Worked example: identify where {name.lower()} appears in the lesson evidence.",
-                    "Name the key parts, then explain the idea in two clear sentences using accurate terms.",
+                    f"Worked example — read this evidence: {support}" if support else f"Worked example — define {name} from the lesson evidence.",
+                    f"Underline the words that define {name.lower()}, then write two accurate sentences.",
                 ),
             }
         )
         misc = misconceptions[i] if i < len(misconceptions) else None
         if misc:
+            label = str(misc.get("label") or "A common confusion appears here.").rstrip(".")
+            correction = str(
+                misc.get("correction") or "Use the lesson evidence to keep the definitions separate."
+            )
             sections.append(
                 {
                     "title": f"Watch Out — {name}",
                     "role": "common_misconception",
                     "body": _para(
-                        str(misc.get("label") or "A common confusion appears here."),
-                        str(misc.get("correction") or "Use the lesson evidence to keep the definitions separate."),
+                        f"{label}.",
+                        f"Correction: {correction}",
                     ),
                 }
             )
@@ -214,7 +244,8 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 "title": f"Try This — {name}",
                 "role": "practice_question",
                 "body": _para(
-                    f"Practice: Explain {name} using evidence from the lesson.",
+                    f"Explain {name} in your own words"
+                    + (f" using this evidence: {support}" if support else "."),
                     "Then give one correct example that shows you understand the idea.",
                 ),
             }
@@ -248,7 +279,7 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 "role": "revision",
                 "body": _para(
                     "Revision points: name each key concept, give one example, and state one mistake to avoid.",
-                    "Say the definitions aloud once, then check them against the lesson evidence.",
+                    "Check your wording against the lesson evidence.",
                 ),
             },
             {
@@ -287,21 +318,32 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
             }
         )
 
-    flowchart = build_subject_flowchart(subject, topic)
-    concept_map = build_concept_map_svg(
-        topic, [str(c.get("name") or "") for c in concepts]
-    )
+    from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+
+    concept_names = [str(c.get("name") or "").strip() for c in concepts if str(c.get("name") or "").strip()]
+    # Prefer domain concept nodes over generic pedagogy stages (Concept→Phenomenon→…)
+    if len(concept_names) >= 2:
+        flowchart = build_educational_flowchart_svg(
+            topic,
+            concept_names[:6],
+            subtitle=f"{subject.title()} key ideas in order",
+        )
+    else:
+        flowchart = build_subject_flowchart(subject, topic)
+    concept_map = build_concept_map_svg(topic, concept_names or [str(c.get("name") or "") for c in concepts])
     visual_summary = [
         {"icon": "*", "color_name": "Teal", "idea": "Core concept"},
         {"icon": "*", "color_name": "Navy", "idea": "Practice"},
         {"icon": "*", "color_name": "Soft gold", "idea": "Check understanding"},
     ]
 
+    lead = pool[0] if pool else f"Precise definitions help you explain {topic} accurately."
     lesson = {
         "big_idea": _para(
-            f"{topic} is worth mastering because it helps you explain "
-            + (", ".join(str(c.get('name') or '') for c in concepts[:2]) or "the lesson ideas")
-            + " with accuracy and confidence."
+            lead if lead.endswith((".", "!", "?")) else lead + ".",
+            "That idea is the thread that holds "
+            + (", ".join(concept_names[:2]) or "the lesson ideas")
+            + " together.",
         ),
         "sections": sections,
         "visual_summary": visual_summary,
@@ -463,7 +505,21 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         }
     ]
 
-    flowchart = build_subject_flowchart(subject, topic)
+    concept_names = [
+        str(c.get("name") or "").strip()
+        for c in (clg.get("core_concepts") or [])
+        if isinstance(c, dict) and str(c.get("name") or "").strip()
+    ]
+    from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+
+    if len(concept_names) >= 2:
+        flowchart = build_educational_flowchart_svg(
+            topic,
+            concept_names[:6],
+            subtitle=f"{subject.title()} exam diagram — label each idea",
+        )
+    else:
+        flowchart = build_subject_flowchart(subject, topic)
     answer_key = []
     for i, row in enumerate(short):
         answer_key.append(
@@ -510,21 +566,51 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
     }
 
 
+def _diagrams_from_board(board: Mapping[str, Any], clg: Mapping[str, Any]) -> tuple[str, str]:
+    topic = str(board.get("topic") or clg.get("topic") or "Lesson")
+    subject = str(board.get("subject") or clg.get("subject_key") or "general")
+    concept_names = [
+        str(c.get("name") or "").strip()
+        for c in (board.get("concepts") or [])
+        if isinstance(c, dict) and str(c.get("name") or "").strip()
+    ]
+    if len(concept_names) >= 2:
+        flowchart = build_educational_flowchart_svg(
+            topic,
+            concept_names[:6],
+            subtitle=f"{subject.title()} key ideas in order",
+        )
+    else:
+        flowchart = build_subject_flowchart(subject, topic)
+    concept_map = build_concept_map_svg(topic, concept_names or [topic])
+    return flowchart, concept_map
+
+
 def compose_adaptations_from_clg(
     clg: Mapping[str, Any],
     *,
     lens_ids: list[str] | None = None,
+    board: Mapping[str, Any] | None = None,
+    uli: Mapping[str, Any] | None = None,
+    sif: Mapping[str, Any] | None = None,
+    uvie: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Compose all adaptive versions from one Canonical Lesson Graph."""
+    """Compose all adaptive versions from the Lesson Intelligence Board (Phase Omega).
+
+    No adaptation is a deep-copy wrap of another. Vocabulary/worksheet remain specialised pages.
+    """
     ids = list(lens_ids or DEFAULT_LENS_IDS)
-    standard = compose_standard_from_clg(clg)
+    intelligence = dict(
+        board
+        or build_lesson_intelligence_board(clg, uli=uli, sif=sif, uvie=uvie)
+    )
+    flowchart, concept_map = _diagrams_from_board(intelligence, clg)
     vocabulary = compose_vocabulary_from_clg(clg)
-    vocab_terms = [
-        str(w.get("term") or "")
-        for w in (vocabulary.get("word_wall") or [])
-        if isinstance(w, dict)
-    ]
-    out: dict[str, Any] = {}
+    out: dict[str, Any] = {
+        "_intelligence_board": intelligence,
+        "_integration_failures": integration_failures(intelligence),
+        "_phase_omega": True,
+    }
     if "vocabulary" in ids:
         out["vocabulary"] = vocabulary
     if "worksheet" in ids:
@@ -533,18 +619,17 @@ def compose_adaptations_from_clg(
     for vid in ids:
         if vid in {"vocabulary", "worksheet"}:
             continue
-        if vid == "standard":
-            out["standard"] = standard
-            continue
-        if vid in LENS_CONTRACTS or vid in {"dyslexia"}:
-            # dyslexia maps to distinct adaptive_writing profile; ld remains Dyslexia Smart tab
-            out[vid] = compose_adaptive_version(
-                standard, "dyslexia" if vid == "dyslexia" else vid, vocabulary_terms=vocab_terms
+        if vid in LENS_CONTRACTS or vid in {"dyslexia", "standard"}:
+            out[vid] = compose_adaptation_from_board(
+                intelligence,
+                vid,
+                flowchart_svg=flowchart,
+                concept_map_svg=concept_map,
             )
-            # Ensure lens metadata
             out[vid].setdefault("lce", {})
             if isinstance(out[vid]["lce"], dict):
                 out[vid]["lce"]["lens"] = lens_for("ld" if vid == "dyslexia" else vid)
+                out[vid]["lce"]["intelligence_board_version"] = intelligence.get("version")
     return out
 
 
@@ -569,29 +654,60 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
 
     clg = build_canonical_lesson_graph(uli, sif=sif, uvie=uvie, topic_hint=topic_hint)
     clg_dict = clg.to_dict()
-    adaptations = compose_adaptations_from_clg(clg_dict)
+    # Phase Omega — Intelligence Board before any paragraph authorship
+    board = build_lesson_intelligence_board(
+        clg_dict,
+        uli=uli if isinstance(uli, Mapping) else {},
+        sif=sif if isinstance(sif, Mapping) else {},
+        uvie=uvie if isinstance(uvie, Mapping) else {},
+    )
+    adaptations = compose_adaptations_from_clg(
+        clg_dict,
+        board=board,
+        uli=uli if isinstance(uli, Mapping) else {},
+        sif=sif if isinstance(sif, Mapping) else {},
+        uvie=uvie if isinstance(uvie, Mapping) else {},
+    )
 
-    # Publisher-Quality Lesson Excellence — polish, golden compare, PQI gate
+    # Publisher-Quality Lesson Excellence — polish, golden compare, editorial board
     from engines.lesson_composition_engine.revise import apply_publisher_quality_excellence
 
-    pqle = apply_publisher_quality_excellence(adaptations, clg=clg_dict)
+    pqle = apply_publisher_quality_excellence(
+        adaptations, clg=clg_dict, board=board
+    )
     adaptations = pqle.get("adaptations") or adaptations
     eerl = pqle.get("eerl") or review_package(adaptations, clg_dict)
     pqi = pqle.get("pqi") or {}
+    editorial = pqle.get("editorial") or {}
 
     publication_ready = bool(pqle.get("publication_ready"))
-    return {
+    publisher_review = pqle.get("publisher_review_report") or {}
+    result = {
         "ok": publication_ready,
         "version": PACK_VERSION,
         "clg": clg_dict,
+        "intelligence_board": board,
+        "integration_failures": list(adaptations.get("_integration_failures") or integration_failures(board)),
         "adaptations": adaptations,
         "eerl": eerl,
         "pqi": pqi,
+        "editorial": editorial,
+        "publisher_review_report": publisher_review,
+        "pmes": pqle.get("pmes") or {},
+        "peec": pqle.get("peec") or {},
+        "uevb": pqle.get("uevb") or {},
         "pqle": {
             "publication_ready": publication_ready,
             "reject_rendering": bool(pqle.get("reject_rendering")),
             "threshold": pqle.get("threshold"),
             "worst_score": pqi.get("worst_score"),
+            "editorial_approved": bool(editorial.get("approved")),
+            "pmes_approved": bool((pqle.get("pmes") or {}).get("approved")),
+            "uevb_approved": bool((pqle.get("uevb") or {}).get("ok")),
+            "peec_ok": bool((pqle.get("peec") or {}).get("ok")),
+            "phase_omega": True,
+            "phase_omega_2_pmes": True,
+            "smoke_ok": PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE_SMOKE_OK,
         },
         "policy": {
             "composes_lessons": True,
@@ -601,8 +717,31 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
             "llm_role": "educational_editor_optional",
             "publisher_quality_required": True,
             "pqi_threshold": pqle.get("threshold"),
+            "phase_omega": True,
+            "phase_omega_2_pmes": True,
+            "pmes_highest_authority": True,
+            "uevb_final_authority": True,
+            "peec_product_excellence": True,
+            "pobr_beta_readiness": True,
+            "intelligence_board_required": True,
+            "no_new_engines": True,
         },
     }
+    try:
+        from pobr import apply_pobr
+
+        pobr_result = apply_pobr(result, write_reports=False)
+        result["pobr"] = {
+            "ok": pobr_result.get("ok"),
+            "beta_ready": pobr_result.get("beta_ready"),
+            "overall_beta_readiness": pobr_result.get("overall_beta_readiness"),
+            "report": pobr_result.get("report"),
+            "smoke_ok": pobr_result.get("smoke_ok"),
+        }
+        result["pqle"]["pobr_beta_ready"] = bool(pobr_result.get("beta_ready"))
+    except Exception as exc:  # noqa: BLE001
+        result["pobr"] = {"ok": False, "error": str(exc)}
+    return result
 
 
 def _compose_package_from_meta(
@@ -712,9 +851,11 @@ def attach_lce_to_adaptations(
         try:
             from engines.lesson_composition_engine.revise import apply_publisher_quality_excellence
 
+            board = meta.get("intelligence_board") or {}
             pqle = apply_publisher_quality_excellence(
                 {k: v for k, v in adaptations.items() if not str(k).startswith("_") and isinstance(v, dict)},
                 clg=clg,
+                board=board if isinstance(board, dict) else {},
             )
             for key, value in (pqle.get("adaptations") or {}).items():
                 adaptations[key] = value
@@ -723,10 +864,13 @@ def attach_lce_to_adaptations(
                 **(adaptations["_meta"].get("lce") or {}),
                 "eerl_final": pqle.get("eerl"),
                 "pqi": pqle.get("pqi"),
+                "editorial": pqle.get("editorial"),
                 "pqle": pqle.get("pqle") if "pqle" in pqle else {
                     "publication_ready": pqle.get("publication_ready"),
                     "reject_rendering": pqle.get("reject_rendering"),
                     "threshold": pqle.get("threshold"),
+                    "editorial_approved": bool((pqle.get("editorial") or {}).get("approved")),
+                    "phase_omega": True,
                 },
                 "premium_vocab": True,
                 "stage": "final_polish_pqle",

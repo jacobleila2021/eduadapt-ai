@@ -2,56 +2,83 @@
   "id": "science_force_pressure",
   "subject": "physics",
   "topic": "Force and Pressure",
-  "pqi_target": 95,
-  "min_sections": 10,
+  "pqi_target": 98,
+  "min_sections": 12,
   "min_vocab_cards": 6,
   "required_roles": [
+    "hook",
+    "visual",
     "concept",
     "simple_explanation",
+    "real_life_example",
     "worked_example",
+    "practice_question",
     "summary",
     "reflection",
     "application"
   ],
+  "educational_personality": "curious classroom teacher; cream textbook; diagram teaches",
   "lesson": {
-    "big_idea": "Force and pressure help us explain how pushes and pulls act on surfaces. When the same force spreads over a smaller area, pressure rises.",
+    "big_idea": "Force is a push or a pull. Pressure tells you how concentrated that force is on a surface — the same push feels sharper on a smaller area.",
     "sections": [
       {
-        "title": "Opening",
+        "title": "Have You Wondered?",
         "role": "hook",
-        "body": "We meet force as a push or pull."
+        "body": "Have you ever pressed a drawing pin into a board? The tip goes in easily, yet the same push with your thumb hurts. That difference is pressure."
+      },
+      {
+        "title": "Using the Diagram",
+        "role": "visual",
+        "body": "The diagram shows Force → Area → Pressure. Trace each label. This visual is here so you can see why a sharp tip bites deeper."
       },
       {
         "title": "Concept: Force",
         "role": "concept",
-        "body": "Force changes motion or shape."
+        "body": "Force is a push or a pull. It can start motion, stop motion, or change shape. Think of force like a hand deciding what an object does next."
       },
       {
         "title": "Understanding Force",
         "role": "simple_explanation",
-        "body": "A force is a push or a pull. It can start, stop, or change motion."
+        "body": "Say it simply: a force is a push or a pull. Restate that in one short sentence before you continue."
       },
       {
-        "title": "Worked Example",
+        "title": "Force in Everyday Life",
+        "role": "real_life_example",
+        "body": "Opening a door, kicking a ball, or pulling a suitcase — each one is force you can feel."
+      },
+      {
+        "title": "Worked Example — Pressure",
         "role": "worked_example",
-        "body": "Compare a sharp pin and a blunt eraser under the same push."
+        "body": "Compare a sharp pin and a blunt eraser under the same push. The pin has a smaller area, so pressure rises and the board yields first."
       },
       {
-        "title": "Summary",
+        "title": "Try This — Pressure",
+        "role": "practice_question",
+        "body": "Point to the diagram, then explain why a sharp knife cuts more easily than a blunt one."
+      },
+      {
+        "title": "Lesson Summary",
         "role": "summary",
-        "body": "Force acts; pressure depends on area."
+        "body": "Force acts; pressure depends on force and area. You can check one home example and feel ready for revision."
       },
       {
-        "title": "Reflect",
+        "title": "Think About It",
         "role": "reflection",
-        "body": "Where do you notice pressure at home?"
+        "body": "Where do you notice pressure at home? Write one sentence that links today's idea to something you already knew."
       },
       {
-        "title": "Apply",
+        "title": "Apply Your Learning",
         "role": "application",
-        "body": "Design one safe classroom demo."
+        "body": "Design one safe classroom demo that shows how area changes pressure. Keep the force the same."
       }
     ],
-    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"80\" viewBox=\"0 0 200 80\"><rect x=\"10\" y=\"20\" width=\"180\" height=\"40\" rx=\"12\" fill=\"#e6f7f8\"/><text x=\"100\" y=\"45\" text-anchor=\"middle\">Force → Area → Pressure</text></svg>"
+    "diagram_package": {
+      "title": "Force and Pressure",
+      "caption": "Force → Area → Pressure",
+      "explanation": "This diagram teaches how the same force becomes higher pressure on a smaller area.",
+      "practice_question": "Point to Area and explain what happens to pressure when area shrinks.",
+      "callouts": ["Label: Force", "Label: Area", "Label: Pressure"]
+    },
+    "svg_diagram": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"420\" height=\"160\" viewBox=\"0 0 420 160\" role=\"img\" aria-label=\"Force Area Pressure\"><rect width=\"100%\" height=\"100%\" fill=\"#FFF9EE\"/><rect x=\"20\" y=\"50\" width=\"100\" height=\"48\" rx=\"14\" fill=\"#e6f7f8\" stroke=\"#0B2E59\"/><text x=\"70\" y=\"80\" text-anchor=\"middle\" font-family=\"Georgia, serif\" fill=\"#0B2E59\">Force</text><rect x=\"160\" y=\"50\" width=\"100\" height=\"48\" rx=\"14\" fill=\"#e3f2fd\" stroke=\"#008C95\"/><text x=\"210\" y=\"80\" text-anchor=\"middle\" font-family=\"Georgia, serif\" fill=\"#0B2E59\">Area</text><rect x=\"300\" y=\"50\" width=\"100\" height=\"48\" rx=\"14\" fill=\"#ecfdf5\" stroke=\"#008C95\"/><text x=\"350\" y=\"80\" text-anchor=\"middle\" font-family=\"Georgia, serif\" fill=\"#0B2E59\">Pressure</text><line x1=\"120\" y1=\"74\" x2=\"160\" y2=\"74\" stroke=\"#008C95\" stroke-width=\"2\"/><line x1=\"260\" y1=\"74\" x2=\"300\" y2=\"74\" stroke=\"#008C95\" stroke-width=\"2\"/><text x=\"210\" y=\"30\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"16\" fill=\"#0B2E59\">Force and Pressure</text></svg>"
   }
 }

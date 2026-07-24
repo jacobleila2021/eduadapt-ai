@@ -178,37 +178,34 @@ def _rewrite_section_body(
         bullets = scaffold_chunk(text, max_bullets=8)
         text = "\n".join(f"- {b}" for b in bullets)
         if profile.get("checkpoints"):
-            text += "\n\n**Checkpoint:** Pause. Can you explain the last step in one sentence?"
+            text += "\n\nPause here. Explain the last step in one sentence."
         if profile.get("predictable"):
-            text = f"**Now:** {section_title}\n\n{text}\n\n**Next:** Continue to the following labelled section."
+            text = f"{section_title}\n\n{text}"
 
     if profile.get("bold_terms"):
         text = _bold_key_terms(text, terms)
 
     if profile.get("glossary_inline") and terms:
         gloss = ", ".join(terms[:6])
-        text += f"\n\n*Key words in this section:* {gloss}."
+        text += f"\n\nImportant words: {gloss}."
 
     if profile.get("listen_cues"):
-        text = f"**Say:** {text}\n\n**Repeat:** Say the main idea aloud in your own words."
+        text = f"{text}\n\nSay the main idea aloud in your own words."
 
     if profile.get("visual_emphasis"):
-        # One quiet visual cue — do not spam every section with the same opener
-        if "look first" not in text.lower():
-            text = f"Study the diagram or colour cues for this idea, then read on.\n\n{text}"
+        # Prefer content that already mentions the diagram; avoid meta openers
+        if "diagram" not in text.lower() and "colour" not in text.lower() and "color" not in text.lower():
+            text = f"{text}\n\nUse the labelled diagram beside this section to check each part."
 
     if profile.get("plain_language"):
         text = (
-            "Here is a simple way to talk about this at home.\n\n"
-            + text
-            + "\n\n**Try asking:** What was the most important idea today?"
+            text
+            + "\n\nAt home: ask what the most important idea was today."
         )
 
     if profile.get("teacher_notes"):
-        text += (
-            "\n\n**Teacher note:** Check for understanding with a quick cold-call or exit ticket. "
-            "Keep verified facts unchanged; differentiate presentation only."
-        )
+        # Per-section teacher notes removed — added once in compose_adaptive_version
+        pass
 
     return text.strip()
 
@@ -247,7 +244,7 @@ def compose_adaptive_version(
             body = (
                 f"At home, you can support this part by asking your child to explain "
                 f"'{title}' in their own words. Listen for the key idea; you do not need "
-                f"to teach the full classroom explanation."
+                f"the full technical wording."
             )
         sec["body"] = _rewrite_section_body(
             body, profile=profile, terms=terms, section_title=title
@@ -261,6 +258,21 @@ def compose_adaptive_version(
         elif version_id == "visual":
             sec["box"] = "visual"
         new_sections.append(sec)
+
+    # Teacher adaptation: single guidance block, not per-section spam
+    if profile.get("teacher_notes"):
+        new_sections.append(
+            {
+                "title": "Teacher Guidance",
+                "role": "teacher_note",
+                "box": "teacher",
+                "body": (
+                    "Check for understanding with one cold-call or exit ticket after the core ideas. "
+                    "Keep verified facts unchanged; differentiate presentation and scaffolds only. "
+                    "Watch for the misconception notes already placed in the lesson."
+                ),
+            }
+        )
 
     # Intentional structural differences
     if version_id == "adhd":

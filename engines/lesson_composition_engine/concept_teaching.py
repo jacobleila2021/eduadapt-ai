@@ -48,26 +48,25 @@ def build_concept_block(
         source_text,
         concept,
         fallback=(
-            f"{concept} is a core idea in this lesson. "
-            f"We will build understanding step by step, starting from familiar experience "
-            f"and moving toward precise classroom language."
+            f"{concept} is defined by the lesson evidence. "
+            f"Build understanding from a familiar experience toward precise classroom language."
         ),
     )
     example = (
-        f"In everyday life, you can notice {concept.lower()} when you observe how things "
-        f"work around you — at home, in the playground, or in a simple classroom demo. "
-        f"Connecting the idea to a real situation makes the definition easier to remember."
+        f"Everyday link: notice where {concept.lower()} shows up at home, in the playground, "
+        f"or in a simple classroom demo. Connecting the idea to a real situation makes the "
+        f"definition easier to remember."
     )
     worked = worked_example or (
-        f"Worked example: Identify where {concept.lower()} appears in the lesson context, "
-        f"name the key parts, and explain the idea in two clear sentences using the lesson vocabulary."
+        f"Worked example — find the sentences about {concept.lower()} in the lesson, "
+        f"underline the defining words, and restate the idea in two clear sentences."
     )
     misc = misconception or (
         f"A common mistake is to confuse {concept.lower()} with a related term. "
         f"Keep the definitions separate and check against the lesson explanation."
     )
     practice = (
-        f"Practice: In your own words, explain {concept} and give one example from the lesson."
+        f"Explain {concept} in your own words and give one example from the lesson."
     )
     reflection = (
         f"Reflection: What part of {concept.lower()} feels clear, and what still needs another example?"

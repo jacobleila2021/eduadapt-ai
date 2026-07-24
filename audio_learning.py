@@ -15,7 +15,17 @@ import streamlit.components.v1 as components
 from structured_renderers import _coerce_dict, content_to_export
 
 VOICE_OPTIONS = {
-    "Female": {
+    "Warm Female (International)": {
+        "openai": "shimmer",
+        "instructions": (
+            "You are a warm, professional female teacher with clear international English. "
+            "Read the lesson aloud to children with natural pacing, warm teacher-style delivery, "
+            "clear pronunciation, and a child-friendly tone."
+        ),
+        "hints": ["female", "zira", "samantha", "karen", "moira", "en-us", "en-gb"],
+        "avoid": ["male"],
+    },
+    "Warm Female (Indian)": {
         "openai": "shimmer",
         "instructions": (
             "You are a warm, professional female teacher with a clear, neutral urban Indian "
@@ -26,7 +36,16 @@ VOICE_OPTIONS = {
         "hints": ["heera", "kalpana", "swara", "priya", "veena", "raveena", "en-in", "english (india)", "hindi"],
         "avoid": ["male"],
     },
-    "Male": {
+    "Warm Male (International)": {
+        "openai": "echo",
+        "instructions": (
+            "You are a warm, professional male teacher with clear international English. "
+            "Read the lesson aloud to children with natural pacing and a calm, encouraging tone."
+        ),
+        "hints": ["male", "david", "mark", "daniel", "en-us", "en-gb"],
+        "avoid": ["female"],
+    },
+    "Warm Male (Indian)": {
         "openai": "echo",
         "instructions": (
             "You are a warm, professional male teacher with a clear, neutral urban Indian "
@@ -41,7 +60,7 @@ VOICE_OPTIONS = {
 
 from lesson_design import get_audio_passage_css
 
-DEFAULT_VOICE = "Female"
+DEFAULT_VOICE = "Warm Female (Indian)"
 
 PLAYBACK_SPEEDS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
 
@@ -753,6 +772,11 @@ def render_audio_learning_panel(
                 or "Premium neural narration is temporarily unavailable."
             )
             + " Using your browser voice."
+        )
+    else:
+        st.caption(
+            "Premium neural narration needs an OpenAI API key in the sidebar or .env "
+            "(OPENAI_API_KEY). Browser voice is active until a key is available."
         )
     st.markdown(
         '<div class="alora-audio-stick" aria-hidden="true"></div>',

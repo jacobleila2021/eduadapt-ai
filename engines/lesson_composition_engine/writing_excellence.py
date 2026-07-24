@@ -53,15 +53,9 @@ def humanize_diction(text: str) -> str:
 
 
 def vary_openings(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Avoid identical first four words across consecutive sections."""
+    """Ensure consecutive sections do not share identical openings — without AI scaffolding prefixes."""
     seen: list[str] = []
     out: list[dict[str, Any]] = []
-    alts = (
-        "Notice how",
-        "Here is another way to see",
-        "A clear classroom example helps:",
-    )
-    alt_i = 0
     for sec in sections:
         if not isinstance(sec, dict):
             continue
@@ -70,14 +64,22 @@ def vary_openings(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not body:
             out.append(row)
             continue
+        # Strip legacy scaffold prefixes injected by older polish passes
+        body = re.sub(
+            r"^(Notice how|Here is another way to see|A clear classroom example helps:)\s+",
+            "",
+            body,
+            flags=re.I,
+        ).strip()
+        if body and body[0].islower():
+            body = body[0].upper() + body[1:]
         first = " ".join(body.split()[:4]).lower()
         if first in seen and not body.startswith("-"):
-            prefix = alts[alt_i % len(alts)]
-            alt_i += 1
-            # Only prefix if it doesn't already start warmly
-            if not body.lower().startswith(tuple(a.lower() for a in alts)):
-                body = f"{prefix} {body[0].lower()}{body[1:]}" if body else body
-        seen.append(first)
+            # Light rephrase without meta scaffolding: drop a repeated lead clause if present
+            parts = re.split(r"(?<=[.!?])\s+", body, maxsplit=1)
+            if len(parts) == 2 and len(parts[1].split()) >= 6:
+                body = parts[1][0].upper() + parts[1][1:] if parts[1] else body
+        seen.append(" ".join(body.split()[:4]).lower())
         row["body"] = body
         out.append(row)
     return out
@@ -99,6 +101,8 @@ def polish_paragraph(text: str, *, idea: str = "") -> str:
 
 def polish_adaptation(adaptation: dict[str, Any]) -> dict[str, Any]:
     """Rewrite lesson prose for publisher-quality teaching voice."""
+    from engines.lesson_composition_engine.publisher_remediation import remediate_adaptation
+
     out = dict(adaptation)
     if out.get("big_idea"):
         out["big_idea"] = polish_paragraph(str(out["big_idea"]), idea="the big idea")
@@ -111,8 +115,6 @@ def polish_adaptation(adaptation: dict[str, Any]) -> dict[str, Any]:
         body = str(row.get("body") or "")
         # Preserve intentional bullet scaffolds for ADHD/dyslexia etc.
         if body.lstrip().startswith("-"):
-            lines = [polish_paragraph(ln.lstrip("- ").strip(), idea=title) if ln.strip().startswith("-") or True else ln for ln in body.splitlines()]
-            # Simpler: polish each bullet line lightly
             polished_lines = []
             for ln in body.splitlines():
                 raw = ln.strip()
@@ -129,6 +131,7 @@ def polish_adaptation(adaptation: dict[str, Any]) -> dict[str, Any]:
     out["sections"] = vary_openings(sections)
     if out.get("summary"):
         out["summary"] = polish_paragraph(str(out["summary"]), idea="summary")
+    out = remediate_adaptation(out)
     out.setdefault("lce", {})
     if isinstance(out["lce"], dict):
         out["lce"]["writing_excellence"] = True

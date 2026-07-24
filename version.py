@@ -1,2 +1,3 @@
-APP_VERSION = "3.0.1"
-BUILD_ID = "20260723-student-safe-pictorial"
+APP_VERSION = "3.1.0"
+BUILD_ID = "ALORA-AI-RC1"
+RC_TAG = "ALORA-AI-RC1"

@@ -348,10 +348,12 @@ def _as_list(value: Any) -> list[str]:
 
 
 def vocabulary_card_html(card: dict[str, Any]) -> str:
-    """Premium flashcard HTML — word visually dominant; PQLE fields included."""
+    """Publisher flashcard HTML — large capitalised word; premium textbook card."""
     import html as html_lib
 
-    term = html_lib.escape(str(card.get("term") or "Term"))
+    raw_term = str(card.get("term") or "Term").strip()
+    display_term = raw_term.upper() if len(raw_term) <= 28 else raw_term
+    term = html_lib.escape(display_term)
     pronunciation = html_lib.escape(str(card.get("pronunciation") or ""))
     pos = html_lib.escape(str(card.get("part_of_speech") or ""))
     student = html_lib.escape(
@@ -373,39 +375,31 @@ def vocabulary_card_html(card: dict[str, Any]) -> str:
     opposite = card.get("opposite_words") or card.get("antonyms") or []
     synonyms = ", ".join(html_lib.escape(str(s)) for s in related[:4])
     antonyms = ", ".join(html_lib.escape(str(s)) for s in opposite[:4])
-    concepts = ", ".join(
-        html_lib.escape(str(s)) for s in (card.get("related_concepts") or [])[:4]
-    )
-    difficulty = html_lib.escape(str(card.get("difficulty") or "core"))
-    reading = html_lib.escape(str(card.get("reading_level") or "grade_appropriate"))
-    color = html_lib.escape(str(card.get("color") or "#e6f7f8"))
+    color = html_lib.escape(str(card.get("color") or "#FFFDF6"))
     emoji = html_lib.escape(str(card.get("emoji") or "📘"))
+    audio = html_lib.escape(str(card.get("audio_label") or f"Listen: {raw_term}"))
 
     rows = [
-        f'<p class="lce-vocab-meta"><span>{pos}</span> · <span>/{pronunciation}/</span></p>'
+        f'<p class="lce-vocab-meta"><span>{pos}</span> · <span class="pmes-pronunciation">/{pronunciation}/</span></p>'
         if pronunciation or pos
         else "",
-        f'<p class="lce-vocab-simple"><strong>Student-friendly</strong> {student}</p>' if student else "",
-        f'<p class="lce-vocab-def"><strong>Academic</strong> {academic}</p>'
+        f'<p class="lce-vocab-simple"><strong>Meaning</strong> {student}</p>' if student else "",
+        f'<p class="lce-vocab-def"><strong>Also</strong> {academic}</p>'
         if academic and academic != student
         else "",
-        f'<p class="lce-vocab-ex"><strong>Example</strong> <em>{example}</em></p>' if example else "",
-        f'<p class="lce-vocab-tip"><strong>Memory tip</strong> {memory}</p>' if memory else "",
+        f'<p class="lce-vocab-ex"><strong>In real life</strong> <em>{example}</em></p>' if example else "",
+        f'<p class="lce-vocab-tip"><strong>Remember</strong> {memory}</p>' if memory else "",
         f'<p class="lce-vocab-ctx"><strong>In this lesson</strong> {context}</p>' if context else "",
-        f'<p class="lce-vocab-pic"><strong>Picture</strong> {picture}</p>' if picture else "",
+        f'<p class="lce-vocab-pic"><strong>Draw this</strong> {picture}</p>' if picture else "",
         f'<p class="lce-vocab-syn"><strong>Related words</strong> {synonyms}</p>' if synonyms else "",
         f'<p class="lce-vocab-ant"><strong>Opposite words</strong> {antonyms}</p>' if antonyms else "",
-        f'<p class="lce-vocab-rel"><strong>Related concepts</strong> {concepts}</p>' if concepts else "",
-        (
-            f'<p class="lce-vocab-tags">'
-            f'<span class="lce-tag">{difficulty}</span>'
-            f'<span class="lce-tag">{reading}</span></p>'
-        ),
+        f'<p class="lce-vocab-audio" aria-label="{audio}"><strong>Audio</strong> {audio}</p>',
     ]
     body = "".join(r for r in rows if r)
     return (
-        f'<article class="lce-vocab-card alora-word-wall-card pqle-vocab-card" style="background:{color};">'
-        f'<div class="alora-vocab-icon" aria-hidden="true">{emoji}</div>'
+        f'<article class="lce-vocab-card alora-word-wall-card pqle-vocab-card pmes-flashcard" '
+        f'style="background:{color};border-top:6px solid #008C95;">'
+        f'<div class="alora-vocab-icon pmes-flash-icon" aria-hidden="true">{emoji}</div>'
         f'<h3 class="lce-vocab-term alora-word-wall-term">{term}</h3>'
         f'<div class="lce-vocab-body alora-word-wall-body">{body}</div>'
         f"</article>"

@@ -67,10 +67,13 @@ def render_action_bar(
     lesson_text: str,
     content_for_spec,
 ) -> None:
-    """Four premium actions: download/print this version and all."""
+    """Premium download / print / save / share actions for beta readiness."""
     from docx_exporter import export_tab_docx
+    from lesson_pack import build_lesson_save_pack, build_share_readme
+    from pdf_exporter import export_tab_pdf
+    from pobr.ui_states import zip_soft_fail_caption
 
-    st.markdown("#### Download & Print")
+    st.markdown("#### Download, Print & Save")
     c1, c2, c3, c4 = st.columns(4)
 
     docx_bytes = export_tab_docx(title, content, spec_id)
@@ -78,10 +81,14 @@ def render_action_bar(
     print_all = build_print_html_all(
         adaptations, lesson_text, base_name, content_for_spec
     )
+    try:
+        pdf_bytes = export_tab_pdf(title, content, spec_id)
+    except Exception:
+        pdf_bytes = b""
 
     with c1:
         st.download_button(
-            "Download This Version",
+            "Word (This Version)",
             data=docx_bytes,
             file_name=download_filename.rsplit(".", 1)[0] + ".docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -89,6 +96,16 @@ def render_action_bar(
             key=f"ws_dl_this_{spec_id}",
             help="Word (DOCX) for this tab only",
         )
+        if pdf_bytes:
+            st.download_button(
+                "PDF (This Version)",
+                data=pdf_bytes,
+                file_name=f"{base_name}_{spec_id}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key=f"ws_pdf_this_{spec_id}",
+                help="PDF pack for sharing with teachers and parents",
+            )
 
     with c2:
         if zip_bytes:
@@ -101,6 +118,8 @@ def render_action_bar(
                 key="ws_dl_all_zip",
                 help="ZIP with HTML + Word per version",
             )
+        else:
+            st.caption(zip_soft_fail_caption())
         st.download_button(
             "Combined HTML Pack",
             data=print_all,
@@ -118,10 +137,8 @@ def render_action_bar(
             mime="text/html",
             use_container_width=True,
             key=f"ws_print_this_{spec_id}",
-            help="Single-version print layout — open file, then Ctrl+P",
+            help="Open file, then Ctrl+P / Cmd+P (Save as PDF supported)",
         )
-
-    with c4:
         st.download_button(
             "Print All Adaptations",
             data=print_all,
@@ -129,7 +146,35 @@ def render_action_bar(
             mime="text/html",
             use_container_width=True,
             key="ws_print_all_pack",
-            help="Cover + contents + all 9 versions — open file, then Ctrl+P",
+            help="Cover + contents + all versions — open, then Ctrl+P",
+        )
+
+    with c4:
+        save_pack = build_lesson_save_pack(
+            adaptations=adaptations,
+            meta={
+                "ok": True,
+                "version": "beta",
+            },
+            topic=title,
+        )
+        st.download_button(
+            "Save Lesson Pack",
+            data=save_pack,
+            file_name=f"{base_name}_alora_save.json",
+            mime="application/json",
+            use_container_width=True,
+            key=f"ws_save_pack_{spec_id}",
+            help="Archive this lesson locally (JSON save pack)",
+        )
+        st.download_button(
+            "Share Instructions",
+            data=build_share_readme(title),
+            file_name=f"{base_name}_share_readme.txt",
+            mime="text/plain",
+            use_container_width=True,
+            key=f"ws_share_readme_{spec_id}",
+            help="How to share HTML/PDF with teachers and parents",
         )
 
 

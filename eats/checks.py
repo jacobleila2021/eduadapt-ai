@@ -621,6 +621,16 @@ def check_diagram(adaptation: Mapping[str, Any]) -> DimensionScore:
         or ((adaptation.get("header") or {}).get("topic") if isinstance(adaptation.get("header"), dict) else "")
         or ""
     )
+    try:
+        from engines.lesson_composition_engine.publisher_remediation import (
+            adaptation_has_generic_diagram,
+        )
+
+        if adaptation_has_generic_diagram(adaptation):
+            issues.append("Generic subject-sequence flowchart is not a domain diagram.")
+            score -= 35
+    except Exception:  # noqa: BLE001
+        pass
     if _has_svg(adaptation):
         score += 20
         svg_all = " ".join(
@@ -766,6 +776,27 @@ def evaluate_adaptation(
     for issue in check_subject_rules(adaptation, subject=subject):
         dims["educational_quality"].score = clamp(dims["educational_quality"].score - 4)
         dims["educational_quality"].issues.append(issue)
+
+    # Publisher remediation recalibration — template / objective (diagram handled in check_diagram)
+    try:
+        from engines.lesson_composition_engine.publisher_remediation import (
+            has_teacher_objective_leak,
+            template_hits,
+        )
+
+        blob = _blob(adaptation)
+        hits = template_hits(blob)
+        if hits:
+            share = min(18.0, 3.5 * len(hits)) / 2.0
+            for key in ("writing_quality", "educational_quality"):
+                dims[key].score = clamp(dims[key].score - share)
+                dims[key].issues.append(f"Template teaching phrases: {', '.join(hits[:3])}")
+        if has_teacher_objective_leak(blob):
+            for key in ("writing_quality", "educational_quality", "pedagogy"):
+                dims[key].score = clamp(dims[key].score - 8)
+                dims[key].issues.append("Teacher/objective wording leaked into student lesson.")
+    except Exception:  # noqa: BLE001
+        pass
 
     # Fold in existing PQI if attached (read-only boost/penalty)
     pqi = adaptation.get("_pqi_overall")

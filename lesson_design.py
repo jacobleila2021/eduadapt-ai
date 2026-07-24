@@ -8,7 +8,7 @@ import html
 import re
 
 # ---- Palette ----
-BG_MAIN = "#F7FAFC"
+BG_MAIN = "#FFF9EE"
 TEXT_BODY = "#333333"
 BORDER_SUBTLE = "#E8E0CF"
 SOFT_YELLOW = "#FFF59D"
@@ -68,8 +68,15 @@ def get_global_dyslexia_css() -> str:
 
 def get_workspace_css_fragment() -> str:
     """Raw CSS (no <style> tags) for inclusion in styles.get_custom_css()."""
+    try:
+        from engines.lesson_composition_engine.publisher_style_guide import style_guide_css
+
+        pmes_css = style_guide_css()
+    except Exception:  # noqa: BLE001
+        pmes_css = ""
     return f"""
     {FONT_IMPORTS}
+    {pmes_css}
     .main .block-container:has(.alora-workspace-active) {{
         background: {BG_MAIN} !important;
         padding-bottom: 320px !important;

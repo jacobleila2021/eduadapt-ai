@@ -54,7 +54,7 @@ def render_viewer_downloads(
             )
             st.info("Recovery: reopen the adaptation and retry the export.")
             return
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
             st.download_button(
                 "Text",
@@ -85,6 +85,21 @@ def render_viewer_downloads(
                 key=f"viewer_html_{spec_id}",
             )
         with c4:
+            try:
+                from pdf_exporter import export_tab_pdf
+
+                pdf_bytes = export_tab_pdf(title, content, spec_id)
+                st.download_button(
+                    "PDF",
+                    data=pdf_bytes,
+                    file_name=download_filename.rsplit(".", 1)[0] + ".pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key=f"viewer_pdf_{spec_id}",
+                )
+            except Exception:
+                st.caption("PDF unavailable")
+        with c5:
             from audio_learning import (
                 VOICE_OPTIONS,
                 extract_speech_text,
