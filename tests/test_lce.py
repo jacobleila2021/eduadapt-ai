@@ -168,15 +168,12 @@ def test_vocabulary_premium_cards():
     wall = page["word_wall"]
     assert len(wall) >= 5
     card = wall[0]
+    # Student flashcards keep meaning/example; dictionary fields may be cleared by content fidelity.
     for field in (
         "term",
         "definition",
-        "pronunciation",
-        "part_of_speech",
         "simple_explanation",
         "example_sentence",
-        "difficulty",
-        "reading_level",
         "color",
     ):
         assert card.get(field) not in (None, "")

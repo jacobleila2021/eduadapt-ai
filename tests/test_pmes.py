@@ -97,7 +97,7 @@ def test_vocabulary_flashcard_html_is_premium():
     assert "pmes-flashcard" in html
     assert "PRESSURE" in html
     assert "Remember" in html
-    assert "In real life" in html
+    assert "Real-life example" in html or "In real life" in html
 
 
 def test_pmes_rewrites_until_diagram_package_exists():

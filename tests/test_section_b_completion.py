@@ -93,17 +93,21 @@ def test_orchestrator_roster():
 
 
 def test_adaptations_enabled():
-    """Section B profiles stay registered; only the decided nine generate."""
+    """Section B profiles stay registered; decided product set generates for class."""
     from adaptation_specs import ADAPTATION_SPECS, OUTPUT_KEYS
 
     registered = {s["id"] for s in ADAPTATION_SPECS}
-    for key in ("exam_revision", "adhd", "dyscalculia", "gifted", "tutor"):
+    for key in ("exam_revision", "dyscalculia", "gifted", "tutor"):
         assert key in registered
         assert key not in OUTPUT_KEYS
+    assert "adhd" in registered and "adhd" in OUTPUT_KEYS
+    assert "autism" in registered and "autism" in OUTPUT_KEYS
     assert set(OUTPUT_KEYS) == {
         "vocabulary",
         "standard",
         "ld",
+        "adhd",
+        "autism",
         "ell",
         "visual",
         "auditory",

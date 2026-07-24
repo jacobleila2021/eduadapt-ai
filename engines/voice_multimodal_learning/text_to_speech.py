@@ -22,8 +22,25 @@ def synthesize_speech(
     if not cleaned:
         return {"ok": False, "error": "empty_text", "provider": None}
 
-    voice = OPENAI_VOICE_MAP.get(voice_style) or OPENAI_VOICE_MAP.get("Female")
-    instructions = (VOICE_OPTIONS.get(voice_style) or VOICE_OPTIONS["Female"]).get("instructions") or ""
+    voice = (
+        OPENAI_VOICE_MAP.get(voice_style)
+        or OPENAI_VOICE_MAP.get("Warm Female (Indian)")
+        or OPENAI_VOICE_MAP.get("Female")
+    )
+    legacy_voice_aliases = {
+        "Female": "Warm Female (Indian)",
+        "Male": "Warm Male (Indian)",
+    }
+    resolved_style = (
+        voice_style
+        if voice_style in VOICE_OPTIONS
+        else legacy_voice_aliases.get(voice_style, "Warm Female (Indian)")
+    )
+    if resolved_style not in VOICE_OPTIONS:
+        resolved_style = next(iter(VOICE_OPTIONS))
+    instructions = (VOICE_OPTIONS.get(resolved_style) or {}).get("instructions") or ""
+    if not voice:
+        voice = OPENAI_VOICE_MAP.get(resolved_style)
 
     audio_bytes = None
     if api_key:
