@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from engines.knowledge_ingestion_engine.universal_ingest import ingest_source_bytes
-from engines.universal_lesson.profile import build_universal_lesson_profile
-from engines.universal_lesson_intelligence import build_universal_lesson_intelligence
-from engines.universal_lesson_validation import validate_uli
+import pytest
+
 from engines.universal_visual_intelligence import (
     UNIVERSAL_VISUAL_INTELLIGENCE_SMOKE_OK,
     UniversalVisualIntelligenceEngine,
@@ -16,7 +14,6 @@ from engines.universal_visual_intelligence import (
 )
 from engines.universal_visual_intelligence.intents import resolve_visual_intents
 from engines.universal_visual_intelligence.priority import PRIORITY_ORDER, rank_source
-from engines.universal_visual_intelligence.schemas import VisualSpec
 from engines.visualization.priority import inject_verified_visuals_into_lesson, has_deterministic_visuals
 
 
@@ -30,6 +27,12 @@ Concept map of the water cycle structure.
 
 
 def _uli_from(raw: bytes, name: str = "uvie.txt"):
+    pytest.importorskip("engines.universal_lesson_intelligence")
+    pytest.importorskip("engines.universal_lesson_validation")
+    from engines.knowledge_ingestion_engine.universal_ingest import ingest_source_bytes
+    from engines.universal_lesson.profile import build_universal_lesson_profile
+    from engines.universal_lesson_intelligence import build_universal_lesson_intelligence
+
     envelope = ingest_source_bytes(name, raw).to_dict()
     profile = build_universal_lesson_profile(envelope).to_dict()
     return build_universal_lesson_intelligence(envelope, profile, enrich=False)
@@ -103,7 +106,7 @@ def test_inject_clears_ai_diagrams_when_deterministic():
             "alt_text": "Concept map",
         }
     ]
-    # pedagogy_organiser is deterministic for has_deterministic_visuals? 
+    # pedagogy_organiser is deterministic for has_deterministic_visuals?
     # has_deterministic_visuals checks source != ai_illustration — yes.
     lesson = {"mermaid_diagram": "graph TD; A-->B", "svg_diagram": "<svg/>"}
     out = inject_verified_visuals_into_lesson(lesson, preferred)
@@ -118,6 +121,8 @@ def test_inject_clears_ai_diagrams_when_deterministic():
 
 
 def test_uli_integration_and_uliqe():
+    from engines.universal_lesson_validation import validate_uli
+
     uli = _uli_from(SAMPLE)
     result = render_visuals_for_uli(uli, context={"topic": "Water Cycle"})
     assert result["ok"] is True
