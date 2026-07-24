@@ -424,7 +424,10 @@ def _fallback_vocabulary(context: dict) -> dict:
                 "emoji": ["💧", "🌿", "☀️", "📘", "🔬", "🌍"][index % 6],
                 "visual_description": f"Imagine a clear labelled diagram showing {term}.",
                 "child_friendly": f"{term} is an important idea from {context.get('topic', 'this lesson')}.",
-                "example": f"We learned about {term} in {context.get('topic', 'today\u2019s lesson')}.",
+                "example": (
+                    f"We learned about {term} in "
+                    f"{context.get('topic') or 'today’s lesson'}."
+                ),
             }
         )
 
