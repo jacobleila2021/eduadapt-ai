@@ -440,6 +440,8 @@ class LessonCompositionPackage:
     quality: CompositionQualityReport | None = None
     composed_by: str = LCE_ENGINE_ID
     schema_version: str = LCE_SCHEMA_VERSION
+    # Publisher spine metadata for attach/UI (board, CLG, PQLE) — not learner HTML
+    publisher_meta: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -450,6 +452,7 @@ class LessonCompositionPackage:
             "quality": self.quality.to_dict() if self.quality else {},
             "composed_by": self.composed_by,
             "schema_version": self.schema_version,
+            "publisher_meta": dict(self.publisher_meta or {}),
         }
 
 

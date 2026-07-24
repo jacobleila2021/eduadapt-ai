@@ -1244,6 +1244,15 @@ def generate_adaptations(
             lce_adaptations = versions
             if lce_package_obj.vocabulary:
                 lce_adaptations["vocabulary"] = lce_package_obj.vocabulary
+            publisher_meta = getattr(lce_package_obj, "publisher_meta", None) or {}
+            pqle_meta = publisher_meta.get("pqle") if isinstance(publisher_meta, dict) else {}
+            merged["_meta"]["canonical_lesson_graph"] = (
+                (publisher_meta.get("clg") if isinstance(publisher_meta, dict) else None) or {}
+            )
+            merged["_meta"]["intelligence_board"] = (
+                (publisher_meta.get("intelligence_board") if isinstance(publisher_meta, dict) else None)
+                or {}
+            )
             merged["_meta"]["lce"] = {
                 "ok": True,
                 "version": getattr(lce_package_obj, "schema_version", "1.0.0"),
@@ -1251,6 +1260,20 @@ def generate_adaptations(
                     lce_package_obj.quality.to_dict()
                     if getattr(lce_package_obj, "quality", None)
                     else {}
+                ),
+                "clg": merged["_meta"]["canonical_lesson_graph"],
+                "intelligence_board": merged["_meta"]["intelligence_board"],
+                "pqi": (publisher_meta.get("pqi") if isinstance(publisher_meta, dict) else None) or {},
+                "pqle": pqle_meta or {
+                    "publication_ready": bool(
+                        (publisher_meta or {}).get("publication_ready", True)
+                    ),
+                    "reject_rendering": False,
+                },
+                "pmes": (publisher_meta.get("pmes") if isinstance(publisher_meta, dict) else None) or {},
+                "editorial": (
+                    (publisher_meta.get("editorial") if isinstance(publisher_meta, dict) else None)
+                    or {}
                 ),
                 "mutates_curriculum": False,
                 "frequency_vocab_used": False,

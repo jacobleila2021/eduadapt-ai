@@ -817,9 +817,22 @@ def _compose_package_from_meta(
     return LessonCompositionPackage(
         blueprint=blueprint,
         standard=None,
-        versions={k: v for k, v in adaptations.items() if k not in {"vocabulary", "worksheet"}},
+        versions={k: v for k, v in adaptations.items() if k not in {"vocabulary", "worksheet"} and not str(k).startswith("_")},
         vocabulary=adaptations.get("vocabulary") or {},
         quality=quality,
+        publisher_meta={
+            "clg": result.get("clg") or {},
+            "intelligence_board": result.get("intelligence_board") or {},
+            "pqi": result.get("pqi") or {},
+            "pqle": result.get("pqle") or {},
+            "pmes": result.get("pmes") or {},
+            "editorial": result.get("editorial") or {},
+            "peec": result.get("peec") or {},
+            "uevb": result.get("uevb") or {},
+            "epp": result.get("epp") or {},
+            "publication_ready": bool(result.get("ok")),
+            "reject_rendering": bool((result.get("pqle") or {}).get("reject_rendering")),
+        },
     )
 
 
@@ -846,41 +859,77 @@ def attach_lce_to_adaptations(
         )
 
     if already:
-        # Light EERL re-check using stored CLG + PQLE polish
-        clg = meta.get("canonical_lesson_graph") or {}
+        # Prefer publisher spine from first compose — empty board/CLG re-scores falsely fail classroom uploads
+        clg = (
+            meta.get("canonical_lesson_graph")
+            or (meta.get("lce") or {}).get("clg")
+            or {}
+        )
+        board = (
+            meta.get("intelligence_board")
+            or (meta.get("lce") or {}).get("intelligence_board")
+            or {}
+        )
+        prior_pqle = (meta.get("lce") or {}).get("pqle") if isinstance(meta.get("lce"), dict) else {}
+        # If first compose already cleared publisher gates, only upgrade vocabulary — do not re-quarantine
+        if (
+            not reject_on_fail
+            and isinstance(prior_pqle, dict)
+            and prior_pqle.get("publication_ready")
+            and not prior_pqle.get("reject_rendering")
+        ):
+            adaptations.setdefault("_meta", {})
+            adaptations["_meta"]["lce"] = {
+                **(adaptations["_meta"].get("lce") or {}),
+                "premium_vocab": True,
+                "stage": "vocab_upgrade_only",
+                "pqle": prior_pqle,
+            }
+            return adaptations
         try:
             from engines.lesson_composition_engine.revise import apply_publisher_quality_excellence
 
-            board = meta.get("intelligence_board") or {}
             pqle = apply_publisher_quality_excellence(
                 {k: v for k, v in adaptations.items() if not str(k).startswith("_") and isinstance(v, dict)},
-                clg=clg,
+                clg=clg if isinstance(clg, dict) else {},
                 board=board if isinstance(board, dict) else {},
             )
             for key, value in (pqle.get("adaptations") or {}).items():
                 adaptations[key] = value
+            reject = bool(pqle.get("reject_rendering"))
             adaptations.setdefault("_meta", {})
+            adaptations["_meta"]["canonical_lesson_graph"] = clg if isinstance(clg, dict) else {}
+            adaptations["_meta"]["intelligence_board"] = board if isinstance(board, dict) else {}
             adaptations["_meta"]["lce"] = {
                 **(adaptations["_meta"].get("lce") or {}),
                 "eerl_final": pqle.get("eerl"),
                 "pqi": pqle.get("pqi"),
                 "editorial": pqle.get("editorial"),
-                "pqle": pqle.get("pqle") if "pqle" in pqle else {
-                    "publication_ready": pqle.get("publication_ready"),
-                    "reject_rendering": pqle.get("reject_rendering"),
+                "clg": clg if isinstance(clg, dict) else {},
+                "intelligence_board": board if isinstance(board, dict) else {},
+                "pqle": {
+                    "publication_ready": bool(pqle.get("publication_ready")),
+                    # Soft audit must not quarantine classroom sessions (reject_on_fail=False)
+                    "reject_rendering": reject if reject_on_fail else False,
+                    "audit_reject_rendering": reject,
                     "threshold": pqle.get("threshold"),
                     "editorial_approved": bool((pqle.get("editorial") or {}).get("approved")),
+                    "pmes_approved": bool((pqle.get("pmes") or {}).get("approved")),
+                    "uevb_approved": bool((pqle.get("uevb") or {}).get("ok")),
+                    "worst_score": (pqle.get("pqi") or {}).get("worst_score"),
                     "phase_omega": True,
                 },
                 "premium_vocab": True,
                 "stage": "final_polish_pqle",
             }
-            if reject_on_fail and pqle.get("reject_rendering"):
+            if reject_on_fail and reject:
+                worst = (pqle.get("pqi") or {}).get("worst_score")
+                threshold = pqle.get("threshold")
                 adaptations["_meta"]["lce"]["render_blocked"] = True
                 adaptations["_meta"]["lce"]["blocked_reason"] = (
-                    f"Publisher Quality Index below threshold "
-                    f"({(pqle.get('pqi') or {}).get('worst_score')}/"
-                    f"{pqle.get('threshold')})."
+                    f"Publisher Quality Index below threshold ({worst}/{threshold})."
+                    if worst is not None
+                    else "The lesson did not meet publisher-quality standards."
                 )
         except Exception:  # noqa: BLE001
             pass

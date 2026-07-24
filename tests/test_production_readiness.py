@@ -158,6 +158,26 @@ def test_publication_gate_blocks_every_known_failure_source():
     }
     assert "Educational Acceptance" in publication_block_reason(eats_blocked)
     assert not publication_allowed(eats_blocked)
+    # Soft PQLE audit must not quarantine classroom sessions without render_blocked
+    soft_pqle = {
+        "_meta": {
+            "lce": {
+                "pqle": {"reject_rendering": True, "publication_ready": False},
+                "pqi": {"publication_ready": False, "worst_score": 80},
+            }
+        }
+    }
+    assert publication_allowed(soft_pqle)
+    hard_pqle = {
+        "_meta": {
+            "lce": {
+                "render_blocked": True,
+                "blocked_reason": "Publisher Quality Index below threshold (80/95).",
+            }
+        }
+    }
+    assert not publication_allowed(hard_pqle)
+    assert "Publisher Quality Index" in publication_block_reason(hard_pqle)
 
 
 def test_viewer_contract_requires_explicit_content_and_identity():

@@ -32,16 +32,12 @@ def publication_block_reason(
         )
 
     lce = meta.get("lce") or {}
-    if lce.get("render_blocked") or (lce.get("pqle") or {}).get("reject_rendering"):
+    # Hard quarantine only when compose explicitly blocked rendering.
+    # Soft pqle.reject_rendering alone must not hide classroom lessons after polish.
+    if lce.get("render_blocked"):
         return str(
             lce.get("blocked_reason")
             or "The lesson did not meet publisher-quality standards (PQI < 95)."
-        )
-    pqi = lce.get("pqi") if isinstance(lce.get("pqi"), dict) else {}
-    if pqi and pqi.get("publication_ready") is False:
-        return (
-            f"Publisher Quality Index below 95 "
-            f"(worst={pqi.get('worst_score')}). Lesson was held for rewrite."
         )
 
     # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief
