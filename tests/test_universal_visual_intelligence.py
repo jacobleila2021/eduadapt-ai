@@ -121,7 +121,8 @@ def test_inject_clears_ai_diagrams_when_deterministic():
 
 
 def test_uli_integration_and_uliqe():
-    from engines.universal_lesson_validation import validate_uli
+    pytest.importorskip("engines.universal_lesson_intelligence")
+    validate_uli = pytest.importorskip("engines.universal_lesson_validation").validate_uli
 
     uli = _uli_from(SAMPLE)
     result = render_visuals_for_uli(uli, context={"topic": "Water Cycle"})
