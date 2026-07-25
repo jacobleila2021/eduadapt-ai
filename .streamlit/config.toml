@@ -7,3 +7,12 @@ gatherUsageStats = false
 
 [client]
 showErrorDetails = false
+
+# Original Alora chrome — dark (never white/cream landing). Cream is lesson paper only.
+[theme]
+base = "dark"
+primaryColor = "#008C95"
+backgroundColor = "#0B1220"
+secondaryBackgroundColor = "#041B4D"
+textColor = "#E8EEF7"
+font = "sans serif"

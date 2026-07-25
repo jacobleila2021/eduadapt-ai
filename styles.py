@@ -26,10 +26,11 @@ def get_custom_css() -> str:
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
-    /* Landing / workspace chrome — original white, not cream textbook paper */
+    /* App chrome — original dark (v2.16.1). Cream (#FFF9EE) is lesson paper only. */
     .stApp, [data-testid="stAppViewContainer"],
     [data-testid="stHeader"], section.main {{
-        background: {COLOR_WHITE} !important;
+        background: #0B1220 !important;
+        color: #E8EEF7;
     }}
 
     .main .block-container {{
@@ -41,7 +42,7 @@ def get_custom_css() -> str:
 
     .main, .main p, .main li, .main span, .main label,
     .main .stMarkdown, .main h2, .main h3, .main h4 {{
-        color: {COLOR_TEXT};
+        color: #E8EEF7;
     }}
 
     .main h2 {{
@@ -318,12 +319,13 @@ def get_custom_css() -> str:
     }}
 
     .workspace-card {{
-        background: {COLOR_WHITE};
+        background: #132038;
         border-radius: 16px;
         padding: 1.5rem 1.75rem;
-        box-shadow: 0 4px 24px rgba(4, 27, 77, 0.07);
-        border: 1px solid rgba(4, 27, 77, 0.07);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(20, 217, 229, 0.18);
         margin-bottom: 1.35rem;
+        color: #E8EEF7;
     }}
 
     .adaptation-panel {{
@@ -349,16 +351,16 @@ def get_custom_css() -> str:
     }}
 
     .metric-card {{
-        background: #f8fcfd;
+        background: #162844;
         border-left: 4px solid {COLOR_ELECTRIC_CYAN};
         border-radius: 12px;
         padding: 1.1rem 1.35rem;
-        box-shadow: 0 2px 12px rgba(4, 27, 77, 0.05);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
         margin-bottom: 0.5rem;
     }}
 
     .metric-card h4 {{
-        color: {COLOR_DEEP_NAVY};
+        color: {COLOR_BRIGHT_AQUA};
         margin: 0 0 0.3rem 0;
         font-size: 0.78rem;
         text-transform: uppercase;
@@ -366,7 +368,7 @@ def get_custom_css() -> str:
     }}
 
     .metric-card p {{
-        color: {COLOR_TEAL};
+        color: #FFFFFF;
         margin: 0;
         font-size: 1.5rem;
         font-weight: 700;
@@ -374,7 +376,7 @@ def get_custom_css() -> str:
 
     /* ---- Cyan pill tabs (Streamlit st-key-* selectors — CSS must NOT rely on wrapper divs) ---- */
     .pill-nav-hint {{
-        color: #3d5470;
+        color: #A8B8D0;
         font-size: 0.95rem;
         margin: 0 0 1.25rem 0;
         line-height: 1.5;
@@ -667,7 +669,33 @@ def get_custom_css() -> str:
     [data-testid="stFileUploaderDropzoneInstructions"] span,
     [data-testid="stFileUploader"] span,
     [data-testid="stFileUploader"] small {{
-        color: #51545d !important;
+        color: #A8B8D0 !important;
+    }}
+
+    /* Keep Streamlit chrome dark — no cream/white landing slabs */
+    [data-testid="stAlert"],
+    div[data-baseweb="notification"],
+    [data-testid="stExpander"],
+    [data-testid="stFileUploader"] section,
+    [data-testid="stFileUploaderDropzone"] {{
+        background-color: #132038 !important;
+        color: #E8EEF7 !important;
+        border-color: rgba(20, 217, 229, 0.25) !important;
+    }}
+    [data-testid="stAlert"] p,
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] summary {{
+        color: #E8EEF7 !important;
+    }}
+    /* Cream reserved for open lesson textbook pages only */
+    .main .block-container:has(.alora-workspace-active) {{
+        background: #FFF9EE !important;
+        color: #333333 !important;
+    }}
+    .main .block-container:has(.alora-workspace-active) .workspace-card {{
+        background: #FFF9EE !important;
+        color: #333333 !important;
+        border-color: #E8E0CF !important;
     }}
 
     :where(button, a, input, textarea, select, [tabindex]):focus-visible {{

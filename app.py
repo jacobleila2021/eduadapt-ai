@@ -134,7 +134,7 @@ def apply_lesson(name: str, text: str, source_envelope: dict | None = None) -> N
     st.session_state.upload_name = name
     st.session_state.source_envelope = source_envelope
     st.session_state.adaptations = None
-    st.session_state.analytics = build_analytics_report(text)
+    st.session_state.analytics = build_analytics_report(text, source_name=name)
     close_workspace()
 
 

@@ -112,10 +112,17 @@ def prompt_leak_hits(text: str) -> list[str]:
 
 
 def scrub_prompt_leaks(text: str) -> str:
-    """Drop sentences that carry prompt/metadata leaks."""
+    """Drop sentences / inline fragments that carry prompt/metadata leaks."""
     out = text or ""
     if not out.strip():
         return out
+    # Strip labelled metadata lines first (Grade Level: 8, Learning Objectives: …)
+    out = re.sub(
+        r"(?i)\b(grade\s*level|learning\s*objectives?|source\s*document|"
+        r"uploaded\s*source|using the uploaded source)\s*[:\-–]\s*[^\n.?!]*",
+        "",
+        out,
+    )
     kept: list[str] = []
     for sent in re.split(r"(?<=[.!?])\s+", out):
         if prompt_leak_hits(sent):
@@ -126,6 +133,10 @@ def scrub_prompt_leaks(text: str) -> str:
             "",
             sent,
         ).strip()
+        # Remove residual banned phrases inside otherwise useful sentences
+        for phrase in PROMPT_LEAK_PHRASES:
+            cleaned = re.sub(re.escape(phrase), "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;:-")
         if cleaned and not prompt_leak_hits(cleaned):
             kept.append(cleaned)
     return " ".join(kept).strip()
@@ -376,14 +387,20 @@ def _break_clone_paragraphs(adaptations: dict[str, Any]) -> dict[str, Any]:
         page = dict(value)
         sections = [dict(s) for s in (page.get("sections") or []) if isinstance(s, dict)]
         new_sections = []
-        for sec in sections:
+        for idx, sec in enumerate(sections):
             row = dict(sec)
-            norm = " ".join(str(row.get("body") or "").lower().split())
+            body = str(row.get("body") or "").rstrip()
+            norm = " ".join(body.lower().split())
             if len(norm) > 80 and norm in seen and seen[norm] != key:
                 sig = signatures.get(key, f"Now explain this idea in the way that suits {key} learners.")
-                body = str(row.get("body") or "").rstrip()
-                if sig.lower() not in body.lower():
-                    row["body"] = f"{body} {sig}"
+                # Rewrite enough that clone detection cannot still match ≥50%
+                lead = body.split(".")[0].strip()
+                if len(lead.split()) < 6:
+                    lead = body[:120].rstrip()
+                row["body"] = (
+                    f"{lead}. For the {key.replace('_', ' ')} version: {sig} "
+                    f"Use your own words to finish the idea from this section."
+                ).strip()
             elif len(norm) > 80:
                 seen[norm] = key
             new_sections.append(row)

@@ -1,11 +1,62 @@
 """
 Local analytics for lesson complexity, reading level, and objectives.
 Uses text statistics so teachers get instant feedback before AI generation.
+Prefers explicit Class/Grade labels from the filename or lesson text over
+raw Flesch–Kincaid when a curriculum grade is stated (e.g. Class 8 PDF).
 """
+
+from __future__ import annotations
 
 import re
 
 import textstat
+
+# Explicit curriculum labels beat readability estimates for Indian board PDFs.
+_GRADE_PATTERNS = (
+    r"(?i)\b(?:class|grade|std\.?|standard)\s*[-–:]?\s*([0-9]{1,2})\b",
+    r"(?i)\b(?:class|grade|std\.?|standard)\s*([IVXLC]{1,6})\b",
+    r"(?i)\b(?:year|yr\.?)\s*([0-9]{1,2})\b",
+)
+
+_ROMAN = {
+    "i": 1,
+    "ii": 2,
+    "iii": 3,
+    "iv": 4,
+    "v": 5,
+    "vi": 6,
+    "vii": 7,
+    "viii": 8,
+    "ix": 9,
+    "x": 10,
+    "xi": 11,
+    "xii": 12,
+}
+
+
+def _roman_or_int(token: str) -> int | None:
+    raw = (token or "").strip().lower()
+    if not raw:
+        return None
+    if raw.isdigit():
+        n = int(raw)
+        return n if 1 <= n <= 12 else None
+    return _ROMAN.get(raw)
+
+
+def detect_stated_grade(*sources: str) -> int | None:
+    """Return Class/Grade 1–12 when the upload name or lesson text states it."""
+    for source in sources:
+        text = source or ""
+        if not text.strip():
+            continue
+        # Prefer filename-style hits in the first 400 chars + full name separately
+        for pattern in _GRADE_PATTERNS:
+            for match in re.finditer(pattern, text):
+                grade = _roman_or_int(match.group(1))
+                if grade is not None:
+                    return grade
+    return None
 
 
 def count_learning_objectives(text: str) -> int:
@@ -82,16 +133,28 @@ def compute_lesson_complexity_score(text: str) -> int:
     return int(round(min(100, max(0, raw))))
 
 
-def estimate_reading_level(text: str) -> str:
+def estimate_reading_level(text: str, *, source_name: str = "") -> str:
     """
     Return a teacher-friendly reading level label.
 
+    Prefer an explicit Class/Grade from the filename or lesson text
+    (e.g. "Exploring Science Class 8.pdf" → Grade 8). Fall back to
+    Flesch–Kincaid only when no curriculum grade is stated.
+
     Args:
         text: Full lesson text.
+        source_name: Original upload filename when available.
 
     Returns:
         String like "Grade 6" or "College level".
     """
+    if not text.strip() and not (source_name or "").strip():
+        return "N/A"
+
+    stated = detect_stated_grade(source_name or "", text[:4000] if text else "")
+    if stated is not None:
+        return f"Grade {stated}"
+
     if not text.strip():
         return "N/A"
 
@@ -103,18 +166,22 @@ def estimate_reading_level(text: str) -> str:
     return "College level"
 
 
-def build_analytics_report(text: str) -> dict:
+def build_analytics_report(text: str, *, source_name: str = "") -> dict:
     """
     Bundle all analytics into one dictionary for the UI.
 
     Args:
         text: Extracted lesson text.
+        source_name: Upload filename used to resolve Class/Grade labels.
 
     Returns:
         Dict with complexity_score, reading_level, and objective_count.
     """
+    stated = detect_stated_grade(source_name or "", (text or "")[:4000])
     return {
         "complexity_score": compute_lesson_complexity_score(text),
-        "reading_level": estimate_reading_level(text),
+        "reading_level": estimate_reading_level(text, source_name=source_name),
         "objective_count": count_learning_objectives(text),
+        "grade_source": "document_label" if stated is not None else "readability",
+        "stated_grade": stated,
     }

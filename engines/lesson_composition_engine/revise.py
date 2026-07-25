@@ -244,17 +244,22 @@ def apply_publisher_quality_excellence(
             content_fidelity_issues,
         )
 
-        def _fid(pkg: dict[str, Any]) -> dict[str, Any]:
-            return apply_content_fidelity(pkg, board=board)
-
-        working, fid_gate = apply_if_improves("content_fidelity", working, _fid)
-        contribution_log.append(fid_gate)
+        # Content fidelity is a hard publishing standard — always apply (never EQS-bypass).
+        working = apply_content_fidelity(working, board=board)
+        contribution_log.append(
+            {
+                "engine": "content_fidelity",
+                "bypassed": False,
+                "mandatory": True,
+                "log": "ENGINE CONTRIBUTION APPLIED",
+            }
+        )
         fidelity_result = {
             "ok": not content_fidelity_issues(working),
             "issues": content_fidelity_issues(working),
             "smoke_ok": CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK,
-            "bypassed": fid_gate.get("bypassed"),
-            "contribution": fid_gate,
+            "bypassed": False,
+            "mandatory": True,
         }
     except Exception as exc:  # noqa: BLE001
         fidelity_result = {"ok": False, "error": str(exc)}
@@ -271,6 +276,23 @@ def apply_publisher_quality_excellence(
         if key.startswith("_") or not isinstance(value, dict) or key in {"vocabulary", "worksheet"}:
             continue
         working[key] = clarity_edit_adaptation(dict(value), topic=topic)
+
+    # Re-apply fidelity after clarity scrub so leaks/clones cannot re-enter the gate
+    try:
+        from engines.lesson_composition_engine.content_fidelity import (
+            apply_content_fidelity,
+            content_fidelity_issues,
+        )
+
+        working = apply_content_fidelity(working, board=board)
+        fidelity_result = {
+            **fidelity_result,
+            "ok": not content_fidelity_issues(working),
+            "issues": content_fidelity_issues(working),
+            "final_pass": True,
+        }
+    except Exception:  # noqa: BLE001
+        pass
 
     eerl = review_package(working, clg)
     golden_deltas = {}
