@@ -1551,6 +1551,23 @@ def generate_adaptations(
             )
             worksheet["diagram_question"] = diagram_question
 
+        # Final provenance stamp — guarantee every teaching node created by any
+        # authoring stage (publisher_author, content fidelity, diagram teaching,
+        # vocabulary) carries valid source_refs before the hard QA gate. This is a
+        # safety net over ALL adaptation keys (including LCE-only lenses such as
+        # dyslexia that are absent from OUTPUT_KEYS). With source-level stamping it
+        # should be a no-op; it never weakens the 100% grounding gate.
+        for _prov_key, _prov_val in list(merged.items()):
+            if not str(_prov_key).startswith("_") and isinstance(_prov_val, dict):
+                _prev_contract = _prov_val.get("_contract") or {}
+                merged[_prov_key] = _apply_v3_output_contract(
+                    _prov_val,
+                    key=_prov_key,
+                    valid_source_refs=source_refs,
+                    fallback_used=str(_prev_contract.get("fallback_used") or "none"),
+                    retry_history=_prev_contract.get("retry_history") or [],
+                )
+
         # Keep Computation Layer provenance attached before QA. Chapter-cache reuse
         # must not leave the publish gate comparing a different artifact set.
         verified_exact_values = []

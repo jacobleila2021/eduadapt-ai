@@ -227,6 +227,21 @@ def simplify_vocabulary_page(page: dict[str, Any], *, topic: str = "") -> dict[s
     return out
 
 
+def _section_source_refs(sections: list[dict[str, Any]]) -> list[str]:
+    """Ordered union of source_refs across sections — provenance a summary inherits."""
+    refs: list[str] = []
+    seen: set[str] = set()
+    for sec in sections:
+        if not isinstance(sec, dict):
+            continue
+        for ref in sec.get("source_refs") or []:
+            r = str(ref)
+            if r and r not in seen:
+                seen.add(r)
+                refs.append(r)
+    return refs
+
+
 def _rewrite_summary(sections: list[dict[str, Any]], *, topic: str) -> list[dict[str, Any]]:
     claims: list[str] = []
     for sec in sections:
@@ -254,23 +269,37 @@ def _rewrite_summary(sections: list[dict[str, Any]], *, topic: str) -> list[dict
         + (f"Finally, {claims[2]} " if len(claims) > 2 else "")
         + "Say those ideas in your own words, then check the diagram once more."
     )
+    # Inherit provenance from the sections being summarised so the summary is
+    # born source-grounded (Option A) — never repaired after the fact.
+    parent_refs = _section_source_refs(sections)
     out: list[dict[str, Any]] = []
-    replaced = False
+    has_summary = False
     for sec in sections:
         row = dict(sec)
-        if str(row.get("role") or "") == "summary" or "summary" in str(row.get("title") or "").lower():
+        is_summary = (
+            str(row.get("role") or "") == "summary"
+            or "summary" in str(row.get("title") or "").lower()
+        )
+        if is_summary:
+            # Duplicate protection: keep exactly one summary. Collapse any further
+            # summary sections instead of appending a new one on each pass.
+            if has_summary:
+                continue
             body = str(row.get("body") or "").lower()
             if any(m in body for m in GENERIC_SUMMARY_MARKERS) or len(body.split()) < 18:
                 row["body"] = summary_body
-                replaced = True
+            if not (row.get("source_refs") or []):
+                row["source_refs"] = list(parent_refs)
+            has_summary = True
         out.append(row)
-    if not replaced:
+    if not has_summary:
         out.append(
             {
                 "title": "Lesson Summary",
                 "role": "summary",
                 "box": "summary",
                 "body": summary_body,
+                "source_refs": list(parent_refs),
             }
         )
     return out
@@ -301,6 +330,8 @@ def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[s
     page["diagram_package"] = pkg
 
     sections = [dict(s) for s in (page.get("sections") or []) if isinstance(s, dict)]
+    # Inherit provenance so newly-created diagram sections are born source-grounded.
+    parent_refs = _section_source_refs(sections)
     blob = " ".join(str(s.get("body") or "") for s in sections).lower()
     if "diagram" not in blob and "see the" not in blob:
         sections.insert(
@@ -313,6 +344,7 @@ def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[s
                     f"{pkg['explanation']} {pkg['caption']}. "
                     f"Practice: {pkg['practice_question']}"
                 ),
+                "source_refs": list(parent_refs),
             },
         )
     # Ensure a practice section mentions the diagram
@@ -323,6 +355,7 @@ def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[s
                 "role": "practice_question",
                 "box": "practice",
                 "body": str(pkg["practice_question"]),
+                "source_refs": list(parent_refs),
             }
         )
     page["sections"] = sections
