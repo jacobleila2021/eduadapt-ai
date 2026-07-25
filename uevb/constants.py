@@ -125,6 +125,9 @@ CORPUS_SEEDS: dict[str, list[dict[str, str]]] = {
     "biology": [
         {"topic": "The Water Cycle", "concept": "Evaporation"},
         {"topic": "Cell Structure", "concept": "Nucleus"},
+        # Environmental science classroom coverage (same biology pack — no new engine)
+        {"topic": "Waste Management", "concept": "Segregation"},
+        {"topic": "Ecosystems", "concept": "Food web"},
     ],
     "english": [
         {"topic": "Active and Passive Voice", "concept": "Voice"},

@@ -400,24 +400,56 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
             )
 
     normalized = normalize_vocab_items(raw_terms, topic=topic, claims=claims)
-    # Ensure a solid study set from claim-grounded science terms (never junk fillers)
+    # Ensure a solid study set from claim-grounded terms (never hardcoded topic banks)
     if len(normalized) < 6:
-        extras = []
+        extras: list[dict[str, str]] = []
+        seen = {str(n.get("term") or "").strip().lower() for n in normalized}
+        stop = {
+            "that", "this", "these", "those", "with", "from", "into", "than", "then",
+            "when", "where", "which", "while", "their", "there", "because", "about",
+            "other", "another", "always", "never", "usually", "often", "shows", "makes",
+            "keeps", "gives", "needs", "turns", "means", "using", "unit", "same", "some",
+            "most", "many", "each", "every", "both", "also", "must", "does",
+        }
         for text in claims:
-            low = text.lower()
-            for term in (
-                "Force",
-                "Pressure",
-                "Area",
-                "Pascal",
-                "Newton",
-                "Evaporation",
-                "Condensation",
-                "Precipitation",
-                "Collection",
-            ):
-                if term.lower() in low and not is_junk_term(term):
-                    extras.append({"term": term, "definition": text, "example": text})
+            for word in str(text).replace(",", " ").split():
+                token = word.strip(".:;()[]\"'")
+                key = token.lower()
+                if len(token) < 5 or is_junk_term(token) or key in stop or key in seen:
+                    continue
+                if not (token[0].isupper() or token.isalpha()):
+                    continue
+                seen.add(key)
+                extras.append(
+                    {
+                        "term": token if token[0].isupper() else token.capitalize(),
+                        "definition": str(text),
+                        "example": (
+                            f"Use “{token.lower()}” when you explain {topic.lower()} out loud — "
+                            f"point to it in one real situation you have seen."
+                        ),
+                        "memory_tip": (
+                            f"Link “{token.lower()}” to one thing you can see at home, "
+                            f"in the kitchen, or on the way to school."
+                        ),
+                    }
+                )
+                if len(extras) >= 8:
+                    break
+            if len(extras) >= 8:
+                break
+        # Topic words as last resort when claims yield nothing usable
+        if len(extras) < 3:
+            for word in topic.replace("-", " ").split():
+                token = word.strip()
+                if len(token) >= 4 and not is_junk_term(token) and token.lower() not in seen:
+                    extras.append(
+                        {
+                            "term": token.title(),
+                            "definition": claims[0] if claims else f"{token} is a key idea in {topic}.",
+                            "example": claims[0] if claims else f"Use {token} accurately in {topic}.",
+                        }
+                    )
         normalized = normalize_vocab_items(
             list(normalized) + extras, topic=topic, claims=claims
         )
@@ -677,6 +709,25 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
         sif=sif if isinstance(sif, Mapping) else {},
         uvie=uvie if isinstance(uvie, Mapping) else {},
     )
+    import copy
+
+    lce_authored = copy.deepcopy(adaptations)
+    original_source = {
+        "adaptations": {
+            "standard": {
+                "topic": board.get("topic"),
+                "big_idea": (board.get("verified_claims") or [""]),
+                "sections": [
+                    {"title": "Source claim", "role": "concept", "body": str(c)}
+                    for c in (board.get("verified_claims") or [])[:6]
+                ],
+            }
+        },
+        "_intelligence_board": board,
+    }
+    if isinstance(original_source["adaptations"]["standard"]["big_idea"], list):
+        claims0 = original_source["adaptations"]["standard"]["big_idea"]
+        original_source["adaptations"]["standard"]["big_idea"] = str(claims0[0] if claims0 else "")
 
     # Publisher-Quality Lesson Excellence — polish, golden compare, editorial board
     from engines.lesson_composition_engine.revise import apply_publisher_quality_excellence
@@ -710,6 +761,20 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
             }
         )
 
+    side_by_side: dict[str, Any] = {}
+    try:
+        from engines.lesson_composition_engine.recovery import side_by_side_quality_report
+
+        side_by_side = side_by_side_quality_report(
+            original=original_source,
+            lce={"adaptations": lce_authored},
+            final={"adaptations": adaptations},
+            subject=str(board.get("subject") or ""),
+            topic=str(board.get("topic") or topic_hint or ""),
+        )
+    except Exception as exc:  # noqa: BLE001
+        side_by_side = {"ok": False, "error": str(exc)[:300]}
+
     publication_ready = bool(pqle.get("publication_ready"))
     publisher_review = pqle.get("publisher_review_report") or {}
     result = {
@@ -729,6 +794,10 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
         "epp": pqle.get("epp") or {},
         "content_fidelity": pqle.get("content_fidelity") or {},
         "eqs": pqle.get("eqs") or {},
+        "heq": pqle.get("heq") or pqle.get("eqs") or {},
+        "human_verdict": pqle.get("human_verdict") or {},
+        "adaptation_advantages": pqle.get("adaptation_advantages") or {},
+        "side_by_side": side_by_side,
         "adaptation_similarity": pqle.get("adaptation_similarity") or {},
         "golden_gate": pqle.get("golden_gate") or {},
         "contribution_log": contribution_log,
@@ -744,7 +813,9 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
             "peec_ok": bool((pqle.get("peec") or {}).get("ok")),
             "mode": "formatting_only",
             "eqs": (pqle.get("eqs") or {}).get("overall"),
+            "heq": (pqle.get("heq") or pqle.get("eqs") or {}).get("overall"),
             "recovery_sprint": True,
+            "human_first": True,
             "phase_omega": True,
             "phase_omega_2_pmes": True,
             "smoke_ok": PHASE_OMEGA_PREMIUM_EDUCATIONAL_EXPERIENCE_SMOKE_OK,

@@ -113,7 +113,7 @@ def _word_wall_card_html(word: dict, index: int = 0) -> str:
         except Exception:
             pass
     term_raw = str(word.get("term") or "Term").strip()
-    display = term_raw.upper() if len(term_raw) <= 28 else (term_raw[:1].upper() + term_raw[1:] if term_raw else "Term")
+    display = (term_raw[:1].upper() + term_raw[1:]) if term_raw else "Term"
     term = html.escape(display)
     meaning = html.escape(
         word.get("child_friendly")

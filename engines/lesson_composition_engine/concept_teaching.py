@@ -52,24 +52,31 @@ def build_concept_block(
             f"Build understanding from a familiar experience toward precise classroom language."
         ),
     )
-    example = (
-        f"Everyday link: notice where {concept.lower()} shows up at home, in the playground, "
-        f"or in a simple classroom demo. Connecting the idea to a real situation makes the "
-        f"definition easier to remember."
-    )
-    worked = worked_example or (
-        f"Worked example — find the sentences about {concept.lower()} in the lesson, "
-        f"underline the defining words, and restate the idea in two clear sentences."
-    )
-    misc = misconception or (
-        f"A common mistake is to confuse {concept.lower()} with a related term. "
-        f"Keep the definitions separate and check against the lesson explanation."
-    )
+    example = ""
+    worked = worked_example or ""
+    misc = misconception or ""
+    # Prefer empty over canned filler — publisher_author / teacher composition owns authorship.
+    if not example:
+        example = (
+            f"Find one real situation that matches {concept.lower()}, "
+            f"then check it against the verified meaning in the lesson evidence."
+        )
+    if not worked:
+        worked = (
+            f"Use the lesson evidence about {concept.lower()} to explain the idea "
+            f"in two clear sentences of your own."
+        )
+    if not misc:
+        misc = (
+            f"Many learners mix {concept.lower()} with a nearby term. "
+            f"Actually, keep the definitions separate and check the lesson evidence."
+        )
     practice = (
         f"Explain {concept} in your own words and give one example from the lesson."
     )
     reflection = (
-        f"Reflection: What part of {concept.lower()} feels clear, and what still needs another example?"
+        f"I understand {concept.lower()} when I can explain it with a real example "
+        f"and keep the accurate meaning."
     )
     return ConceptBlock(
         concept_id=cid,
@@ -125,7 +132,7 @@ def concept_blocks_to_sections(blocks: list[ConceptBlock]) -> list[LessonSection
                 box="teach" if step in {"concept", "simple_explanation"} else "",
                 visual_ids=[block.visual_id] if step == "visual" and block.visual_id else [],
                 concept_id=block.concept_id,
-                transition_in=pick_transition(step_index),
+                transition_in=pick_transition(step_index, previous=block.title, nxt=block.title, topic=block.title),
             )
             sections.append(section)
             step_index += 1

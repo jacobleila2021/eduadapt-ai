@@ -11,15 +11,9 @@ from engines.lesson_composition_engine.schemas import CONCEPT_TEACHING_STEPS
 MAX_PARAGRAPH_WORDS = 120
 MIN_SENTENCES = 2
 
-TRANSITION_BANK = (
-    "Building on that idea,",
-    "With this foundation in place,",
-    "Next, we make the idea concrete.",
-    "Now apply what you have learned.",
-    "Before we practise,",
-    "To check understanding,",
-    "Looking back at the big idea,",
-)
+# Deprecated: never author learner prose from a fixed transition bank.
+# Kept empty so accidental callers cannot inject canned scaffolds.
+TRANSITION_BANK: tuple[str, ...] = ()
 
 
 def word_count(text: str) -> int:
@@ -37,25 +31,21 @@ def split_paragraphs(text: str) -> list[str]:
 
 
 def ensure_paragraph_quality(paragraph: str, *, idea: str = "") -> str:
-    """Normalize a paragraph toward production teaching prose."""
+    """Normalize teaching prose without injecting meta scaffolding."""
     text = re.sub(r"\s+", " ", (paragraph or "").strip())
+    # Strip legacy score-inflation filler if present
+    text = re.sub(
+        r"(?i)\s*Remember:\s+[^.?!]+helps you explain the topic clearly\.?",
+        "",
+        text,
+    ).strip()
     if not text:
         if idea:
-            return (
-                f"{idea.rstrip('.')} is an important idea in this lesson. "
-                f"Pay close attention to how it connects to what you already know."
-            )
+            return f"{idea.rstrip('.')} is defined clearly in this lesson."
         return ""
-    # Expand single-sentence fragments
-    if sentence_count(text) < MIN_SENTENCES and idea:
-        text = (
-            f"{text.rstrip('.')}."
-            f" Remember: {idea.rstrip('.')} helps you explain the topic clearly."
-        )
     # Soft-trim very long paragraphs at sentence boundaries
     words = text.split()
     if len(words) > MAX_PARAGRAPH_WORDS + 40:
-        # Keep first ~120 words ending on a sentence if possible
         clipped = " ".join(words[:MAX_PARAGRAPH_WORDS])
         if "." in clipped:
             clipped = clipped.rsplit(".", 1)[0] + "."
@@ -114,8 +104,13 @@ def _step_title(step: str, concept: str) -> str:
     return labels.get(step, f"{step.replace('_', ' ').title()}: {concept}")
 
 
-def pick_transition(index: int) -> str:
-    return TRANSITION_BANK[index % len(TRANSITION_BANK)]
+def pick_transition(index: int, *, previous: str = "", nxt: str = "", topic: str = "this lesson") -> str:
+    """Dynamic teacher transition — never retrieve a canned TRANSITION_BANK line."""
+    from engines.lesson_composition_engine.teacher_composition import compose_transition
+
+    prev = previous or (f"idea {index}" if index else "")
+    following = nxt or f"the next idea"
+    return compose_transition(previous=prev, nxt=following, topic=topic or "this lesson")
 
 
 def dedupe_sentences(text: str) -> str:

@@ -27,45 +27,6 @@ CARD_COLORS = (
     "#eef2ff",  # indigo mist
 )
 
-POS_GUESS = (
-    (r"tion$|sion$|ness$|ment$|ity$|ism$", "noun"),
-    (r"ise$|ize$|ate$|ify$", "verb"),
-    (r"ous$|ful$|less$|ical$|ive$|able$|ible$", "adjective"),
-    (r"ly$", "adverb"),
-)
-
-
-def _guess_pos(term: str) -> str:
-    t = (term or "").strip().lower()
-    for pattern, pos in POS_GUESS:
-        if re.search(pattern, t):
-            return pos
-    return "noun"
-
-
-def _syllable_guess(term: str) -> str:
-    word = re.sub(r"[^A-Za-z]", "", term or "")
-    if not word:
-        return ""
-    vowels = "aeiouy"
-    chunks: list[str] = []
-    current = ""
-    for i, ch in enumerate(word.lower()):
-        current += ch
-        if ch in vowels and (i + 1 >= len(word) or word.lower()[i + 1] not in vowels):
-            if len(current) > 1 or not chunks:
-                chunks.append(current)
-                current = ""
-    if current:
-        if chunks:
-            chunks[-1] += current
-        else:
-            chunks.append(current)
-    if len(chunks) <= 1:
-        return word.lower()
-    return "-".join(chunks)
-
-
 def _display_term(term: str) -> str:
     raw = (term or "").strip()
     if not raw:
@@ -91,8 +52,6 @@ def compose_vocabulary_card(
     related_concepts: list[str] | None = None,
     difficulty: str = "core",
     reading_level: str = "grade_appropriate",
-    pronunciation: str = "",
-    part_of_speech: str = "",
     color_index: int = 0,
     verified: bool = False,
     emoji: str = "",
@@ -111,11 +70,6 @@ def compose_vocabulary_card(
         picture = picture or enrich.get("picture") or ""
         related_concepts = related_concepts or list(enrich.get("related_concepts") or [])
         verified = verified or bool(enrich.get("verified"))
-        pr = enrich.get("pronunciation")
-        if not pronunciation and isinstance(pr, list) and pr:
-            pronunciation = "-".join(str(x) for x in pr)
-        elif not pronunciation and isinstance(pr, str):
-            pronunciation = pr
         if enrich.get("example_sentence"):
             example_sentence = example_sentence or enrich["example_sentence"]
         if enrich.get("simplified"):
@@ -123,11 +77,6 @@ def compose_vocabulary_card(
         reading_level = reading_level or enrich.get("reading_level") or reading_level
     except Exception:  # noqa: BLE001
         pass
-
-    if not pronunciation:
-        pronunciation = ""
-    if not part_of_speech:
-        part_of_speech = ""
 
     # Never keep LXP "not found" / template filler / teacher objectives
     definition = student_safe_definition(definition)
@@ -239,8 +188,6 @@ def compose_vocabulary_page(
                 related_concepts=_as_list(item.get("related_concepts")),
                 difficulty=str(item.get("difficulty") or "core"),
                 reading_level=str(item.get("reading_level") or "grade_appropriate"),
-                pronunciation=str(item.get("pronunciation") or ""),
-                part_of_speech=str(item.get("part_of_speech") or ""),
                 color_index=i,
                 emoji=str(item.get("emoji") or ""),
                 verified=bool(item.get("verified")),

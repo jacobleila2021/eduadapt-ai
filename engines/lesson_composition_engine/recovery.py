@@ -288,6 +288,11 @@ def clarity_edit_adaptation(adaptation: dict[str, Any], *, topic: str = "this le
 
 
 def adaptation_similarity_report(adaptations: Mapping[str, Any]) -> dict[str, Any]:
+    """Gate: each adaptation must differ from mainstream (not a wrap/clone).
+
+    Sibling profiles (e.g. ld vs dyslexia) may share accessibility moves; that is not
+    clone-wrapping mainstream. Full pairwise ratios stay in diagnostics only.
+    """
     keys = [
         k
         for k, v in adaptations.items()
@@ -295,119 +300,54 @@ def adaptation_similarity_report(adaptations: Mapping[str, Any]) -> dict[str, An
         and not str(k).startswith("_")
         and k not in {"vocabulary", "worksheet"}
     ]
+    mainstream = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
+    m_text = instructional_text(mainstream)[:12000] if mainstream else ""
     failures = []
+    vs_mainstream = {}
     pairwise = {}
+    for key in keys:
+        if key == "standard" or not isinstance(adaptations.get(key), dict):
+            continue
+        a_text = instructional_text(adaptations[key])[:12000]
+        sim = SequenceMatcher(None, a_text, m_text).ratio() if m_text else 0.0
+        vs_mainstream[key] = round(sim, 4)
+        if sim > MAX_SIMILARITY:
+            failures.append({"pair": [key, "standard"], "similarity": round(sim, 4)})
     for i, a in enumerate(keys):
         for b in keys[i + 1 :]:
-            # Compare instructional text only
             sim = SequenceMatcher(
                 None, instructional_text(adaptations[a])[:12000], instructional_text(adaptations[b])[:12000]
             ).ratio()
             pairwise[f"{a}__{b}"] = round(sim, 4)
-            if sim > MAX_SIMILARITY:
-                failures.append({"pair": [a, b], "similarity": round(sim, 4)})
+            # Extreme sibling clones still fail (near-identical wraps of each other)
+            if a != "standard" and b != "standard" and sim > 0.85:
+                failures.append({"pair": [a, b], "similarity": round(sim, 4), "sibling_clone": True})
     return {
         "threshold": MAX_SIMILARITY,
+        "mode": "vs_mainstream",
+        "vs_mainstream": vs_mainstream,
         "pairwise": pairwise,
         "failures": failures,
         "ok": not failures,
     }
 
 
-def educational_quality_score(adaptations: Mapping[str, Any]) -> dict[str, Any]:
-    """EQS — learner-experience weighted score (0–100)."""
-    std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
-    text = instructional_text(std)
-    full = _text_blob(
-        {k: v for k, v in adaptations.items() if isinstance(v, dict) and not str(k).startswith("_")}
+def educational_quality_score(adaptations: Mapping[str, Any], **kwargs: Any) -> dict[str, Any]:
+    """HEQ — human educational quality (teaching-dominated; threshold 95).
+
+    Delegates to human_quality. SVG/HTML cannot inflate a weak lesson.
+    """
+    from engines.lesson_composition_engine.human_quality import human_educational_quality
+
+    board = adaptations.get("_intelligence_board") if isinstance(adaptations.get("_intelligence_board"), dict) else {}
+    subject = str(kwargs.get("subject") or board.get("subject") or "")
+    topic = str(kwargs.get("topic") or board.get("topic") or "")
+    claims = kwargs.get("claims")
+    if claims is None:
+        claims = [str(c) for c in (board.get("verified_claims") or []) if str(c).strip()]
+    return human_educational_quality(
+        adaptations, subject=subject, topic=topic, claims=list(claims or [])
     )
-    robotic = phrase_hits(full, ROBOTIC_PHRASES)
-    student = _text_blob(
-        {
-            k: v
-            for k, v in adaptations.items()
-            if k in {"standard", "ld", "ell", "visual", "auditory", "adhd", "autism"}
-            and isinstance(v, dict)
-        }
-    )
-    advisory = phrase_hits(student, TEACHER_ADVISORY)
-    rep = repetition_ratio(full)
-    vocab = vocab_quality(adaptations.get("vocabulary") if isinstance(adaptations.get("vocabulary"), dict) else {})
-    sim = adaptation_similarity_report(adaptations)
-
-    # Teaching effectiveness 35%
-    teach = 70.0
-    teach -= min(25, 5 * len(robotic))
-    teach -= min(20, 4 * len(advisory))
-    teach -= min(15, rep * 50)
-    if len(text) < 400:
-        teach -= 15
-    if "example" not in full.lower() and "for example" not in full.lower():
-        teach -= 8
-    teach = max(0, min(100, teach))
-
-    # Adaptation distinctiveness 20%
-    distinct = 100.0
-    if sim["failures"]:
-        distinct -= min(80, 15 * len(sim["failures"]))
-    distinct = max(0, distinct)
-
-    # Readability 15%
-    words = text.split()
-    avg = (sum(len(w) for w in words) / max(len(words), 1)) if words else 0
-    read = 80.0
-    if avg > 7.5:
-        read -= 15
-    if rep > 0.08:
-        read -= 20
-    read = max(0, min(100, read))
-
-    # Visual 10%
-    svg_ok = any(
-        str(std.get(k) or "").startswith("<svg")
-        for k in ("flowchart_svg", "concept_map_svg", "svg_diagram")
-    )
-    visual = 85.0 if svg_ok else 35.0
-
-    # Vocabulary 10%
-    vscore = float(vocab.get("score") or 0)
-
-    # Accessibility 5%
-    access = 80.0
-    if advisory:
-        access -= 30
-    if not svg_ok:
-        access -= 10
-
-    # Rendering 5% — light: has sections + big idea
-    sections = [s for s in (std.get("sections") or []) if isinstance(s, dict)]
-    render = 90.0 if (std.get("big_idea") and len(sections) >= 4) else 40.0
-
-    overall = (
-        0.35 * teach
-        + 0.20 * distinct
-        + 0.15 * read
-        + 0.10 * visual
-        + 0.10 * vscore
-        + 0.05 * access
-        + 0.05 * render
-    )
-    return {
-        "overall": round(overall, 1),
-        "components": {
-            "teaching_effectiveness": round(teach, 1),
-            "adaptation_distinctiveness": round(distinct, 1),
-            "readability": round(read, 1),
-            "visual_learning_quality": round(visual, 1),
-            "vocabulary_learning": round(vscore, 1),
-            "accessibility": round(access, 1),
-            "rendering_quality": round(render, 1),
-        },
-        "robotic_phrases": robotic,
-        "advisory_leaks": advisory,
-        "similarity": sim,
-        "vocabulary": vocab,
-    }
 
 
 def contribution_delta(before_score: float, after_score: float) -> dict[str, Any]:
@@ -581,38 +521,122 @@ def measure_upstream_engine_contributions(
     return log
 
 
+def side_by_side_quality_report(
+    *,
+    original: Mapping[str, Any],
+    lce: Mapping[str, Any],
+    final: Mapping[str, Any],
+    subject: str = "",
+    topic: str = "",
+) -> dict[str, Any]:
+    """Original → LCE → Final with educational quality impact of each change."""
+    from engines.lesson_composition_engine.human_quality import human_educational_quality
+
+    def _snap(label: str, pkg: Mapping[str, Any]) -> dict[str, Any]:
+        adaptations = pkg.get("adaptations") if isinstance(pkg.get("adaptations"), dict) else pkg
+        if not isinstance(adaptations, dict):
+            adaptations = {}
+        std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
+        heq = human_educational_quality(adaptations, subject=subject, topic=topic)
+        return {
+            "stage": label,
+            "big_idea": str(std.get("big_idea") or "")[:400],
+            "section_count": len([s for s in (std.get("sections") or []) if isinstance(s, dict)]),
+            "excerpt": instructional_text(std)[:900],
+            "heq": heq.get("overall"),
+            "human_verdict": heq.get("human_verdict"),
+            "weak_markers": heq.get("weak_teaching_markers") or [],
+            "publication_ready": heq.get("publication_ready"),
+        }
+
+    o = _snap("original_source", original)
+    l = _snap("lce_authored", lce)
+    f = _snap("final_published", final)
+
+    def _delta(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
+        da = float(b.get("heq") or 0) - float(a.get("heq") or 0)
+        return {
+            "heq_delta": round(da, 2),
+            "improved": da > 0,
+            "reduced": da < 0,
+            "unchanged": da == 0,
+            "verdict": (
+                "improved educational quality"
+                if da > 0
+                else ("reduced educational quality" if da < 0 else "no heq change")
+            ),
+        }
+
+    return {
+        "schema": "alora.side_by_side_quality.v1",
+        "topic": topic,
+        "subject": subject,
+        "stages": [o, l, f],
+        "changes": [
+            {
+                "from": "original_source",
+                "to": "lce_authored",
+                **_delta(o, l),
+                "what_changed": "Board-driven publisher authorship composed adaptive lessons from verified claims.",
+            },
+            {
+                "from": "lce_authored",
+                "to": "final_published",
+                **_delta(l, f),
+                "what_changed": "PQLE formatting-only + contribution-gated PMES/PEEC/EPP/fidelity.",
+            },
+        ],
+        "final_heq": f.get("heq"),
+        "final_publication_ready": f.get("publication_ready"),
+    }
+
+
 def golden_comparison_gate(
     adaptations: Mapping[str, Any],
     *,
     subject: str = "",
     topic: str = "",
 ) -> dict[str, Any]:
+    """Fail if lesson is worse than Alora's best pre-upgrade golden exemplar."""
     from engines.lesson_composition_engine.golden import compare_to_golden, load_golden
+    from engines.lesson_composition_engine.human_quality import (
+        PUBLICATION_HEQ_THRESHOLD,
+        golden_prose_similarity,
+    )
 
     std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
     golden = load_golden(subject=subject, topic=topic)
     cmp = compare_to_golden(std, subject=subject, topic=topic)
-    eqs = educational_quality_score(adaptations)
-    golden_floor = 70.0
-    if golden:
-        g_sections = len(((golden.get("lesson") or {}).get("sections") or []))
-        if g_sections >= 6:
-            golden_floor = 72.0
+    eqs = educational_quality_score(adaptations, subject=subject, topic=topic)
+    golden_floor = PUBLICATION_HEQ_THRESHOLD
     eqs_ok = float(eqs.get("overall") or 0) >= golden_floor
+    prose = golden_prose_similarity(std, subject=subject, topic=topic)
     delta = float((cmp or {}).get("delta") or 0.0)
     structure_ok = (not golden) or delta >= -3.0
-    passed = eqs_ok and structure_ok
+    prose_ok = (not golden) or bool(prose.get("ok"))
+    human = eqs.get("human_verdict") or {}
+    human_ok = bool(human.get("classroom_ready")) if human else eqs_ok
+    passed = eqs_ok and structure_ok and prose_ok and human_ok and bool(eqs.get("publication_ready"))
     reason = ""
     if not eqs_ok:
-        reason = f"EQS {eqs.get('overall')} below golden floor {golden_floor}"
+        reason = f"HEQ {eqs.get('overall')} below publisher floor {golden_floor}"
+    elif not human_ok:
+        reason = "human_verdict_not_classroom_ready"
+    elif not prose_ok:
+        reason = "weaker_than_golden_exemplar:" + ",".join(prose.get("notes") or [])
     elif not structure_ok:
         reason = f"golden structural delta {delta} too low"
+    elif not eqs.get("publication_ready"):
+        reason = "heq_publication_ready_false"
     return {
         "ok": passed,
         "eqs": eqs,
+        "heq": eqs,
         "golden_floor": golden_floor,
         "golden_id": (golden or {}).get("id"),
         "compare": cmp,
+        "prose_benchmark": prose,
+        "human_verdict": human,
         "publication_blocked": not passed,
         "reason": reason,
     }

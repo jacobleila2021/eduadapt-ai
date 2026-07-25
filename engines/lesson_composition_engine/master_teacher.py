@@ -53,103 +53,15 @@ def craft_teaching_paragraph(
     curiosity: str = "",
     profile: str = "standard",
 ) -> str:
-    """Build one teachable paragraph with curiosity → understanding → life → transition."""
+    """Build one teachable paragraph in golden classroom voice (no template scaffold)."""
+    from engines.lesson_composition_engine.publisher_author import teach_concept_paragraph
     from engines.lesson_composition_engine.recovery import sanitize_concept_label
 
     topic_s = (topic or "this lesson").strip()
     name = sanitize_concept_label(concept or topic_s, topic=topic_s)
-    claim_s = _clip_sentence(claim or f"{name} is defined clearly in this lesson.")
-    curiosity_s = _clip_sentence(
-        curiosity
-        or f"Have you ever wondered why {name.lower()} matters when you study {topic_s}?"
-    )
-    prior_s = _clip_sentence(
-        prior
-        or f"You already know everyday patterns that prepare you to understand {name.lower()}."
-    )
-    analogy_s = _clip_sentence(
-        analogy
-        or (
-            f"Think of {name.lower()} like a familiar idea: once you can say what it does, "
-            f"the rest of {topic_s} becomes easier to explain."
-        )
-    )
-    example_s = _clip_sentence(
-        example
-        or f"In real life, {name.lower()} shows up clearly when you connect it to {topic_s}."
-    )
-    transition_s = _clip_sentence(
-        f"Next, keep this meaning of {name.lower()} in mind as we move one step further."
-    )
-
-    if profile == "adhd":
-        parts = [
-            _clip_sentence(f"Mission for {name}: learn it in one short burst."),
-            claim_s,
-            _clip_sentence(f"Quick win example: {example_s.rstrip('.')}."),
-            _clip_sentence("Pause. Check. Next chunk."),
-        ]
-    elif profile == "dyslexia":
-        parts = [
-            _clip_sentence(f"{name}."),
-            claim_s,
-            _clip_sentence("Read once slowly. Circle the key word."),
-            _clip_sentence(f"Whisper the meaning of {name.lower()} once."),
-        ]
-    elif profile == "ld":
-        parts = [
-            _clip_sentence(f"Step for {name}:"),
-            claim_s,
-            _clip_sentence(f"Show you know: {example_s}"),
-        ]
-    elif profile == "autism":
-        parts = [
-            _clip_sentence(f"First, the idea is {name}."),
-            claim_s,
-            example_s,
-            _clip_sentence("Next comes the example check."),
-        ]
-    elif profile == "ell":
-        parts = [
-            _clip_sentence(f"New word focus: {name}."),
-            claim_s,
-            example_s,
-            _clip_sentence(f"Say: “{name} means…” in one short sentence."),
-        ]
-    elif profile == "visual":
-        parts = [
-            _clip_sentence(f"Look for {name.lower()} on the diagram before you read."),
-            claim_s,
-            _clip_sentence(f"Match the picture labels to this example: {example_s}"),
-            _clip_sentence(f"Point to the part that shows {name.lower()}, then explain it."),
-        ]
-    elif profile == "auditory":
-        parts = [
-            _clip_sentence(f"Listen carefully to {name.lower()}."),
-            claim_s,
-            _clip_sentence(f"Say it aloud: {claim_s}"),
-            _clip_sentence(f"Story cue to remember: {example_s}"),
-        ]
-    elif profile == "teacher":
-        parts = [
-            _clip_sentence(f"Model {name} with verified evidence on the board."),
-            claim_s,
-            _clip_sentence(f"Listen for misconceptions; accept answers that use: {example_s}"),
-            _clip_sentence("Exit check: one accurate sentence plus one real example."),
-        ]
-    elif profile == "parent":
-        parts = [
-            _clip_sentence(f"At home, ask what {name.lower()} means."),
-            claim_s,
-            example_s,
-        ]
-    else:
-        parts = [curiosity_s, prior_s, claim_s, analogy_s, example_s, transition_s]
-
-    # Keep rhythm within style-guide sentence budget
-    parts = [p for p in parts if p][: MAX_PARAGRAPH_SENTENCES + 2]
-    text = _scrub(" ".join(parts))
-    return ensure_paragraph_quality(text, idea=name)
+    claim_s = claim or example or f"{name} is defined clearly in this lesson."
+    text = teach_concept_paragraph(name=name, claim=claim_s, topic=topic_s, profile=profile)
+    return ensure_paragraph_quality(_scrub(text), idea=name)
 
 
 def enrich_section_body(
@@ -161,19 +73,41 @@ def enrich_section_body(
     example: str = "",
     profile: str = "standard",
 ) -> str:
-    """If a section body is thin or template-like, rewrite as master-teacher prose."""
+    """If a section body is thin or template-like, rewrite as master-teacher prose.
+
+    Never destroy already-composed Teacher Composition Framework writing.
+    """
     from engines.lesson_composition_engine.recovery import sanitize_concept_label
 
     text = _scrub(body or "")
     words = text.split()
     low = text.lower()
-    needs = (
-        len(words) < 28
-        or any(p in low for p in BANNED_AUTHORING)
-        or text.count(".") < 2
-        or (bool(words) and words[0].lower() == "explain")
+    # Count real sentence endings — questions and exclamations are complete teaching moves
+    sentence_ends = len(re.findall(r"[.!?]+", text))
+    # Already-composed educational writing: keep it (Teacher Composition / publisher author)
+    composed_markers = (
+        "find a living moment",
+        "connect it to this accurate meaning",
+        "in plain language",
+        "many learners believe",
+        "what should stay with you",
+        "two scenes — one steady",
+        "have you noticed",
+        "have you seen something like this",
+        "why does",
+        "follow ",
+        "watch carefully",
     )
-    if not needs and len(words) <= 160:
+    if any(m in low for m in composed_markers) and sentence_ends >= 1 and len(words) >= 12:
+        return ensure_paragraph_quality(text, idea=title or topic)
+
+    needs = (
+        len(words) < 18
+        or any(p in low for p in BANNED_AUTHORING)
+        or sentence_ends < 1
+        or (bool(words) and words[0].lower() == "explain" and len(words) < 40)
+    )
+    if not needs and len(words) <= 220:
         return ensure_paragraph_quality(text, idea=title or topic)
     concept = sanitize_concept_label(
         title.split("—")[-1].split(":")[-1].strip() if title else topic,
@@ -201,6 +135,16 @@ def apply_master_teacher_pass(
 
     board = board or {}
     topic = str(adaptation.get("topic") or board.get("topic") or "Lesson")
+    lce = adaptation.get("lce") if isinstance(adaptation.get("lce"), dict) else {}
+    # Teacher Composition Framework already authored this lesson — polish clarity only.
+    if lce.get("teacher_composition") or lce.get("no_template_banks"):
+        out = clarity_edit_adaptation(dict(adaptation), topic=topic)
+        out.setdefault("lce", {})
+        if isinstance(out["lce"], dict):
+            out["lce"]["master_teacher"] = False
+            out["lce"]["master_teacher_skipped"] = "teacher_composition_preserved"
+        return out
+
     claims = list(board.get("verified_claims") or [])
     examples = list(board.get("examples") or [])
     out = dict(adaptation)
@@ -214,7 +158,8 @@ def apply_master_teacher_pass(
         if body0.lstrip().startswith("-"):
             sections.append(row)
             continue
-        if role in {"visual", "summary", "revision"} and len(body0.split()) > 20:
+        if role in {"visual", "summary", "revision", "hook", "reflection"} and len(body0.split()) > 12:
+            # Preserve hooks / reflections / diagrams authored upstream
             sections.append(row)
             continue
         claim = claims[min(i, len(claims) - 1)] if claims else ""

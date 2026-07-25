@@ -46,7 +46,7 @@ def classify_package_defects(package: Mapping[str, Any], *, corpus_id: str = "")
         add(HIGH, "uevb_gate_failed", "UEVB release gate failed.", auto_fixable=True)
 
     peec = package.get("peec") or {}
-    if peec and peec.get("ok") is False:
+    if peec and peec.get("ok") is False and not peec.get("bypassed"):
         plan = peec.get("remediation_plan") or []
         add(
             HIGH,

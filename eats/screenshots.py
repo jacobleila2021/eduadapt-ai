@@ -38,27 +38,63 @@ def adaptation_html(adaptation_id: str, content: Mapping[str, Any]) -> str:
         )
 
     vocab_html = ""
-    words = content.get("words") or content.get("cards") or []
+    words = (
+        content.get("words")
+        or content.get("cards")
+        or content.get("word_wall")
+        or content.get("vocabulary_cards")
+        or []
+    )
     if words:
         cards = []
         for w in words:
             if not isinstance(w, dict):
                 continue
             term = html.escape(str(w.get("term") or w.get("word") or ""))
+            if not term.strip():
+                continue
             definition = html.escape(
-                str(w.get("student_friendly_definition") or w.get("definition") or "")
+                str(
+                    w.get("simple_explanation")
+                    or w.get("student_friendly_definition")
+                    or w.get("definition")
+                    or ""
+                )
+            )
+            example = html.escape(str(w.get("example_sentence") or w.get("example") or ""))
+            memory = html.escape(str(w.get("remember_this") or w.get("memory_tip") or ""))
+            use_this = html.escape(str(w.get("use_this_word") or w.get("lesson_context") or ""))
+            picture = html.escape(
+                str(w.get("draw_this") or w.get("picture") or w.get("visual_description") or "")
+            )
+            body = "".join(
+                part
+                for part in (
+                    f'<p class="def"><strong>Meaning</strong> {definition}</p>' if definition else "",
+                    f'<p class="ex"><strong>Real-life example</strong> {example}</p>' if example else "",
+                    f'<p class="pic"><strong>Picture idea</strong> {picture}</p>' if picture else "",
+                    f'<p class="tip"><strong>Remember this</strong> {memory}</p>' if memory else "",
+                    f'<p class="use"><strong>Use this word</strong> {use_this}</p>' if use_this else "",
+                )
+                if part
             )
             cards.append(
-                f'<article class="vocab-card"><h3 class="term">{term}</h3>'
-                f'<p class="def">{definition}</p></article>'
+                f'<article class="vocab-card"><h3 class="term">{term}</h3>{body}</article>'
             )
         vocab_html = '<div class="vocab-grid">' + "".join(cards) + "</div>"
 
     svgs = []
+    seen_svg: set[str] = set()
     for key in ("flowchart_svg", "concept_map_svg", "svg_diagram"):
         raw = str(content.get(key) or "")
-        if raw.strip().startswith("<svg"):
-            svgs.append(f'<div class="diagram">{raw}</div>')
+        if not raw.strip().startswith("<svg"):
+            continue
+        # Avoid printing the same diagram twice when svg_diagram mirrors flowchart_svg.
+        sig = " ".join(raw.split())[:240]
+        if sig in seen_svg:
+            continue
+        seen_svg.add(sig)
+        svgs.append(f'<div class="diagram">{raw}</div>')
 
     return f"""<!DOCTYPE html>
 <html lang="en"><head>

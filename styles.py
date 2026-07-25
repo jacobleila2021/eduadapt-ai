@@ -26,10 +26,17 @@ def get_custom_css() -> str:
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
+    /* Landing / workspace chrome — original white, not cream textbook paper */
+    .stApp, [data-testid="stAppViewContainer"],
+    [data-testid="stHeader"], section.main {{
+        background: {COLOR_WHITE} !important;
+    }}
+
     .main .block-container {{
         padding-top: 8.85rem;
         max-width: 1160px;
         padding-bottom: 2.5rem;
+        background: transparent;
     }}
 
     .main, .main p, .main li, .main span, .main label,

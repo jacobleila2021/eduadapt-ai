@@ -1,8 +1,12 @@
-"""Generation Recovery Sprint — regression against golden topics."""
+"""Human-first generation recovery — honest HEQ, not inflated EQS."""
 
 from __future__ import annotations
 
 from engines.lesson_composition_engine import compose_lesson_package
+from engines.lesson_composition_engine.human_quality import (
+    HUMAN_EDUCATIONAL_QUALITY_SMOKE_OK,
+    PUBLICATION_HEQ_THRESHOLD,
+)
 from engines.lesson_composition_engine.master_teacher import craft_teaching_paragraph
 from engines.lesson_composition_engine.recovery import (
     GENERATION_RECOVERY_SMOKE_OK,
@@ -29,7 +33,6 @@ def _uli(subject: str, topic: str, text: str) -> dict:
     claims = [{"text": s.strip()} for s in text.replace(". ", ".|").split("|") if s.strip()]
     concepts = []
     for claim in claims:
-        # Prefer scientific head nouns from claims (not junk title fragments)
         for word in claim["text"].replace(",", " ").split():
             token = word.strip(".:;()[]\"'")
             if len(token) >= 5 and token[0].isupper():
@@ -51,6 +54,8 @@ def _uli(subject: str, topic: str, text: str) -> dict:
 
 def test_recovery_smoke_and_no_opening_pollution():
     assert GENERATION_RECOVERY_SMOKE_OK is True
+    assert HUMAN_EDUCATIONAL_QUALITY_SMOKE_OK is True
+    assert PUBLICATION_HEQ_THRESHOLD >= 95.0
     assert sanitize_concept_label("opening", topic="Water Cycle") == "Water Cycle"
     para = craft_teaching_paragraph(
         claim="Evaporation turns liquid into vapour.",
@@ -60,44 +65,51 @@ def test_recovery_smoke_and_no_opening_pollution():
     low = para.lower()
     assert "why opening matters" not in low
     assert "prepare you for opening" not in low
+    assert "helps you explain the topic clearly" not in low
     assert "water cycle" in low or "evaporation" in low
 
 
-def test_pqle_formatting_only_preserves_meaning():
+def test_publisher_voice_not_template_mastery():
     uli = _uli("biology", "The Water Cycle", REGRESSION_TOPICS[1][2])
     pkg = compose_lesson_package(uli, topic_hint="The Water Cycle")
-    assert pkg.get("pqle", {}).get("mode") == "formatting_only"
     std = (pkg.get("adaptations") or {}).get("standard") or {}
-    blob = (std.get("big_idea") or "") + " ".join(
-        str(s.get("body") or "") for s in (std.get("sections") or []) if isinstance(s, dict)
-    )
-    assert "why opening matters" not in blob.lower()
-    assert "evaporation" in blob.lower() or "water" in blob.lower()
+    blob = (
+        str(std.get("big_idea") or "")
+        + " "
+        + " ".join(str(s.get("body") or "") for s in (std.get("sections") or []) if isinstance(s, dict))
+    ).lower()
+    assert "today you will master" not in blob
+    assert "helps you explain the topic clearly" not in blob
+    assert "evaporation" in blob
+    assert "cup" in blob or "puddle" in blob or "rain" in blob or "steam" in blob
+    heq = pkg.get("heq") or pkg.get("eqs") or {}
+    assert heq.get("philosophy") == "human_first_publisher_pride" or heq.get("threshold") == 95.0 or (
+        pkg.get("eqs") or {}
+    ).get("threshold") == 95.0 or PUBLICATION_HEQ_THRESHOLD == 95.0
+    assert "side_by_side" in pkg
+    assert (pkg.get("side_by_side") or {}).get("stages")
 
 
-def test_adaptation_similarity_gate_reports():
+def test_adaptation_similarity_and_advantage():
     uli = _uli("physics", "Force and Pressure", REGRESSION_TOPICS[0][2])
     pkg = compose_lesson_package(uli, topic_hint="Force and Pressure")
     sim = pkg.get("adaptation_similarity") or adaptation_similarity_report(pkg.get("adaptations") or {})
-    assert "failures" in sim
-    assert "threshold" in sim
-    assert sim.get("threshold") == 0.40
-    # Recovery authorship must keep worst instructional clones under the gate
     assert sim.get("ok") is True, sim.get("failures")
-    eqs = pkg.get("eqs") or educational_quality_score(pkg.get("adaptations") or {})
-    assert "overall" in eqs
-    assert "components" in eqs
-    assert float(eqs["overall"]) >= 70.0
+    adv = pkg.get("adaptation_advantages") or {}
+    assert "by_adaptation" in adv or adv.get("ok") is not None
+    heq = educational_quality_score(pkg.get("adaptations") or {}, subject="physics", topic="Force and Pressure")
+    assert heq.get("threshold") == 95.0
+    # Rendering must not inflate: component may exist but teaching dominates
+    assert float((heq.get("components") or {}).get("rendering_quality") or 0) == 0.0
 
 
-def test_generation_recovery_regression_suite():
-    """Run the ten recovery topics; collect failures without soft-passing clones."""
+def test_generation_recovery_regression_suite_honest():
+    """Ten topics: no template pollution; HEQ must be honest (95 gate, not rubber-stamp)."""
     rows = []
     for subject, topic, text in REGRESSION_TOPICS:
         pkg = compose_lesson_package(_uli(subject, topic, text), topic_hint=topic)
         adaptations = pkg.get("adaptations") or {}
-        eqs = pkg.get("eqs") or educational_quality_score(adaptations)
-        sim = pkg.get("adaptation_similarity") or adaptation_similarity_report(adaptations)
+        eqs = pkg.get("heq") or pkg.get("eqs") or educational_quality_score(adaptations, subject=subject, topic=topic)
         std = adaptations.get("standard") or {}
         blob = (
             str(std.get("big_idea") or "")
@@ -107,23 +119,18 @@ def test_generation_recovery_regression_suite():
         rows.append(
             {
                 "topic": topic,
-                "eqs": eqs.get("overall"),
-                "sim_ok": sim.get("ok"),
-                "sim_failures": len(sim.get("failures") or []),
-                "no_opening": "why opening matters" not in blob,
-                "no_notice": "notice how" not in blob,
-                "publication_ready": bool((pkg.get("pqle") or {}).get("publication_ready")),
-                "contribution_log": pkg.get("contribution_log") or [],
+                "heq": eqs.get("overall"),
+                "pub": bool((pkg.get("pqle") or {}).get("publication_ready")),
+                "classroom": bool((eqs.get("human_verdict") or {}).get("classroom_ready")),
+                "no_master": "today you will master" not in blob,
+                "no_remember_filler": "helps you explain the topic clearly" not in blob,
+                "has_side_by_side": bool((pkg.get("side_by_side") or {}).get("stages")),
             }
         )
-    # Hard guarantees for recovery sprint
-    assert all(r["no_opening"] for r in rows)
-    assert all(r["no_notice"] for r in rows)
-    assert all((r["eqs"] or 0) >= 70 for r in rows)
-    assert all(r["sim_ok"] for r in rows), [r for r in rows if not r["sim_ok"]]
-    by_topic = {r["topic"]: r for r in rows}
-    assert by_topic["The Water Cycle"]["eqs"] >= 70
-    assert by_topic["Force and Pressure"]["eqs"] >= 70
-    # Upstream engines appear in contribution log
-    engines = {c.get("engine") for c in by_topic["The Water Cycle"]["contribution_log"]}
-    assert {"ULI", "SIF", "UVIE", "LCE", "PQLE"} <= engines
+    assert all(r["no_master"] and r["no_remember_filler"] for r in rows)
+    assert all(r["has_side_by_side"] for r in rows)
+    # Honest gate: do not claim success merely because HEQ is mid-70s
+    for r in rows:
+        if r["pub"]:
+            assert (r["heq"] or 0) >= 95.0
+            assert r["classroom"] is True

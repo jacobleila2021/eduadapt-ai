@@ -33,24 +33,25 @@ def _ensure_confidence_close(adaptation: dict[str, Any], *, topic: str) -> dict[
     if "summary" not in roles:
         sections.append(
             {
-                "title": "Lesson Summary",
+                "title": "What should stay with you",
                 "role": "summary",
                 "box": "summary",
                 "body": (
-                    f"You can explain the key ideas in {topic} in your own words now. "
-                    "Check one example, then take a short pause before you revise."
+                    f"Keep the precise meaning of {topic} with one real example you can still point to. "
+                    f"If you can teach that example to someone else, the lesson has landed."
                 ),
             }
         )
     else:
-        # Strengthen last summary if it lacks confidence language
+        # Strengthen last summary if it lacks confidence language — never inject generic markers.
         for sec in sections:
             if str(sec.get("role") or "") == "summary":
                 body = str(sec.get("body") or "")
-                if not any(w in body.lower() for w in ("you can", "ready", "check", "proud")):
+                low = body.lower()
+                if not any(w in low for w in ("you can", "ready", "keep", "teach", "remember", "stay")):
                     sec["body"] = (
                         body.rstrip(".")
-                        + f". You can check one example from {topic} and feel ready for the next step."
+                        + f". Keep one real example of {topic} you could teach without looking back."
                     )
                 break
     adaptation["sections"] = sections

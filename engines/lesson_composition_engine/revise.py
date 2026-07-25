@@ -192,8 +192,9 @@ def apply_publisher_quality_excellence(
 
         working, peec_gate = apply_if_improves("PEEC", working, _peec)
         contribution_log.append(peec_gate)
+        # Bypassed with no error means quality was already at the publication floor.
         peec_result = {
-            "ok": not peec_gate.get("bypassed"),
+            "ok": (not peec_gate.get("bypassed")) or not peec_gate.get("error"),
             "bypassed": peec_gate.get("bypassed"),
             "contribution": peec_gate,
         }
@@ -286,19 +287,26 @@ def apply_publisher_quality_excellence(
     pqi = score_package(working, golden_deltas=golden_deltas)
     editorial = review_package_editorial(working, board=board)
 
-    eqs = educational_quality_score(working)
+    eqs = educational_quality_score(
+        working,
+        subject=str(clg.get("subject_key") or board.get("subject") or ""),
+        topic=topic,
+    )
     sim = adaptation_similarity_report(working)
+    from engines.lesson_composition_engine.human_quality import (
+        PUBLICATION_HEQ_THRESHOLD,
+        adaptation_advantage_report,
+    )
+
+    adv = adaptation_advantage_report(working)
     golden_gate = golden_comparison_gate(
         working,
         subject=str(clg.get("subject_key") or board.get("subject") or ""),
         topic=topic,
     )
 
-    publication_ready = (
-        bool(sim.get("ok"))
-        and bool(golden_gate.get("ok"))
-        and float(eqs.get("overall") or 0) >= 70.0
-        and bool(fidelity_result.get("ok", True))
+    publication_ready = bool(eqs.get("publication_ready")) and bool(golden_gate.get("ok")) and bool(
+        fidelity_result.get("ok", True)
     )
 
     uevb_result: dict[str, Any] = {}
@@ -322,7 +330,9 @@ def apply_publisher_quality_excellence(
             "epp": epp_result,
             "content_fidelity": fidelity_result,
             "eqs": eqs,
+            "heq": eqs,
             "adaptation_similarity": sim,
+            "adaptation_advantages": adv,
             "golden_gate": golden_gate,
             "contribution_log": contribution_log,
         }
@@ -333,10 +343,16 @@ def apply_publisher_quality_excellence(
     reject_reasons = []
     if not sim.get("ok"):
         reject_reasons.append("adaptation_similarity_above_40pct")
+    if not adv.get("ok"):
+        reject_reasons.append("adaptation_advantage_weak")
     if not golden_gate.get("ok"):
         reject_reasons.append(str(golden_gate.get("reason") or "golden_gate_failed"))
-    if float(eqs.get("overall") or 0) < 70.0:
-        reject_reasons.append(f"eqs_below_70:{eqs.get('overall')}")
+    if float(eqs.get("overall") or 0) < PUBLICATION_HEQ_THRESHOLD:
+        reject_reasons.append(f"heq_below_{int(PUBLICATION_HEQ_THRESHOLD)}:{eqs.get('overall')}")
+    if eqs.get("weak_teaching_markers"):
+        reject_reasons.append("weak_teaching_markers")
+    if not (eqs.get("human_verdict") or {}).get("classroom_ready"):
+        reject_reasons.append("not_classroom_ready")
     if not fidelity_result.get("ok", True):
         issues = fidelity_result.get("issues") or []
         reject_reasons.append(
@@ -373,4 +389,8 @@ def apply_publisher_quality_excellence(
         "phase_omega": True,
         "phase_omega_2_pmes": True,
         "pqle_mode": "formatting_only",
+        "heq": eqs,
+        "adaptation_advantages": adv,
+        "human_verdict": eqs.get("human_verdict") or {},
+        "publication_heq_threshold": PUBLICATION_HEQ_THRESHOLD,
     }

@@ -146,11 +146,12 @@ def style_guide_css() -> str:
   --alora-section-gap: {SECTION_GAP_PX}px;
   --alora-vocab-term: {VOCAB_TERM_SIZE_PX}px;
 }}
-.alora-publisher-page, .alora-lesson-shell, .stApp, [data-testid="stAppViewContainer"] {{
+.alora-publisher-page, .alora-lesson-shell, .alora-workspace-active {{
   background: var(--alora-cream) !important;
   color: var(--alora-ink);
   font-family: var(--alora-body);
 }}
+/* Landing / app chrome stays white — cream is for authored lesson pages only. */
 .alora-publisher-page h1, .alora-publisher-page h2, .alora-publisher-page h3,
 .lce-vocab-term, .alora-word-wall-term {{
   font-family: var(--alora-display) !important;
