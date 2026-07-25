@@ -242,7 +242,9 @@ def _section_source_refs(sections: list[dict[str, Any]]) -> list[str]:
     return refs
 
 
-def _rewrite_summary(sections: list[dict[str, Any]], *, topic: str) -> list[dict[str, Any]]:
+def _rewrite_summary(
+    sections: list[dict[str, Any]], *, topic: str, has_diagram: bool = False
+) -> list[dict[str, Any]]:
     claims: list[str] = []
     for sec in sections:
         role = str(sec.get("role") or "")
@@ -261,13 +263,23 @@ def _rewrite_summary(sections: list[dict[str, Any]], *, topic: str) -> list[dict
         claims = [
             f"The key ideas in {topic} are defined clearly in this lesson.",
             f"Use one real-life example to explain {topic}.",
-            f"Check the diagram once more before you finish.",
+            (
+                "Check the diagram once more before you finish."
+                if has_diagram
+                else "Reread the key ideas once more before you finish."
+            ),
         ]
+    # Never tell the learner to "check the diagram" on a page that has none.
+    closing = (
+        "Say those ideas in your own words, then check the diagram once more."
+        if has_diagram
+        else "Say those ideas in your own words, then explain them to someone else."
+    )
     summary_body = (
         f"In {topic}, remember: {claims[0]} "
         + (f"Also, {claims[1]} " if len(claims) > 1 else "")
         + (f"Finally, {claims[2]} " if len(claims) > 2 else "")
-        + "Say those ideas in your own words, then check the diagram once more."
+        + closing
     )
     # Inherit provenance from the sections being summarised so the summary is
     # born source-grounded (Option A) — never repaired after the fact.
@@ -491,7 +503,13 @@ def apply_content_fidelity(
             row["body"] = scrub_prompt_leaks(str(row.get("body") or ""))
             if row["body"]:
                 sections.append(row)
-        page["sections"] = _rewrite_summary(sections, topic=topic)
+        page_has_diagram = any(
+            str(page.get(field) or "").startswith("<svg")
+            for field in ("flowchart_svg", "svg_diagram", "concept_map_svg")
+        ) or bool(str(page.get("mermaid_diagram") or "").strip())
+        page["sections"] = _rewrite_summary(
+            sections, topic=topic, has_diagram=page_has_diagram
+        )
         if key not in {"parent", "teacher"}:
             page = ensure_diagram_teaching(page, topic=topic)
         if key in {"worksheet", "exam", "standard"}:

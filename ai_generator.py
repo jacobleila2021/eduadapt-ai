@@ -44,7 +44,8 @@ from knowledge.prompts import (
 from secrets_helper import is_valid_openai_key, read_api_key_from_env_file, reload_env
 
 CLASSROOM_LESSON_KEYS = frozenset(
-    {"standard", "ld", "ell", "visual", "auditory", "teacher", "adhd", "autism"}
+    # ADHD and Autism versions cancelled (product decision).
+    {"standard", "ld", "ell", "visual", "auditory", "teacher"}
 )
 LESSON_KEYS = [k for k in OUTPUT_KEYS if k not in ("vocabulary", "worksheet")]
 MAX_PARALLEL_LESSONS = 4
@@ -476,10 +477,13 @@ def _fallback_worksheet(context: dict, vocab: dict) -> dict:
     terms = [w.get("term", "") for w in vocab.get("word_wall") or [] if w.get("term")]
     facts = context.get("facts_and_processes") or []
     short = []
+    # Learner-facing wording only — phrases like "uploaded source" are authoring
+    # metadata and are (correctly) deleted by the prompt-leak scrubber, which
+    # used to wipe every fallback question and break the worksheet renderer.
     for index, fact in enumerate(facts[:8], 1):
         short.append(
             {
-                "question": f"Using the uploaded source, explain: {fact[:120]}",
+                "question": f"From this lesson, explain: {fact[:120]}",
                 "marks": 2,
                 "lines": 4,
                 "model_answer": fact[:500],
@@ -489,13 +493,13 @@ def _fallback_worksheet(context: dict, vocab: dict) -> dict:
         short.extend(
             [
                 {
-                    "question": "Name two key ideas stated in the uploaded source.",
+                    "question": "Name two key ideas taught in this lesson.",
                     "marks": 2,
                     "lines": 3,
                     "model_answer": "; ".join(facts[:2])[:500],
                 },
                 {
-                    "question": "Summarise the main idea of the uploaded source.",
+                    "question": "Summarise the main idea of this lesson in your own words.",
                     "marks": 2,
                     "lines": 3,
                     "model_answer": str((facts or [context.get("topic", "")])[0])[:500],
@@ -1330,9 +1334,11 @@ def generate_adaptations(
                 if _valid_worksheet(sheet):
                     break
             if not _valid_worksheet(sheet):
-                sheet = lce_adaptations.get("worksheet") or _fallback_worksheet(
-                    context, merged["vocabulary"]
-                )
+                # The LCE worksheet already failed validation above — never hand an
+                # invalid sheet to the renderer ("Worksheet sections were not
+                # generated correctly"). The extractive fallback always yields a
+                # renderable sheet with short/long answers.
+                sheet = _fallback_worksheet(context, merged["vocabulary"])
                 worksheet_fallback = True
         if (
             grounding_mode != "uploaded_source"
@@ -1471,9 +1477,10 @@ def generate_adaptations(
             from engines.lesson_composition_engine import attach_lce_to_adaptations
 
             step("LCE editorial polish…", 0.88)
-            # Merge LCE-only adaptive versions (ADHD / Autism / Dyslexia) even when
-            # not in the default generate=True product set.
-            for extra_key in ("adhd", "autism", "dyslexia"):
+            # Merge LCE-only adaptive versions even when not in the default
+            # generate=True product set. ADHD and Autism versions are cancelled
+            # (product decision) and must never be merged or shown.
+            for extra_key in ("dyslexia",):
                 candidate = lce_adaptations.get(extra_key)
                 if isinstance(candidate, dict) and (
                     candidate.get("sections") or candidate.get("big_idea")

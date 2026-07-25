@@ -48,8 +48,7 @@ DEFAULT_LENS_IDS = (
     "auditory",
     "teacher",
     "parent",
-    "adhd",
-    "autism",
+    # "adhd" and "autism" lenses cancelled (product decision) — not composed by default.
     "dyslexia",
     "vocabulary",
     "worksheet",
@@ -934,7 +933,9 @@ def _compose_package_from_meta(
     return LessonCompositionPackage(
         blueprint=blueprint,
         standard=None,
-        versions={k: v for k, v in adaptations.items() if k not in {"vocabulary", "worksheet"} and not str(k).startswith("_")},
+        # Keep the LCE-authored worksheet in versions — dropping it forced the
+        # Streamlit path onto LLM/extractive fallbacks and broke the exam module.
+        versions={k: v for k, v in adaptations.items() if k != "vocabulary" and not str(k).startswith("_")},
         vocabulary=adaptations.get("vocabulary") or {},
         quality=quality,
         publisher_meta={

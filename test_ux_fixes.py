@@ -293,9 +293,10 @@ def test_nine_version_tabs():
     assert "Exam Worksheet" in labels
     neuro = next(c for c in PILL_CATEGORIES if c["id"] == "neurodiversity")
     assert neuro["spec_ids"] == ["ld"]
-    assert "ADHD Support" in labels
-    assert "Autism Support" in labels
-    assert len(PILL_CATEGORIES) == 11
+    # ADHD/Autism versions cancelled (product decision) — no tabs for them.
+    assert "ADHD Support" not in labels
+    assert "Autism Support" not in labels
+    assert len(PILL_CATEGORIES) == 9
 
 
 def test_pill_categories_cover_generated_specs():
@@ -304,10 +305,11 @@ def test_pill_categories_cover_generated_specs():
 
     covered = {sid for cat in PILL_CATEGORIES for sid in cat["spec_ids"]}
     assert set(OUTPUT_KEYS) == covered
-    assert len(OUTPUT_KEYS) == 11
+    assert len(OUTPUT_KEYS) == 9
     assert "exam_revision" not in OUTPUT_KEYS
-    assert "adhd" in OUTPUT_KEYS
-    assert "autism" in OUTPUT_KEYS
+    # ADHD/Autism versions cancelled (product decision).
+    assert "adhd" not in OUTPUT_KEYS
+    assert "autism" not in OUTPUT_KEYS
 
 
 def test_only_nine_generated():
@@ -317,8 +319,6 @@ def test_only_nine_generated():
         "vocabulary",
         "standard",
         "ld",
-        "adhd",
-        "autism",
         "ell",
         "visual",
         "auditory",

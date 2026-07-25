@@ -122,11 +122,12 @@ def test_compose_lesson_package_adaptations():
         "auditory",
         "teacher",
         "parent",
-        "adhd",
-        "autism",
         "dyslexia",
     ):
         assert key in adaptations
+    # ADHD and Autism versions are cancelled (product decision) — never composed.
+    assert "adhd" not in adaptations
+    assert "autism" not in adaptations
     std = adaptations["standard"]
     assert std.get("big_idea")
     assert len(std.get("sections") or []) >= 8
@@ -201,23 +202,19 @@ def test_visual_placement_and_diagram_quality():
 
 
 def test_adaptive_versions_are_distinct():
+    # ADHD/Autism versions cancelled (product decision) — distinctness is now
+    # asserted across the shipped adaptive set.
     pkg = compose_lesson_package(
         _sample_uli(), sif=_sample_sif(), uvie=_sample_uvie(), topic_hint="Force and Pressure"
     )
     standard = pkg["adaptations"]["standard"]
-    adhd = pkg["adaptations"]["adhd"]
-    autism = pkg["adaptations"]["autism"]
+    dyslexia = pkg["adaptations"]["dyslexia"]
     parent = pkg["adaptations"]["parent"]
-    assert (adhd.get("lce") or {}).get("pedagogically_distinct") is True
-    assert (autism.get("lce") or {}).get("pedagogically_distinct") is True
-    adhd_titles = " ".join(s.get("title", "") for s in adhd.get("sections") or [])
-    autism_titles = " ".join(s.get("title", "") for s in autism.get("sections") or [])
-    assert "Energy Plan" in adhd_titles or "Checkpoint" in adhd_titles or "2-minute" in adhd_titles.lower() or "burst" in (adhd.get("sections") or [{}])[0].get("body", "").lower()
-    assert "Lesson Map" in autism_titles or "predictable" in str(autism.get("lce")).lower()
     assert parent.get("sections")
-    # Bodies should differ from standard for ADHD intro
-    assert (adhd.get("sections") or [{}])[0].get("title") != (standard.get("sections") or [{}])[0].get("title") or (
-        adhd.get("sections") or [{}])[0].get("body") != (standard.get("sections") or [{}])[0].get("body")
+    assert dyslexia.get("sections")
+    # Bodies should differ from standard for the dyslexia intro
+    assert (dyslexia.get("sections") or [{}])[0].get("title") != (standard.get("sections") or [{}])[0].get("title") or (
+        dyslexia.get("sections") or [{}])[0].get("body") != (standard.get("sections") or [{}])[0].get("body")
     rewritten = compose_adaptive_version(standard, "ell", vocabulary_terms=["force", "pressure"])
     assert "Key Words" in str(rewritten.get("sections")) or "Important words" in str(rewritten.get("sections"))
 
@@ -226,7 +223,7 @@ def test_accessibility_does_not_collapse_depth():
     pkg = compose_lesson_package(
         _sample_uli(), sif=_sample_sif(), uvie=_sample_uvie(), topic_hint="Force and Pressure"
     )
-    for key in ("ld", "dyslexia", "adhd", "autism", "ell"):
+    for key in ("ld", "dyslexia", "ell"):
         lesson = pkg["adaptations"][key]
         assert len(lesson.get("sections") or []) >= 6
         blob = " ".join(str(s.get("body") or "") for s in lesson["sections"])

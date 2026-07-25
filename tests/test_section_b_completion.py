@@ -100,14 +100,14 @@ def test_adaptations_enabled():
     for key in ("exam_revision", "dyscalculia", "gifted", "tutor"):
         assert key in registered
         assert key not in OUTPUT_KEYS
-    assert "adhd" in registered and "adhd" in OUTPUT_KEYS
-    assert "autism" in registered and "autism" in OUTPUT_KEYS
+    # ADHD/Autism versions cancelled (product decision): registered profiles
+    # remain, but they are never generated or shown.
+    assert "adhd" in registered and "adhd" not in OUTPUT_KEYS
+    assert "autism" in registered and "autism" not in OUTPUT_KEYS
     assert set(OUTPUT_KEYS) == {
         "vocabulary",
         "standard",
         "ld",
-        "adhd",
-        "autism",
         "ell",
         "visual",
         "auditory",

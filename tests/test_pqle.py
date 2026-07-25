@@ -120,20 +120,13 @@ def test_adaptation_personalities_distinct():
         _uli(), sif=_sif(), uvie={"visuals": [{"visual_id": "v1", "caption": "Force diagram"}]}, topic_hint="Force and Pressure"
     )
     ad = pkg["adaptations"]
-    adhd_titles = " ".join(s.get("title", "") for s in ad["adhd"]["sections"])
-    autism_titles = " ".join(s.get("title", "") for s in ad["autism"]["sections"])
+    # ADHD/Autism versions cancelled (product decision) — never composed.
+    assert "adhd" not in ad and "autism" not in ad
     visual_titles = " ".join(s.get("title", "") for s in ad["visual"]["sections"])
     auditory_titles = " ".join(s.get("title", "") for s in ad["auditory"]["sections"])
-    assert "Energy Plan" in adhd_titles or "Mission Goal" in adhd_titles or "2-Minute Chunk" in adhd_titles
-    assert (
-        "Lesson Map" in autism_titles
-        or "Lesson Diagram" in autism_titles
-        or "Today's Routine" in autism_titles
-    )
     assert "Key Words First" in " ".join(s.get("title", "") for s in ad["ell"]["sections"])
     assert "See the Big Picture" in visual_titles or "See It First" in visual_titles
     assert "Listen" in auditory_titles or "Hear" in auditory_titles
-    assert (ad["adhd"].get("lce") or {}).get("pedagogically_distinct") is True
 
 
 def test_eerl_rejects_robotic_and_missing_diagram():

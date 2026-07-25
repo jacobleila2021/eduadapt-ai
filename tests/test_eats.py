@@ -130,11 +130,13 @@ def test_rejects_plain_vocabulary_lists():
 def test_adaptation_personalities_differ():
     ads = _compose_adaptations()
     package = evaluate_package(ads, subject="physics")
-    assert "adhd" in package.by_adaptation
-    assert "autism" in package.by_adaptation
+    # ADHD/Autism versions cancelled (product decision) — never composed.
+    assert "adhd" not in package.by_adaptation
+    assert "autism" not in package.by_adaptation
     assert "ell" in package.by_adaptation
-    assert package.by_adaptation["adhd"].dimensions["adaptation"].score >= 85
-    assert package.by_adaptation["autism"].dimensions["adaptation"].score >= 85
+    assert package.by_adaptation["ell"].dimensions["adaptation"].score >= 85
+    assert package.by_adaptation["dyslexia"].dimensions["adaptation"].score >= 85
+    assert package.by_adaptation["ld"].dimensions["adaptation"].score >= 85
 
 
 def test_lce_lesson_passes_educational_acceptance():

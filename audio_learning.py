@@ -198,6 +198,7 @@ def generate_openai_speech_result(
         ("tts-1-hd", False),
         ("tts-1", False),
     ]
+    last_error = ""
     for model, supports_instructions in attempts:
         try:
             kwargs: dict[str, Any] = {
@@ -215,12 +216,17 @@ def generate_openai_speech_result(
                 message="Neural narration generated.",
                 fallback_used="none" if model == attempts[0][0] else model,
             ).to_dict()
-        except Exception:
+        except Exception as exc:  # noqa: BLE001
+            # Keep the real provider error so the UI can say WHY neural
+            # narration failed (bad key, no TTS access, quota) instead of a
+            # generic "temporarily unavailable".
+            last_error = f"{model}: {str(exc)[:180]}"
             continue
+    detail = f" Provider error — {last_error}" if last_error else ""
     return partial(
         "audio_generation",
         "voice_multimodal",
-        "Neural narration is temporarily unavailable.",
+        f"Neural narration is temporarily unavailable.{detail}",
         code="audio_generation.retries_exhausted",
         recovery="Use browser narration or retry shortly.",
         fallback_used="browser_tts",

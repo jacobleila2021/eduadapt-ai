@@ -14,6 +14,17 @@ _STOPWORDS = {
     "other", "should", "students", "such", "than", "that", "the", "their",
     "them", "then", "there", "these", "they", "this", "through", "to",
     "using", "was", "were", "when", "where", "which", "will", "with", "would",
+    # Document/worksheet metadata — must never surface as teachable concepts,
+    # diagram labels, or vocabulary ("Grade 10", "40 minutes", "5 marks", …).
+    "grade", "grades", "class", "classes", "standard", "marks", "mark",
+    "minute", "minutes", "hour", "hours", "duration", "period", "periods",
+    "page", "pages", "chapter", "chapters", "unit", "units", "section",
+    "sections", "exercise", "exercises", "activity", "activities",
+    "question", "questions", "answer", "answers", "worksheet", "exam",
+    "test", "quiz", "total", "date", "name", "school", "teacher",
+    "teachers", "student", "subject", "topic", "syllabus", "curriculum",
+    "objectives", "objective", "instructions", "note", "notes", "figure",
+    "table", "copyright", "published", "reprint", "edition", "board",
 }
 _SKILL_VERBS = {
     "analyse", "analyze", "apply", "calculate", "classify", "compare",

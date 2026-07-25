@@ -670,10 +670,13 @@ def test_model_failures_use_scoped_source_fallbacks(monkeypatch):
     )
     assert set(OUTPUT_KEYS) <= set(result)
     # Chat provider is down: lesson adaptations must use scoped fallbacks.
-    # Vocabulary may still be LCE-authored (deterministic) and marked complete.
-    chat_keys = [key for key in OUTPUT_KEYS if key != "vocabulary"]
+    # Vocabulary and the worksheet may still be LCE-authored (deterministic)
+    # and marked complete — LCE needs no chat provider.
+    chat_keys = [key for key in OUTPUT_KEYS if key not in ("vocabulary", "worksheet")]
     assert all(
         result[key]["_contract"]["completeness"] == "fallback"
         for key in chat_keys
     )
+    # The worksheet must always reach the renderer in a valid shape.
+    assert len(result["worksheet"].get("short_answer") or []) >= 4
     assert result["_meta"]["publish_qa"]["publish_blocked"] is False

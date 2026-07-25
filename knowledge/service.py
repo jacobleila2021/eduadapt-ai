@@ -331,7 +331,7 @@ def inject_exam_practice_into_lessons(
         return adaptations
 
     classroom_keys = frozenset(
-        {"standard", "ld", "ell", "visual", "auditory", "teacher", "adhd", "autism"}
+        {"standard", "ld", "ell", "visual", "auditory", "teacher", "dyslexia"}
     )
     exam_bundle = (knowledge or {}).get("exam_bundle") or {}
     lines: list[str] = []
@@ -377,10 +377,10 @@ def inject_exam_practice_into_lessons(
         for i, claim in enumerate(claims[:6], start=1):
             marks = 2 if i <= 4 else 5
             kind = "Short" if i <= 4 else "Long/HOTS"
+            # Learner-facing question only — never leak authoring/model cues.
             lines.append(
-                f"- **Q{i} ({kind}, {marks} marks, practice-from-source):** "
-                f"Using only the uploaded lesson on {topic}, respond to: {claim[:220]} "
-                f"— *Model cue: restate the claim with lesson terminology; do not invent facts.*"
+                f"- **Q{i} ({kind}, {marks} marks):** "
+                f"Using only this lesson on {topic}, respond to: {claim[:220]}"
             )
 
     if not lines:
@@ -394,8 +394,8 @@ def inject_exam_practice_into_lessons(
         title = "Exam Practice (Official)"
     else:
         intro = (
-            "Board-style practice grounded in the uploaded source "
-            "(practice-from-source — not an official answer key):\n\n"
+            "Board-style practice built from this lesson "
+            "(not an official answer key):\n\n"
         )
         title = "Exam Practice"
 

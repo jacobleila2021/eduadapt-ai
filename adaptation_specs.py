@@ -143,14 +143,16 @@ ADAPTATION_SPECS = [
         "id": "adhd",
         "tab": "ADHD Support",
         "title": "ADHD Support",
-        "generate": True,
+        # Product decision: ADHD Support version cancelled — do not generate or show.
+        "generate": False,
         "hint": "LCE ADHD lens: chunked learning, timers, mini goals, quick checks, movement prompts — full curriculum depth, not a recolored clone.",
     },
     {
         "id": "autism",
         "tab": "Autism Support",
         "title": "Autism Support",
-        "generate": True,
+        # Product decision: Autism Support version cancelled — do not generate or show.
+        "generate": False,
         "hint": "LCE Autism lens: predictable routine, literal language, calm transitions, consistent structure — full exam coverage.",
     },
     {
