@@ -996,6 +996,18 @@ def attach_lce_to_adaptations(
             and prior_pqle.get("publication_ready")
             and not prior_pqle.get("reject_rendering")
         ):
+            # Still scrub prompt leaks / clones — vocab-only path must not skip fidelity
+            try:
+                from engines.lesson_composition_engine.content_fidelity import (
+                    ensure_classroom_content_fidelity,
+                )
+
+                adaptations = ensure_classroom_content_fidelity(
+                    adaptations,
+                    board=board if isinstance(board, dict) else {},
+                )
+            except Exception:  # noqa: BLE001
+                pass
             adaptations.setdefault("_meta", {})
             adaptations["_meta"]["lce"] = {
                 **(adaptations["_meta"].get("lce") or {}),

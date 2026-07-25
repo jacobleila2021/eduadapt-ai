@@ -717,7 +717,7 @@ def _source_fallback_lesson(
         body_parts.extend(
             [
                 "",
-                f"Check: Point to evidence in the uploaded material that supports each idea about {topic}.",
+                f"Check: Point to evidence in the lesson that supports each idea about {topic}.",
                 "Scaffold: Preview key terms, then have students use each term in a full sentence.",
             ]
         )
@@ -758,7 +758,7 @@ def _source_fallback_lesson(
             "Repeat: students echo, then explain in their own words."
         ),
         "teacher": (
-            "Teacher note: verify each claim against the uploaded source before "
+            "Teacher note: verify each claim against the lesson evidence before "
             "extending discussion; use the Exam Practice section for board-style marking."
         ),
         "standard": (
@@ -1633,6 +1633,21 @@ def generate_adaptations(
                 )
         except Exception:
             merged.setdefault("_meta", {})["lesson_bundle_error"] = "finalize_failed"
+
+        # Absolute last mile — scrub leaks/clones after every post-LCE inject
+        try:
+            from engines.lesson_composition_engine.content_fidelity import (
+                ensure_classroom_content_fidelity,
+            )
+
+            board = (
+                (merged.get("_meta") or {}).get("intelligence_board")
+                or (merged.get("_meta") or {}).get("lesson_context")
+                or {}
+            )
+            merged = ensure_classroom_content_fidelity(merged, board=board)
+        except Exception:
+            merged.setdefault("_meta", {})["content_fidelity_error"] = "final_scrub_failed"
     except Exception as error:
         raise RuntimeError(
             "Adaptation generation could not complete after safe fallbacks."

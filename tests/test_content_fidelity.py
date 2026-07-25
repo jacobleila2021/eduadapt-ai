@@ -69,7 +69,8 @@ def test_prompt_leak_detection_and_scrub():
     assert not content_fidelity_issues(cleaned)
 
 
-def test_publication_gate_blocks_prompt_leaks():
+def test_publication_gate_repairs_prompt_leaks():
+    """Classroom gate must scrub repairable leaks instead of quarantining the lesson."""
     leaked = {
         "standard": {
             "sections": [
@@ -77,10 +78,41 @@ def test_publication_gate_blocks_prompt_leaks():
             ]
         }
     }
-    reason = content_fidelity_block_reason(leaked)
-    assert reason
-    assert not publication_allowed(leaked)
-    assert "Content fidelity" in publication_block_reason(leaked)
+    assert content_fidelity_block_reason(leaked)
+    assert publication_allowed(leaked)
+    assert not content_fidelity_block_reason(leaked)
+    assert not publication_block_reason(leaked)
+    blob = " ".join(
+        str(s.get("body") or "") for s in leaked["standard"]["sections"] if isinstance(s, dict)
+    ).lower()
+    assert "using the uploaded source" not in blob
+
+
+def test_teacher_advisory_does_not_quarantine_students():
+    pkg = {
+        "standard": {
+            "sections": [
+                {
+                    "title": "Force",
+                    "role": "concept",
+                    "body": "Force is a push or a pull that can change the motion of an object in daily life.",
+                }
+            ],
+            "flowchart_svg": "<svg xmlns='http://www.w3.org/2000/svg'><text>Force</text></svg>",
+        },
+        "teacher": {
+            "sections": [
+                {
+                    "title": "Plan",
+                    "role": "teacher",
+                    "body": "Align learning objectives to the grade level. Check the uploaded source.",
+                }
+            ]
+        },
+    }
+    cleaned = apply_content_fidelity(pkg, board={"topic": "Force"})
+    assert not content_fidelity_issues(cleaned)
+    assert publication_allowed(cleaned)
 
 
 def test_student_flashcard_shape():

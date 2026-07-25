@@ -40,13 +40,26 @@ def publication_block_reason(
             or "The lesson did not meet publisher-quality standards (PQI < 95)."
         )
 
-    # Phase Final — prompt leaks / dictionary vocab / clone pages fail publication
+    # Phase Final — repair then gate (never quarantine repaired classroom lessons)
     try:
-        from engines.lesson_composition_engine.content_fidelity import content_fidelity_block_reason
+        from engines.lesson_composition_engine.content_fidelity import (
+            content_fidelity_block_reason,
+            ensure_classroom_content_fidelity,
+        )
 
-        fidelity_reason = content_fidelity_block_reason(adaptations if isinstance(adaptations, dict) else None)
-        if fidelity_reason:
-            return fidelity_reason
+        if isinstance(adaptations, dict):
+            board = (
+                (adaptations.get("_meta") or {}).get("intelligence_board")
+                or (adaptations.get("_meta") or {}).get("lesson_context")
+                or {}
+            )
+            repaired = ensure_classroom_content_fidelity(adaptations, board=board)
+            # Mutate in place so Streamlit session keeps the cleaned package
+            adaptations.clear()
+            adaptations.update(repaired)
+            fidelity_reason = content_fidelity_block_reason(adaptations)
+            if fidelity_reason:
+                return fidelity_reason
     except Exception:
         pass
 

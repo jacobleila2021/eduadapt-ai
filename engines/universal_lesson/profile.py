@@ -251,7 +251,7 @@ def build_universal_lesson_profile(
         for concept in concepts[:5]:
             objectives.append(
                 {
-                    "objective": f"Explain {concept['concept']} using the uploaded source.",
+                    "objective": f"Explain {concept['concept']} using evidence from the lesson.",
                     "source_refs": concept["source_refs"],
                     "status": "pedagogically_inferred",
                 }
