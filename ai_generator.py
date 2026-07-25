@@ -1231,64 +1231,62 @@ def generate_adaptations(
             )
 
         # --- Lesson Composition Engine 1.0 (primary educational composition) ---
+        # Verified publisher_author is mandatory. Never silently fall back to legacy.
         step("Composing lessons with Lesson Composition Engine…", 0.12)
         lce_package_obj = None
         lce_adaptations: dict = {}
-        try:
-            from engines.lesson_composition_engine import compose_lesson_package
+        from engines.lesson_composition_engine.publisher_author import (  # noqa: F401
+            compose_publisher_adaptation,
+        )
+        from engines.lesson_composition_engine import compose_lesson_package
 
-            lce_package_obj = compose_lesson_package(
-                lesson_text=lesson_text,
-                universal_profile=universal_profile,
-                meta=merged.get("_meta") or {},
-                context=context,
-            )
-            versions = dict(lce_package_obj.versions or {})
-            lce_adaptations = versions
-            if lce_package_obj.vocabulary:
-                lce_adaptations["vocabulary"] = lce_package_obj.vocabulary
-            publisher_meta = getattr(lce_package_obj, "publisher_meta", None) or {}
-            pqle_meta = publisher_meta.get("pqle") if isinstance(publisher_meta, dict) else {}
-            merged["_meta"]["canonical_lesson_graph"] = (
-                (publisher_meta.get("clg") if isinstance(publisher_meta, dict) else None) or {}
-            )
-            merged["_meta"]["intelligence_board"] = (
-                (publisher_meta.get("intelligence_board") if isinstance(publisher_meta, dict) else None)
+        lce_package_obj = compose_lesson_package(
+            lesson_text=lesson_text,
+            universal_profile=universal_profile,
+            meta=merged.get("_meta") or {},
+            context=context,
+        )
+        versions = dict(lce_package_obj.versions or {})
+        lce_adaptations = versions
+        if lce_package_obj.vocabulary:
+            lce_adaptations["vocabulary"] = lce_package_obj.vocabulary
+        publisher_meta = getattr(lce_package_obj, "publisher_meta", None) or {}
+        pqle_meta = publisher_meta.get("pqle") if isinstance(publisher_meta, dict) else {}
+        merged["_meta"]["canonical_lesson_graph"] = (
+            (publisher_meta.get("clg") if isinstance(publisher_meta, dict) else None) or {}
+        )
+        merged["_meta"]["intelligence_board"] = (
+            (publisher_meta.get("intelligence_board") if isinstance(publisher_meta, dict) else None)
+            or {}
+        )
+        merged["_meta"]["lce"] = {
+            "ok": True,
+            "author": "publisher_author",
+            "version": getattr(lce_package_obj, "schema_version", "1.0.0"),
+            "quality": (
+                lce_package_obj.quality.to_dict()
+                if getattr(lce_package_obj, "quality", None)
+                else {}
+            ),
+            "clg": merged["_meta"]["canonical_lesson_graph"],
+            "intelligence_board": merged["_meta"]["intelligence_board"],
+            "pqi": (publisher_meta.get("pqi") if isinstance(publisher_meta, dict) else None) or {},
+            "pqle": pqle_meta or {
+                "publication_ready": bool(
+                    (publisher_meta or {}).get("publication_ready", True)
+                ),
+                "reject_rendering": False,
+            },
+            "pmes": (publisher_meta.get("pmes") if isinstance(publisher_meta, dict) else None) or {},
+            "editorial": (
+                (publisher_meta.get("editorial") if isinstance(publisher_meta, dict) else None)
                 or {}
-            )
-            merged["_meta"]["lce"] = {
-                "ok": True,
-                "version": getattr(lce_package_obj, "schema_version", "1.0.0"),
-                "quality": (
-                    lce_package_obj.quality.to_dict()
-                    if getattr(lce_package_obj, "quality", None)
-                    else {}
-                ),
-                "clg": merged["_meta"]["canonical_lesson_graph"],
-                "intelligence_board": merged["_meta"]["intelligence_board"],
-                "pqi": (publisher_meta.get("pqi") if isinstance(publisher_meta, dict) else None) or {},
-                "pqle": pqle_meta or {
-                    "publication_ready": bool(
-                        (publisher_meta or {}).get("publication_ready", True)
-                    ),
-                    "reject_rendering": False,
-                },
-                "pmes": (publisher_meta.get("pmes") if isinstance(publisher_meta, dict) else None) or {},
-                "editorial": (
-                    (publisher_meta.get("editorial") if isinstance(publisher_meta, dict) else None)
-                    or {}
-                ),
-                "mutates_curriculum": False,
-                "frequency_vocab_used": False,
-            }
-            if getattr(lce_package_obj, "blueprint", None):
-                merged["_meta"]["lce"]["blueprint"] = lce_package_obj.blueprint.to_dict()
-        except Exception as lce_exc:  # noqa: BLE001
-            merged["_meta"]["lce"] = {
-                "ok": False,
-                "error": str(lce_exc)[:300],
-            }
-            lce_adaptations = {}
+            ),
+            "mutates_curriculum": False,
+            "frequency_vocab_used": False,
+        }
+        if getattr(lce_package_obj, "blueprint", None):
+            merged["_meta"]["lce"]["blueprint"] = lce_package_obj.blueprint.to_dict()
 
         step("Building vocabulary study page…", 0.15)
         vocab = {}
@@ -1650,7 +1648,8 @@ def generate_adaptations(
             merged.setdefault("_meta", {})["content_fidelity_error"] = "final_scrub_failed"
     except Exception as error:
         raise RuntimeError(
-            "Adaptation generation could not complete after safe fallbacks."
+            "Adaptation generation failed. Verified publisher_author is required; "
+            "silent legacy LCE fallback is disabled."
         ) from error
 
     return merged
