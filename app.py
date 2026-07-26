@@ -5,6 +5,16 @@ Dashboard + dedicated adaptation workspace (never stacked on homepage).
 
 from __future__ import annotations
 
+# Streamlit Cloud ships an older system SQLite; Chroma needs >= 3.35.
+# pysqlite3-binary is installed on Linux only (see requirements.txt).
+try:
+    __import__("pysqlite3")
+    import sys as _sys
+
+    _sys.modules["sqlite3"] = _sys.modules.pop("pysqlite3")
+except Exception:
+    pass
+
 import json
 import logging
 import hashlib
