@@ -83,7 +83,9 @@ def test_publisher_voice_not_template_mastery():
     assert "evaporation" in blob
     # Product law (textbook theory): clean claim-grounded teaching — no
     # scene-activity coaching ("stand at a puddle") in learner theory.
-    assert "stand" not in blob or "stand for" in blob
+    assert "stand at" not in blob
+    assert "stand in" not in blob
+    assert "stand next" not in blob
     heq = pkg.get("heq") or pkg.get("eqs") or {}
     assert heq.get("philosophy") == "human_first_publisher_pride" or heq.get("threshold") == 95.0 or (
         pkg.get("eqs") or {}

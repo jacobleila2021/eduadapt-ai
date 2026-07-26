@@ -360,12 +360,12 @@ def _is_textbook_page(page: Mapping[str, Any] | None) -> bool:
 # Presentation markers each textbook lens must carry (product law: same
 # verified theory, lens-specific presentation).
 _TEXTBOOK_LENS_MARKERS = {
-    "visual": (("see it in the diagram", "diagram"), "diagram-anchored theory reading"),
+    "visual": (("see it in the diagram", "see it —", "diagram"), "diagram-anchored theory reading"),
     "auditory": (("aloud",), "read-aloud rehearsal of the same theory"),
     "ell": (("key word", "plain words"), "key-word framing in plain English"),
-    "ld": (("step by step", "one step at a time"), "single-idea steps with reduced load"),
-    "dyslexia": (("calm and clear", "\n"), "one sentence per line, calm layout"),
-    "adhd": (("short", "step"), "short-burst reading"),
+    "ld": (("step by step", "one step at a time", "\n-"), "single-idea steps with reduced load"),
+    "dyslexia": (("calm and clear", "decoding support", "\n"), "one sentence per line, calm layout, decoding support"),
+    "adhd": (("short", "step", "\n-"), "short-burst reading"),
     "autism": (("same order", "routine", "step"), "predictable order"),
 }
 
@@ -382,6 +382,38 @@ def adaptation_educational_advantage(
     sim = SequenceMatcher(None, a_text[:10000], m_text[:10000]).ratio()
     advantages: list[str] = []
     weak = True
+
+    if _is_textbook_page(adaptation) and version_id in {"teacher", "parent"}:
+        # v3.3: Teacher/Parent inherit the canonical lesson unchanged and ADD
+        # guidance — high similarity to mainstream is mandated, not a clone.
+        support_role = "teacher_support" if version_id == "teacher" else "parent_support"
+        has_support = any(
+            str(s.get("role") or "") == support_role for s in _sections(adaptation)
+        )
+        label = (
+            "canonical lesson plus teaching guidance (outcomes, misconceptions, Bloom's, assessment)"
+            if version_id == "teacher"
+            else "canonical lesson plus home support (discussion questions, support strategies)"
+        )
+        if has_support and sim <= 0.995:
+            return {
+                "version_id": version_id,
+                "advantage": label,
+                "advantages": [label],
+                "similarity_to_mainstream": round(sim, 4),
+                "ok": True,
+                "failure_reason": "",
+            }
+        return {
+            "version_id": version_id,
+            "advantage": "",
+            "advantages": [],
+            "similarity_to_mainstream": round(sim, 4),
+            "ok": False,
+            "failure_reason": (
+                "clone_of_mainstream" if sim > 0.995 else "no_clear_educational_advantage"
+            ),
+        }
 
     if _is_textbook_page(adaptation) and version_id in _TEXTBOOK_LENS_MARKERS:
         markers, label = _TEXTBOOK_LENS_MARKERS[version_id]

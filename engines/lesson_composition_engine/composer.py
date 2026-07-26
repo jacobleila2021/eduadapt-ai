@@ -8,6 +8,7 @@ LLM (when used) is Educational Editor only — never curriculum author.
 
 from __future__ import annotations
 
+import copy
 from typing import Any, Mapping
 
 from engines.lesson_composition_engine.board_adaptations import compose_adaptation_from_board
@@ -498,11 +499,28 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         if isinstance(w, dict)
     ][:8]
 
+    # v3.3: every worksheet question must map back to a taught concept —
+    # anchor generic official hints ("Give one everyday example.") to the lesson.
+    import re as _re
+
+    concept_tokens: set[str] = set()
+    for c in concepts:
+        concept_tokens.update(_re.findall(r"[a-z]{4,}", str((c or {}).get("name") or "").lower()))
+    concept_tokens.update(_re.findall(r"[a-z]{4,}", topic.lower()))
+    for fact in pool:
+        concept_tokens.update(_re.findall(r"[a-z]{4,}", str(fact).lower()))
+
+    def _anchor_to_lesson(q: str) -> str:
+        if set(_re.findall(r"[a-z]{4,}", q.lower())) & concept_tokens:
+            return q
+        anchor = str((concepts[0] or {}).get("name") or topic) if concepts else topic
+        return f"{q.rstrip('.?')} from this lesson on {anchor}."
+
     short = []
     seed = assessments if len(assessments) >= 4 else (assessments + concepts)
     for i, outcome in enumerate(seed[:8] or concepts[:8] or [{"name": topic}]):
         if isinstance(outcome, dict) and outcome.get("prompt"):
-            q = str(outcome["prompt"])
+            q = _anchor_to_lesson(str(outcome["prompt"]))
         else:
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
             q = f"In 1–2 sentences, explain '{name}'."
@@ -700,22 +718,55 @@ def compose_adaptations_from_clg(
     if "worksheet" in ids:
         out["worksheet"] = compose_worksheet_from_clg(clg, vocabulary)
 
+    # ------------------------------------------------------------------
+    # Master Lesson Architecture (v3.3):
+    # ONE canonical Mainstream lesson (Gold Standard) is composed first,
+    # frozen, and every adaptation inherits it — presentation only.
+    # No adaptation may bypass the Canonical Lesson.
+    # ------------------------------------------------------------------
+    from engines.lesson_composition_engine.canonical import (
+        PRESENTATION_LENSES,
+        augment_support_version,
+        build_canonical_lesson,
+        derive_presentation_adaptation,
+        extract_essential_learning_core,
+        freeze_canonical,
+        validate_curriculum_fidelity,
+    )
+
+    canonical = build_canonical_lesson(
+        intelligence, flowchart_svg=flowchart, concept_map_svg=concept_map
+    )
+    core = extract_essential_learning_core(canonical, intelligence)
+    frozen = freeze_canonical(canonical, core)
+
     for vid in ids:
         if vid in {"vocabulary", "worksheet"}:
             continue
-        if vid in LENS_CONTRACTS or vid in {"dyslexia", "standard"}:
-            out[vid] = compose_adaptation_from_board(
-                intelligence,
-                vid,
-                flowchart_svg=flowchart,
-                concept_map_svg=concept_map,
-            )
-            out[vid].setdefault("lce", {})
-            if isinstance(out[vid]["lce"], dict):
-                out[vid]["lce"]["lens"] = lens_for("ld" if vid == "dyslexia" else vid)
-                out[vid]["lce"]["intelligence_board_version"] = intelligence.get("version")
-                out[vid]["lce"]["composed_from_clg"] = True
-                out[vid]["lce"]["not_a_clone"] = True
+        if vid == "standard":
+            out[vid] = copy.deepcopy(frozen)
+        elif vid in {"teacher", "parent"}:
+            out[vid] = augment_support_version(frozen, core, intelligence, vid)
+        elif vid in PRESENTATION_LENSES:
+            out[vid] = derive_presentation_adaptation(frozen, core, vid)
+        else:
+            continue
+        out[vid].setdefault("lce", {})
+        if isinstance(out[vid]["lce"], dict):
+            out[vid]["lce"]["lens"] = lens_for("ld" if vid == "dyslexia" else vid)
+            out[vid]["lce"]["intelligence_board_version"] = intelligence.get("version")
+            out[vid]["lce"]["composed_from_clg"] = True
+            out[vid]["lce"]["not_a_clone"] = True
+
+    out["_canonical"] = {
+        "core": core,
+        "hash": core.get("hash"),
+        "frozen": True,
+        "gold_standard": "standard",
+    }
+    # Curriculum fidelity — hard gate: identical curriculum in every version.
+    out["_curriculum_fidelity"] = validate_curriculum_fidelity(core, out)
+
     # Stamp similarity audit for publication gate
     try:
         from engines.lesson_composition_engine.recovery import adaptation_similarity_report
@@ -829,6 +880,27 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
 
     publication_ready = bool(pqle.get("publication_ready"))
     publisher_review = pqle.get("publisher_review_report") or {}
+
+    # v3.3 Curriculum Fidelity — re-validated AFTER all polish passes so no
+    # downstream engine can silently remove curriculum. Hard gate.
+    curriculum_fidelity: dict[str, Any] = {}
+    try:
+        from engines.lesson_composition_engine.canonical import validate_curriculum_fidelity
+
+        canonical_meta = adaptations.get("_canonical") or lce_authored.get("_canonical") or {}
+        core = dict(canonical_meta.get("core") or {})
+        if core:
+            curriculum_fidelity = validate_curriculum_fidelity(core, adaptations)
+    except Exception as exc:  # noqa: BLE001
+        curriculum_fidelity = {"ok": False, "failures": [f"validator error: {exc}"]}
+    fidelity_ok = bool(curriculum_fidelity.get("ok", True))
+    reject_reasons = list(pqle.get("reject_reasons") or [])
+    if not fidelity_ok:
+        reject_reasons.append(
+            "curriculum_fidelity_failed: " + "; ".join(curriculum_fidelity.get("failures", [])[:4])
+        )
+    publication_ready = publication_ready and fidelity_ok
+
     result = {
         "ok": publication_ready,
         "version": PACK_VERSION,
@@ -853,7 +925,9 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
         "adaptation_similarity": pqle.get("adaptation_similarity") or {},
         "golden_gate": pqle.get("golden_gate") or {},
         "contribution_log": contribution_log,
-        "reject_reasons": pqle.get("reject_reasons") or [],
+        "reject_reasons": reject_reasons,
+        "canonical": adaptations.get("_canonical") or {},
+        "curriculum_fidelity": curriculum_fidelity,
         "pqle": {
             "publication_ready": publication_ready,
             "reject_rendering": bool(pqle.get("reject_rendering")),
@@ -994,6 +1068,8 @@ def _compose_package_from_meta(
         publisher_meta={
             "clg": result.get("clg") or {},
             "intelligence_board": result.get("intelligence_board") or {},
+            "canonical": result.get("canonical") or {},
+            "curriculum_fidelity": result.get("curriculum_fidelity") or {},
             "pqi": result.get("pqi") or {},
             "pqle": result.get("pqle") or {},
             "pmes": result.get("pmes") or {},

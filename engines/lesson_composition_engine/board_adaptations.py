@@ -32,12 +32,27 @@ def compose_adaptation_from_board(
     flowchart_svg: str = "",
     concept_map_svg: str = "",
 ) -> dict[str, Any]:
-    """Author one pedagogically unique adaptation from the Intelligence Board."""
-    from engines.lesson_composition_engine.publisher_author import compose_publisher_adaptation
-
-    return compose_publisher_adaptation(
-        board,
-        version_id,
-        flowchart_svg=flowchart_svg,
-        concept_map_svg=concept_map_svg,
+    """Master Lesson Architecture (v3.3): every adaptation inherits the ONE
+    canonical Mainstream lesson — presentation changes only. No adaptation
+    may bypass the Canonical Lesson or compose its own curriculum."""
+    from engines.lesson_composition_engine.canonical import (
+        PRESENTATION_LENSES,
+        augment_support_version,
+        build_canonical_lesson,
+        derive_presentation_adaptation,
+        extract_essential_learning_core,
+        freeze_canonical,
     )
+
+    canonical = build_canonical_lesson(
+        board, flowchart_svg=flowchart_svg, concept_map_svg=concept_map_svg
+    )
+    core = extract_essential_learning_core(canonical, board)
+    frozen = freeze_canonical(canonical, core)
+    if version_id == "standard":
+        return frozen
+    if version_id in {"teacher", "parent"}:
+        return augment_support_version(frozen, core, board, version_id)
+    if version_id in PRESENTATION_LENSES:
+        return derive_presentation_adaptation(frozen, core, version_id)
+    return frozen

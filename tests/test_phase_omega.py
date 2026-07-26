@@ -112,9 +112,14 @@ def test_adaptations_are_pedagogically_distinct():
     assert any("Key word" in t or "plain words" in t for t in titles_ell)
     assert adhd["sections"] and autism["sections"]
     assert adhd["lce"]["pedagogically_distinct"] is True
-    # No questions inside learner theory for any lens.
+    # No questions inside learner theory for any lens. Questions live only in
+    # the mandated question zones (Practice / Assessment) of the canonical
+    # lesson — v3.3 Master Lesson Architecture.
+    question_zones = {"practice_question", "assessment"}
     for page in (adhd, autism, ell):
         for sec in page["sections"]:
+            if str(sec.get("role") or "") in question_zones:
+                continue
             assert "?" not in str(sec.get("body") or ""), sec.get("title")
 
 

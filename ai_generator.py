@@ -1425,79 +1425,64 @@ def generate_adaptations(
         step(f"Lesson adaptations… {done}/{total} complete", 0.30 + (0.65 * done / total))
 
         other_keys = [k for k in LESSON_KEYS if k != "standard"]
-        # Prefer LCE for all keys first (no extra LLM). Only call LLM for gaps.
-        pending_llm = []
+        # ------------------------------------------------------------------
+        # Master Lesson Architecture (v3.3): there is ONLY ONE lesson.
+        # The Mainstream lesson above is the Canonical Lesson (Gold Standard).
+        # Every remaining adaptation INHERITS it — presentation only.
+        # No adaptation may regenerate the lesson independently (no per-key
+        # LLM calls), so every learner receives identical curriculum.
+        # ------------------------------------------------------------------
+        from engines.lesson_composition_engine.canonical import (
+            augment_support_version,
+            derive_presentation_adaptation,
+            extract_essential_learning_core,
+            freeze_canonical,
+        )
+
+        board_meta = merged["_meta"].get("intelligence_board") or {}
+        canonical_core = extract_essential_learning_core(
+            merged["standard"], board_meta
+        )
+        canonical_frozen = freeze_canonical(merged["standard"], canonical_core)
+        merged["_meta"]["essential_learning_core"] = canonical_core
+
         for key in other_keys:
             candidate = lce_adaptations.get(key) or {}
             classroom = key in CLASSROOM_LESSON_KEYS
             parent_ok = key == "parent" and candidate.get("sections") and candidate.get("big_idea")
-            if _valid_lesson(candidate, classroom=classroom) or parent_ok:
+            canonical_candidate = bool(
+                isinstance(candidate.get("lce"), dict)
+                and candidate["lce"].get("derived_from_canonical")
+            )
+            if (canonical_candidate and (_valid_lesson(candidate, classroom=classroom) or parent_ok)):
+                # LCE candidate already inherits the canonical lesson.
                 merged[key] = _apply_v3_output_contract(
                     inject_verified_visuals_into_lesson(candidate, preferred),
                     key=key,
                     valid_source_refs=source_refs,
                     fallback_used="lce",
                 )
-                done += 1
-                step(
-                    f"Lesson adaptations… {done}/{total} complete",
-                    0.30 + (0.65 * done / total),
-                )
             else:
-                pending_llm.append(key)
-
-        if pending_llm:
-            with ThreadPoolExecutor(max_workers=MAX_PARALLEL_LESSONS) as pool:
-                futures = {
-                    pool.submit(
-                        _generate_one_lesson,
-                        api_key,
-                        key,
-                        by_id.get(key, {}).get("title", key),
-                        by_id.get(key, {}).get("hint", ""),
-                        user_prompt,
-                        baseline_lesson,
-                        suppress_ai_diagrams=suppress_ai_diagrams,
-                    ): key
-                    for key in pending_llm
-                }
-                for future in as_completed(futures):
-                    key = futures[future]
-                    fallback_used = "none"
-                    retry_history: list[dict] = []
-                    try:
-                        _, lesson = future.result()
-                    except Exception:
-                        lesson = lce_adaptations.get(key) or _source_fallback_lesson(
-                            key, universal_profile, source_refs
-                        )
-                        fallback_used = "classroom_source_fallback"
-                        retry_history.append(
-                            {
-                                "attempts": 2,
-                                "status": "failed",
-                                "recovery": fallback_used,
-                            }
-                        )
-                    if not _valid_lesson(
-                        lesson, classroom=key in CLASSROOM_LESSON_KEYS
-                    ):
-                        lesson = lce_adaptations.get(key) or _source_fallback_lesson(
-                            key, universal_profile, source_refs
-                        )
-                        fallback_used = "lce_recovery" if key in lce_adaptations else "classroom_source_fallback"
-                    merged[key] = _apply_v3_output_contract(
-                        inject_verified_visuals_into_lesson(lesson, preferred),
-                        key=key,
-                        valid_source_refs=source_refs,
-                        fallback_used=fallback_used,
-                        retry_history=retry_history,
+                # Derive directly from the frozen canonical lesson.
+                if key in {"teacher", "parent"}:
+                    derived = augment_support_version(
+                        canonical_frozen, canonical_core, board_meta, key
                     )
-                    done += 1
-                    step(
-                        f"Lesson adaptations… {done}/{total} complete",
-                        0.30 + (0.65 * done / total),
+                else:
+                    derived = derive_presentation_adaptation(
+                        canonical_frozen, canonical_core, key
                     )
+                merged[key] = _apply_v3_output_contract(
+                    inject_verified_visuals_into_lesson(derived, preferred),
+                    key=key,
+                    valid_source_refs=source_refs,
+                    fallback_used="canonical_derived",
+                )
+            done += 1
+            step(
+                f"Lesson adaptations… {done}/{total} complete",
+                0.30 + (0.65 * done / total),
+            )
 
         # Final LCE authorship polish (vocabulary upgrade + distinct adaptive versions)
         try:
@@ -1509,15 +1494,20 @@ def generate_adaptations(
             # (product decision) and must never be merged or shown.
             for extra_key in ("dyslexia",):
                 candidate = lce_adaptations.get(extra_key)
-                if isinstance(candidate, dict) and (
-                    candidate.get("sections") or candidate.get("big_idea")
+                if not (
+                    isinstance(candidate, dict)
+                    and (candidate.get("sections") or candidate.get("big_idea"))
                 ):
-                    merged[extra_key] = _apply_v3_output_contract(
-                        inject_verified_visuals_into_lesson(candidate, preferred),
-                        key=extra_key,
-                        valid_source_refs=source_refs,
-                        fallback_used="lce",
+                    # v3.3: never regenerate — inherit the canonical lesson.
+                    candidate = derive_presentation_adaptation(
+                        canonical_frozen, canonical_core, extra_key
                     )
+                merged[extra_key] = _apply_v3_output_contract(
+                    inject_verified_visuals_into_lesson(candidate, preferred),
+                    key=extra_key,
+                    valid_source_refs=source_refs,
+                    fallback_used="lce",
+                )
             merged = attach_lce_to_adaptations(
                 merged, lesson_text=lesson_text, reject_on_fail=False
             )
@@ -1547,9 +1537,16 @@ def generate_adaptations(
                 "vocabulary",
                 "worksheet",
             }:
-                merged[output_key] = _source_fallback_lesson(
-                    output_key, universal_profile, source_refs
-                )
+                # v3.3: a missing version inherits the canonical lesson —
+                # never a separately generated fallback lesson.
+                if output_key in {"teacher", "parent"}:
+                    merged[output_key] = augment_support_version(
+                        canonical_frozen, canonical_core, board_meta, output_key
+                    )
+                else:
+                    merged[output_key] = derive_presentation_adaptation(
+                        canonical_frozen, canonical_core, output_key
+                    )
             if isinstance(merged.get(output_key), dict):
                 contract = (merged[output_key].get("_contract") or {})
                 merged[output_key] = _apply_v3_output_contract(
@@ -1652,6 +1649,25 @@ def generate_adaptations(
                     )
         merged["_meta"]["engine_artifacts"] = stem.get("artifacts") or []
         merged["_meta"]["verified_exact_values"] = verified_exact_values
+
+        # ------------------------------------------------------------------
+        # v3.3 Curriculum Fidelity — HARD GATE (Subject Engine as Curriculum
+        # Guardian). Every adaptation must carry identical curriculum: same
+        # concepts, same claims, same teaching sequence, same diagrams. If any
+        # concept is missing from any version, generation fails.
+        # ------------------------------------------------------------------
+        from engines.lesson_composition_engine.canonical import (
+            validate_curriculum_fidelity,
+        )
+
+        fidelity = validate_curriculum_fidelity(canonical_core, merged)
+        merged["_meta"]["curriculum_fidelity"] = fidelity
+        if not fidelity.get("ok", True):
+            raise RuntimeError(
+                "Curriculum validation failed — an adaptation does not carry the "
+                "complete canonical curriculum: "
+                + "; ".join(fidelity.get("failures", [])[:5])
+            )
 
         package_qa = validate_lesson_package(
             artifacts=stem["artifacts"],
