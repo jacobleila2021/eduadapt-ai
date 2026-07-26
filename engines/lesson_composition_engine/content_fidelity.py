@@ -149,6 +149,26 @@ def scrub_prompt_leaks(text: str) -> str:
     return " ".join(kept).strip()
 
 
+def scrub_teacher_voice(text: str) -> str:
+    """Remove classroom-management sentences from learner self-study pages.
+
+    Uploaded sources are often teacher lesson plans ("I will divide you into
+    pairs…", "Begin by asking students where they saw water today…"). Those
+    lines belong only in the Teacher/Parent versions — a self-studying learner
+    must see pure theory.
+    """
+    from engines.lesson_composition_engine.vocab_quality import is_teacher_facing_text
+
+    if not (text or "").strip():
+        return text or ""
+    kept = [
+        sent
+        for sent in re.split(r"(?<=[.!?])\s+", text)
+        if sent.strip() and not is_teacher_facing_text(sent)
+    ]
+    return " ".join(kept).strip()
+
+
 def simplify_vocab_card(row: dict[str, Any], *, topic: str = "this lesson") -> dict[str, Any]:
     """Student flashcard only — no dictionary apparatus."""
     card = dict(row)
@@ -335,9 +355,16 @@ def ensure_concept_primer(
 
     def _teaches(claim: str) -> bool:
         """Only complete teaching sentences may explain a concept — never
-        titles, wrapped-line fragments, or document metadata rows."""
+        titles, wrapped-line fragments, document metadata rows, or classroom
+        instructions from a teacher lesson plan."""
+        from engines.lesson_composition_engine.vocab_quality import (
+            is_teacher_facing_text,
+        )
+
         c = claim.strip()
         if len(c.split()) < 6 or not c.endswith((".", "!", "?")):
+            return False
+        if is_teacher_facing_text(c):
             return False
         return not re.search(
             r"(?i)\bgrade\s*\d|\bmarks?\s*[:\d]|\btime\s*:|\bminutes\b|\|", c
@@ -571,9 +598,17 @@ def apply_content_fidelity(
             out[key] = simplify_vocabulary_page(dict(value), topic=topic)
             continue
 
+        from engines.lesson_composition_engine.vocab_quality import (
+            is_teacher_facing_text,
+        )
+
+        # Learner pages carry self-study theory only; classroom-management
+        # content stays exclusively in the Teacher and Parent versions.
+        learner_page = key not in {"parent", "teacher"}
         page = dict(value)
         if page.get("big_idea"):
-            page["big_idea"] = scrub_prompt_leaks(str(page["big_idea"]))
+            big = scrub_prompt_leaks(str(page["big_idea"]))
+            page["big_idea"] = scrub_teacher_voice(big) if learner_page else big
         sections = []
         for sec in page.get("sections") or []:
             if not isinstance(sec, dict):
@@ -581,6 +616,12 @@ def apply_content_fidelity(
             row = dict(sec)
             row["title"] = scrub_prompt_leaks(str(row.get("title") or ""))
             row["body"] = scrub_prompt_leaks(str(row.get("body") or ""))
+            if learner_page:
+                if is_teacher_facing_text(row["title"]):
+                    # "Guided Practice", "Independent Practice", "Warm-up" —
+                    # whole block is a lesson-plan activity, not learner theory.
+                    continue
+                row["body"] = scrub_teacher_voice(row["body"])
             if row["body"]:
                 sections.append(row)
         page_has_diagram = any(

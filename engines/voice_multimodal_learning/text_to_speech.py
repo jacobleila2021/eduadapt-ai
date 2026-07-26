@@ -22,19 +22,17 @@ def synthesize_speech(
     if not cleaned:
         return {"ok": False, "error": "empty_text", "provider": None}
 
-    voice = (
-        OPENAI_VOICE_MAP.get(voice_style)
-        or OPENAI_VOICE_MAP.get("Warm Female (Indian)")
-        or OPENAI_VOICE_MAP.get("Female")
-    )
+    voice = OPENAI_VOICE_MAP.get(voice_style) or OPENAI_VOICE_MAP.get("Female")
     legacy_voice_aliases = {
-        "Female": "Warm Female (Indian)",
-        "Male": "Warm Male (Indian)",
+        "Warm Female (Indian)": "Female",
+        "Warm Female (International)": "Female",
+        "Warm Male (Indian)": "Male",
+        "Warm Male (International)": "Male",
     }
     resolved_style = (
         voice_style
         if voice_style in VOICE_OPTIONS
-        else legacy_voice_aliases.get(voice_style, "Warm Female (Indian)")
+        else legacy_voice_aliases.get(voice_style, "Female")
     )
     if resolved_style not in VOICE_OPTIONS:
         resolved_style = next(iter(VOICE_OPTIONS))

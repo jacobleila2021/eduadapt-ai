@@ -25,6 +25,12 @@ _STOPWORDS = {
     "teachers", "student", "subject", "topic", "syllabus", "curriculum",
     "objectives", "objective", "instructions", "note", "notes", "figure",
     "table", "copyright", "published", "reprint", "edition", "board",
+    # Lesson-plan scaffolding words — headings and teacher phrasing that must
+    # never become concepts ("Introduction", "Guided Practice", "I want you…").
+    "introduction", "understanding", "practice", "guided", "independent",
+    "essential", "exploration", "creation", "diagram", "diagrams", "labeled",
+    "labelled", "label", "labels", "image", "images", "want", "task", "tasks",
+    "moment", "responses", "response", "your", "yours",
 }
 # Verbs and generic nouns that are never teachable concepts on their own
 # ("moves", "changes state", "time") even when frequent in the source.
@@ -39,7 +45,7 @@ _GENERIC_CONCEPT_WORDS = {
     "time", "times", "state", "states", "stage", "stages", "thing",
     "things", "idea", "ideas", "way", "ways", "kind", "kinds", "part",
     "parts", "example", "examples", "important", "different", "amount",
-    "number", "back", "again", "constantly", "continuous",
+    "number", "back", "again", "constantly", "continuous", "movement",
     # prepositions / connectives / participles that pass the length filter
     "during", "within", "without", "around", "across", "towards", "toward",
     "under", "over", "above", "below", "along", "among", "while", "until",
@@ -211,6 +217,14 @@ def build_universal_lesson_profile(
             and token not in _GENERIC_CONCEPT_WORDS
         )
 
+    try:
+        from engines.lesson_composition_engine.vocab_quality import (
+            is_teacher_facing_text as _is_teacher_facing,
+        )
+    except Exception:  # pragma: no cover - engine always ships together
+        def _is_teacher_facing(_: str) -> bool:
+            return False
+
     word_rows: list[tuple[str, str]] = []
     bigram_rows: list[tuple[str, str]] = []
     first_seen: dict[str, int] = {}
@@ -223,6 +237,12 @@ def build_universal_lesson_profile(
         # "evaporation condensation". Tokenize EVERY word (including short
         # ones) so "water on Earth" never collapses into "water earth".
         for segment in re.split(r"[.,;:!?()\[\]{}\n\r•|—–]+", str(block["text"])):
+            # Classroom-management lines from teacher lesson plans ("I want you
+            # to take a moment…", "create your own labeled diagram") must never
+            # seed concepts — they produced junk terms like "i want" and
+            # "diagram" that became broken questions and vocab cards.
+            if _is_teacher_facing(segment):
+                continue
             tokens = [
                 w.lower()[:-2] if w.lower().endswith("'s") else w.lower()
                 for w in re.findall(r"\b[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\b", segment)

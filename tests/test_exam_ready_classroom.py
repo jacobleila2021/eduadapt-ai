@@ -28,11 +28,18 @@ def test_ld_rules_no_longer_collapse_to_grade_3_4():
 
 
 def test_classroom_policy_pack_wired_into_lesson_prompt():
+    # Product decision: student adaptations are learner self-study theory;
+    # only the Teacher version keeps the classroom-delivery flow.
     prompt = _lesson_prompt("ld", "Dyslexia Smart", "hint")
-    assert "CLASSROOM TEACHING FLOW" in prompt
+    assert "SELF-STUDY THEORY FLOW" in prompt
+    assert "CLASSROOM TEACHING FLOW" not in prompt
     assert "BOARD / EXAM READINESS" in prompt
     assert "Exam Practice" in prompt
     assert "standard" in CLASSROOM_LESSON_KEYS
+
+    teacher_prompt = _lesson_prompt("teacher", "Teacher Version", "hint")
+    assert "CLASSROOM TEACHING FLOW" in teacher_prompt
+    assert "SELF-STUDY THEORY FLOW" not in teacher_prompt
 
 
 def test_valid_lesson_rejects_thin_classroom_condensation():

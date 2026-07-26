@@ -84,7 +84,19 @@ def build_lesson_intelligence_board(
         + _texts(list(clg.get("claim_texts") or []))
         + _texts(list(profile.get("claim_ledger") or []), "text", "claim")
     )
-    claim_texts = [c for c in claim_texts if not has_teacher_objective_leak(c) and not template_hits(c)]
+    from engines.lesson_composition_engine.vocab_quality import is_teacher_facing_text
+
+    # The board feeds learner self-study versions — classroom-management lines
+    # from a teacher lesson plan ("I want you to…", "Begin by asking students…")
+    # must never become teaching claims, titles, or worked-example seeds. The
+    # Teacher/Parent versions keep the full plan via their own authoring path.
+    claim_texts = [
+        c
+        for c in claim_texts
+        if not has_teacher_objective_leak(c)
+        and not template_hits(c)
+        and not is_teacher_facing_text(c)
+    ]
 
     concepts_raw = list(clg.get("core_concepts") or [])
     from_clg = bool(concepts_raw)

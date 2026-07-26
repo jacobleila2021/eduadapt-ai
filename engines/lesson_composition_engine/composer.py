@@ -68,13 +68,20 @@ def _student_goal(goal: str, *, topic: str) -> str:
 
 
 def _teachable_fact(text: str) -> bool:
-    """Objectives and authoring lines ('Students will explain…') are not facts a
-    learner can be shown as a model answer."""
+    """Objectives, authoring lines ('Students will explain…'), classroom-management
+    instructions ('Begin by asking students…') and document metadata
+    ('Grade Level: 6 | Subject: Earth Science') are not facts a learner can be
+    shown as lesson content or a model answer."""
     import re as _re
 
+    from engines.lesson_composition_engine.vocab_quality import is_teacher_facing_text
+
+    if is_teacher_facing_text(text):
+        return False
     return not _re.search(
         r"(?i)\b(students?|learners?)\s+will\b|\bobjectives?\b|\byou will learn\b"
-        r"|\blesson plan\b|\bmarks?\s*:\s*\d",
+        r"|\blesson plan\b|\bmarks?\s*:\s*\d|\bgrade\s*level\b|\bsubject\s*:"
+        r"|\btime\s*:|\bduration\b|\bminutes\b|\|",
         text,
     )
 
@@ -395,6 +402,10 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
     topic = clean_topic(str(clg.get("topic") or "Lesson Vocabulary"))
     claims = [str(f.get("text") or "") for f in (clg.get("facts") or []) if f]
     claims.extend(str(t) for t in (clg.get("claim_texts") or []) if t)
+    # Vocabulary meanings must come from teaching sentences only — a lesson-plan
+    # source is full of classroom instructions ("Begin by asking students where
+    # they saw water today…") that must never become a card definition.
+    claims = [c for c in claims if c.strip() and _teachable_fact(c)]
 
     raw_terms: list[Any] = list(clg.get("vocabulary") or [])
     for c in clg.get("core_concepts") or []:
@@ -533,14 +544,26 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
     long_q = []
     for i, concept in enumerate(concepts[:4] or [{"name": topic}]):
         name = str(concept.get("name") or topic)
-        # Model answer = the lesson's own facts about this concept, so
-        # "Show Answer" teaches content — never marking advice for teachers.
-        support = [t for t in pool if name.lower() in t.lower()][:3]
-        if not support and pool:
-            start = min(i, len(pool) - 1)
-            support = pool[start : start + 2]
+        # An 8-mark model answer must be substantial: the concept's own
+        # explanation, every lesson fact that mentions it, related lesson facts
+        # for context, and a closing sentence that ties it back to the topic.
+        direct = [t for t in pool if name.lower() in t.lower()]
+        context_facts = [t for t in pool if t not in direct]
         explanation = str(concept.get("explanation") or "").strip()
-        answer_parts = ([explanation] if explanation else []) + support
+        answer_parts: list[str] = []
+        seen_parts: set[str] = set()
+        for part in ([explanation] if explanation else []) + direct[:4] + context_facts[:2]:
+            key = part.strip().lower()
+            if key and key not in seen_parts:
+                seen_parts.add(key)
+                answer_parts.append(part)
+            if len(answer_parts) >= 5:
+                break
+        if answer_parts:
+            answer_parts.append(
+                f"Together, these points show how {name} fits into {topic} "
+                f"and why it matters in this lesson."
+            )
         long_q.append(
             {
                 "question": f"Explain '{name}' in detail with examples from the lesson.",

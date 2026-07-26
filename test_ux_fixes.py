@@ -227,19 +227,19 @@ def test_fill_blank_rejects_off_topic_answers():
     assert st["fill_blank_answers"][0].lower() != "radius"
 
 
-def test_indian_voices_present():
-    from audio_learning import VOICE_OPTIONS
+def test_two_plain_voice_labels():
+    # Product decision: exactly two voices, labelled only "Female" and "Male".
+    from audio_learning import DEFAULT_VOICE, VOICE_OPTIONS
 
-    assert "Warm Female (Indian)" in VOICE_OPTIONS
-    assert "Warm Male (Indian)" in VOICE_OPTIONS
-    assert "en-in" in VOICE_OPTIONS["Warm Female (Indian)"]["hints"]
+    assert set(VOICE_OPTIONS.keys()) == {"Female", "Male"}
+    assert DEFAULT_VOICE == "Female"
 
 
 def test_male_voice_avoids_female():
     from audio_learning import VOICE_OPTIONS
 
-    assert "female" in VOICE_OPTIONS["Warm Male (Indian)"]["avoid"]
-    assert "male" not in VOICE_OPTIONS["Warm Male (Indian)"]["hints"]
+    assert "female" in VOICE_OPTIONS["Male"]["avoid"]
+    assert "male" in VOICE_OPTIONS["Male"]["hints"]
 
 
 def test_voices_have_instructions():
@@ -425,12 +425,7 @@ def test_sanitize_builds_multiple_self_test_questions():
 
 
 def test_warm_voices_only():
-    assert set(VOICE_OPTIONS.keys()) == {
-        "Warm Female (International)",
-        "Warm Female (Indian)",
-        "Warm Male (International)",
-        "Warm Male (Indian)",
-    }
+    assert set(VOICE_OPTIONS.keys()) == {"Female", "Male"}
 
 
 def test_split_sentences_minimum():

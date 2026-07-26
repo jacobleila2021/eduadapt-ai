@@ -195,12 +195,35 @@ def compose_vocabulary_page(
             )
         )
 
-    # Do not pad with topic-token junk; quality over quota
+    # Do not pad with topic-token junk; quality over quota.
+    # A card whose meaning is a placeholder ("EARTH is an important idea in…")
+    # teaches nothing and poisons flashcards, matching, and fill-blanks —
+    # drop it rather than show a wrong meaning.
+    def _real_meaning(definition: str) -> bool:
+        low = (definition or "").lower()
+        return bool(low.strip()) and not any(
+            p in low
+            for p in (
+                "is an important idea in",
+                "is a key idea in",
+                "find where the lesson explains",
+            )
+        )
+
+    solid = [c for c in cards if _real_meaning(c.definition)]
+    if len(solid) >= 3:
+        cards = solid
+
     word_wall = [c.to_word_wall_row() for c in cards]
     flashcards = [
         {
             "front": c.term,
-            "back": f"{c.definition} | Example: {c.example_sentence}",
+            "back": (
+                f"{c.definition} | Example: {c.example_sentence}"
+                if c.example_sentence
+                and c.example_sentence.strip().lower() != c.definition.strip().lower()
+                else c.definition
+            ),
         }
         for c in cards
     ]
@@ -231,10 +254,14 @@ def compose_vocabulary_page(
         }
         for c in cards
     ]
-    fill_blanks = [
-        f"Complete: ________ — {_blank_out(c.definition, c.term)}"
-        for c in cards[:8]
-    ]
+    def _fill_line(c: VocabularyCard) -> str:
+        # Exactly ONE blank per question. When the term appears inside its own
+        # definition, blank it there; otherwise put a single blank up front.
+        if re.search(re.escape(c.term), c.definition, re.IGNORECASE):
+            return f"Complete: {_blank_out(c.definition, c.term)}"
+        return f"Complete: ________ — {c.definition}"
+
+    fill_blanks = [_fill_line(c) for c in cards[:8]]
     fill_answers = [c.term for c in cards[:8]]
     reference_chart = [
         {

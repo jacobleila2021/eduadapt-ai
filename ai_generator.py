@@ -33,6 +33,7 @@ from knowledge.prompts import (
     BOARD_EXAM_READINESS_RULES,
     BULLET_SECTION_RULES,
     CLASSROOM_TEACHING_RULES,
+    SELF_STUDY_TEACHING_RULES,
     DEPTH_RULES,
     DIFFERENTIATION_RULES,
     ENGINE_RULES,
@@ -160,7 +161,31 @@ def _lesson_prompt(
 
     classroom_policy = ""
     if adaptation_id in CLASSROOM_LESSON_KEYS:
-        classroom_policy = f"{CLASSROOM_TEACHING_RULES}\n{BOARD_EXAM_READINESS_RULES}"
+        # Only the Teacher version keeps classroom-delivery style; every
+        # student adaptation is learner self-study theory (product decision).
+        teaching_rules = (
+            CLASSROOM_TEACHING_RULES
+            if adaptation_id == "teacher"
+            else SELF_STUDY_TEACHING_RULES
+        )
+        classroom_policy = f"{teaching_rules}\n{BOARD_EXAM_READINESS_RULES}"
+
+    if adaptation_id in {"teacher", "parent"}:
+        section_skeleton = """    {"title": "Learning Goal", "body": "120+ words — what students will be able to do", "box": "teal"},
+    {"title": "Meristematic Tissue", "body": "120+ words teachable classroom segment", "box": "blue"},
+    {"title": "Permanent Tissue", "body": "120+ words teachable classroom segment", "box": "blue"},
+    {"title": "Guided Practice", "body": "worked examples with the class", "box": "green"},
+    {"title": "Independent Practice", "body": "questions students complete alone", "box": "green"},
+    {"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"},
+    {"title": "Summary", "body": "recap all key points for revision", "box": "orange"}"""
+    else:
+        section_skeleton = """    {"title": "What You Will Learn", "body": "120+ words written to the student — the ideas you will master", "box": "teal"},
+    {"title": "Meristematic Tissue", "body": "120+ words of clear self-study theory explaining this concept to the student", "box": "blue"},
+    {"title": "Permanent Tissue", "body": "120+ words of clear self-study theory explaining this concept to the student", "box": "blue"},
+    {"title": "Worked Examples", "body": "step-by-step examples the student can follow alone", "box": "green"},
+    {"title": "Practice On Your Own", "body": "questions the student answers alone, with answers to self-check", "box": "green"},
+    {"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"},
+    {"title": "Summary", "body": "recap all key points for revision", "box": "orange"}"""
 
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 
@@ -169,13 +194,7 @@ Return ONLY valid JSON with a single top-level key "{adaptation_id}" whose value
   "big_idea": "clear summary sentence",
 {diagram_fields}
   "sections": [
-    {{"title": "Learning Goal", "body": "120+ words — what students will be able to do", "box": "teal"}},
-    {{"title": "Meristematic Tissue", "body": "120+ words teachable classroom segment", "box": "blue"}},
-    {{"title": "Permanent Tissue", "body": "120+ words teachable classroom segment", "box": "blue"}},
-    {{"title": "Guided Practice", "body": "worked examples with the class", "box": "green"}},
-    {{"title": "Independent Practice", "body": "questions students complete alone", "box": "green"}},
-    {{"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"}},
-    {{"title": "Summary", "body": "recap all key points for revision", "box": "orange"}}
+{section_skeleton}
   ],
   "visual_summary": [
     {{"icon": "🟦", "color_name": "Topic", "idea": "..."}},
@@ -454,15 +473,15 @@ def _fallback_vocabulary(context: dict) -> dict:
             for w in word_wall[:8]
         ],
         "self_test": {
-            # Hide the answer term inside the clue — a fill blank must never
-            # display its own answer.
+            # Exactly ONE blank per question, and the blank must never display
+            # its own answer: blank the term inside its definition when present,
+            # otherwise ask for the word with a single trailing blank.
             "fill_blanks": [
                 re.sub(
-                    re.escape(w["term"]),
-                    "________",
-                    f"{w['definition'].rstrip('.')}. The vocabulary word is ________.",
-                    flags=re.IGNORECASE,
+                    re.escape(w["term"]), "________", w["definition"], flags=re.IGNORECASE
                 )
+                if re.search(re.escape(w["term"]), w["definition"], re.IGNORECASE)
+                else f"{w['definition'].rstrip('.')}. The vocabulary word is ________."
                 for w in word_wall[: min(6, len(word_wall))]
             ],
             "fill_blank_answers": [w["term"] for w in word_wall[: min(6, len(word_wall))]],
