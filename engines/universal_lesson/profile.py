@@ -46,6 +46,9 @@ _GENERIC_CONCEPT_WORDS = {
     "although", "though", "however", "therefore", "every", "always", "often",
     "usually", "sometimes", "powered", "formed", "heated", "cooled",
     "released", "collected", "known", "seen", "used", "found",
+    # number words ("four stages") are counts, not concepts
+    "zero", "once", "twice", "three", "four", "five", "seven", "eight",
+    "nine", "first", "second", "third", "fourth", "fifth", "many", "several",
 }
 
 _SKILL_VERBS = {
@@ -210,21 +213,30 @@ def build_universal_lesson_profile(
 
     word_rows: list[tuple[str, str]] = []
     bigram_rows: list[tuple[str, str]] = []
+    first_seen: dict[str, int] = {}
+    token_pos = 0
     for block in blocks:
         block_id = str(block.get("block_id") or "")
-        # Tokenize EVERY word (including short ones) so bigram adjacency is
-        # true adjacency in the source — dropping "on" from "water on Earth"
-        # previously invented the junk phrase "water earth".
-        tokens = [
-            w.lower()[:-2] if w.lower().endswith("'s") else w.lower()
-            for w in re.findall(r"\b[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\b", str(block["text"]))
-        ]
-        for word in tokens:
-            if _concept_word(word):
-                word_rows.append((word, block_id))
-        for first, second in zip(tokens, tokens[1:]):
-            if _concept_word(first) and _concept_word(second):
-                bigram_rows.append((f"{first} {second}", block_id))
+        # Phrases may only pair words that are truly adjacent in the source:
+        # split on punctuation first, otherwise the list "evaporation,
+        # condensation, precipitation" invents junk phrases like
+        # "evaporation condensation". Tokenize EVERY word (including short
+        # ones) so "water on Earth" never collapses into "water earth".
+        for segment in re.split(r"[.,;:!?()\[\]{}\n\r•|—–]+", str(block["text"])):
+            tokens = [
+                w.lower()[:-2] if w.lower().endswith("'s") else w.lower()
+                for w in re.findall(r"\b[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\b", segment)
+            ]
+            for offset, word in enumerate(tokens):
+                if _concept_word(word):
+                    word_rows.append((word, block_id))
+                    first_seen.setdefault(word, token_pos + offset)
+            for offset, (first, second) in enumerate(zip(tokens, tokens[1:])):
+                if _concept_word(first) and _concept_word(second):
+                    phrase = f"{first} {second}"
+                    bigram_rows.append((phrase, block_id))
+                    first_seen.setdefault(phrase, token_pos + offset)
+            token_pos += len(tokens)
     counts = Counter(word for word, _ in word_rows)
     bigram_counts = Counter(phrase for phrase, _ in bigram_rows)
 
@@ -238,7 +250,13 @@ def build_universal_lesson_profile(
     single_terms = [
         word for word, _ in counts.most_common(30) if word not in covered_words
     ]
-    top_terms = phrase_terms + single_terms
+    # Select by importance (frequency), then present in the order the source
+    # teaches them — so diagrams and questions follow the lesson's own flow
+    # (evaporation → condensation → precipitation), not raw word counts.
+    top_terms = sorted(
+        (phrase_terms + single_terms)[:15],
+        key=lambda t: first_seen.get(t, 10**9),
+    )
 
     def _term_refs(term: str) -> list[str]:
         rows = bigram_rows if " " in term else word_rows
@@ -273,9 +291,14 @@ def build_universal_lesson_profile(
     claim_index = 0
 
     for block in blocks:
-        block_text = str(block["text"])
+        # Hard-wrapped source lines (PDF/txt) are NOT sentence boundaries —
+        # splitting on single newlines produced mid-sentence claim fragments
+        # ("…precipitation and"). Join wrapped lines; only blank lines and
+        # end punctuation separate claims.
+        block_text = re.sub(r"\n{2,}", "\u2029", str(block["text"]))
+        block_text = re.sub(r"[ \t]*\n[ \t]*", " ", block_text)
         block_id = str(block.get("block_id") or "")
-        for sentence in re.split(r"(?<=[.!?])\s+|\n+", block_text):
+        for sentence in re.split(r"(?<=[.!?])\s+|\u2029+", block_text):
             sentence = sentence.strip()
             if len(sentence) < 8:
                 continue

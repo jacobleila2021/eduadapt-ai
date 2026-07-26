@@ -212,9 +212,19 @@ def test_adaptive_versions_are_distinct():
     parent = pkg["adaptations"]["parent"]
     assert parent.get("sections")
     assert dyslexia.get("sections")
+
+    def _first_teaching(page):
+        """First section that is not the intentionally-shared must-learn primer."""
+        for sec in page.get("sections") or [{}]:
+            if str(sec.get("role") or "") != "concept_primer":
+                return sec
+        return {}
+
     # Bodies should differ from standard for the dyslexia intro
-    assert (dyslexia.get("sections") or [{}])[0].get("title") != (standard.get("sections") or [{}])[0].get("title") or (
-        dyslexia.get("sections") or [{}])[0].get("body") != (standard.get("sections") or [{}])[0].get("body")
+    std_first, dys_first = _first_teaching(standard), _first_teaching(dyslexia)
+    assert dys_first.get("title") != std_first.get("title") or dys_first.get(
+        "body"
+    ) != std_first.get("body")
     rewritten = compose_adaptive_version(standard, "ell", vocabulary_terms=["force", "pressure"])
     assert "Key Words" in str(rewritten.get("sections")) or "Important words" in str(rewritten.get("sections"))
 

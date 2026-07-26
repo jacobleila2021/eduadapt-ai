@@ -217,10 +217,9 @@ def build_student_definition(term: str, academic: str, *, topic: str = "") -> st
             return first.strip()
         return academic
     topic = clean_topic(topic, fallback="this topic")
-    return (
-        f"{display} is an important idea in {topic}. "
-        f"Say what {display.lower()} means in one clear sentence using the lesson diagram."
-    )
+    # A meaning must read as a meaning — never a teaching instruction, and
+    # never a reference to a diagram the vocabulary page does not show.
+    return f"{display} is a key idea in {topic} — find where the lesson explains it."
 
 
 def normalize_vocab_items(

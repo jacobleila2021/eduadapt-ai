@@ -18,6 +18,6 @@ chempy>=0.8.0
 schemdraw>=0.17
 # Phase 2 Knowledge Layer (NCERT pilot + RAG)
 chromadb>=0.5.0
-# deploy rebuild: v3.1.7-content-quality (force Streamlit Cloud rebuild)
+# deploy rebuild: v3.1.8-learner-first (force Streamlit Cloud rebuild)
 # Beta readiness — optional nicer PDF typography (fallback PDF always available)
 fpdf2>=2.7.0,<3.0.0

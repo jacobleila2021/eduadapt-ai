@@ -249,7 +249,7 @@ def _rewrite_summary(
     for sec in sections:
         role = str(sec.get("role") or "")
         body = str(sec.get("body") or "").strip()
-        if role in {"summary", "revision"}:
+        if role in {"summary", "revision", "concept_primer"}:
             continue
         for sent in re.split(r"(?<=[.!?])\s+", body):
             s = sent.strip()
@@ -314,6 +314,81 @@ def _rewrite_summary(
                 "source_refs": list(parent_refs),
             }
         )
+    return out
+
+
+def ensure_concept_primer(
+    page: dict[str, Any],
+    *,
+    board: Mapping[str, Any],
+    topic: str,
+) -> dict[str, Any]:
+    """Open every lesson page with the condensed must-learn concepts.
+
+    Each core concept is explained in one source-grounded sentence BEFORE any
+    question or activity, and narration reads this first — restoring the
+    v2.x learner experience the product is benchmarked against.
+    """
+    sections = [s for s in (page.get("sections") or []) if isinstance(s, dict)]
+    if any(str(s.get("role") or "") == "concept_primer" for s in sections):
+        return page
+
+    def _teaches(claim: str) -> bool:
+        """Only complete teaching sentences may explain a concept — never
+        titles, wrapped-line fragments, or document metadata rows."""
+        c = claim.strip()
+        if len(c.split()) < 6 or not c.endswith((".", "!", "?")):
+            return False
+        return not re.search(
+            r"(?i)\bgrade\s*\d|\bmarks?\s*[:\d]|\btime\s*:|\bminutes\b|\|", c
+        )
+
+    claims = [str(c) for c in (board.get("verified_claims") or []) if str(c).strip()]
+    lines: list[str] = []
+    used_claims: set[str] = set()
+    for concept in (board.get("concepts") or [])[:6]:
+        if isinstance(concept, dict):
+            name = str(concept.get("name") or concept.get("concept") or "").strip()
+            explanation = str(concept.get("explanation") or "").strip()
+        else:
+            name, explanation = str(concept).strip(), ""
+        if not name:
+            continue
+        if not explanation or not _teaches(explanation):
+            low = name.lower()
+            explanation = next(
+                (
+                    c
+                    for c in claims
+                    if low in c.lower() and c not in used_claims and _teaches(c)
+                ),
+                "",
+            )
+        explanation = explanation.strip()
+        if not explanation or prompt_leak_hits(explanation):
+            continue
+        used_claims.add(explanation)
+        display = name if len(name) > 30 else name[:1].upper() + name[1:]
+        lines.append(f"• {display} — {explanation}")
+    if len(lines) < 2:
+        lines = [
+            f"• {c}" for c in claims if _teaches(c) and not prompt_leak_hits(c)
+        ][:4]
+    if len(lines) < 2:
+        return page
+
+    primer = {
+        "title": "Must-Learn Ideas",
+        "role": "concept_primer",
+        "box": "summary",
+        "body": (
+            f"Before you begin, make sure you can say these key ideas about "
+            f"{topic} in your own words:\n" + "\n".join(lines)
+        ),
+        "source_refs": _section_source_refs(sections),
+    }
+    out = dict(page)
+    out["sections"] = [primer] + sections
     return out
 
 
@@ -441,6 +516,11 @@ def _break_clone_paragraphs(adaptations: dict[str, Any]) -> dict[str, Any]:
         new_sections = []
         for idx, sec in enumerate(sections):
             row = dict(sec)
+            # The must-learn primer is a deliberate shared anchor on every
+            # page (same condensed concepts) — never rewrite it as a clone.
+            if str(row.get("role") or "") == "concept_primer":
+                new_sections.append(row)
+                continue
             body = str(row.get("body") or "").rstrip()
             norm = " ".join(body.lower().split())
             if len(norm) > 80 and norm in seen and seen[norm] != key:
@@ -510,6 +590,10 @@ def apply_content_fidelity(
         page["sections"] = _rewrite_summary(
             sections, topic=topic, has_diagram=page_has_diagram
         )
+        if key != "worksheet":
+            # Every lesson page opens with the condensed must-learn concepts
+            # before any question or activity (v2.x learner experience).
+            page = ensure_concept_primer(page, board=board, topic=topic)
         if key not in {"parent", "teacher"}:
             page = ensure_diagram_teaching(page, topic=topic)
         if key in {"worksheet", "exam", "standard"}:
@@ -585,6 +669,9 @@ def ensure_classroom_content_fidelity(
                     if not isinstance(sec, dict):
                         continue
                     row = dict(sec)
+                    if str(row.get("role") or "") == "concept_primer":
+                        sections.append(row)
+                        continue
                     body = str(row.get("body") or "").rstrip()
                     fingerprint = f"[{key}:{idx + 1}]"
                     if fingerprint not in body:
@@ -629,6 +716,9 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
         paras = set()
         for sec in value.get("sections") or []:
             if isinstance(sec, dict):
+                # The shared must-learn primer is intentional, not a clone.
+                if str(sec.get("role") or "") == "concept_primer":
+                    continue
                 norm = " ".join(str(sec.get("body") or "").lower().split())
                 if len(norm) > 80:
                     paras.add(norm)

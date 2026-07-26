@@ -213,19 +213,26 @@ def compose_vocabulary_page(
         }
         for c in cards
     ]
+    def _blank_out(text: str, term: str) -> str:
+        """Case-insensitively hide every occurrence of the answer term —
+        a fill-blank question must never contain its own answer."""
+        if not term:
+            return text
+        return re.sub(re.escape(term), "________", text, flags=re.IGNORECASE)
+
     practice = [
         {
             "term": c.term,
             "sentence_blank": (
-                c.example_sentence.replace(c.term, "________", 1)
-                if c.term in c.example_sentence
+                _blank_out(c.example_sentence, c.term)
+                if re.search(re.escape(c.term), c.example_sentence, re.IGNORECASE)
                 else f"Write one sentence that correctly uses ________ ({c.term})."
             ),
         }
         for c in cards
     ]
     fill_blanks = [
-        f"Complete: ________ — {c.definition}"
+        f"Complete: ________ — {_blank_out(c.definition, c.term)}"
         for c in cards[:8]
     ]
     fill_answers = [c.term for c in cards[:8]]

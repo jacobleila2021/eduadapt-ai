@@ -454,8 +454,15 @@ def _fallback_vocabulary(context: dict) -> dict:
             for w in word_wall[:8]
         ],
         "self_test": {
+            # Hide the answer term inside the clue — a fill blank must never
+            # display its own answer.
             "fill_blanks": [
-                f"{w['definition'].rstrip('.')}. The vocabulary word is ________."
+                re.sub(
+                    re.escape(w["term"]),
+                    "________",
+                    f"{w['definition'].rstrip('.')}. The vocabulary word is ________.",
+                    flags=re.IGNORECASE,
+                )
                 for w in word_wall[: min(6, len(word_wall))]
             ],
             "fill_blank_answers": [w["term"] for w in word_wall[: min(6, len(word_wall))]],
@@ -1557,6 +1564,31 @@ def generate_adaptations(
                 f"{universal_profile.get('topic') or 'the uploaded lesson'}."
             )
             worksheet["diagram_question"] = diagram_question
+
+        # The Must-Learn primer always opens every lesson page — later visual/
+        # practice injectors may prepend sections, but the learner (and the
+        # narration) must meet the condensed concepts first.
+        for _pk, _pv in merged.items():
+            if str(_pk).startswith("_") or not isinstance(_pv, dict):
+                continue
+            _secs = _pv.get("sections")
+            if not isinstance(_secs, list):
+                continue
+            _primers = [
+                s
+                for s in _secs
+                if isinstance(s, dict) and str(s.get("role") or "") == "concept_primer"
+            ]
+            if _primers:
+                _rest = [
+                    s
+                    for s in _secs
+                    if not (
+                        isinstance(s, dict)
+                        and str(s.get("role") or "") == "concept_primer"
+                    )
+                ]
+                _pv["sections"] = [_primers[0]] + _rest
 
         # Final provenance stamp — guarantee every teaching node created by any
         # authoring stage (publisher_author, content fidelity, diagram teaching,

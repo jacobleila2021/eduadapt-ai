@@ -465,6 +465,14 @@ def _prepare_self_test(self_test: dict, word_wall: list[dict], *, topic: str = "
             resolved = fallback
         answers.append(resolved or "")
 
+    # Final guard: a fill-blank sentence must never contain its own answer
+    # (e.g. "Complete: ________ — The water cycle is…" with answer "water cycle").
+    for i, (sentence, answer) in enumerate(zip(rebuilt, answers)):
+        if answer and re.search(re.escape(answer), sentence, re.IGNORECASE):
+            rebuilt[i] = re.sub(
+                re.escape(answer), "________", sentence, flags=re.IGNORECASE
+            )
+
     data["fill_blanks"] = rebuilt
     data["fill_blank_answers"] = answers
     return data
