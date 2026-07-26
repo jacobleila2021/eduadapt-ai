@@ -71,6 +71,36 @@ def test_valid_lesson_rejects_thin_classroom_condensation():
     assert _valid_lesson(rich, classroom=True)
 
 
+def test_valid_lesson_accepts_master_lesson_contract_page():
+    """Master Lessons use many focused sections — must not be rejected as thin."""
+    from engines.lesson_composition_engine.canonical import build_canonical_lesson
+
+    board = {
+        "topic": "The Water Cycle",
+        "subject": "science",
+        "verified_claims": [
+            "The water cycle is the continuous movement of water between the earth and the sky.",
+            "Evaporation happens when the sun heats water in rivers, lakes and seas.",
+            "Condensation forms clouds when water vapour cools high in the sky.",
+            "Precipitation returns water to the ground as rain, snow or hail.",
+            "Collection gathers water in rivers, lakes and oceans so the cycle can begin again.",
+        ],
+        "concepts": ["evaporation", "condensation", "precipitation", "collection"],
+        "misconceptions": [
+            {"label": "clouds are smoke", "correction": "clouds are condensed water vapour."}
+        ],
+        "learning_goals": ["Explain the stages of the water cycle."],
+        "examples": ["Rain filling a village pond after a hot week is the water cycle at work."],
+        "assessment_objectives": ["Explain each stage of the water cycle in order."],
+    }
+    page = build_canonical_lesson(
+        board,
+        flowchart_svg="<svg xmlns='http://www.w3.org/2000/svg'></svg>",
+    )
+    assert page["lce"]["master_lesson"] is True
+    assert _valid_lesson(page, classroom=True)
+
+
 def test_valid_lesson_rejects_stub_bullets_in_classroom_mode():
     bullets = "\n".join(f"- word{i}" for i in range(8))
     lesson = {

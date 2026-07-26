@@ -345,10 +345,23 @@ def _has_exam_practice_section(sections: list) -> bool:
         "board practice",
         "exam focus",
         "board exam",
+        "exam questions",
+        "practice questions",
+        "hots questions",
+        "assessment check",
     )
+    exam_roles = {
+        "practice_question",
+        "exam_question",
+        "hots_question",
+        "assessment",
+    }
     for section in sections:
         if not isinstance(section, dict):
             continue
+        role = str(section.get("role") or "").lower()
+        if role in exam_roles:
+            return True
         title = str(section.get("title") or "").lower()
         if any(m in title for m in markers):
             return True
@@ -367,6 +380,20 @@ def _stub_bullet_ratio(body: str) -> float:
     return stubby / len(bullets)
 
 
+def _is_master_lesson_page(lesson: dict) -> bool:
+    """True when the page is (or inherits) the Master Lesson Contract."""
+    lce = lesson.get("lce") if isinstance(lesson.get("lce"), dict) else {}
+    if lce.get("master_lesson") or lce.get("derived_from_canonical") or lce.get("master_lesson_inherited"):
+        return True
+    roles = {
+        str(s.get("role") or "")
+        for s in (lesson.get("sections") or [])
+        if isinstance(s, dict)
+    }
+    required = {"essential_learning", "concept", "exam_question", "exit_ticket", "summary"}
+    return required.issubset(roles)
+
+
 def _valid_lesson(lesson: dict, *, classroom: bool = False) -> bool:
     sections = lesson.get("sections") or []
     # Visuals are attached deterministically after generation. Requiring a
@@ -381,6 +408,54 @@ def _valid_lesson(lesson: dict, *, classroom: bool = False) -> bool:
     aggregate = " ".join(bodies)
     if _word_count(aggregate) < 500:
         return False
+
+    # Master Lesson Contract pages intentionally use many focused sections
+    # (Must Know, Exit Ticket, Exam, HOTS, …). Rejecting them for "thin
+    # sections" forced a source/LLM fallback and broke curriculum fidelity.
+    if _is_master_lesson_page(lesson):
+        roles = {
+            str(s.get("role") or "")
+            for s in sections
+            if isinstance(s, dict)
+        }
+        required = {
+            "objective",
+            "essential_learning",
+            "concept",
+            "summary",
+            "practice_question",
+            "exam_question",
+        }
+        if not required.issubset(roles):
+            return False
+        # Stub-bullet check only on teaching prose — revision/exit checklists
+        # are intentionally short one-liners.
+        skip_stub_roles = {
+            "revision",
+            "exit_ticket",
+            "essential_learning",
+            "presentation_frame",
+            "presentation_toolkit",
+            "presentation_bridge",
+            "presentation_close",
+            "presentation_signature",
+            "visual_support",
+            "auditory_support",
+            "language_support",
+            "decoding_support",
+            "chunk_support",
+            "routine_support",
+            "teacher_support",
+            "parent_support",
+        }
+        for sec, body in zip(sections, bodies):
+            if not isinstance(sec, dict):
+                continue
+            if str(sec.get("role") or "") in skip_stub_roles:
+                continue
+            if _stub_bullet_ratio(body) > 0.5:
+                return False
+        return _has_exam_practice_section(sections) or len(lesson.get("practice") or []) >= 4
 
     thin_sections = 0
     for body in bodies:
