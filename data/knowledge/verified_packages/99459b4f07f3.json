@@ -1,0 +1,3403 @@
+{
+  "schema_version": "3.0.0",
+  "package_id": "99459b4f07f3",
+  "created_at": "2026-07-26T09:59:40.116669+00:00",
+  "lesson_metadata": {
+    "topic": null,
+    "source_chars": 47,
+    "source_id": null,
+    "curriculum_status": "unknown",
+    "board": null,
+    "grade": null,
+    "subject": null
+  },
+  "source": {
+    "schema_version": "3.0.0",
+    "source_id": "src_21499de4fefa24d1",
+    "source_hash": "21499de4fefa24d1efe33c4cae6493e5dd3de4f0cc6a498a15a3bc835c92f51b",
+    "filename": "lesson.txt",
+    "detected_mime": "text/plain",
+    "detected_format": "txt",
+    "status": "readable",
+    "blocks": [
+      {
+        "block_id": "blk_21499de4fe_00000",
+        "text": "Plant cell has chloroplast. Solve 2*x + 3 = 11.",
+        "kind": "prose",
+        "page": 1,
+        "slide": null,
+        "order": 0,
+        "extraction_method": "text",
+        "ocr_confidence": null,
+        "source_ref": "lesson.txt#page-1",
+        "metadata": {}
+      }
+    ],
+    "text": "Plant cell has chloroplast. Solve 2*x + 3 = 11.",
+    "extraction_methods": [
+      "text"
+    ],
+    "ocr_used": false,
+    "ocr_confidence": null,
+    "readable_content_score": 0.275,
+    "language": "en",
+    "warnings": [],
+    "errors": [],
+    "user_metadata": {},
+    "curriculum_resolution": {
+      "status": "unknown",
+      "curriculum": null,
+      "confidence": 0.0,
+      "provenance": "not_evaluated"
+    },
+    "ok": true
+  },
+  "universal_profile": {
+    "schema_version": "3.0.0",
+    "source_id": "src_21499de4fefa24d1",
+    "title": "Plant cell has chloroplast. Solve 2*x + 3 = 11.",
+    "topic": "Plant cell has chloroplast",
+    "concepts": [
+      {
+        "concept": "plant",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "frequency": 1
+      },
+      {
+        "concept": "cell",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "frequency": 1
+      },
+      {
+        "concept": "chloroplast",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "frequency": 1
+      },
+      {
+        "concept": "solve",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "frequency": 1
+      }
+    ],
+    "skills": [
+      {
+        "skill": "solve",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ]
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "plant",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ]
+      },
+      {
+        "term": "cell",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ]
+      },
+      {
+        "term": "chloroplast",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ]
+      },
+      {
+        "term": "solve",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ]
+      }
+    ],
+    "learning_objectives": [
+      {
+        "objective": "Explain plant using evidence from the lesson.",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain cell using evidence from the lesson.",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain chloroplast using evidence from the lesson.",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain solve using evidence from the lesson.",
+        "source_refs": [
+          "blk_21499de4fe_00000"
+        ],
+        "status": "pedagogically_inferred"
+      }
+    ],
+    "misconceptions": [],
+    "examples": [],
+    "assessment_opportunities": [],
+    "visual_opportunities": [],
+    "difficulty": {
+      "band": "introductory",
+      "score": 10.05,
+      "average_sentence_words": 3.0,
+      "average_word_characters": 4.83
+    },
+    "age_estimate": {
+      "band": "8-11",
+      "method": "source_readability_heuristic",
+      "confidence": 0.55
+    },
+    "language": "en",
+    "curriculum_resolution": {
+      "status": "unknown",
+      "curriculum": null,
+      "confidence": 0.0,
+      "provenance": "no_source_marker"
+    },
+    "claim_ledger": [
+      {
+        "claim_id": "claim_00001",
+        "text": "Plant cell has chloroplast.",
+        "source_block_ids": [
+          "blk_21499de4fe_00000"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00002",
+        "text": "Solve 2*x + 3 = 11.",
+        "source_block_ids": [
+          "blk_21499de4fe_00000"
+        ],
+        "authority": "uploaded_source"
+      }
+    ],
+    "grounding_mode": "uploaded_source"
+  },
+  "curriculum": {
+    "resolution": {},
+    "enrichment": {
+      "status": "no_hits",
+      "required": false
+    },
+    "citations": [],
+    "rag_hits": [],
+    "exam_bundle": {}
+  },
+  "verified_concepts": [],
+  "verified_stem_outputs": [],
+  "verified_visuals": [],
+  "biology_figures": [],
+  "accessibility_adaptations": {},
+  "assessment_assets": {
+    "has_vocabulary": false,
+    "has_worksheet": false,
+    "official_mcqs": []
+  },
+  "visual_assets": [],
+  "analytics_metadata": {
+    "ok": true,
+    "payload": {
+      "report": {
+        "complexity_score": 37,
+        "reading_level": "Grade 1",
+        "objective_count": 1,
+        "grade_source": "readability",
+        "stated_grade": null
+      },
+      "what_happened": {
+        "lesson": {
+          "complexity_score": 37,
+          "reading_level": "Grade 1",
+          "objective_count": 1,
+          "grade_source": "readability",
+          "stated_grade": null
+        },
+        "mastery": {
+          "mastered_count": 0,
+          "developing_count": 0,
+          "at_risk_count": 0,
+          "mastered": [],
+          "developing": [],
+          "at_risk": []
+        },
+        "engagement": {
+          "next_activity": {
+            "activity_type": "explore",
+            "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+            "source": "fallback"
+          },
+          "pathway_type": "mastery",
+          "streaks": {},
+          "xp": null
+        }
+      },
+      "why_it_happened": {
+        "misconceptions": [],
+        "learning_gaps": {
+          "has_gaps": false
+        },
+        "explainability": {
+          "decision_id": "path_4d4b94c6",
+          "decision_type": "pathway",
+          "choice": "mastery",
+          "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+          "evidence": [
+            {
+              "factor": "presentation_mode",
+              "value": "standard"
+            },
+            {
+              "factor": "step_count",
+              "value": 0
+            },
+            {
+              "factor": "accessibility_profiles",
+              "value": [
+                "standard"
+              ]
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.86,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        }
+      },
+      "what_is_likely_next": {
+        "risk_of_falling_behind": 0.15,
+        "probability_of_mastery": 0.4,
+        "recommended_intervention_timing": "monitor",
+        "revision_urgency": "low",
+        "assessment_readiness": false,
+        "engagement_decline_risk": 0.1,
+        "dropout_risk_indicator": {
+          "value": 0.1,
+          "note": "Educational engagement proxy only \u2014 not clinical"
+        },
+        "recommendation_confidence": 0.72,
+        "explanatory_factors": [
+          {
+            "factor": "at_risk_concepts",
+            "value": 0
+          },
+          {
+            "factor": "mastered_concepts",
+            "value": 0
+          },
+          {
+            "factor": "confidence",
+            "value": 0.5
+          },
+          {
+            "factor": "completion_rate",
+            "value": 0.5
+          },
+          {
+            "factor": "motivation",
+            "value": 0.5
+          }
+        ],
+        "explainability": {
+          "decision_id": "predict",
+          "decision_type": "prediction",
+          "choice": "monitor",
+          "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+          "evidence": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.72,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        },
+        "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+      },
+      "recommended_intervention": [
+        {
+          "recommendation_id": "rec_e7b9e625",
+          "audience": "student",
+          "title": "AI Tutor session on next activity",
+          "reason": "Targeted tutoring from ALE next activity",
+          "evidence": [
+            {
+              "next_activity": {
+                "activity_type": "explore",
+                "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                "source": "fallback"
+              }
+            }
+          ],
+          "confidence": 0.77,
+          "priority": 25,
+          "expected_outcome": "Clarify misconceptions with verified grounding",
+          "kind": "intervention"
+        }
+      ],
+      "recommendation_confidence": 0.72,
+      "supporting_evidence": [
+        {
+          "factor": "at_risk_concepts",
+          "value": 0
+        },
+        {
+          "factor": "mastered_concepts",
+          "value": 0
+        },
+        {
+          "factor": "confidence",
+          "value": 0.5
+        },
+        {
+          "factor": "completion_rate",
+          "value": 0.5
+        },
+        {
+          "factor": "motivation",
+          "value": 0.5
+        }
+      ],
+      "learner_analytics": {
+        "learner_id": "anonymous",
+        "learning_progress": {
+          "mastered_count": 0,
+          "developing_count": 0,
+          "at_risk_count": 0,
+          "mastered": [],
+          "developing": [],
+          "at_risk": []
+        },
+        "mastery_growth": {},
+        "curriculum_coverage": {
+          "matched_concepts": 0,
+          "learning_outcomes": 0,
+          "primary_concept_id": null
+        },
+        "competency_progression": [],
+        "accessibility_usage": {
+          "profiles": [
+            "standard"
+          ],
+          "supports": [],
+          "interface": {
+            "font": "system",
+            "font_size_px": 18,
+            "colour_theme": "default",
+            "contrast": "aa",
+            "line_spacing": 1.5,
+            "paragraph_spacing": 1.2,
+            "margins": "comfortable",
+            "reading_ruler": false,
+            "focus_mode": false,
+            "animation_reduction": false,
+            "keyboard_navigation": true,
+            "touch_targets": "standard",
+            "icon_size": "standard",
+            "toolbar_layout": "full",
+            "navigation_complexity": "standard",
+            "distraction_level": "low"
+          }
+        },
+        "reading_behaviour": {
+          "lesson_reading_level": "Grade 1",
+          "complexity_score": 37,
+          "reader_time_sec": null,
+          "scroll_depth": null,
+          "bookmarks": [],
+          "notes_count": 0,
+          "focus_mode": null,
+          "tts_usage": null,
+          "completion": null
+        },
+        "assessment_history": {
+          "exam_readiness": {},
+          "misconceptions": [],
+          "revision_plan": {}
+        },
+        "learning_confidence": {
+          "confidence": 0.5,
+          "band": "moderate",
+          "factors": [
+            {
+              "name": "baseline",
+              "value": 0.5,
+              "weight": 1.0
+            }
+          ]
+        },
+        "engagement": {
+          "next_activity": {
+            "activity_type": "explore",
+            "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+            "source": "fallback"
+          },
+          "pathway_type": "mastery",
+          "streaks": {},
+          "xp": null
+        },
+        "motivation": {
+          "quests": [],
+          "badges": [],
+          "motivation_level": 0.5
+        },
+        "study_consistency": {
+          "learning_streak": 0,
+          "completion_rate": 0.0
+        },
+        "ai_tutor_interactions": {
+          "modes": [
+            "socratic",
+            "guided_discovery",
+            "direct_instruction",
+            "worked_example",
+            "step_coaching",
+            "retrieval_practice",
+            "spaced_review",
+            "exam_prep",
+            "reflection",
+            "executive_function",
+            "parent_explanation",
+            "teacher_explanation"
+          ],
+          "verified_artifact_count": 0,
+          "adaptive_brief": {
+            "decision_id": "path_4d4b94c6",
+            "decision_type": "pathway",
+            "choice": "mastery",
+            "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+            "evidence": [
+              {
+                "factor": "presentation_mode",
+                "value": "standard"
+              },
+              {
+                "factor": "step_count",
+                "value": 0
+              },
+              {
+                "factor": "accessibility_profiles",
+                "value": [
+                  "standard"
+                ]
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              }
+            ],
+            "confidence": 0.86,
+            "teacher_override_allowed": true,
+            "overridden_by": null,
+            "override_reason": null
+          }
+        },
+        "recommended_next_steps": [],
+        "risk_indicators": {
+          "risk_of_failure": 0.15,
+          "risk_of_disengagement": 0.1,
+          "probability_of_mastery": 0.4,
+          "estimated_completion_time_min": 15,
+          "recommended_intervention_timing": "monitor",
+          "readiness_for_assessment": false,
+          "confidence": 0.72,
+          "explanatory_factors": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "explainability": {
+            "decision_id": "predict",
+            "decision_type": "prediction",
+            "choice": "monitor",
+            "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+            "evidence": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "confidence": 0.72,
+            "teacher_override_allowed": true,
+            "overridden_by": null,
+            "override_reason": null
+          },
+          "exam_readiness_ref": {}
+        },
+        "lesson_metadata": {
+          "complexity_score": 37,
+          "reading_level": "Grade 1",
+          "objective_count": 1,
+          "grade_source": "readability",
+          "stated_grade": null
+        },
+        "philosophy": {
+          "what": "Aggregated learner state from verified engines",
+          "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+          "policy": "insights_only_no_content_mutation"
+        }
+      },
+      "teacher_analytics": {
+        "class_overview": {
+          "size": 1,
+          "topic": "Plant cell has chloroplast"
+        },
+        "mastery_heatmaps": {},
+        "curriculum_coverage": {
+          "outcomes": 0,
+          "concepts": 0,
+          "graph_stats": {
+            "concepts": 19,
+            "outcomes": 5,
+            "edges": 11,
+            "cross_links": 13
+          }
+        },
+        "assessment_quality": {
+          "official_items": 0,
+          "exam_bundle_keys": [
+            "exemplar",
+            "previous_year",
+            "sample",
+            "competency",
+            "hots"
+          ],
+          "policy": "official_answers_only"
+        },
+        "accessibility_effectiveness": {},
+        "learning_gaps": {
+          "has_gaps": false
+        },
+        "common_misconceptions": [],
+        "students_requiring_intervention": [],
+        "students_ready_for_enrichment": [],
+        "lesson_effectiveness": {
+          "complexity_score": 37,
+          "reading_level": "Grade 1",
+          "objective_count": 1
+        },
+        "question_effectiveness": {
+          "note": "Requires longitudinal attempt data from AME store",
+          "bank_items_available": 0
+        },
+        "time_on_task": 0.0,
+        "assignment_completion": 0.0,
+        "explainability": {
+          "decision_id": "path_4d4b94c6",
+          "decision_type": "pathway",
+          "choice": "mastery",
+          "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+          "evidence": [
+            {
+              "factor": "presentation_mode",
+              "value": "standard"
+            },
+            {
+              "factor": "step_count",
+              "value": 0
+            },
+            {
+              "factor": "accessibility_profiles",
+              "value": [
+                "standard"
+              ]
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.86,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        }
+      },
+      "curriculum_analytics": {
+        "coverage_by_curriculum": {
+          "curriculum_id": "ncert_cbse_class8_science_v1",
+          "board": "CBSE",
+          "programme": "Secondary",
+          "grade": "8",
+          "subject": "Science",
+          "version": "1.0.0",
+          "language": "en",
+          "original_labels": {
+            "curriculum": "NCERT",
+            "edition": "NCERT Class VIII Science (pilot)"
+          }
+        },
+        "coverage_by_standard": [],
+        "bloom_distribution": {},
+        "dok_distribution": {},
+        "competency_completion": [],
+        "prerequisite_completion": {
+          "has_gaps": false
+        },
+        "concept_mastery_bindings": [],
+        "knowledge_gaps": {
+          "has_gaps": false
+        }
+      },
+      "mastery_analytics": {
+        "mastery_summary": {},
+        "learner_model_bands": {
+          "mastered": [],
+          "developing": [],
+          "at_risk": []
+        },
+        "exam_readiness": {},
+        "revision_effectiveness": {
+          "plan": {},
+          "spaced_repetition": []
+        },
+        "growth_over_time": {
+          "note": "Compare sequential AME mastery snapshots"
+        }
+      },
+      "assessment_analytics": {
+        "question_difficulty": "derived_from_item_metadata_when_attempts_exist",
+        "distractor_effectiveness": "requires_option_level_attempt_logs",
+        "common_misconceptions": [],
+        "mastery_trends": {},
+        "revision_effectiveness": {},
+        "assessment_reliability": {
+          "policy": "official_bank_keys_only"
+        },
+        "growth_over_time": {
+          "note": "Snapshot AME mastery_pct series"
+        }
+      },
+      "accessibility_analytics": {
+        "font_usage": "system",
+        "theme_usage": "default",
+        "tts_usage": false,
+        "reading_ruler": false,
+        "focus_mode": null,
+        "spacing_preferences": {
+          "line": 1.5,
+          "paragraph": 1.2
+        },
+        "accommodation_effectiveness": {
+          "supports": [],
+          "note": "Correlate support usage with mastery deltas longitudinally"
+        },
+        "support_adoption": [
+          "standard"
+        ],
+        "wcag_compliance_metrics": {
+          "target": "WCAG 2.2 AA",
+          "udl": "UDL 3.0",
+          "facts_immutable": true
+        }
+      },
+      "engagement_analytics": {
+        "daily_activity": {},
+        "weekly_activity": {},
+        "monthly_activity": {},
+        "session_length": 0.0,
+        "learning_streaks": {
+          "days": 0
+        },
+        "xp_growth": 0,
+        "quest_completion": [],
+        "motivation_trends": 0.5,
+        "consistency": 0.0
+      },
+      "ai_tutor_analytics": {
+        "questions_asked": null,
+        "hints_requested": null,
+        "conversation_length": null,
+        "concept_confusion": [],
+        "help_seeking_behaviour": [
+          "socratic",
+          "guided_discovery",
+          "direct_instruction",
+          "worked_example",
+          "step_coaching",
+          "retrieval_practice",
+          "spaced_review",
+          "exam_prep",
+          "reflection",
+          "executive_function",
+          "parent_explanation",
+          "teacher_explanation"
+        ],
+        "confidence_growth": {
+          "confidence": 0.5,
+          "band": "moderate",
+          "factors": [
+            {
+              "name": "baseline",
+              "value": 0.5,
+              "weight": 1.0
+            }
+          ]
+        },
+        "response_effectiveness": {
+          "grounding": "ENGINE_ARTIFACTS + RAG + CIE + AME \u2014 never general knowledge first",
+          "verified_artifact_count": 0
+        },
+        "session_history": []
+      },
+      "intervention_analytics": {
+        "active_interventions": [],
+        "enrichment": [],
+        "teacher_recs": [],
+        "success_tracking": {
+          "note": "Compare mastery before/after intervention_id in AME evidence"
+        }
+      },
+      "predictions": {
+        "risk_of_falling_behind": 0.15,
+        "probability_of_mastery": 0.4,
+        "recommended_intervention_timing": "monitor",
+        "revision_urgency": "low",
+        "assessment_readiness": false,
+        "engagement_decline_risk": 0.1,
+        "dropout_risk_indicator": {
+          "value": 0.1,
+          "note": "Educational engagement proxy only \u2014 not clinical"
+        },
+        "recommendation_confidence": 0.72,
+        "explanatory_factors": [
+          {
+            "factor": "at_risk_concepts",
+            "value": 0
+          },
+          {
+            "factor": "mastered_concepts",
+            "value": 0
+          },
+          {
+            "factor": "confidence",
+            "value": 0.5
+          },
+          {
+            "factor": "completion_rate",
+            "value": 0.5
+          },
+          {
+            "factor": "motivation",
+            "value": 0.5
+          }
+        ],
+        "explainability": {
+          "decision_id": "predict",
+          "decision_type": "prediction",
+          "choice": "monitor",
+          "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+          "evidence": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.72,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        },
+        "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+      },
+      "recommendations": [
+        {
+          "recommendation_id": "rec_e7b9e625",
+          "audience": "student",
+          "title": "AI Tutor session on next activity",
+          "reason": "Targeted tutoring from ALE next activity",
+          "evidence": [
+            {
+              "next_activity": {
+                "activity_type": "explore",
+                "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                "source": "fallback"
+              }
+            }
+          ],
+          "confidence": 0.77,
+          "priority": 25,
+          "expected_outcome": "Clarify misconceptions with verified grounding",
+          "kind": "intervention"
+        }
+      ],
+      "alerts": [],
+      "dashboard": {
+        "role": "student",
+        "dashboard": {
+          "learner_id": "anonymous",
+          "learning_progress": {
+            "mastered_count": 0,
+            "developing_count": 0,
+            "at_risk_count": 0,
+            "mastered": [],
+            "developing": [],
+            "at_risk": []
+          },
+          "mastery_growth": {},
+          "curriculum_coverage": {
+            "matched_concepts": 0,
+            "learning_outcomes": 0,
+            "primary_concept_id": null
+          },
+          "competency_progression": [],
+          "accessibility_usage": {
+            "profiles": [
+              "standard"
+            ],
+            "supports": [],
+            "interface": {
+              "font": "system",
+              "font_size_px": 18,
+              "colour_theme": "default",
+              "contrast": "aa",
+              "line_spacing": 1.5,
+              "paragraph_spacing": 1.2,
+              "margins": "comfortable",
+              "reading_ruler": false,
+              "focus_mode": false,
+              "animation_reduction": false,
+              "keyboard_navigation": true,
+              "touch_targets": "standard",
+              "icon_size": "standard",
+              "toolbar_layout": "full",
+              "navigation_complexity": "standard",
+              "distraction_level": "low"
+            }
+          },
+          "reading_behaviour": {
+            "lesson_reading_level": "Grade 1",
+            "complexity_score": 37,
+            "reader_time_sec": null,
+            "scroll_depth": null,
+            "bookmarks": [],
+            "notes_count": 0,
+            "focus_mode": null,
+            "tts_usage": null,
+            "completion": null
+          },
+          "assessment_history": {
+            "exam_readiness": {},
+            "misconceptions": [],
+            "revision_plan": {}
+          },
+          "learning_confidence": {
+            "confidence": 0.5,
+            "band": "moderate",
+            "factors": [
+              {
+                "name": "baseline",
+                "value": 0.5,
+                "weight": 1.0
+              }
+            ]
+          },
+          "engagement": {
+            "next_activity": {
+              "activity_type": "explore",
+              "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+              "source": "fallback"
+            },
+            "pathway_type": "mastery",
+            "streaks": {},
+            "xp": null
+          },
+          "motivation": {
+            "quests": [],
+            "badges": [],
+            "motivation_level": 0.5
+          },
+          "study_consistency": {
+            "learning_streak": 0,
+            "completion_rate": 0.0
+          },
+          "ai_tutor_interactions": {
+            "modes": [
+              "socratic",
+              "guided_discovery",
+              "direct_instruction",
+              "worked_example",
+              "step_coaching",
+              "retrieval_practice",
+              "spaced_review",
+              "exam_prep",
+              "reflection",
+              "executive_function",
+              "parent_explanation",
+              "teacher_explanation"
+            ],
+            "verified_artifact_count": 0,
+            "adaptive_brief": {
+              "decision_id": "path_4d4b94c6",
+              "decision_type": "pathway",
+              "choice": "mastery",
+              "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+              "evidence": [
+                {
+                  "factor": "presentation_mode",
+                  "value": "standard"
+                },
+                {
+                  "factor": "step_count",
+                  "value": 0
+                },
+                {
+                  "factor": "accessibility_profiles",
+                  "value": [
+                    "standard"
+                  ]
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.86,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            }
+          },
+          "recommended_next_steps": [],
+          "risk_indicators": {
+            "risk_of_failure": 0.15,
+            "risk_of_disengagement": 0.1,
+            "probability_of_mastery": 0.4,
+            "estimated_completion_time_min": 15,
+            "recommended_intervention_timing": "monitor",
+            "readiness_for_assessment": false,
+            "confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "exam_readiness_ref": {}
+          },
+          "lesson_metadata": {
+            "complexity_score": 37,
+            "reading_level": "Grade 1",
+            "objective_count": 1,
+            "grade_source": "readability",
+            "stated_grade": null
+          },
+          "philosophy": {
+            "what": "Aggregated learner state from verified engines",
+            "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+            "policy": "insights_only_no_content_mutation"
+          }
+        },
+        "filters_supported": [
+          "topic",
+          "grade",
+          "date_range",
+          "profile"
+        ],
+        "exports_supported": [
+          "json",
+          "csv",
+          "excel",
+          "pdf"
+        ],
+        "accessibility": {
+          "wcag": "WCAG 2.2 AA",
+          "responsive": true,
+          "dark_mode_ready": true,
+          "print_ready": true
+        },
+        "alerts": [],
+        "recommendations": [
+          {
+            "recommendation_id": "rec_33113fb3",
+            "audience": "student",
+            "title": "AI Tutor session on next activity",
+            "reason": "Targeted tutoring from ALE next activity",
+            "evidence": [
+              {
+                "next_activity": {
+                  "activity_type": "explore",
+                  "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                  "source": "fallback"
+                }
+              }
+            ],
+            "confidence": 0.77,
+            "priority": 25,
+            "expected_outcome": "Clarify misconceptions with verified grounding",
+            "kind": "intervention"
+          }
+        ],
+        "predictions": {
+          "risk_of_falling_behind": 0.15,
+          "probability_of_mastery": 0.4,
+          "recommended_intervention_timing": "monitor",
+          "revision_urgency": "low",
+          "assessment_readiness": false,
+          "engagement_decline_risk": 0.1,
+          "dropout_risk_indicator": {
+            "value": 0.1,
+            "note": "Educational engagement proxy only \u2014 not clinical"
+          },
+          "recommendation_confidence": 0.72,
+          "explanatory_factors": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "explainability": {
+            "decision_id": "predict",
+            "decision_type": "prediction",
+            "choice": "monitor",
+            "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+            "evidence": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "confidence": 0.72,
+            "teacher_override_allowed": true,
+            "overridden_by": null,
+            "override_reason": null
+          },
+          "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+        }
+      },
+      "role_views": {
+        "student": {
+          "role": "student",
+          "dashboard": {
+            "learner_id": "anonymous",
+            "learning_progress": {
+              "mastered_count": 0,
+              "developing_count": 0,
+              "at_risk_count": 0,
+              "mastered": [],
+              "developing": [],
+              "at_risk": []
+            },
+            "mastery_growth": {},
+            "curriculum_coverage": {
+              "matched_concepts": 0,
+              "learning_outcomes": 0,
+              "primary_concept_id": null
+            },
+            "competency_progression": [],
+            "accessibility_usage": {
+              "profiles": [
+                "standard"
+              ],
+              "supports": [],
+              "interface": {
+                "font": "system",
+                "font_size_px": 18,
+                "colour_theme": "default",
+                "contrast": "aa",
+                "line_spacing": 1.5,
+                "paragraph_spacing": 1.2,
+                "margins": "comfortable",
+                "reading_ruler": false,
+                "focus_mode": false,
+                "animation_reduction": false,
+                "keyboard_navigation": true,
+                "touch_targets": "standard",
+                "icon_size": "standard",
+                "toolbar_layout": "full",
+                "navigation_complexity": "standard",
+                "distraction_level": "low"
+              }
+            },
+            "reading_behaviour": {
+              "lesson_reading_level": "Grade 1",
+              "complexity_score": 37,
+              "reader_time_sec": null,
+              "scroll_depth": null,
+              "bookmarks": [],
+              "notes_count": 0,
+              "focus_mode": null,
+              "tts_usage": null,
+              "completion": null
+            },
+            "assessment_history": {
+              "exam_readiness": {},
+              "misconceptions": [],
+              "revision_plan": {}
+            },
+            "learning_confidence": {
+              "confidence": 0.5,
+              "band": "moderate",
+              "factors": [
+                {
+                  "name": "baseline",
+                  "value": 0.5,
+                  "weight": 1.0
+                }
+              ]
+            },
+            "engagement": {
+              "next_activity": {
+                "activity_type": "explore",
+                "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                "source": "fallback"
+              },
+              "pathway_type": "mastery",
+              "streaks": {},
+              "xp": null
+            },
+            "motivation": {
+              "quests": [],
+              "badges": [],
+              "motivation_level": 0.5
+            },
+            "study_consistency": {
+              "learning_streak": 0,
+              "completion_rate": 0.0
+            },
+            "ai_tutor_interactions": {
+              "modes": [
+                "socratic",
+                "guided_discovery",
+                "direct_instruction",
+                "worked_example",
+                "step_coaching",
+                "retrieval_practice",
+                "spaced_review",
+                "exam_prep",
+                "reflection",
+                "executive_function",
+                "parent_explanation",
+                "teacher_explanation"
+              ],
+              "verified_artifact_count": 0,
+              "adaptive_brief": {
+                "decision_id": "path_4d4b94c6",
+                "decision_type": "pathway",
+                "choice": "mastery",
+                "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+                "evidence": [
+                  {
+                    "factor": "presentation_mode",
+                    "value": "standard"
+                  },
+                  {
+                    "factor": "step_count",
+                    "value": 0
+                  },
+                  {
+                    "factor": "accessibility_profiles",
+                    "value": [
+                      "standard"
+                    ]
+                  },
+                  {
+                    "factor": "confidence",
+                    "value": 0.5
+                  }
+                ],
+                "confidence": 0.86,
+                "teacher_override_allowed": true,
+                "overridden_by": null,
+                "override_reason": null
+              }
+            },
+            "recommended_next_steps": [],
+            "risk_indicators": {
+              "risk_of_failure": 0.15,
+              "risk_of_disengagement": 0.1,
+              "probability_of_mastery": 0.4,
+              "estimated_completion_time_min": 15,
+              "recommended_intervention_timing": "monitor",
+              "readiness_for_assessment": false,
+              "confidence": 0.72,
+              "explanatory_factors": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "explainability": {
+                "decision_id": "predict",
+                "decision_type": "prediction",
+                "choice": "monitor",
+                "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+                "evidence": [
+                  {
+                    "factor": "at_risk_concepts",
+                    "value": 0
+                  },
+                  {
+                    "factor": "mastered_concepts",
+                    "value": 0
+                  },
+                  {
+                    "factor": "confidence",
+                    "value": 0.5
+                  },
+                  {
+                    "factor": "completion_rate",
+                    "value": 0.5
+                  },
+                  {
+                    "factor": "motivation",
+                    "value": 0.5
+                  }
+                ],
+                "confidence": 0.72,
+                "teacher_override_allowed": true,
+                "overridden_by": null,
+                "override_reason": null
+              },
+              "exam_readiness_ref": {}
+            },
+            "lesson_metadata": {
+              "complexity_score": 37,
+              "reading_level": "Grade 1",
+              "objective_count": 1,
+              "grade_source": "readability",
+              "stated_grade": null
+            },
+            "philosophy": {
+              "what": "Aggregated learner state from verified engines",
+              "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+              "policy": "insights_only_no_content_mutation"
+            }
+          },
+          "filters_supported": [
+            "topic",
+            "grade",
+            "date_range",
+            "profile"
+          ],
+          "exports_supported": [
+            "json",
+            "csv",
+            "excel",
+            "pdf"
+          ],
+          "accessibility": {
+            "wcag": "WCAG 2.2 AA",
+            "responsive": true,
+            "dark_mode_ready": true,
+            "print_ready": true
+          },
+          "alerts": [],
+          "recommendations": [
+            {
+              "recommendation_id": "rec_56f2d1a5",
+              "audience": "student",
+              "title": "AI Tutor session on next activity",
+              "reason": "Targeted tutoring from ALE next activity",
+              "evidence": [
+                {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  }
+                }
+              ],
+              "confidence": 0.77,
+              "priority": 25,
+              "expected_outcome": "Clarify misconceptions with verified grounding",
+              "kind": "intervention"
+            }
+          ],
+          "predictions": {
+            "risk_of_falling_behind": 0.15,
+            "probability_of_mastery": 0.4,
+            "recommended_intervention_timing": "monitor",
+            "revision_urgency": "low",
+            "assessment_readiness": false,
+            "engagement_decline_risk": 0.1,
+            "dropout_risk_indicator": {
+              "value": 0.1,
+              "note": "Educational engagement proxy only \u2014 not clinical"
+            },
+            "recommendation_confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+          }
+        },
+        "teacher": {
+          "role": "teacher",
+          "dashboard": {
+            "class_overview": {
+              "size": 1,
+              "topic": "Plant cell has chloroplast"
+            },
+            "mastery_heatmaps": {},
+            "curriculum_coverage": {
+              "outcomes": 0,
+              "concepts": 0,
+              "graph_stats": {
+                "concepts": 19,
+                "outcomes": 5,
+                "edges": 11,
+                "cross_links": 13
+              }
+            },
+            "assessment_quality": {
+              "official_items": 0,
+              "exam_bundle_keys": [
+                "exemplar",
+                "previous_year",
+                "sample",
+                "competency",
+                "hots"
+              ],
+              "policy": "official_answers_only"
+            },
+            "accessibility_effectiveness": {
+              "standard": 1
+            },
+            "learning_gaps": {
+              "has_gaps": false
+            },
+            "common_misconceptions": [],
+            "students_requiring_intervention": [],
+            "students_ready_for_enrichment": [],
+            "lesson_effectiveness": {
+              "complexity_score": 37,
+              "reading_level": "Grade 1",
+              "objective_count": 1
+            },
+            "question_effectiveness": {
+              "note": "Requires longitudinal attempt data from AME store",
+              "bank_items_available": 0
+            },
+            "time_on_task": 0.0,
+            "assignment_completion": 0.0,
+            "explainability": {
+              "decision_id": "path_4d4b94c6",
+              "decision_type": "pathway",
+              "choice": "mastery",
+              "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+              "evidence": [
+                {
+                  "factor": "presentation_mode",
+                  "value": "standard"
+                },
+                {
+                  "factor": "step_count",
+                  "value": 0
+                },
+                {
+                  "factor": "accessibility_profiles",
+                  "value": [
+                    "standard"
+                  ]
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.86,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            }
+          },
+          "class": {
+            "class_size": 1,
+            "mastery_heatmaps": {},
+            "common_misconceptions": [],
+            "students_requiring_intervention": [],
+            "students_ready_for_enrichment": [],
+            "accessibility_profile_distribution": {
+              "standard": 1
+            },
+            "learners": [
+              {
+                "learner_id": "anonymous",
+                "learning_progress": {
+                  "mastered_count": 0,
+                  "developing_count": 0,
+                  "at_risk_count": 0,
+                  "mastered": [],
+                  "developing": [],
+                  "at_risk": []
+                },
+                "mastery_growth": {},
+                "curriculum_coverage": {
+                  "matched_concepts": 0,
+                  "learning_outcomes": 0,
+                  "primary_concept_id": null
+                },
+                "competency_progression": [],
+                "accessibility_usage": {
+                  "profiles": [
+                    "standard"
+                  ],
+                  "supports": [],
+                  "interface": {
+                    "font": "system",
+                    "font_size_px": 18,
+                    "colour_theme": "default",
+                    "contrast": "aa",
+                    "line_spacing": 1.5,
+                    "paragraph_spacing": 1.2,
+                    "margins": "comfortable",
+                    "reading_ruler": false,
+                    "focus_mode": false,
+                    "animation_reduction": false,
+                    "keyboard_navigation": true,
+                    "touch_targets": "standard",
+                    "icon_size": "standard",
+                    "toolbar_layout": "full",
+                    "navigation_complexity": "standard",
+                    "distraction_level": "low"
+                  }
+                },
+                "reading_behaviour": {
+                  "lesson_reading_level": "Grade 1",
+                  "complexity_score": 37,
+                  "reader_time_sec": null,
+                  "scroll_depth": null,
+                  "bookmarks": [],
+                  "notes_count": 0,
+                  "focus_mode": null,
+                  "tts_usage": null,
+                  "completion": null
+                },
+                "assessment_history": {
+                  "exam_readiness": {},
+                  "misconceptions": [],
+                  "revision_plan": {}
+                },
+                "learning_confidence": {
+                  "confidence": 0.5,
+                  "band": "moderate",
+                  "factors": [
+                    {
+                      "name": "baseline",
+                      "value": 0.5,
+                      "weight": 1.0
+                    }
+                  ]
+                },
+                "engagement": {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  },
+                  "pathway_type": "mastery",
+                  "streaks": {},
+                  "xp": null
+                },
+                "motivation": {
+                  "quests": [],
+                  "badges": [],
+                  "motivation_level": 0.5
+                },
+                "study_consistency": {
+                  "learning_streak": 0,
+                  "completion_rate": 0.0
+                },
+                "ai_tutor_interactions": {
+                  "modes": [
+                    "socratic",
+                    "guided_discovery",
+                    "direct_instruction",
+                    "worked_example",
+                    "step_coaching",
+                    "retrieval_practice",
+                    "spaced_review",
+                    "exam_prep",
+                    "reflection",
+                    "executive_function",
+                    "parent_explanation",
+                    "teacher_explanation"
+                  ],
+                  "verified_artifact_count": 0,
+                  "adaptive_brief": {
+                    "decision_id": "path_4d4b94c6",
+                    "decision_type": "pathway",
+                    "choice": "mastery",
+                    "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+                    "evidence": [
+                      {
+                        "factor": "presentation_mode",
+                        "value": "standard"
+                      },
+                      {
+                        "factor": "step_count",
+                        "value": 0
+                      },
+                      {
+                        "factor": "accessibility_profiles",
+                        "value": [
+                          "standard"
+                        ]
+                      },
+                      {
+                        "factor": "confidence",
+                        "value": 0.5
+                      }
+                    ],
+                    "confidence": 0.86,
+                    "teacher_override_allowed": true,
+                    "overridden_by": null,
+                    "override_reason": null
+                  }
+                },
+                "recommended_next_steps": [],
+                "risk_indicators": {
+                  "risk_of_failure": 0.15,
+                  "risk_of_disengagement": 0.1,
+                  "probability_of_mastery": 0.4,
+                  "estimated_completion_time_min": 15,
+                  "recommended_intervention_timing": "monitor",
+                  "readiness_for_assessment": false,
+                  "confidence": 0.72,
+                  "explanatory_factors": [
+                    {
+                      "factor": "at_risk_concepts",
+                      "value": 0
+                    },
+                    {
+                      "factor": "mastered_concepts",
+                      "value": 0
+                    },
+                    {
+                      "factor": "confidence",
+                      "value": 0.5
+                    },
+                    {
+                      "factor": "completion_rate",
+                      "value": 0.5
+                    },
+                    {
+                      "factor": "motivation",
+                      "value": 0.5
+                    }
+                  ],
+                  "explainability": {
+                    "decision_id": "predict",
+                    "decision_type": "prediction",
+                    "choice": "monitor",
+                    "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+                    "evidence": [
+                      {
+                        "factor": "at_risk_concepts",
+                        "value": 0
+                      },
+                      {
+                        "factor": "mastered_concepts",
+                        "value": 0
+                      },
+                      {
+                        "factor": "confidence",
+                        "value": 0.5
+                      },
+                      {
+                        "factor": "completion_rate",
+                        "value": 0.5
+                      },
+                      {
+                        "factor": "motivation",
+                        "value": 0.5
+                      }
+                    ],
+                    "confidence": 0.72,
+                    "teacher_override_allowed": true,
+                    "overridden_by": null,
+                    "override_reason": null
+                  },
+                  "exam_readiness_ref": {}
+                },
+                "lesson_metadata": {
+                  "complexity_score": 37,
+                  "reading_level": "Grade 1",
+                  "objective_count": 1,
+                  "grade_source": "readability",
+                  "stated_grade": null
+                },
+                "philosophy": {
+                  "what": "Aggregated learner state from verified engines",
+                  "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+                  "policy": "insights_only_no_content_mutation"
+                }
+              }
+            ]
+          },
+          "filters_supported": [
+            "topic",
+            "grade",
+            "date_range",
+            "profile"
+          ],
+          "exports_supported": [
+            "json",
+            "csv",
+            "excel",
+            "pdf"
+          ],
+          "accessibility": {
+            "wcag": "WCAG 2.2 AA",
+            "responsive": true,
+            "dark_mode_ready": true,
+            "print_ready": true
+          },
+          "alerts": [],
+          "recommendations": [
+            {
+              "recommendation_id": "rec_65541d70",
+              "audience": "student",
+              "title": "AI Tutor session on next activity",
+              "reason": "Targeted tutoring from ALE next activity",
+              "evidence": [
+                {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  }
+                }
+              ],
+              "confidence": 0.77,
+              "priority": 25,
+              "expected_outcome": "Clarify misconceptions with verified grounding",
+              "kind": "intervention"
+            }
+          ],
+          "predictions": {
+            "risk_of_falling_behind": 0.15,
+            "probability_of_mastery": 0.4,
+            "recommended_intervention_timing": "monitor",
+            "revision_urgency": "low",
+            "assessment_readiness": false,
+            "engagement_decline_risk": 0.1,
+            "dropout_risk_indicator": {
+              "value": 0.1,
+              "note": "Educational engagement proxy only \u2014 not clinical"
+            },
+            "recommendation_confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+          }
+        },
+        "parent": {
+          "role": "parent",
+          "dashboard": {
+            "learner_id": "anonymous",
+            "progress_summary": {
+              "mastered": 0,
+              "needs_support": 0,
+              "confidence": {
+                "confidence": 0.5,
+                "band": "moderate",
+                "factors": [
+                  {
+                    "name": "baseline",
+                    "value": 0.5,
+                    "weight": 1.0
+                  }
+                ]
+              },
+              "exam_readiness": {}
+            },
+            "learning_strengths": [],
+            "areas_needing_support": [],
+            "reading_habits": {
+              "lesson_reading_level": "Grade 1",
+              "complexity_score": 37,
+              "reader_time_sec": null,
+              "scroll_depth": null,
+              "bookmarks": [],
+              "notes_count": 0,
+              "focus_mode": null,
+              "tts_usage": null,
+              "completion": null
+            },
+            "homework_completion": 0.0,
+            "accessibility_supports": [
+              "standard"
+            ],
+            "achievement_timeline": [],
+            "suggested_home_activities": [
+              {
+                "priority": 1,
+                "action": "home_support",
+                "detail": "Short retrieval practice using official questions only"
+              }
+            ],
+            "encouragement_tips": [
+              "Celebrate small mastery gains \u2014 progress over perfection.",
+              "Keep sessions short if attention support is active.",
+              "Ask the learner to explain one concept in their own words."
+            ],
+            "interface_summary": {
+              "font": "system",
+              "font_size_px": 18,
+              "colour_theme": "default",
+              "contrast": "aa",
+              "line_spacing": 1.5,
+              "paragraph_spacing": 1.2,
+              "margins": "comfortable",
+              "reading_ruler": false,
+              "focus_mode": false,
+              "animation_reduction": false,
+              "keyboard_navigation": true,
+              "touch_targets": "standard",
+              "icon_size": "standard",
+              "toolbar_layout": "full",
+              "navigation_complexity": "standard",
+              "distraction_level": "low"
+            },
+            "policy": "no_medical_diagnoses_functional_supports_only"
+          },
+          "filters_supported": [
+            "topic",
+            "grade",
+            "date_range",
+            "profile"
+          ],
+          "exports_supported": [
+            "json",
+            "csv",
+            "excel",
+            "pdf"
+          ],
+          "accessibility": {
+            "wcag": "WCAG 2.2 AA",
+            "responsive": true,
+            "dark_mode_ready": true,
+            "print_ready": true
+          },
+          "alerts": [],
+          "recommendations": [
+            {
+              "recommendation_id": "rec_fe07474e",
+              "audience": "student",
+              "title": "AI Tutor session on next activity",
+              "reason": "Targeted tutoring from ALE next activity",
+              "evidence": [
+                {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  }
+                }
+              ],
+              "confidence": 0.77,
+              "priority": 25,
+              "expected_outcome": "Clarify misconceptions with verified grounding",
+              "kind": "intervention"
+            }
+          ],
+          "predictions": {
+            "risk_of_falling_behind": 0.15,
+            "probability_of_mastery": 0.4,
+            "recommended_intervention_timing": "monitor",
+            "revision_urgency": "low",
+            "assessment_readiness": false,
+            "engagement_decline_risk": 0.1,
+            "dropout_risk_indicator": {
+              "value": 0.1,
+              "note": "Educational engagement proxy only \u2014 not clinical"
+            },
+            "recommendation_confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+          }
+        }
+      },
+      "policy": {
+        "insights_only": true,
+        "no_curriculum_mutation": true,
+        "no_answer_mutation": true,
+        "no_accessibility_override": true,
+        "no_medical_diagnoses": true,
+        "educator_final_authority": true,
+        "explainable_auditable": true
+      },
+      "laie_version": "2.0.0",
+      "philosophy": [
+        "What happened?",
+        "Why did it happen?",
+        "What is likely next?",
+        "What intervention?",
+        "How confident?",
+        "Which evidence?"
+      ]
+    },
+    "deterministic": true,
+    "assets": []
+  },
+  "gamification": {
+    "ok": true,
+    "payload": {
+      "system": "LMAS",
+      "engine": "learning_motivation",
+      "enabled": true,
+      "xp": 0,
+      "badges": [],
+      "streaks": {
+        "daily": 0,
+        "weekly": 0,
+        "monthly": 0,
+        "grace_days_used": 0,
+        "best_daily": 0
+      },
+      "quests": [
+        "Complete one focused lesson block",
+        "Three healthy study sessions",
+        "Revise a weak concept",
+        "Plan before you start",
+        "General practice",
+        "Official practice set",
+        "Mini project"
+      ],
+      "quest_objects": [
+        {
+          "quest_id": "q_a92e4da3",
+          "type": "daily",
+          "title": "Complete one focused lesson block",
+          "description": "Finish a meaningful chunk of today's lesson.",
+          "reward_xp_hint": 25,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429599+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_0e01a1c3",
+          "type": "weekly",
+          "title": "Three healthy study sessions",
+          "description": "Show up three days this week \u2014 grace days allowed.",
+          "reward_xp_hint": 45,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429606+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_d4724345",
+          "type": "revision",
+          "title": "Revise a weak concept",
+          "description": "Review: a prior concept.",
+          "reward_xp_hint": 18,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429608+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_bc1f72cc",
+          "type": "executive_function",
+          "title": "Plan before you start",
+          "description": "Write a 3-step plan, then begin step 1.",
+          "reward_xp_hint": 12,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429609+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_aa91f27c",
+          "type": "subject",
+          "title": "General practice",
+          "description": "Complete subject practice with understanding over speed.",
+          "reward_xp_hint": 20,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429611+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_cfe53289",
+          "type": "exam_preparation",
+          "title": "Official practice set",
+          "description": "Attempt official/exam-style items via AME \u2014 no guessing farm.",
+          "reward_xp_hint": 30,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429612+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_b0d02d46",
+          "type": "project",
+          "title": "Mini project",
+          "description": "Create or explain one applied example from the lesson.",
+          "reward_xp_hint": 50,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429614+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        }
+      ],
+      "certificates": [],
+      "level": {
+        "level": {
+          "id": "explorer"
+        }
+      },
+      "achievements": [],
+      "skill_tree": {
+        "nodes": [
+          {
+            "concept_id": "foundations",
+            "prerequisites": [],
+            "status": "current"
+          },
+          {
+            "concept_id": "core_idea",
+            "prerequisites": [
+              "foundations"
+            ],
+            "status": "locked"
+          },
+          {
+            "concept_id": "application",
+            "prerequisites": [
+              "core_idea"
+            ],
+            "status": "locked"
+          },
+          {
+            "concept_id": "enrichment",
+            "prerequisites": [
+              "application"
+            ],
+            "status": "locked"
+          }
+        ],
+        "mastered": [],
+        "current": [
+          "foundations"
+        ],
+        "recommended_next": [
+          "foundations"
+        ],
+        "enrichment_paths": [],
+        "source": [
+          "curriculum",
+          "assessment",
+          "adaptive_learning"
+        ],
+        "interactive": true
+      },
+      "learning_journey": {
+        "milestones": [
+          {
+            "id": "start",
+            "label": "Began journey",
+            "done": true
+          },
+          {
+            "id": "first_badge",
+            "label": "First badge",
+            "done": false
+          },
+          {
+            "id": "scholar",
+            "label": "Reach Scholar",
+            "done": false
+          },
+          {
+            "id": "certificate",
+            "label": "Earn a certificate",
+            "done": false
+          }
+        ],
+        "completed_competencies": [],
+        "current_progress": {
+          "level": {
+            "id": "explorer",
+            "name": "Explorer",
+            "min_xp": 0
+          },
+          "next": {
+            "id": "discoverer",
+            "name": "Discoverer",
+            "min_xp": 100
+          },
+          "xp": 0,
+          "progress_to_next": 0.0,
+          "policy": "levels_reflect_learning_growth_not_time_only"
+        },
+        "upcoming_goals": [
+          {
+            "goal": "Complete next recommended skill"
+          }
+        ],
+        "adaptive_recommendations": {
+          "activity_type": "explore",
+          "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+          "source": "fallback"
+        },
+        "certificates_earned": [],
+        "quests_active": [
+          {
+            "quest_id": "q_a92e4da3",
+            "type": "daily",
+            "title": "Complete one focused lesson block",
+            "description": "Finish a meaningful chunk of today's lesson.",
+            "reward_xp_hint": 25,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429599+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_0e01a1c3",
+            "type": "weekly",
+            "title": "Three healthy study sessions",
+            "description": "Show up three days this week \u2014 grace days allowed.",
+            "reward_xp_hint": 45,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429606+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_d4724345",
+            "type": "revision",
+            "title": "Revise a weak concept",
+            "description": "Review: a prior concept.",
+            "reward_xp_hint": 18,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429608+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_bc1f72cc",
+            "type": "executive_function",
+            "title": "Plan before you start",
+            "description": "Write a 3-step plan, then begin step 1.",
+            "reward_xp_hint": 12,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429609+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_aa91f27c",
+            "type": "subject",
+            "title": "General practice",
+            "description": "Complete subject practice with understanding over speed.",
+            "reward_xp_hint": 20,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429611+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          }
+        ]
+      },
+      "competency_map": {
+        "heat_map": [],
+        "mastery_map": {
+          "mastered": [],
+          "at_risk": []
+        },
+        "curriculum_coverage": {
+          "curriculum_nodes": 0,
+          "mastered": 0,
+          "gaps": 0
+        },
+        "strengths": [],
+        "gaps": [],
+        "source": [
+          "curriculum",
+          "assessment"
+        ],
+        "policy": "maps_visualize_verified_mastery_only"
+      },
+      "personalization": {
+        "notification_style": "standard",
+        "visual_complexity": "standard",
+        "reward_frequency": "medium",
+        "interaction_style": "supportive",
+        "celebration_intensity": "standard",
+        "source": "accessibility",
+        "presentation_only": true
+      },
+      "rewards_summary": {
+        "xp_total": 0,
+        "level_id": "explorer",
+        "badges_count": 0,
+        "achievements_count": 0,
+        "certificates_count": 0,
+        "quests_completed": 0,
+        "framing": "Recognition of growth \u2014 not a pay-to-win economy",
+        "competitive_leaderboards": false
+      },
+      "alcis": {
+        "xp": 0,
+        "badges": [],
+        "streaks": {
+          "daily": 0,
+          "weekly": 0,
+          "monthly": 0,
+          "grace_days_used": 0,
+          "best_daily": 0
+        },
+        "new_badges": [],
+        "new_achievements": [],
+        "owner": "learning_motivation_engine"
+      },
+      "atie": {
+        "level": "explorer",
+        "recent_achievements": [],
+        "active_quests": [
+          {
+            "quest_id": "q_a92e4da3",
+            "type": "daily",
+            "title": "Complete one focused lesson block",
+            "description": "Finish a meaningful chunk of today's lesson.",
+            "reward_xp_hint": 25,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429599+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_0e01a1c3",
+            "type": "weekly",
+            "title": "Three healthy study sessions",
+            "description": "Show up three days this week \u2014 grace days allowed.",
+            "reward_xp_hint": 45,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429606+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_d4724345",
+            "type": "revision",
+            "title": "Revise a weak concept",
+            "description": "Review: a prior concept.",
+            "reward_xp_hint": 18,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429608+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          }
+        ],
+        "policy": "reference_only_do_not_change_curriculum"
+      },
+      "vmle": {
+        "announcements": []
+      },
+      "dashboard": {
+        "role": "learner",
+        "rewards": {
+          "xp_total": 0,
+          "level_id": "explorer",
+          "badges_count": 0,
+          "achievements_count": 0,
+          "certificates_count": 0,
+          "quests_completed": 0,
+          "framing": "Recognition of growth \u2014 not a pay-to-win economy",
+          "competitive_leaderboards": false
+        },
+        "journey": {
+          "milestones": [
+            {
+              "id": "start",
+              "label": "Began journey",
+              "done": true
+            },
+            {
+              "id": "first_badge",
+              "label": "First badge",
+              "done": false
+            },
+            {
+              "id": "scholar",
+              "label": "Reach Scholar",
+              "done": false
+            },
+            {
+              "id": "certificate",
+              "label": "Earn a certificate",
+              "done": false
+            }
+          ],
+          "completed_competencies": [],
+          "current_progress": {
+            "level": {
+              "id": "explorer",
+              "name": "Explorer",
+              "min_xp": 0
+            },
+            "next": {
+              "id": "discoverer",
+              "name": "Discoverer",
+              "min_xp": 100
+            },
+            "xp": 0,
+            "progress_to_next": 0.0,
+            "policy": "levels_reflect_learning_growth_not_time_only"
+          },
+          "upcoming_goals": [
+            {
+              "goal": "Complete next recommended skill"
+            }
+          ],
+          "adaptive_recommendations": {
+            "activity_type": "explore",
+            "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+            "source": "fallback"
+          },
+          "certificates_earned": [],
+          "quests_active": [
+            {
+              "quest_id": "q_a92e4da3",
+              "type": "daily",
+              "title": "Complete one focused lesson block",
+              "description": "Finish a meaningful chunk of today's lesson.",
+              "reward_xp_hint": 25,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429599+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_0e01a1c3",
+              "type": "weekly",
+              "title": "Three healthy study sessions",
+              "description": "Show up three days this week \u2014 grace days allowed.",
+              "reward_xp_hint": 45,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429606+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_d4724345",
+              "type": "revision",
+              "title": "Revise a weak concept",
+              "description": "Review: a prior concept.",
+              "reward_xp_hint": 18,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429608+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_bc1f72cc",
+              "type": "executive_function",
+              "title": "Plan before you start",
+              "description": "Write a 3-step plan, then begin step 1.",
+              "reward_xp_hint": 12,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429609+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_aa91f27c",
+              "type": "subject",
+              "title": "General practice",
+              "description": "Complete subject practice with understanding over speed.",
+              "reward_xp_hint": 20,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429611+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            }
+          ]
+        },
+        "quests": [
+          {
+            "quest_id": "q_a92e4da3",
+            "type": "daily",
+            "title": "Complete one focused lesson block",
+            "description": "Finish a meaningful chunk of today's lesson.",
+            "reward_xp_hint": 25,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429599+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_0e01a1c3",
+            "type": "weekly",
+            "title": "Three healthy study sessions",
+            "description": "Show up three days this week \u2014 grace days allowed.",
+            "reward_xp_hint": 45,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429606+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_d4724345",
+            "type": "revision",
+            "title": "Revise a weak concept",
+            "description": "Review: a prior concept.",
+            "reward_xp_hint": 18,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429608+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_bc1f72cc",
+            "type": "executive_function",
+            "title": "Plan before you start",
+            "description": "Write a 3-step plan, then begin step 1.",
+            "reward_xp_hint": 12,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429609+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_aa91f27c",
+            "type": "subject",
+            "title": "General practice",
+            "description": "Complete subject practice with understanding over speed.",
+            "reward_xp_hint": 20,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429611+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_cfe53289",
+            "type": "exam_preparation",
+            "title": "Official practice set",
+            "description": "Attempt official/exam-style items via AME \u2014 no guessing farm.",
+            "reward_xp_hint": 30,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429612+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_b0d02d46",
+            "type": "project",
+            "title": "Mini project",
+            "description": "Create or explain one applied example from the lesson.",
+            "reward_xp_hint": 50,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429614+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          }
+        ],
+        "badges": [],
+        "no_public_leaderboard": true
+      },
+      "analytics": {
+        "learner_id": "anonymous",
+        "xp_total": 0,
+        "event_counts": {
+          "motivation_plan": 2
+        },
+        "metrics": {
+          "xp_growth": 0,
+          "achievement_rates": 0,
+          "quest_completion": 0,
+          "streak_health": 0,
+          "certificates": 0
+        },
+        "events": [
+          {
+            "ts": "2026-07-26T09:59:38.318114+00:00",
+            "event_type": "motivation_plan",
+            "learner_id": "anonymous",
+            "payload": {
+              "xp": 0
+            },
+            "destination": "laie"
+          },
+          {
+            "ts": "2026-07-26T09:59:40.114387+00:00",
+            "event_type": "motivation_plan",
+            "learner_id": "anonymous",
+            "payload": {
+              "xp": 0
+            },
+            "destination": "laie"
+          }
+        ],
+        "forward_to": "learning_analytics"
+      },
+      "design": "accessibility-first intrinsic motivation",
+      "policy": {
+        "intrinsic_before_extrinsic": true,
+        "no_dark_patterns": true,
+        "no_pay_to_win": true,
+        "no_public_competitive_leaderboards": true,
+        "no_punish_missed_days": true,
+        "never_alter_curriculum_or_assessment": true,
+        "anti_farming": true
+      },
+      "note": "LMAS owns motivation economy; curriculum/assessment unchanged"
+    },
+    "deterministic": true,
+    "assets": []
+  },
+  "qa_report": {
+    "passed": true,
+    "publish_blocked": false,
+    "blocked_reason": null,
+    "checks": [
+      {
+        "code": "diagram_availability",
+        "ok": true,
+        "detail": "4 deterministic visual(s) selected"
+      },
+      {
+        "code": "diagram_correctness",
+        "ok": true,
+        "detail": "Verified visuals resolve on disk or via iframe"
+      },
+      {
+        "code": "optional_curriculum_enrichment",
+        "ok": true,
+        "severity": "warning",
+        "detail": "No curriculum references available."
+      },
+      {
+        "code": "bloom_coverage",
+        "ok": true,
+        "detail": "Bloom tags in exam bundle: ['n/a']"
+      },
+      {
+        "code": "learning_objective_coverage",
+        "ok": true,
+        "detail": "Exam/official items linked"
+      },
+      {
+        "code": "source_grounding",
+        "ok": true,
+        "detail": "0.0% of factual units reference valid uploaded source blocks"
+      },
+      {
+        "code": "accessibility_structure",
+        "ok": true,
+        "detail": "Adaptation sections present"
+      },
+      {
+        "code": "reading_level",
+        "ok": true,
+        "detail": "Insufficient text to score reading level"
+      },
+      {
+        "code": "hallucination_detection",
+        "ok": true,
+        "detail": "No unresolved NEED_ENGINE/NEED_SOURCE markers"
+      },
+      {
+        "code": "wcag_brand_palette",
+        "ok": true,
+        "detail": "Engine visuals use Alora navy/teal high-contrast palette"
+      },
+      {
+        "code": "wcag_alt_text",
+        "ok": true,
+        "detail": "NCERT figures have alt/caption"
+      }
+    ],
+    "scorecard": {
+      "bloom_levels": [],
+      "source_grounding_coverage": 0.0,
+      "accessibility_score": 100
+    }
+  },
+  "grounding_mode": "uploaded_source",
+  "grounding_coverage": 0.0,
+  "lifecycle_state": "validated",
+  "orchestration_trace": [],
+  "chapter_approved": false,
+  "version_history": [
+    {
+      "version": 1,
+      "at": "2026-07-26T09:59:40.116676+00:00",
+      "note": "VLIE package build"
+    }
+  ],
+  "adaptations_keys": [],
+  "merged_engine_summary": {
+    "ok": false,
+    "errors": [],
+    "warnings": [
+      "lce_eerl_not_ready"
+    ]
+  },
+  "audit_trail": [
+    {
+      "ts": "2026-07-26T09:59:38.973183+00:00",
+      "event": "vlie_start",
+      "run_id": "99459b4f07f3"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.973198+00:00",
+      "event": "stage_status",
+      "stage": "source_ingestion",
+      "engine": "knowledge_ingestion",
+      "status": "success",
+      "message": "Readable source content extracted.",
+      "warnings": [],
+      "fallback_used": "native_extraction",
+      "run_id": "99459b4f07f3",
+      "source_id": "src_21499de4fefa24d1",
+      "input_hash": "5ee26e8a44df08006cb99637915e2ebe91f5f137fd960405e6fb41a2e1d60383"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.973310+00:00",
+      "event": "stage_status",
+      "stage": "content_classification",
+      "engine": "content_classifier",
+      "status": "success",
+      "message": "Classified 1 source blocks.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "99459b4f07f3",
+      "source_id": "src_21499de4fefa24d1",
+      "input_hash": "29801fa3b42c57d6a8f05fd156baa993c37e7ee36852003aa0a14c61d14d661c"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.973673+00:00",
+      "event": "stage_status",
+      "stage": "universal_profile",
+      "engine": "universal_curriculum",
+      "status": "success",
+      "message": "Source profile created; curriculum status is unknown.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "99459b4f07f3",
+      "source_id": "src_21499de4fefa24d1",
+      "input_hash": "7c8e3619c6720ca72afa84796c1406ae873af10e48d70aeca0afb23aaab449cc"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.973733+00:00",
+      "event": "engine_start",
+      "engine_id": "knowledge_ingestion"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.973750+00:00",
+      "event": "engine_done",
+      "engine_id": "knowledge_ingestion",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.973754+00:00",
+      "event": "engine_start",
+      "engine_id": "universal_curriculum"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.997994+00:00",
+      "event": "engine_done",
+      "engine_id": "universal_curriculum",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998006+00:00",
+      "event": "engine_start",
+      "engine_id": "curriculum_expansion"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998470+00:00",
+      "event": "engine_done",
+      "engine_id": "curriculum_expansion",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998477+00:00",
+      "event": "engine_start",
+      "engine_id": "curriculum_migration"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998491+00:00",
+      "event": "engine_done",
+      "engine_id": "curriculum_migration",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998494+00:00",
+      "event": "engine_start",
+      "engine_id": "curriculum"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998530+00:00",
+      "event": "engine_done",
+      "engine_id": "curriculum",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.998534+00:00",
+      "event": "engine_start",
+      "engine_id": "scientific_accuracy"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.999158+00:00",
+      "event": "engine_done",
+      "engine_id": "scientific_accuracy",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.999166+00:00",
+      "event": "engine_start",
+      "engine_id": "assessment"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.999826+00:00",
+      "event": "engine_done",
+      "engine_id": "assessment",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.999834+00:00",
+      "event": "engine_start",
+      "engine_id": "accessibility"
+    },
+    {
+      "ts": "2026-07-26T09:59:38.999968+00:00",
+      "event": "engine_done",
+      "engine_id": "accessibility",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:38.999972+00:00",
+      "event": "engine_start",
+      "engine_id": "adaptive_learning"
+    },
+    {
+      "ts": "2026-07-26T09:59:39.018209+00:00",
+      "event": "engine_done",
+      "engine_id": "adaptive_learning",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:39.018218+00:00",
+      "event": "engine_start",
+      "engine_id": "ai_tutor"
+    },
+    {
+      "ts": "2026-07-26T09:59:39.033478+00:00",
+      "event": "engine_done",
+      "engine_id": "ai_tutor",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:39.033496+00:00",
+      "event": "engine_start",
+      "engine_id": "voice_multimodal"
+    },
+    {
+      "ts": "2026-07-26T09:59:39.033822+00:00",
+      "event": "engine_done",
+      "engine_id": "voice_multimodal",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:39.033837+00:00",
+      "event": "engine_start",
+      "engine_id": "lesson_composition"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.014136+00:00",
+      "event": "engine_done",
+      "engine_id": "lesson_composition",
+      "ok": false,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:40.014149+00:00",
+      "event": "engine_start",
+      "engine_id": "quality_assurance"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.014266+00:00",
+      "event": "engine_done",
+      "engine_id": "quality_assurance",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:40.014272+00:00",
+      "event": "engine_start",
+      "engine_id": "learning_experience"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.111606+00:00",
+      "event": "engine_done",
+      "engine_id": "learning_experience",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:40.111627+00:00",
+      "event": "engine_start",
+      "engine_id": "learning_analytics"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.112191+00:00",
+      "event": "engine_done",
+      "engine_id": "learning_analytics",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:40.112231+00:00",
+      "event": "engine_start",
+      "engine_id": "learning_motivation"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.114470+00:00",
+      "event": "engine_done",
+      "engine_id": "learning_motivation",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:40.114483+00:00",
+      "event": "engine_start",
+      "engine_id": "gamification"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.114511+00:00",
+      "event": "engine_done",
+      "engine_id": "gamification",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-26T09:59:40.114518+00:00",
+      "event": "engine_start",
+      "engine_id": "learning_companion"
+    },
+    {
+      "ts": "2026-07-26T09:59:40.116645+00:00",
+      "event": "engine_done",
+      "engine_id": "learning_companion",
+      "ok": true,
+      "errors": []
+    }
+  ],
+  "vlie_validation": {
+    "ok": true,
+    "publish_blocked": false,
+    "errors": [],
+    "scorecard": {
+      "bloom_levels": [],
+      "source_grounding_coverage": 0.0,
+      "accessibility_score": 100
+    }
+  },
+  "curriculum_resolution": {
+    "status": "unknown",
+    "curriculum": null,
+    "confidence": 0.0,
+    "provenance": "no_source_marker"
+  },
+  "stage_status": {
+    "source_ingestion": {
+      "stage": "source_ingestion",
+      "engine": "knowledge_ingestion",
+      "status": "success",
+      "message": "Readable source content extracted.",
+      "warnings": [],
+      "fallback_used": "native_extraction",
+      "run_id": "99459b4f07f3",
+      "source_id": "src_21499de4fefa24d1",
+      "input_hash": "5ee26e8a44df08006cb99637915e2ebe91f5f137fd960405e6fb41a2e1d60383"
+    },
+    "content_classification": {
+      "stage": "content_classification",
+      "engine": "content_classifier",
+      "status": "success",
+      "message": "Classified 1 source blocks.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "99459b4f07f3",
+      "source_id": "src_21499de4fefa24d1",
+      "input_hash": "29801fa3b42c57d6a8f05fd156baa993c37e7ee36852003aa0a14c61d14d661c"
+    },
+    "universal_profile": {
+      "stage": "universal_profile",
+      "engine": "universal_curriculum",
+      "status": "success",
+      "message": "Source profile created; curriculum status is unknown.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "99459b4f07f3",
+      "source_id": "src_21499de4fefa24d1",
+      "input_hash": "7c8e3619c6720ca72afa84796c1406ae873af10e48d70aeca0afb23aaab449cc"
+    }
+  }
+}

@@ -1,0 +1,735 @@
+{
+  "schema_version": "1.0.0",
+  "package_id": "da54df7683fd",
+  "created_at": "2026-07-17T17:57:59.780524+00:00",
+  "lesson_metadata": {
+    "topic": "The Water Cycle: How Earth's Water Moves",
+    "source_chars": 2149,
+    "pilot_id": "ncert_cbse_class8_science_v1",
+    "board": "CBSE",
+    "grade": "8",
+    "subject": "Science"
+  },
+  "curriculum": {
+    "citations": [
+      "[NCERT Class 8 Science Ch.1 p.1]",
+      "[NCERT Class 8 Science Ch.16 p.188]",
+      "[NCERT Class 8 Science Ch.8 p.94]",
+      "[NCERT Class 8 Science Ch.6 p.72]",
+      "[NCERT Class 8 Science Ch.5 p.62]",
+      "[NCERT Class 8 Science Ch.11 p.128]"
+    ],
+    "rag_hits": [
+      {
+        "chunk_id": "c8sci-ch01-001",
+        "citation": "[NCERT Class 8 Science Ch.1 p.1]",
+        "chapter_title": "Crop Production and Management",
+        "score": 0.0,
+        "excerpt": "Agriculture is the practice of cultivating plants and rearing animals for food, fibre, and other products. Kharif crops are sown in the rainy season (June to October) and include paddy, maize, soybean, cotton, and groundnut. Rabi crops are sown in winter (October to March) and include wheat, gram, pea, and mustard. Good quality seeds, timely sowing, proper irrigation, and use of manure and fertili"
+      },
+      {
+        "chunk_id": "c8sci-ch16-001",
+        "citation": "[NCERT Class 8 Science Ch.16 p.188]",
+        "chapter_title": "Light",
+        "score": 0.0,
+        "excerpt": "Light enables us to see objects. Light travels in straight lines. Reflection occurs when light bounces from a surface; laws of reflection state angle of incidence equals angle of reflection. Plane mirrors form virtual, erect, same-size images. Refraction is bending of light when it passes from one medium to another. Lenses converge or diverge light rays. The human eye has cornea, iris, pupil, lens"
+      },
+      {
+        "chunk_id": "c8sci-ch08-001",
+        "citation": "[NCERT Class 8 Science Ch.8 p.94]",
+        "chapter_title": "Cell \u2014 Structure and Functions",
+        "score": 0.0,
+        "excerpt": "The cell is the basic structural and functional unit of life. Robert Hooke discovered cells in cork. Cells vary in shape and size. The cell membrane encloses the cytoplasm. The nucleus contains chromosomes with DNA and controls cell activities. Plant cells have a rigid cell wall outside the membrane, chloroplasts for photosynthesis, and a large central vacuole. Animal cells lack cell wall and chlo"
+      },
+      {
+        "chunk_id": "c8sci-ch06-001",
+        "citation": "[NCERT Class 8 Science Ch.6 p.72]",
+        "chapter_title": "Combustion and Flame",
+        "score": 0.0,
+        "excerpt": "Combustion is a chemical process in which a substance reacts with oxygen to give heat and light. A substance that undergoes combustion is called combustible or fuel. Ignition temperature is the lowest temperature at which a substance catches fire. Inflammable substances have very low ignition temperature. A flame has three zones: outer non-luminous zone (hottest, complete combustion), middle lumin"
+      },
+      {
+        "chunk_id": "c8sci-ch05-001",
+        "citation": "[NCERT Class 8 Science Ch.5 p.62]",
+        "chapter_title": "Coal and Petroleum",
+        "score": 0.0,
+        "excerpt": "Coal, petroleum, and natural gas are fossil fuels formed from dead remains of living organisms buried under earth over millions of years. Coal is used as fuel and in thermal power plants. Petroleum is a dark oily liquid found deep underground; refining separates it into petrol, diesel, kerosene, lubricating oil, paraffin wax, and asphalt. Natural gas is stored under high pressure as compressed nat"
+      },
+      {
+        "chunk_id": "c8sci-ch11-001",
+        "citation": "[NCERT Class 8 Science Ch.11 p.128]",
+        "chapter_title": "Force and Pressure",
+        "score": 0.0,
+        "excerpt": "A force is a push or pull that can change the state of motion, shape, or direction of an object. Force is measured in newtons (N). Pressure is force per unit area: P = F/A. Smaller area gives higher pressure for the same force, which is why sharp knives cut better. Atmospheric pressure is due to the weight of air. Liquid pressure increases with depth. Friction opposes motion between surfaces in co"
+      }
+    ],
+    "exam_bundle": {
+      "exemplar": [
+        {
+          "item_id": "exemplar-c8-001",
+          "source": "NCERT Exemplar",
+          "question_type": "mcq",
+          "question": "Which of the following is a Rabi crop?",
+          "official_answer": "C",
+          "marks": 1,
+          "bloom": "remember",
+          "year": ""
+        },
+        {
+          "item_id": "exemplar-c8-002",
+          "source": "NCERT Exemplar",
+          "question_type": "mcq",
+          "question": "Which microorganism is used in the commercial production of alcohol?",
+          "official_answer": "B",
+          "marks": 1,
+          "bloom": "remember",
+          "year": ""
+        }
+      ],
+      "previous_year": [
+        {
+          "item_id": "exemplar-c8-010",
+          "source": "CBSE Previous Year",
+          "question_type": "mcq",
+          "question": "Which zone of a candle flame is the hottest?",
+          "official_answer": "C",
+          "marks": 1,
+          "bloom": "understand",
+          "year": ""
+        },
+        {
+          "item_id": "pyq-c8-001",
+          "source": "CBSE Previous Year",
+          "question_type": "short_answer",
+          "question": "Define amplitude and wavelength of a sound wave.",
+          "official_answer": "Amplitude is the maximum displacement of particles from the mean position; wavelength is the distance between two consecutive compressions or rarefactions.",
+          "marks": 2,
+          "bloom": "remember",
+          "year": "2023"
+        }
+      ],
+      "sample": [
+        {
+          "item_id": "exemplar-c8-005",
+          "source": "CBSE Sample Paper",
+          "question_type": "mcq",
+          "question": "Which organelle is present in plant cells but not in animal cells?",
+          "official_answer": "C",
+          "marks": 1,
+          "bloom": "remember",
+          "year": ""
+        },
+        {
+          "item_id": "sample-c8-001",
+          "source": "CBSE Sample Paper",
+          "question_type": "mcq",
+          "question": "The angle of incidence is equal to the angle of reflection. This statement is:",
+          "official_answer": "A",
+          "marks": 1,
+          "bloom": "remember",
+          "year": "2024"
+        }
+      ],
+      "competency": [
+        {
+          "item_id": "comp-c8-001",
+          "source": "Competency",
+          "question_type": "competency",
+          "question": "A schoolbag strap is made wide. Explain how this design choice uses the relationship P = F/A.",
+          "official_answer": "For the same force (weight of the bag), a larger area of the strap reduces pressure on the shoulder, making it more comfortable.",
+          "marks": 2,
+          "bloom": "apply",
+          "year": ""
+        }
+      ],
+      "hots": [
+        {
+          "item_id": "hots-c8-001",
+          "source": "HOTS",
+          "question_type": "hots",
+          "question": "Why do plant cells have a large vacuole while most animal cells do not? Give a reasoned answer.",
+          "official_answer": "The large vacuole stores water and maintains turgor pressure that supports the plant cell; animal cells rely on a cytoskeleton and do not need the same turgidity for rigidity.",
+          "marks": 3,
+          "bloom": "analyze",
+          "year": ""
+        }
+      ]
+    }
+  },
+  "verified_concepts": [
+    {
+      "engine_id": "llm_rag",
+      "layer": "teaching",
+      "task_kind": "explain_rag",
+      "payload": {
+        "question": "Students will explain how water changes state during the water cycle.",
+        "mode": "explain",
+        "rag_hits": [
+          {
+            "chunk_id": "c8sci-ch16-001",
+            "citation": "[NCERT Class 8 Science Ch.16 p.188]",
+            "chapter_title": "Light",
+            "score": 0.0,
+            "excerpt": "Light enables us to see objects. Light travels in straight lines. Reflection occurs when light bounces from a surface; laws of reflection state angle of incidence equals angle of reflection. Plane mirrors form virtual, erect, same-size images. Refraction is bending of light when it passes from one medium to another. Lenses converge or diverge light rays. The human eye has cornea, iris, pupil, lens"
+          },
+          {
+            "chunk_id": "c8sci-ch06-001",
+            "citation": "[NCERT Class 8 Science Ch.6 p.72]",
+            "chapter_title": "Combustion and Flame",
+            "score": 0.0,
+            "excerpt": "Combustion is a chemical process in which a substance reacts with oxygen to give heat and light. A substance that undergoes combustion is called combustible or fuel. Ignition temperature is the lowest temperature at which a substance catches fire. Inflammable substances have very low ignition temperature. A flame has three zones: outer non-luminous zone (hottest, complete combustion), middle lumin"
+          },
+          {
+            "chunk_id": "c8sci-ch11-001",
+            "citation": "[NCERT Class 8 Science Ch.11 p.128]",
+            "chapter_title": "Force and Pressure",
+            "score": 0.0,
+            "excerpt": "A force is a push or pull that can change the state of motion, shape, or direction of an object. Force is measured in newtons (N). Pressure is force per unit area: P = F/A. Smaller area gives higher pressure for the same force, which is why sharp knives cut better. Atmospheric pressure is due to the weight of air. Liquid pressure increases with depth. Friction opposes motion between surfaces in co"
+          },
+          {
+            "chunk_id": "c8sci-ch13-001",
+            "citation": "[NCERT Class 8 Science Ch.13 p.154]",
+            "chapter_title": "Sound",
+            "score": 0.0,
+            "excerpt": "Sound is produced by vibrating objects. Vibrations travel through a medium as waves. Sound cannot travel through vacuum. Frequency is the number of vibrations per second measured in hertz (Hz). Amplitude determines loudness. Higher frequency gives higher pitch. Human audible range is about 20 Hz to 20,000 Hz. Echo is reflection of sound from a hard surface heard after the original sound. Ultrasoun"
+          },
+          {
+            "chunk_id": "c8sci-ch01-001",
+            "citation": "[NCERT Class 8 Science Ch.1 p.1]",
+            "chapter_title": "Crop Production and Management",
+            "score": 0.0,
+            "excerpt": "Agriculture is the practice of cultivating plants and rearing animals for food, fibre, and other products. Kharif crops are sown in the rainy season (June to October) and include paddy, maize, soybean, cotton, and groundnut. Rabi crops are sown in winter (October to March) and include wheat, gram, pea, and mustard. Good quality seeds, timely sowing, proper irrigation, and use of manure and fertili"
+          },
+          {
+            "chunk_id": "c8sci-ch05-001",
+            "citation": "[NCERT Class 8 Science Ch.5 p.62]",
+            "chapter_title": "Coal and Petroleum",
+            "score": 0.0,
+            "excerpt": "Coal, petroleum, and natural gas are fossil fuels formed from dead remains of living organisms buried under earth over millions of years. Coal is used as fuel and in thermal power plants. Petroleum is a dark oily liquid found deep underground; refining separates it into petrol, diesel, kerosene, lubricating oil, paraffin wax, and asphalt. Natural gas is stored under high pressure as compressed nat"
+          }
+        ],
+        "citations": [
+          "[NCERT Class 8 Science Ch.16 p.188]",
+          "[NCERT Class 8 Science Ch.6 p.72]",
+          "[NCERT Class 8 Science Ch.11 p.128]",
+          "[NCERT Class 8 Science Ch.13 p.154]",
+          "[NCERT Class 8 Science Ch.1 p.1]",
+          "[NCERT Class 8 Science Ch.5 p.62]"
+        ],
+        "instruction": "Teaching Layer must answer using RETRIEVED_SOURCES only; cite chapters.",
+        "claim_kind": "question",
+        "claim_line": 7
+      },
+      "latex": null,
+      "asset_paths": [],
+      "validation": "pass",
+      "validation_detail": "6 NCERT chunk(s) retrieved for explain",
+      "error": null,
+      "deterministic": false,
+      "ok": true
+    },
+    {
+      "engine_id": "llm_rag",
+      "layer": "teaching",
+      "task_kind": "explain_rag",
+      "payload": {
+        "question": "Exit ticket: Name two processes in the water cycle and explain what causes each. Success criteria: correct vocabulary, clear cause-and-effect, complete sentences.",
+        "mode": "explain",
+        "rag_hits": [
+          {
+            "chunk_id": "c8sci-ch06-001",
+            "citation": "[NCERT Class 8 Science Ch.6 p.72]",
+            "chapter_title": "Combustion and Flame",
+            "score": 0.0,
+            "excerpt": "Combustion is a chemical process in which a substance reacts with oxygen to give heat and light. A substance that undergoes combustion is called combustible or fuel. Ignition temperature is the lowest temperature at which a substance catches fire. Inflammable substances have very low ignition temperature. A flame has three zones: outer non-luminous zone (hottest, complete combustion), middle lumin"
+          },
+          {
+            "chunk_id": "c8sci-ch01-001",
+            "citation": "[NCERT Class 8 Science Ch.1 p.1]",
+            "chapter_title": "Crop Production and Management",
+            "score": 0.0,
+            "excerpt": "Agriculture is the practice of cultivating plants and rearing animals for food, fibre, and other products. Kharif crops are sown in the rainy season (June to October) and include paddy, maize, soybean, cotton, and groundnut. Rabi crops are sown in winter (October to March) and include wheat, gram, pea, and mustard. Good quality seeds, timely sowing, proper irrigation, and use of manure and fertili"
+          },
+          {
+            "chunk_id": "c8sci-ch16-001",
+            "citation": "[NCERT Class 8 Science Ch.16 p.188]",
+            "chapter_title": "Light",
+            "score": 0.0,
+            "excerpt": "Light enables us to see objects. Light travels in straight lines. Reflection occurs when light bounces from a surface; laws of reflection state angle of incidence equals angle of reflection. Plane mirrors form virtual, erect, same-size images. Refraction is bending of light when it passes from one medium to another. Lenses converge or diverge light rays. The human eye has cornea, iris, pupil, lens"
+          },
+          {
+            "chunk_id": "c8sci-ch08-001",
+            "citation": "[NCERT Class 8 Science Ch.8 p.94]",
+            "chapter_title": "Cell \u2014 Structure and Functions",
+            "score": 0.0,
+            "excerpt": "The cell is the basic structural and functional unit of life. Robert Hooke discovered cells in cork. Cells vary in shape and size. The cell membrane encloses the cytoplasm. The nucleus contains chromosomes with DNA and controls cell activities. Plant cells have a rigid cell wall outside the membrane, chloroplasts for photosynthesis, and a large central vacuole. Animal cells lack cell wall and chlo"
+          },
+          {
+            "chunk_id": "c8sci-ch05-001",
+            "citation": "[NCERT Class 8 Science Ch.5 p.62]",
+            "chapter_title": "Coal and Petroleum",
+            "score": 0.0,
+            "excerpt": "Coal, petroleum, and natural gas are fossil fuels formed from dead remains of living organisms buried under earth over millions of years. Coal is used as fuel and in thermal power plants. Petroleum is a dark oily liquid found deep underground; refining separates it into petrol, diesel, kerosene, lubricating oil, paraffin wax, and asphalt. Natural gas is stored under high pressure as compressed nat"
+          },
+          {
+            "chunk_id": "c8sci-ch11-001",
+            "citation": "[NCERT Class 8 Science Ch.11 p.128]",
+            "chapter_title": "Force and Pressure",
+            "score": 0.0,
+            "excerpt": "A force is a push or pull that can change the state of motion, shape, or direction of an object. Force is measured in newtons (N). Pressure is force per unit area: P = F/A. Smaller area gives higher pressure for the same force, which is why sharp knives cut better. Atmospheric pressure is due to the weight of air. Liquid pressure increases with depth. Friction opposes motion between surfaces in co"
+          }
+        ],
+        "citations": [
+          "[NCERT Class 8 Science Ch.6 p.72]",
+          "[NCERT Class 8 Science Ch.1 p.1]",
+          "[NCERT Class 8 Science Ch.16 p.188]",
+          "[NCERT Class 8 Science Ch.8 p.94]",
+          "[NCERT Class 8 Science Ch.5 p.62]",
+          "[NCERT Class 8 Science Ch.11 p.128]"
+        ],
+        "instruction": "Teaching Layer must answer using RETRIEVED_SOURCES only; cite chapters.",
+        "claim_kind": "question",
+        "claim_line": 37
+      },
+      "latex": null,
+      "asset_paths": [],
+      "validation": "pass",
+      "validation_detail": "6 NCERT chunk(s) retrieved for explain",
+      "error": null,
+      "deterministic": false,
+      "ok": true
+    }
+  ],
+  "verified_stem_outputs": [
+    {
+      "engine_id": "llm_rag",
+      "layer": "teaching",
+      "task_kind": "explain_rag",
+      "payload": {
+        "question": "Students will explain how water changes state during the water cycle.",
+        "mode": "explain",
+        "rag_hits": [
+          {
+            "chunk_id": "c8sci-ch16-001",
+            "citation": "[NCERT Class 8 Science Ch.16 p.188]",
+            "chapter_title": "Light",
+            "score": 0.0,
+            "excerpt": "Light enables us to see objects. Light travels in straight lines. Reflection occurs when light bounces from a surface; laws of reflection state angle of incidence equals angle of reflection. Plane mirrors form virtual, erect, same-size images. Refraction is bending of light when it passes from one medium to another. Lenses converge or diverge light rays. The human eye has cornea, iris, pupil, lens"
+          },
+          {
+            "chunk_id": "c8sci-ch06-001",
+            "citation": "[NCERT Class 8 Science Ch.6 p.72]",
+            "chapter_title": "Combustion and Flame",
+            "score": 0.0,
+            "excerpt": "Combustion is a chemical process in which a substance reacts with oxygen to give heat and light. A substance that undergoes combustion is called combustible or fuel. Ignition temperature is the lowest temperature at which a substance catches fire. Inflammable substances have very low ignition temperature. A flame has three zones: outer non-luminous zone (hottest, complete combustion), middle lumin"
+          },
+          {
+            "chunk_id": "c8sci-ch11-001",
+            "citation": "[NCERT Class 8 Science Ch.11 p.128]",
+            "chapter_title": "Force and Pressure",
+            "score": 0.0,
+            "excerpt": "A force is a push or pull that can change the state of motion, shape, or direction of an object. Force is measured in newtons (N). Pressure is force per unit area: P = F/A. Smaller area gives higher pressure for the same force, which is why sharp knives cut better. Atmospheric pressure is due to the weight of air. Liquid pressure increases with depth. Friction opposes motion between surfaces in co"
+          },
+          {
+            "chunk_id": "c8sci-ch13-001",
+            "citation": "[NCERT Class 8 Science Ch.13 p.154]",
+            "chapter_title": "Sound",
+            "score": 0.0,
+            "excerpt": "Sound is produced by vibrating objects. Vibrations travel through a medium as waves. Sound cannot travel through vacuum. Frequency is the number of vibrations per second measured in hertz (Hz). Amplitude determines loudness. Higher frequency gives higher pitch. Human audible range is about 20 Hz to 20,000 Hz. Echo is reflection of sound from a hard surface heard after the original sound. Ultrasoun"
+          },
+          {
+            "chunk_id": "c8sci-ch01-001",
+            "citation": "[NCERT Class 8 Science Ch.1 p.1]",
+            "chapter_title": "Crop Production and Management",
+            "score": 0.0,
+            "excerpt": "Agriculture is the practice of cultivating plants and rearing animals for food, fibre, and other products. Kharif crops are sown in the rainy season (June to October) and include paddy, maize, soybean, cotton, and groundnut. Rabi crops are sown in winter (October to March) and include wheat, gram, pea, and mustard. Good quality seeds, timely sowing, proper irrigation, and use of manure and fertili"
+          },
+          {
+            "chunk_id": "c8sci-ch05-001",
+            "citation": "[NCERT Class 8 Science Ch.5 p.62]",
+            "chapter_title": "Coal and Petroleum",
+            "score": 0.0,
+            "excerpt": "Coal, petroleum, and natural gas are fossil fuels formed from dead remains of living organisms buried under earth over millions of years. Coal is used as fuel and in thermal power plants. Petroleum is a dark oily liquid found deep underground; refining separates it into petrol, diesel, kerosene, lubricating oil, paraffin wax, and asphalt. Natural gas is stored under high pressure as compressed nat"
+          }
+        ],
+        "citations": [
+          "[NCERT Class 8 Science Ch.16 p.188]",
+          "[NCERT Class 8 Science Ch.6 p.72]",
+          "[NCERT Class 8 Science Ch.11 p.128]",
+          "[NCERT Class 8 Science Ch.13 p.154]",
+          "[NCERT Class 8 Science Ch.1 p.1]",
+          "[NCERT Class 8 Science Ch.5 p.62]"
+        ],
+        "instruction": "Teaching Layer must answer using RETRIEVED_SOURCES only; cite chapters.",
+        "claim_kind": "question",
+        "claim_line": 7
+      },
+      "latex": null,
+      "asset_paths": [],
+      "validation": "pass",
+      "validation_detail": "6 NCERT chunk(s) retrieved for explain",
+      "error": null,
+      "deterministic": false,
+      "ok": true
+    },
+    {
+      "engine_id": "llm_rag",
+      "layer": "teaching",
+      "task_kind": "explain_rag",
+      "payload": {
+        "question": "Exit ticket: Name two processes in the water cycle and explain what causes each. Success criteria: correct vocabulary, clear cause-and-effect, complete sentences.",
+        "mode": "explain",
+        "rag_hits": [
+          {
+            "chunk_id": "c8sci-ch06-001",
+            "citation": "[NCERT Class 8 Science Ch.6 p.72]",
+            "chapter_title": "Combustion and Flame",
+            "score": 0.0,
+            "excerpt": "Combustion is a chemical process in which a substance reacts with oxygen to give heat and light. A substance that undergoes combustion is called combustible or fuel. Ignition temperature is the lowest temperature at which a substance catches fire. Inflammable substances have very low ignition temperature. A flame has three zones: outer non-luminous zone (hottest, complete combustion), middle lumin"
+          },
+          {
+            "chunk_id": "c8sci-ch01-001",
+            "citation": "[NCERT Class 8 Science Ch.1 p.1]",
+            "chapter_title": "Crop Production and Management",
+            "score": 0.0,
+            "excerpt": "Agriculture is the practice of cultivating plants and rearing animals for food, fibre, and other products. Kharif crops are sown in the rainy season (June to October) and include paddy, maize, soybean, cotton, and groundnut. Rabi crops are sown in winter (October to March) and include wheat, gram, pea, and mustard. Good quality seeds, timely sowing, proper irrigation, and use of manure and fertili"
+          },
+          {
+            "chunk_id": "c8sci-ch16-001",
+            "citation": "[NCERT Class 8 Science Ch.16 p.188]",
+            "chapter_title": "Light",
+            "score": 0.0,
+            "excerpt": "Light enables us to see objects. Light travels in straight lines. Reflection occurs when light bounces from a surface; laws of reflection state angle of incidence equals angle of reflection. Plane mirrors form virtual, erect, same-size images. Refraction is bending of light when it passes from one medium to another. Lenses converge or diverge light rays. The human eye has cornea, iris, pupil, lens"
+          },
+          {
+            "chunk_id": "c8sci-ch08-001",
+            "citation": "[NCERT Class 8 Science Ch.8 p.94]",
+            "chapter_title": "Cell \u2014 Structure and Functions",
+            "score": 0.0,
+            "excerpt": "The cell is the basic structural and functional unit of life. Robert Hooke discovered cells in cork. Cells vary in shape and size. The cell membrane encloses the cytoplasm. The nucleus contains chromosomes with DNA and controls cell activities. Plant cells have a rigid cell wall outside the membrane, chloroplasts for photosynthesis, and a large central vacuole. Animal cells lack cell wall and chlo"
+          },
+          {
+            "chunk_id": "c8sci-ch05-001",
+            "citation": "[NCERT Class 8 Science Ch.5 p.62]",
+            "chapter_title": "Coal and Petroleum",
+            "score": 0.0,
+            "excerpt": "Coal, petroleum, and natural gas are fossil fuels formed from dead remains of living organisms buried under earth over millions of years. Coal is used as fuel and in thermal power plants. Petroleum is a dark oily liquid found deep underground; refining separates it into petrol, diesel, kerosene, lubricating oil, paraffin wax, and asphalt. Natural gas is stored under high pressure as compressed nat"
+          },
+          {
+            "chunk_id": "c8sci-ch11-001",
+            "citation": "[NCERT Class 8 Science Ch.11 p.128]",
+            "chapter_title": "Force and Pressure",
+            "score": 0.0,
+            "excerpt": "A force is a push or pull that can change the state of motion, shape, or direction of an object. Force is measured in newtons (N). Pressure is force per unit area: P = F/A. Smaller area gives higher pressure for the same force, which is why sharp knives cut better. Atmospheric pressure is due to the weight of air. Liquid pressure increases with depth. Friction opposes motion between surfaces in co"
+          }
+        ],
+        "citations": [
+          "[NCERT Class 8 Science Ch.6 p.72]",
+          "[NCERT Class 8 Science Ch.1 p.1]",
+          "[NCERT Class 8 Science Ch.16 p.188]",
+          "[NCERT Class 8 Science Ch.8 p.94]",
+          "[NCERT Class 8 Science Ch.5 p.62]",
+          "[NCERT Class 8 Science Ch.11 p.128]"
+        ],
+        "instruction": "Teaching Layer must answer using RETRIEVED_SOURCES only; cite chapters.",
+        "claim_kind": "question",
+        "claim_line": 37
+      },
+      "latex": null,
+      "asset_paths": [],
+      "validation": "pass",
+      "validation_detail": "6 NCERT chunk(s) retrieved for explain",
+      "error": null,
+      "deterministic": false,
+      "ok": true
+    }
+  ],
+  "verified_visuals": [],
+  "biology_figures": [],
+  "accessibility_adaptations": {
+    "standard": true,
+    "ld": true,
+    "dyslexia": true,
+    "dyscalculia": true,
+    "dysgraphia": true,
+    "autism": true,
+    "adhd": true,
+    "executive": true,
+    "visual": true,
+    "auditory": true,
+    "ell": true,
+    "gifted": true,
+    "parent": true,
+    "tutor": true,
+    "teacher": true,
+    "exam_revision": true,
+    "multisensory": true
+  },
+  "assessment_assets": {
+    "has_vocabulary": true,
+    "has_worksheet": true,
+    "official_mcqs": [
+      {
+        "item_id": "exemplar-c8-009",
+        "source": "NCERT Exemplar",
+        "topic": "Coal and Petroleum",
+        "question": "Assertion (A): Coal and petroleum are called fossil fuels. Reason (R): They are formed from dead remains of organisms over millions of years.",
+        "official_answer": "A",
+        "citation": "[NCERT Exemplar \u00b7 exemplar-c8-009]"
+      },
+      {
+        "item_id": "exemplar-c8-005",
+        "source": "CBSE Sample Paper",
+        "topic": "Cell Structure",
+        "question": "Which organelle is present in plant cells but not in animal cells?",
+        "official_answer": "C",
+        "citation": "[CBSE Sample Paper \u00b7 exemplar-c8-005]"
+      },
+      {
+        "item_id": "exemplar-c8-007",
+        "source": "NCERT Exemplar",
+        "topic": "Sound",
+        "question": "Sound cannot travel through:",
+        "official_answer": "D",
+        "citation": "[NCERT Exemplar \u00b7 exemplar-c8-007]"
+      },
+      {
+        "item_id": "exemplar-c8-001",
+        "source": "NCERT Exemplar",
+        "topic": "Crop Production and Management",
+        "question": "Which of the following is a Rabi crop?",
+        "official_answer": "C",
+        "citation": "[NCERT Exemplar \u00b7 exemplar-c8-001]"
+      },
+      {
+        "item_id": "exemplar-c8-002",
+        "source": "NCERT Exemplar",
+        "topic": "Microorganisms",
+        "question": "Which microorganism is used in the commercial production of alcohol?",
+        "official_answer": "B",
+        "citation": "[NCERT Exemplar \u00b7 exemplar-c8-002]"
+      },
+      {
+        "item_id": "comp-c8-001",
+        "source": "Competency",
+        "topic": "Force and Pressure",
+        "question": "A schoolbag strap is made wide. Explain how this design choice uses the relationship P = F/A.",
+        "official_answer": "For the same force (weight of the bag), a larger area of the strap reduces pressure on the shoulder, making it more comfortable.",
+        "citation": "[Competency \u00b7 comp-c8-001]"
+      },
+      {
+        "item_id": "hots-c8-001",
+        "source": "HOTS",
+        "topic": "Cell \u2014 Structure and Functions",
+        "question": "Why do plant cells have a large vacuole while most animal cells do not? Give a reasoned answer.",
+        "official_answer": "The large vacuole stores water and maintains turgor pressure that supports the plant cell; animal cells rely on a cytoskeleton and do not need the same turgidity for rigidity.",
+        "citation": "[HOTS \u00b7 hots-c8-001]"
+      },
+      {
+        "item_id": "exemplar-c8-008",
+        "source": "NCERT Exemplar",
+        "topic": "Light",
+        "question": "The angle of incidence is equal to the angle of reflection. This is a law of:",
+        "official_answer": "B",
+        "citation": "[NCERT Exemplar \u00b7 exemplar-c8-008]"
+      }
+    ]
+  },
+  "visual_assets": [],
+  "analytics_metadata": {},
+  "gamification": {},
+  "qa_report": {
+    "passed": true,
+    "checks": [
+      {
+        "code": "source_citations",
+        "ok": true,
+        "detail": "6 citation(s)"
+      },
+      {
+        "code": "citation_completeness",
+        "ok": true,
+        "detail": "Citations present for science pilot"
+      },
+      {
+        "code": "bloom_coverage",
+        "ok": true,
+        "detail": "Bloom tags in exam bundle: ['analyze', 'apply', 'remember', 'understand']"
+      },
+      {
+        "code": "learning_objective_coverage",
+        "ok": true,
+        "detail": "Exam/official items linked"
+      },
+      {
+        "code": "accessibility_structure",
+        "ok": true,
+        "detail": "Adaptation sections present"
+      },
+      {
+        "code": "reading_level",
+        "ok": true,
+        "detail": "Flesch\u2013Kincaid grade \u2248 10.51"
+      },
+      {
+        "code": "hallucination_detection",
+        "ok": true,
+        "detail": "No unresolved NEED_ENGINE/NEED_SOURCE markers"
+      },
+      {
+        "code": "wcag_brand_palette",
+        "ok": true,
+        "detail": "Engine visuals use Alora navy/teal high-contrast palette"
+      },
+      {
+        "code": "wcag_alt_text",
+        "ok": true,
+        "detail": "NCERT figures have alt/caption"
+      }
+    ],
+    "blocked_reason": null,
+    "publish_blocked": false,
+    "scorecard": {
+      "bloom_levels": [
+        "analyze",
+        "apply",
+        "remember",
+        "understand"
+      ],
+      "reading_grade": 10.51,
+      "accessibility_score": 100
+    }
+  },
+  "orchestration_trace": [
+    {
+      "agent_id": "curriculum_planner",
+      "role": "Curriculum Planner",
+      "status": "done",
+      "detail": "Pilot scope + verified knowledge first"
+    },
+    {
+      "agent_id": "lesson_analyzer",
+      "role": "Lesson Analyzer",
+      "status": "done",
+      "detail": "context built"
+    },
+    {
+      "agent_id": "knowledge_retrieval",
+      "role": "Knowledge Retrieval Agent",
+      "status": "done",
+      "detail": "6 citations"
+    },
+    {
+      "agent_id": "subject_expert",
+      "role": "Subject Expert",
+      "status": "done",
+      "detail": "engines routed"
+    },
+    {
+      "agent_id": "stem_verification",
+      "role": "STEM Verification Agent",
+      "status": "done",
+      "detail": "2 artifacts"
+    },
+    {
+      "agent_id": "accessibility",
+      "role": "Accessibility Specialist",
+      "status": "done",
+      "detail": "adaptations generated"
+    },
+    {
+      "agent_id": "neurodiversity",
+      "role": "Neurodiversity Specialist",
+      "status": "done",
+      "detail": "LD / ADHD / autism variants as configured"
+    },
+    {
+      "agent_id": "visual_learning",
+      "role": "Visual Learning Agent",
+      "status": "done",
+      "detail": "0 visuals"
+    },
+    {
+      "agent_id": "assessment_designer",
+      "role": "Assessment Designer",
+      "status": "done",
+      "detail": "worksheet + exam bundle"
+    },
+    {
+      "agent_id": "qa_agent",
+      "role": "QA Agent",
+      "status": "done",
+      "detail": "QA complete"
+    },
+    {
+      "agent_id": "publishing",
+      "role": "Publishing Agent",
+      "status": "done",
+      "detail": "publish gate evaluated"
+    }
+  ],
+  "chapter_approved": false,
+  "version_history": [
+    {
+      "version": 1,
+      "at": "2026-07-17T17:57:59.780549+00:00",
+      "note": "VLIE package build"
+    }
+  ],
+  "adaptations_keys": [
+    "vocabulary",
+    "worksheet",
+    "standard",
+    "ld",
+    "dyslexia",
+    "dyscalculia",
+    "dysgraphia",
+    "autism",
+    "adhd",
+    "executive",
+    "visual",
+    "auditory",
+    "ell",
+    "gifted",
+    "parent",
+    "tutor",
+    "teacher",
+    "exam_revision",
+    "multisensory"
+  ],
+  "merged_engine_summary": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  },
+  "audit_trail": [
+    {
+      "ts": "2026-07-17T17:51:19.355638+00:00",
+      "event": "vlie_start",
+      "run_id": "da54df7683fd"
+    },
+    {
+      "ts": "2026-07-17T17:51:19.356641+00:00",
+      "event": "teaching_start"
+    },
+    {
+      "ts": "2026-07-17T17:57:59.780473+00:00",
+      "event": "teaching_done"
+    }
+  ],
+  "vlie_validation": {
+    "ok": true,
+    "publish_blocked": false,
+    "errors": [],
+    "scorecard": {
+      "bloom_levels": [
+        "analyze",
+        "apply",
+        "remember",
+        "understand"
+      ],
+      "reading_grade": 10.51,
+      "accessibility_score": 100
+    }
+  }
+}

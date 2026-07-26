@@ -1,0 +1,109 @@
+{
+  "package_id": "ff65b59bdd22",
+  "schema_version": "1.0.0",
+  "source_path": "C:\\Users\\SPECTRE\\AppData\\Local\\Temp\\pytest-of-SPECTRE\\pytest-51\\test_ingest_markdown0\\cell.md",
+  "source_hash": "15ed92e7c2996460140ec2cd6f295aabdd7fd5189ce2f29201626f39bc02161c",
+  "curriculum": {
+    "curriculum": "NCERT",
+    "board": "CBSE",
+    "grade": "8",
+    "subject": "Science",
+    "chapter": 0,
+    "chapter_title": "",
+    "topic": "",
+    "unit": "",
+    "language": "en",
+    "hierarchy": {
+      "internal": {
+        "chapter": 0,
+        "topic": "",
+        "concepts": [
+          "Cell Structure",
+          "Chloroplast"
+        ],
+        "learning_outcomes": [
+          "Students will be able to label a plant cell."
+        ],
+        "skills": [],
+        "assessment": []
+      },
+      "original_labels": {
+        "board": "CBSE",
+        "curriculum": "NCERT"
+      },
+      "preserves_source_terminology": true
+    }
+  },
+  "text_chunks": [
+    {
+      "chunk_id": "cell-p1-c0",
+      "text": "# Cell Structure\n\n## Chloroplast\nPlant cells have chloroplast.\n\nLearning objectives: Students will be able to label a plant cell.\n\n1. What is the function of the vacuole?\nH2 + O2 -> H2O\nSolve x = 2",
+      "chapter": 0,
+      "chapter_title": "# Cell Structure",
+      "page_start": 1,
+      "source": "C:\\Users\\SPECTRE\\AppData\\Local\\Temp\\pytest-of-SPECTRE\\pytest-51\\test_ingest_markdown0\\cell.md",
+      "board": "CBSE",
+      "grade": "8",
+      "subject": "Science",
+      "parent_id": "page-1",
+      "chunk_by": "page"
+    }
+  ],
+  "figures": [],
+  "tables": [],
+  "equations": [
+    {
+      "latex": "\\ce{H2 + O2 -> H2}",
+      "kind": "chemistry",
+      "page": null,
+      "raw": "H2 + O2 -> H2"
+    },
+    {
+      "latex": "H2O\nSolve x",
+      "kind": "math",
+      "page": null,
+      "raw": "H2O\nSolve x"
+    }
+  ],
+  "questions": [
+    {
+      "question": "1. What is the function of the vacuole?",
+      "question_type": "short_answer",
+      "marks": 1,
+      "bloom": "remember",
+      "difficulty": "medium",
+      "topic": "",
+      "chapter": 0,
+      "official_answer": "",
+      "options": [],
+      "source": "cell.md"
+    }
+  ],
+  "vocabulary": [
+    "Cell Structure",
+    "Chloroplast"
+  ],
+  "learning_objectives": [
+    "Students will be able to label a plant cell."
+  ],
+  "concepts": [
+    "Cell Structure",
+    "Chloroplast"
+  ],
+  "accessibility": {
+    "reading_grade_estimate": -1.8,
+    "vocabulary_difficulty": "low",
+    "language_complexity": 4.548387096774194,
+    "figures_with_alt_placeholders": 0,
+    "wcag_notes": "Alt text placeholders attached; teachers should refine descriptions"
+  },
+  "citations": [
+    "[NCERT CBSE Class 8 Science Ch.0]"
+  ],
+  "index_status": {
+    "skipped": true
+  },
+  "version": 1,
+  "errors": [],
+  "warnings": []
+}

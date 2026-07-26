@@ -1,0 +1,144 @@
+{
+  "package_id": "9d10d4930ae5",
+  "schema_version": "1.0.0",
+  "source_path": "C:\\Users\\SPECTRE\\AppData\\Local\\Temp\\tmpmb72mhxy\\sample.md",
+  "source_hash": "66f68c03b3f6ed5389248ae965533e006133eb0bb842fdfff93cee661e2a06e7",
+  "curriculum": {
+    "curriculum": "NCERT",
+    "board": "CBSE",
+    "grade": "8",
+    "subject": "Science",
+    "chapter": 0,
+    "chapter_title": "",
+    "topic": "",
+    "unit": "",
+    "language": "en",
+    "hierarchy": {
+      "internal": {
+        "chapter": 0,
+        "topic": "",
+        "concepts": [
+          "Force and Pressure"
+        ],
+        "learning_outcomes": [
+          "explain P=F/A."
+        ],
+        "skills": [],
+        "assessment": []
+      },
+      "original_labels": {
+        "board": "CBSE",
+        "curriculum": "NCERT"
+      },
+      "preserves_source_terminology": true
+    }
+  },
+  "text_chunks": [
+    {
+      "chunk_id": "sample-p1-c0",
+      "text": "# Force and Pressure\n\nStudents will be able to explain P=F/A.\n\n1. Define pressure.\nH2 + Cl2 -> 2HCl",
+      "chapter": 0,
+      "chapter_title": "# Force and Pressure",
+      "page_start": 1,
+      "source": "C:\\Users\\SPECTRE\\AppData\\Local\\Temp\\tmpmb72mhxy\\sample.md",
+      "board": "CBSE",
+      "grade": "8",
+      "subject": "Science",
+      "parent_id": "page-1",
+      "chunk_by": "page"
+    }
+  ],
+  "figures": [],
+  "tables": [],
+  "equations": [
+    {
+      "latex": "sure\n\nStudents will be able to explain P",
+      "kind": "math",
+      "page": null,
+      "raw": "sure\n\nStudents will be able to explain P"
+    }
+  ],
+  "questions": [
+    {
+      "question": "1. Define pressure.",
+      "question_type": "short_answer",
+      "marks": 1,
+      "bloom": "remember",
+      "difficulty": "medium",
+      "topic": "",
+      "chapter": 0,
+      "official_answer": "",
+      "options": [],
+      "source": "sample.md"
+    }
+  ],
+  "vocabulary": [
+    "Force and Pressure"
+  ],
+  "learning_objectives": [
+    "explain P=F/A."
+  ],
+  "concepts": [
+    "Force and Pressure"
+  ],
+  "accessibility": {
+    "reading_grade_estimate": -4.2,
+    "vocabulary_difficulty": "low",
+    "language_complexity": 3.8823529411764706,
+    "figures_with_alt_placeholders": 0,
+    "wcag_notes": "Alt text placeholders attached; teachers should refine descriptions"
+  },
+  "citations": [
+    "[NCERT CBSE Class 8 Science Ch.0]"
+  ],
+  "index_status": {
+    "curriculum_chunks": {
+      "collection": "kie_curriculum_chunks",
+      "indexed": 1,
+      "backend": "chromadb"
+    },
+    "legacy_ncert_index": {
+      "indexed": 8,
+      "backend": "chromadb",
+      "message": "Index already built"
+    },
+    "question_bank": {
+      "collection": "kie_question_bank",
+      "indexed": 1,
+      "backend": "chromadb"
+    },
+    "official_question_index": {
+      "backend": "chromadb",
+      "indexed": 14
+    },
+    "figures": {
+      "collection": "figures",
+      "indexed": 0
+    },
+    "diagrams": {
+      "collection": "figures",
+      "indexed": 0
+    },
+    "formulas": {
+      "collection": "kie_formulas",
+      "indexed": 1,
+      "backend": "chromadb"
+    },
+    "vocabulary": {
+      "collection": "kie_vocabulary",
+      "indexed": 1,
+      "backend": "chromadb"
+    },
+    "worked_examples": {
+      "indexed": 0,
+      "note": "populated when worked examples tagged"
+    },
+    "misconceptions": {
+      "indexed": 0,
+      "note": "populated from engine common_mistakes later"
+    }
+  },
+  "version": 1,
+  "errors": [],
+  "warnings": []
+}

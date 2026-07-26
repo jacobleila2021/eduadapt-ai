@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0.0",
+  "package_id": "e208ed01088e",
+  "created_at": "2026-07-16T14:02:51.854352+00:00",
+  "lesson_metadata": {
+    "topic": null,
+    "source_chars": 56,
+    "pilot_id": null,
+    "board": null,
+    "grade": null,
+    "subject": null
+  },
+  "curriculum": {
+    "citations": [],
+    "rag_hits": [],
+    "exam_bundle": {}
+  },
+  "verified_concepts": [],
+  "verified_stem_outputs": [],
+  "verified_visuals": [],
+  "biology_figures": [],
+  "accessibility_adaptations": {},
+  "assessment_assets": {
+    "has_vocabulary": false,
+    "has_worksheet": false,
+    "official_mcqs": []
+  },
+  "visual_assets": [],
+  "analytics_metadata": {
+    "ok": true,
+    "payload": {
+      "report": {
+        "complexity_score": 36,
+        "reading_level": "Grade 1",
+        "objective_count": 1
+      }
+    },
+    "deterministic": false,
+    "assets": []
+  },
+  "gamification": {
+    "ok": true,
+    "payload": {
+      "enabled": false,
+      "xp": 0,
+      "badges": [],
+      "streaks": {
+        "days": 0
+      },
+      "quests": [
+        "Complete Exam Practice (Official)",
+        "Review verified visuals"
+      ],
+      "certificates": [],
+      "design": "accessibility-first intrinsic motivation",
+      "note": "Full XP/badge persistence deferred to Section C roadmap"
+    },
+    "deterministic": false,
+    "assets": []
+  },
+  "qa_report": {
+    "passed": false,
+    "publish_blocked": true,
+    "blocked_reason": "Sympify of expression 'could not parse 'Plant cell chloroplast. Solve 2*x+3'' failed, because of exception being raised:\nSyntaxError: invalid syntax (<string>, line 1)",
+    "checks": [
+      {
+        "code": "artifact_fail",
+        "ok": false,
+        "detail": "Sympify of expression 'could not parse 'Plant cell chloroplast. Solve 2*x+3'' failed, because of exception being raised:\nSyntaxError: invalid syntax (<string>, line 1)",
+        "engine_id": "sympy"
+      },
+      {
+        "code": "diagram_availability",
+        "ok": true,
+        "detail": "1 deterministic visual(s) selected"
+      },
+      {
+        "code": "diagram_correctness",
+        "ok": true,
+        "detail": "Verified visuals resolve on disk or via iframe"
+      },
+      {
+        "code": "source_citations",
+        "ok": true,
+        "detail": "6 citation(s)"
+      },
+      {
+        "code": "citation_completeness",
+        "ok": true,
+        "detail": "Citations present for science pilot"
+      },
+      {
+        "code": "bloom_coverage",
+        "ok": true,
+        "detail": "Bloom tags in exam bundle: ['analyze', 'apply', 'remember', 'understand']"
+      },
+      {
+        "code": "learning_objective_coverage",
+        "ok": true,
+        "detail": "Exam/official items linked"
+      },
+      {
+        "code": "accessibility_structure",
+        "ok": true,
+        "detail": "Adaptation sections present"
+      },
+      {
+        "code": "reading_level",
+        "ok": true,
+        "detail": "Insufficient text to score reading level"
+      },
+      {
+        "code": "hallucination_detection",
+        "ok": true,
+        "detail": "No unresolved NEED_ENGINE/NEED_SOURCE markers"
+      },
+      {
+        "code": "wcag_brand_palette",
+        "ok": true,
+        "detail": "Engine visuals use Alora navy/teal high-contrast palette"
+      },
+      {
+        "code": "wcag_alt_text",
+        "ok": true,
+        "detail": "NCERT figures have alt/caption"
+      }
+    ],
+    "scorecard": {
+      "bloom_levels": [
+        "analyze",
+        "apply",
+        "remember",
+        "understand"
+      ],
+      "accessibility_score": 100
+    }
+  },
+  "orchestration_trace": [],
+  "chapter_approved": false,
+  "version_history": [
+    {
+      "version": 1,
+      "at": "2026-07-16T14:02:51.854360+00:00",
+      "note": "VLIE package build"
+    }
+  ],
+  "adaptations_keys": [],
+  "merged_engine_summary": {
+    "ok": false,
+    "errors": [
+      "1 engine check(s) failed \u2014 lesson must not publish",
+      "Sympify of expression 'could not parse 'Plant cell chloroplast. Solve 2*x+3'' failed, because of exception being raised:\nSyntaxError: invalid syntax (<string>, line 1)"
+    ],
+    "warnings": []
+  },
+  "audit_trail": [
+    {
+      "ts": "2026-07-16T14:02:45.410465+00:00",
+      "event": "vlie_start",
+      "run_id": "e208ed01088e"
+    },
+    {
+      "ts": "2026-07-16T14:02:45.410516+00:00",
+      "event": "engine_start",
+      "engine_id": "curriculum"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.460842+00:00",
+      "event": "engine_done",
+      "engine_id": "curriculum",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.460856+00:00",
+      "event": "engine_start",
+      "engine_id": "scientific_accuracy"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.477743+00:00",
+      "event": "engine_done",
+      "engine_id": "scientific_accuracy",
+      "ok": false,
+      "errors": [
+        "1 engine check(s) failed \u2014 lesson must not publish"
+      ]
+    },
+    {
+      "ts": "2026-07-16T14:02:51.477754+00:00",
+      "event": "engine_start",
+      "engine_id": "assessment"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.477767+00:00",
+      "event": "engine_done",
+      "engine_id": "assessment",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.477770+00:00",
+      "event": "engine_start",
+      "engine_id": "accessibility"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.478062+00:00",
+      "event": "engine_done",
+      "engine_id": "accessibility",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.478072+00:00",
+      "event": "engine_start",
+      "engine_id": "adaptive_learning"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.478085+00:00",
+      "event": "engine_done",
+      "engine_id": "adaptive_learning",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.478089+00:00",
+      "event": "engine_start",
+      "engine_id": "ai_tutor"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.478100+00:00",
+      "event": "engine_done",
+      "engine_id": "ai_tutor",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.478103+00:00",
+      "event": "engine_start",
+      "engine_id": "learning_analytics"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.854051+00:00",
+      "event": "engine_done",
+      "engine_id": "learning_analytics",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.854066+00:00",
+      "event": "engine_start",
+      "engine_id": "gamification"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.854078+00:00",
+      "event": "engine_done",
+      "engine_id": "gamification",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "ts": "2026-07-16T14:02:51.854081+00:00",
+      "event": "engine_start",
+      "engine_id": "quality_assurance"
+    },
+    {
+      "ts": "2026-07-16T14:02:51.854308+00:00",
+      "event": "engine_done",
+      "engine_id": "quality_assurance",
+      "ok": false,
+      "errors": [
+        "Sympify of expression 'could not parse 'Plant cell chloroplast. Solve 2*x+3'' failed, because of exception being raised:\nSyntaxError: invalid syntax (<string>, line 1)"
+      ]
+    }
+  ],
+  "vlie_validation": {
+    "ok": false,
+    "publish_blocked": true,
+    "errors": [
+      "Sympify of expression 'could not parse 'Plant cell chloroplast. Solve 2*x+3'' failed, because of exception being raised:\nSyntaxError: invalid syntax (<string>, line 1)"
+    ],
+    "scorecard": {
+      "bloom_levels": [
+        "analyze",
+        "apply",
+        "remember",
+        "understand"
+      ],
+      "accessibility_score": 100
+    }
+  }
+}

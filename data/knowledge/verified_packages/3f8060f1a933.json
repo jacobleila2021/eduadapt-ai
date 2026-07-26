@@ -1,0 +1,5317 @@
+{
+  "schema_version": "3.0.0",
+  "package_id": "3f8060f1a933",
+  "created_at": "2026-07-19T05:31:06.168396+00:00",
+  "lesson_metadata": {
+    "topic": "Vocabulary Study \u2014 Tissues in Action",
+    "source_chars": 4151,
+    "source_id": "src_40eb8e1ab1146ae8",
+    "curriculum_status": "unknown",
+    "board": null,
+    "grade": null,
+    "subject": null
+  },
+  "source": {
+    "schema_version": "3.0.0",
+    "source_id": "src_40eb8e1ab1146ae8",
+    "source_hash": "40eb8e1ab1146ae804447bcf5de1ab9f30e1b97b7a7e37b75c9760a49e02dd53",
+    "filename": "LESSON Biology_vocabulary (1).docx",
+    "detected_mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "detected_format": "docx",
+    "status": "readable",
+    "blocks": [
+      {
+        "block_id": "blk_40eb8e1ab1_00000",
+        "text": "Vocabulary Study \u2014 Tissues in Action",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 0,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00001",
+        "text": "1. Word Wall",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 1,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00002",
+        "text": "Meristematic Tissues: Groups of cells that can divide continuously, responsible for plant growth.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 2,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00003",
+        "text": "Picture: Cells in a plant root tip actively dividing.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 3,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00004",
+        "text": "Permanent Tissues: Tissues formed from meristematic tissues that have differentiated to perform specific functions.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 4,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00005",
+        "text": "Picture: Different types of plant cells, such as xylem and phloem.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 5,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00006",
+        "text": "Epithelial Tissue: Tissue that forms the outer covering of the body and lines internal organs.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 6,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00007",
+        "text": "Picture: Layer of tightly packed cells protecting underlying tissues.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 7,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00008",
+        "text": "Connective Tissue: Tissues that support and connect different parts of the body.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 8,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00009",
+        "text": "Picture: Blood and bone cells providing structure and transport.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 9,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00010",
+        "text": "Muscular Tissue: Tissue responsible for movement in the body, including skeletal, smooth, and cardiac muscles.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 10,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00011",
+        "text": "Picture: Muscle fibers contracting to enable movement.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 11,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00012",
+        "text": "Apical Meristem: Meristematic tissue located at the tips of roots and shoots, responsible for growth in length.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 12,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00013",
+        "text": "Picture: Growth tip of a plant root.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 13,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00014",
+        "text": "Lateral Meristem: Meristematic tissue responsible for growth in girth, found in the stems of plants.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 14,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00015",
+        "text": "Picture: Cross-section of a tree trunk showing growth rings.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 15,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00016",
+        "text": "Intercalary Meristem: Meristematic tissue located at the base of internodes, aiding in regrowth after cutting.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 16,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00017",
+        "text": "Picture: New grass shoots emerging after being cut.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 17,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00018",
+        "text": "Xylem: Complex permanent tissue that transports water and minerals from roots to other parts of the plant.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 18,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00019",
+        "text": "Picture: Diagram of xylem vessels in a plant.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 19,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00020",
+        "text": "Phloem: Complex permanent tissue that transports food from leaves to other parts of the plant.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 20,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00021",
+        "text": "Picture: Diagram of phloem tissue in a plant.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 21,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00022",
+        "text": "Skeletal Muscle: Voluntary muscular tissue attached to bones, responsible for body movement.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 22,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00023",
+        "text": "Picture: Skeletal muscle fibers in action.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 23,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00024",
+        "text": "Smooth Muscle: Involuntary muscular tissue found in organs, responsible for automatic movements.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 24,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00025",
+        "text": "Picture: Smooth muscle tissue in the digestive tract.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 25,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00026",
+        "text": "Cardiac Muscle: Involuntary muscular tissue found in the heart, responsible for pumping blood.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 26,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00027",
+        "text": "Picture: Cardiac muscle fibers contracting.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 27,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00028",
+        "text": "2. Flashcards",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 28,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00029",
+        "text": "FRONT: What are meristematic tissues?  \u2192  BACK: Groups of cells that can divide continuously, responsible for plant growth.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 29,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00030",
+        "text": "FRONT: What is the function of epithelial tissue?  \u2192  BACK: To form the outer covering of the body and line internal organs.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 30,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00031",
+        "text": "FRONT: What does xylem do?  \u2192  BACK: Transports water and minerals from roots to other parts of the plant.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 31,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00032",
+        "text": "FRONT: What is the role of skeletal muscle?  \u2192  BACK: Responsible for voluntary movements of the body.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 32,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00033",
+        "text": "3. Picture Words",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 33,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00034",
+        "text": "Meristematic Tissues \u2014 Green \u2014 Draw: A plant root tip with dividing cells.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 34,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00035",
+        "text": "Xylem \u2014 Blue \u2014 Draw: Xylem vessels transporting water.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 35,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00036",
+        "text": "Epithelial Tissue \u2014 Yellow \u2014 Draw: Layer of epithelial cells.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 36,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00037",
+        "text": "4. Say \u00b7 Spell \u00b7 Use",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 37,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00038",
+        "text": "Meristematic Tissues (/\u02ccm\u025br\u0259\u02c8st\u025bm\u0259t\u026ak \u02c8t\u026a\u0283u\u02d0z/) \u2014 ____ are responsible for the growth of plants.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 38,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00039",
+        "text": "Connective Tissue (/k\u0259\u02c8n\u025bkt\u026av \u02c8t\u026a\u0283u\u02d0/) \u2014 ____ supports and connects different parts of the body.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 39,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00040",
+        "text": "Apical Meristem (/\u02c8e\u026ap\u026ak\u0259l \u02c8m\u025br\u0259\u02ccst\u025bm/) \u2014 The ____ is located at the tips of roots and shoots.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 40,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00041",
+        "text": "5. Self-Test",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 41,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00042",
+        "text": "Match the tissue type with its function.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 42,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00043",
+        "text": "Xylem transports water and minerals from roots to other parts of the plant.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 43,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00044",
+        "text": "Epithelial tissue protects underlying tissues and facilitates absorption.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 44,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00045",
+        "text": "Muscular tissue enables movement in the body.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 45,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00046",
+        "text": "6. Quick Reference",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 46,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00047",
+        "text": "Epithelial Tissue: Forms the outer covering of the body and lines internal organs. (Exam tip: Focus on types: squamous, cuboidal, columnar.)",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 47,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00048",
+        "text": "Connective Tissue: Supports and connects different parts of the body. (Exam tip: Remember examples: blood, bone, cartilage.)",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 48,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00049",
+        "text": "Muscular Tissue: Responsible for movement in the body. (Exam tip: Differentiate between voluntary and involuntary muscles.)",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 49,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00050",
+        "text": "7. Concept Map",
+        "kind": "heading",
+        "page": null,
+        "slide": null,
+        "order": 50,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00051",
+        "text": "Study how all vocabulary terms connect to the main topic.",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 51,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00052",
+        "text": "Tip: Download the HTML vocabulary file for the full arrow flowchart (best for colour printing).",
+        "kind": "prose",
+        "page": null,
+        "slide": null,
+        "order": 52,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {}
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00053",
+        "text": "Tissues in Action",
+        "kind": "table",
+        "page": null,
+        "slide": null,
+        "order": 53,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {
+          "table_index": 1
+        }
+      },
+      {
+        "block_id": "blk_40eb8e1ab1_00054",
+        "text": "Meristematic Tissues | Permanent Tissues | Epithelial Tissue\nConnective Tissue | Muscular Tissue | Apical Meristem\nLateral Meristem | Intercalary Meristem | Xylem\nPhloem | Skeletal Muscle | Smooth Muscle",
+        "kind": "table",
+        "page": null,
+        "slide": null,
+        "order": 54,
+        "extraction_method": "python-docx",
+        "ocr_confidence": null,
+        "source_ref": "LESSON Biology_vocabulary (1).docx#page-1",
+        "metadata": {
+          "table_index": 2
+        }
+      }
+    ],
+    "text": "Vocabulary Study \u2014 Tissues in Action\n\n1. Word Wall\n\nMeristematic Tissues: Groups of cells that can divide continuously, responsible for plant growth.\n\nPicture: Cells in a plant root tip actively dividing.\n\nPermanent Tissues: Tissues formed from meristematic tissues that have differentiated to perform specific functions.\n\nPicture: Different types of plant cells, such as xylem and phloem.\n\nEpithelial Tissue: Tissue that forms the outer covering of the body and lines internal organs.\n\nPicture: Layer of tightly packed cells protecting underlying tissues.\n\nConnective Tissue: Tissues that support and connect different parts of the body.\n\nPicture: Blood and bone cells providing structure and transport.\n\nMuscular Tissue: Tissue responsible for movement in the body, including skeletal, smooth, and cardiac muscles.\n\nPicture: Muscle fibers contracting to enable movement.\n\nApical Meristem: Meristematic tissue located at the tips of roots and shoots, responsible for growth in length.\n\nPicture: Growth tip of a plant root.\n\nLateral Meristem: Meristematic tissue responsible for growth in girth, found in the stems of plants.\n\nPicture: Cross-section of a tree trunk showing growth rings.\n\nIntercalary Meristem: Meristematic tissue located at the base of internodes, aiding in regrowth after cutting.\n\nPicture: New grass shoots emerging after being cut.\n\nXylem: Complex permanent tissue that transports water and minerals from roots to other parts of the plant.\n\nPicture: Diagram of xylem vessels in a plant.\n\nPhloem: Complex permanent tissue that transports food from leaves to other parts of the plant.\n\nPicture: Diagram of phloem tissue in a plant.\n\nSkeletal Muscle: Voluntary muscular tissue attached to bones, responsible for body movement.\n\nPicture: Skeletal muscle fibers in action.\n\nSmooth Muscle: Involuntary muscular tissue found in organs, responsible for automatic movements.\n\nPicture: Smooth muscle tissue in the digestive tract.\n\nCardiac Muscle: Involuntary muscular tissue found in the heart, responsible for pumping blood.\n\nPicture: Cardiac muscle fibers contracting.\n\n2. Flashcards\n\nFRONT: What are meristematic tissues?  \u2192  BACK: Groups of cells that can divide continuously, responsible for plant growth.\n\nFRONT: What is the function of epithelial tissue?  \u2192  BACK: To form the outer covering of the body and line internal organs.\n\nFRONT: What does xylem do?  \u2192  BACK: Transports water and minerals from roots to other parts of the plant.\n\nFRONT: What is the role of skeletal muscle?  \u2192  BACK: Responsible for voluntary movements of the body.\n\n3. Picture Words\n\nMeristematic Tissues \u2014 Green \u2014 Draw: A plant root tip with dividing cells.\n\nXylem \u2014 Blue \u2014 Draw: Xylem vessels transporting water.\n\nEpithelial Tissue \u2014 Yellow \u2014 Draw: Layer of epithelial cells.\n\n4. Say \u00b7 Spell \u00b7 Use\n\nMeristematic Tissues (/\u02ccm\u025br\u0259\u02c8st\u025bm\u0259t\u026ak \u02c8t\u026a\u0283u\u02d0z/) \u2014 ____ are responsible for the growth of plants.\n\nConnective Tissue (/k\u0259\u02c8n\u025bkt\u026av \u02c8t\u026a\u0283u\u02d0/) \u2014 ____ supports and connects different parts of the body.\n\nApical Meristem (/\u02c8e\u026ap\u026ak\u0259l \u02c8m\u025br\u0259\u02ccst\u025bm/) \u2014 The ____ is located at the tips of roots and shoots.\n\n5. Self-Test\n\nMatch the tissue type with its function.\n\nXylem transports water and minerals from roots to other parts of the plant.\n\nEpithelial tissue protects underlying tissues and facilitates absorption.\n\nMuscular tissue enables movement in the body.\n\n6. Quick Reference\n\nEpithelial Tissue: Forms the outer covering of the body and lines internal organs. (Exam tip: Focus on types: squamous, cuboidal, columnar.)\n\nConnective Tissue: Supports and connects different parts of the body. (Exam tip: Remember examples: blood, bone, cartilage.)\n\nMuscular Tissue: Responsible for movement in the body. (Exam tip: Differentiate between voluntary and involuntary muscles.)\n\n7. Concept Map\n\nStudy how all vocabulary terms connect to the main topic.\n\nTip: Download the HTML vocabulary file for the full arrow flowchart (best for colour printing).\n\nTissues in Action\n\nMeristematic Tissues | Permanent Tissues | Epithelial Tissue\nConnective Tissue | Muscular Tissue | Apical Meristem\nLateral Meristem | Intercalary Meristem | Xylem\nPhloem | Skeletal Muscle | Smooth Muscle",
+    "extraction_methods": [
+      "python-docx"
+    ],
+    "ocr_used": false,
+    "ocr_confidence": null,
+    "readable_content_score": 1.0,
+    "language": "en",
+    "warnings": [],
+    "errors": [],
+    "user_metadata": {},
+    "curriculum_resolution": {
+      "status": "unknown",
+      "curriculum": null,
+      "confidence": 0.0,
+      "provenance": "not_evaluated"
+    },
+    "ok": true
+  },
+  "universal_profile": {
+    "schema_version": "3.0.0",
+    "source_id": "src_40eb8e1ab1146ae8",
+    "title": "Vocabulary Study \u2014 Tissues in Action",
+    "topic": "Vocabulary Study \u2014 Tissues in Action",
+    "concepts": [
+      {
+        "concept": "tissue",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00016",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00020"
+        ],
+        "frequency": 27
+      },
+      {
+        "concept": "tissues",
+        "source_refs": [
+          "blk_40eb8e1ab1_00000",
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00004",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00038"
+        ],
+        "frequency": 14
+      },
+      {
+        "concept": "picture",
+        "source_refs": [
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00009",
+          "blk_40eb8e1ab1_00011",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00015",
+          "blk_40eb8e1ab1_00017"
+        ],
+        "frequency": 14
+      },
+      {
+        "concept": "plant",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00019",
+          "blk_40eb8e1ab1_00020",
+          "blk_40eb8e1ab1_00021"
+        ],
+        "frequency": 12
+      },
+      {
+        "concept": "responsible",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00024",
+          "blk_40eb8e1ab1_00026",
+          "blk_40eb8e1ab1_00029"
+        ],
+        "frequency": 11
+      },
+      {
+        "concept": "body",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00030",
+          "blk_40eb8e1ab1_00032",
+          "blk_40eb8e1ab1_00039",
+          "blk_40eb8e1ab1_00045"
+        ],
+        "frequency": 11
+      },
+      {
+        "concept": "muscle",
+        "source_refs": [
+          "blk_40eb8e1ab1_00011",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00023",
+          "blk_40eb8e1ab1_00024",
+          "blk_40eb8e1ab1_00025",
+          "blk_40eb8e1ab1_00026",
+          "blk_40eb8e1ab1_00027",
+          "blk_40eb8e1ab1_00032"
+        ],
+        "frequency": 10
+      },
+      {
+        "concept": "meristematic",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00004",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00016",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00038"
+        ],
+        "frequency": 9
+      },
+      {
+        "concept": "cells",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00009",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00036"
+        ],
+        "frequency": 8
+      },
+      {
+        "concept": "xylem",
+        "source_refs": [
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00019",
+          "blk_40eb8e1ab1_00031",
+          "blk_40eb8e1ab1_00035",
+          "blk_40eb8e1ab1_00043",
+          "blk_40eb8e1ab1_00054"
+        ],
+        "frequency": 8
+      },
+      {
+        "concept": "growth",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00015",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00038"
+        ],
+        "frequency": 7
+      },
+      {
+        "concept": "epithelial",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00030",
+          "blk_40eb8e1ab1_00036",
+          "blk_40eb8e1ab1_00044",
+          "blk_40eb8e1ab1_00047",
+          "blk_40eb8e1ab1_00054"
+        ],
+        "frequency": 7
+      }
+    ],
+    "skills": [],
+    "vocabulary": [
+      {
+        "term": "tissue",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00016",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00020"
+        ]
+      },
+      {
+        "term": "tissues",
+        "source_refs": [
+          "blk_40eb8e1ab1_00000",
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00004",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00038"
+        ]
+      },
+      {
+        "term": "picture",
+        "source_refs": [
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00009",
+          "blk_40eb8e1ab1_00011",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00015",
+          "blk_40eb8e1ab1_00017"
+        ]
+      },
+      {
+        "term": "plant",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00019",
+          "blk_40eb8e1ab1_00020",
+          "blk_40eb8e1ab1_00021"
+        ]
+      },
+      {
+        "term": "responsible",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00024",
+          "blk_40eb8e1ab1_00026",
+          "blk_40eb8e1ab1_00029"
+        ]
+      },
+      {
+        "term": "body",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00030",
+          "blk_40eb8e1ab1_00032",
+          "blk_40eb8e1ab1_00039",
+          "blk_40eb8e1ab1_00045"
+        ]
+      },
+      {
+        "term": "muscle",
+        "source_refs": [
+          "blk_40eb8e1ab1_00011",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00023",
+          "blk_40eb8e1ab1_00024",
+          "blk_40eb8e1ab1_00025",
+          "blk_40eb8e1ab1_00026",
+          "blk_40eb8e1ab1_00027",
+          "blk_40eb8e1ab1_00032"
+        ]
+      },
+      {
+        "term": "meristematic",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00004",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00016",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00038"
+        ]
+      },
+      {
+        "term": "cells",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00009",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00036"
+        ]
+      },
+      {
+        "term": "xylem",
+        "source_refs": [
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00019",
+          "blk_40eb8e1ab1_00031",
+          "blk_40eb8e1ab1_00035",
+          "blk_40eb8e1ab1_00043",
+          "blk_40eb8e1ab1_00054"
+        ]
+      },
+      {
+        "term": "growth",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00015",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00038"
+        ]
+      },
+      {
+        "term": "epithelial",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00030",
+          "blk_40eb8e1ab1_00036",
+          "blk_40eb8e1ab1_00044",
+          "blk_40eb8e1ab1_00047",
+          "blk_40eb8e1ab1_00054"
+        ]
+      },
+      {
+        "term": "parts",
+        "source_refs": [
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00020",
+          "blk_40eb8e1ab1_00031",
+          "blk_40eb8e1ab1_00039",
+          "blk_40eb8e1ab1_00043",
+          "blk_40eb8e1ab1_00048"
+        ]
+      },
+      {
+        "term": "muscular",
+        "source_refs": [
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00024",
+          "blk_40eb8e1ab1_00026",
+          "blk_40eb8e1ab1_00045",
+          "blk_40eb8e1ab1_00049",
+          "blk_40eb8e1ab1_00054"
+        ]
+      },
+      {
+        "term": "meristem",
+        "source_refs": [
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00016",
+          "blk_40eb8e1ab1_00040",
+          "blk_40eb8e1ab1_00054"
+        ]
+      }
+    ],
+    "learning_objectives": [
+      {
+        "objective": "Explain tissue using the uploaded source.",
+        "source_refs": [
+          "blk_40eb8e1ab1_00006",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00016",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00020"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain tissues using the uploaded source.",
+        "source_refs": [
+          "blk_40eb8e1ab1_00000",
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00004",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00008",
+          "blk_40eb8e1ab1_00029",
+          "blk_40eb8e1ab1_00034",
+          "blk_40eb8e1ab1_00038"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain picture using the uploaded source.",
+        "source_refs": [
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00007",
+          "blk_40eb8e1ab1_00009",
+          "blk_40eb8e1ab1_00011",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00015",
+          "blk_40eb8e1ab1_00017"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain plant using the uploaded source.",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00003",
+          "blk_40eb8e1ab1_00005",
+          "blk_40eb8e1ab1_00013",
+          "blk_40eb8e1ab1_00018",
+          "blk_40eb8e1ab1_00019",
+          "blk_40eb8e1ab1_00020",
+          "blk_40eb8e1ab1_00021"
+        ],
+        "status": "pedagogically_inferred"
+      },
+      {
+        "objective": "Explain responsible using the uploaded source.",
+        "source_refs": [
+          "blk_40eb8e1ab1_00002",
+          "blk_40eb8e1ab1_00010",
+          "blk_40eb8e1ab1_00012",
+          "blk_40eb8e1ab1_00014",
+          "blk_40eb8e1ab1_00022",
+          "blk_40eb8e1ab1_00024",
+          "blk_40eb8e1ab1_00026",
+          "blk_40eb8e1ab1_00029"
+        ],
+        "status": "pedagogically_inferred"
+      }
+    ],
+    "misconceptions": [],
+    "examples": [],
+    "assessment_opportunities": [
+      {
+        "question": "FRONT: What are meristematic tissues?",
+        "source_refs": [
+          "blk_40eb8e1ab1_00029"
+        ]
+      },
+      {
+        "question": "FRONT: What is the function of epithelial tissue?",
+        "source_refs": [
+          "blk_40eb8e1ab1_00030"
+        ]
+      },
+      {
+        "question": "FRONT: What does xylem do?",
+        "source_refs": [
+          "blk_40eb8e1ab1_00031"
+        ]
+      },
+      {
+        "question": "FRONT: What is the role of skeletal muscle?",
+        "source_refs": [
+          "blk_40eb8e1ab1_00032"
+        ]
+      }
+    ],
+    "visual_opportunities": [
+      {
+        "opportunity": "Picture: Blood and bone cells providing structure and transport.",
+        "source_refs": [
+          "blk_40eb8e1ab1_00009"
+        ]
+      },
+      {
+        "opportunity": "Concept Map",
+        "source_refs": [
+          "blk_40eb8e1ab1_00050"
+        ]
+      }
+    ],
+    "difficulty": {
+      "band": "intermediate",
+      "score": 14.36,
+      "average_sentence_words": 10.17,
+      "average_word_characters": 5.43
+    },
+    "age_estimate": {
+      "band": "11-14",
+      "method": "source_readability_heuristic",
+      "confidence": 0.55
+    },
+    "language": "en",
+    "curriculum_resolution": {
+      "status": "unknown",
+      "curriculum": null,
+      "confidence": 0.0,
+      "provenance": "no_source_marker"
+    },
+    "claim_ledger": [
+      {
+        "claim_id": "claim_00001",
+        "text": "Vocabulary Study \u2014 Tissues in Action",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00000"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00002",
+        "text": "Word Wall",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00001"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00003",
+        "text": "Meristematic Tissues: Groups of cells that can divide continuously, responsible for plant growth.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00002"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00004",
+        "text": "Picture: Cells in a plant root tip actively dividing.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00003"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00005",
+        "text": "Permanent Tissues: Tissues formed from meristematic tissues that have differentiated to perform specific functions.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00004"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00006",
+        "text": "Picture: Different types of plant cells, such as xylem and phloem.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00005"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00007",
+        "text": "Epithelial Tissue: Tissue that forms the outer covering of the body and lines internal organs.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00006"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00008",
+        "text": "Picture: Layer of tightly packed cells protecting underlying tissues.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00007"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00009",
+        "text": "Connective Tissue: Tissues that support and connect different parts of the body.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00008"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00010",
+        "text": "Picture: Blood and bone cells providing structure and transport.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00009"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00011",
+        "text": "Muscular Tissue: Tissue responsible for movement in the body, including skeletal, smooth, and cardiac muscles.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00010"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00012",
+        "text": "Picture: Muscle fibers contracting to enable movement.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00011"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00013",
+        "text": "Apical Meristem: Meristematic tissue located at the tips of roots and shoots, responsible for growth in length.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00012"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00014",
+        "text": "Picture: Growth tip of a plant root.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00013"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00015",
+        "text": "Lateral Meristem: Meristematic tissue responsible for growth in girth, found in the stems of plants.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00014"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00016",
+        "text": "Picture: Cross-section of a tree trunk showing growth rings.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00015"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00017",
+        "text": "Intercalary Meristem: Meristematic tissue located at the base of internodes, aiding in regrowth after cutting.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00016"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00018",
+        "text": "Picture: New grass shoots emerging after being cut.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00017"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00019",
+        "text": "Xylem: Complex permanent tissue that transports water and minerals from roots to other parts of the plant.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00018"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00020",
+        "text": "Picture: Diagram of xylem vessels in a plant.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00019"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00021",
+        "text": "Phloem: Complex permanent tissue that transports food from leaves to other parts of the plant.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00020"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00022",
+        "text": "Picture: Diagram of phloem tissue in a plant.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00021"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00023",
+        "text": "Skeletal Muscle: Voluntary muscular tissue attached to bones, responsible for body movement.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00022"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00024",
+        "text": "Picture: Skeletal muscle fibers in action.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00023"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00025",
+        "text": "Smooth Muscle: Involuntary muscular tissue found in organs, responsible for automatic movements.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00024"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00026",
+        "text": "Picture: Smooth muscle tissue in the digestive tract.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00025"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00027",
+        "text": "Cardiac Muscle: Involuntary muscular tissue found in the heart, responsible for pumping blood.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00026"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00028",
+        "text": "Picture: Cardiac muscle fibers contracting.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00027"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00029",
+        "text": "Flashcards",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00028"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00030",
+        "text": "FRONT: What are meristematic tissues?",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00029"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00031",
+        "text": "\u2192  BACK: Groups of cells that can divide continuously, responsible for plant growth.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00029"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00032",
+        "text": "FRONT: What is the function of epithelial tissue?",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00030"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00033",
+        "text": "\u2192  BACK: To form the outer covering of the body and line internal organs.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00030"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00034",
+        "text": "FRONT: What does xylem do?",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00031"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00035",
+        "text": "\u2192  BACK: Transports water and minerals from roots to other parts of the plant.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00031"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00036",
+        "text": "FRONT: What is the role of skeletal muscle?",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00032"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00037",
+        "text": "\u2192  BACK: Responsible for voluntary movements of the body.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00032"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00038",
+        "text": "Picture Words",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00033"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00039",
+        "text": "Meristematic Tissues \u2014 Green \u2014 Draw: A plant root tip with dividing cells.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00034"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00040",
+        "text": "Xylem \u2014 Blue \u2014 Draw: Xylem vessels transporting water.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00035"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00041",
+        "text": "Epithelial Tissue \u2014 Yellow \u2014 Draw: Layer of epithelial cells.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00036"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00042",
+        "text": "Say \u00b7 Spell \u00b7 Use",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00037"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00043",
+        "text": "Meristematic Tissues (/\u02ccm\u025br\u0259\u02c8st\u025bm\u0259t\u026ak \u02c8t\u026a\u0283u\u02d0z/) \u2014 ____ are responsible for the growth of plants.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00038"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00044",
+        "text": "Connective Tissue (/k\u0259\u02c8n\u025bkt\u026av \u02c8t\u026a\u0283u\u02d0/) \u2014 ____ supports and connects different parts of the body.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00039"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00045",
+        "text": "Apical Meristem (/\u02c8e\u026ap\u026ak\u0259l \u02c8m\u025br\u0259\u02ccst\u025bm/) \u2014 The ____ is located at the tips of roots and shoots.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00040"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00046",
+        "text": "Self-Test",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00041"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00047",
+        "text": "Match the tissue type with its function.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00042"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00048",
+        "text": "Xylem transports water and minerals from roots to other parts of the plant.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00043"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00049",
+        "text": "Epithelial tissue protects underlying tissues and facilitates absorption.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00044"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00050",
+        "text": "Muscular tissue enables movement in the body.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00045"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00051",
+        "text": "Quick Reference",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00046"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00052",
+        "text": "Epithelial Tissue: Forms the outer covering of the body and lines internal organs.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00047"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00053",
+        "text": "(Exam tip: Focus on types: squamous, cuboidal, columnar.)",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00047"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00054",
+        "text": "Connective Tissue: Supports and connects different parts of the body.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00048"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00055",
+        "text": "(Exam tip: Remember examples: blood, bone, cartilage.)",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00048"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00056",
+        "text": "Muscular Tissue: Responsible for movement in the body.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00049"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00057",
+        "text": "(Exam tip: Differentiate between voluntary and involuntary muscles.)",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00049"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00058",
+        "text": "Concept Map",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00050"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00059",
+        "text": "Study how all vocabulary terms connect to the main topic.",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00051"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00060",
+        "text": "Tip: Download the HTML vocabulary file for the full arrow flowchart (best for colour printing).",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00052"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00061",
+        "text": "Tissues in Action",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00053"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00062",
+        "text": "Meristematic Tissues | Permanent Tissues | Epithelial Tissue",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00054"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00063",
+        "text": "Connective Tissue | Muscular Tissue | Apical Meristem",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00054"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00064",
+        "text": "Lateral Meristem | Intercalary Meristem | Xylem",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00054"
+        ],
+        "authority": "uploaded_source"
+      },
+      {
+        "claim_id": "claim_00065",
+        "text": "Phloem | Skeletal Muscle | Smooth Muscle",
+        "source_block_ids": [
+          "blk_40eb8e1ab1_00054"
+        ],
+        "authority": "uploaded_source"
+      }
+    ],
+    "grounding_mode": "uploaded_source"
+  },
+  "curriculum": {
+    "resolution": {
+      "status": "unknown",
+      "curriculum": null,
+      "confidence": 0.0,
+      "provenance": "no_source_marker"
+    },
+    "enrichment": {
+      "status": "no_hits",
+      "required": false,
+      "citation_notice": "No curriculum references available."
+    },
+    "citations": [],
+    "rag_hits": [],
+    "exam_bundle": {}
+  },
+  "verified_concepts": [],
+  "verified_stem_outputs": [],
+  "verified_visuals": [
+    {
+      "source": "ncert_figure",
+      "engine_id": "biology_ncert",
+      "task_kind": "biology_figure",
+      "asset_paths": [
+        "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-plant-cell.svg"
+      ],
+      "iframe_url": null,
+      "latex": null,
+      "caption": "Typical plant cell showing cell wall, membrane, nucleus, chloroplast and vacuole.",
+      "alt_text": "Diagram of a plant cell with labels for cell wall, cell membrane, nucleus, chloroplast, and large vacuole.",
+      "chapter": 8
+    },
+    {
+      "source": "ncert_figure",
+      "engine_id": "biology_ncert",
+      "task_kind": "biology_figure",
+      "asset_paths": [
+        "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-animal-cell.svg"
+      ],
+      "iframe_url": null,
+      "latex": null,
+      "caption": "Typical animal cell showing membrane, nucleus, cytoplasm and mitochondria.",
+      "alt_text": "Diagram of an animal cell with nucleus, cytoplasm, cell membrane and mitochondria labelled.",
+      "chapter": 8
+    }
+  ],
+  "biology_figures": [
+    {
+      "id": "fig-c8-ch08-plant-cell",
+      "chapter": 8,
+      "chapter_title": "Cell \u2014 Structure and Functions",
+      "figure_number": "8.1",
+      "title": "Plant cell (labelled)",
+      "caption": "Typical plant cell showing cell wall, membrane, nucleus, chloroplast and vacuole.",
+      "alt_text": "Diagram of a plant cell with labels for cell wall, cell membrane, nucleus, chloroplast, and large vacuole.",
+      "keywords": [
+        "plant cell",
+        "chloroplast",
+        "vacuole",
+        "nucleus"
+      ],
+      "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-plant-cell.svg",
+      "relative_path": "figures/fig-c8-ch08-plant-cell.svg"
+    },
+    {
+      "id": "fig-c8-ch08-animal-cell",
+      "chapter": 8,
+      "chapter_title": "Cell \u2014 Structure and Functions",
+      "figure_number": "8.2",
+      "title": "Animal cell (labelled)",
+      "caption": "Typical animal cell showing membrane, nucleus, cytoplasm and mitochondria.",
+      "alt_text": "Diagram of an animal cell with nucleus, cytoplasm, cell membrane and mitochondria labelled.",
+      "keywords": [
+        "animal cell",
+        "mitochondria",
+        "nucleus"
+      ],
+      "path": "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-animal-cell.svg",
+      "relative_path": "figures/fig-c8-ch08-animal-cell.svg"
+    }
+  ],
+  "accessibility_adaptations": {
+    "standard": true,
+    "auditory": true,
+    "ld": true,
+    "visual": true,
+    "ell": true,
+    "parent": true,
+    "teacher": true
+  },
+  "assessment_assets": {
+    "has_vocabulary": true,
+    "has_worksheet": true,
+    "official_mcqs": []
+  },
+  "visual_assets": [
+    {
+      "source": "ncert_figure",
+      "engine_id": "biology_ncert",
+      "task_kind": "biology_figure",
+      "asset_paths": [
+        "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-plant-cell.svg"
+      ],
+      "iframe_url": null,
+      "latex": null,
+      "caption": "Typical plant cell showing cell wall, membrane, nucleus, chloroplast and vacuole.",
+      "alt_text": "Diagram of a plant cell with labels for cell wall, cell membrane, nucleus, chloroplast, and large vacuole.",
+      "chapter": 8
+    },
+    {
+      "source": "ncert_figure",
+      "engine_id": "biology_ncert",
+      "task_kind": "biology_figure",
+      "asset_paths": [
+        "C:\\Users\\SPECTRE\\Desktop\\eduadapt-ai\\knowledge\\seed\\figures\\fig-c8-ch08-animal-cell.svg"
+      ],
+      "iframe_url": null,
+      "latex": null,
+      "caption": "Typical animal cell showing membrane, nucleus, cytoplasm and mitochondria.",
+      "alt_text": "Diagram of an animal cell with nucleus, cytoplasm, cell membrane and mitochondria labelled.",
+      "chapter": 8
+    }
+  ],
+  "analytics_metadata": {
+    "ok": true,
+    "payload": {
+      "report": {
+        "complexity_score": 67,
+        "reading_level": "Grade 9",
+        "objective_count": 1
+      },
+      "what_happened": {
+        "lesson": {
+          "complexity_score": 67,
+          "reading_level": "Grade 9",
+          "objective_count": 1
+        },
+        "mastery": {
+          "mastered_count": 0,
+          "developing_count": 0,
+          "at_risk_count": 0,
+          "mastered": [],
+          "developing": [],
+          "at_risk": []
+        },
+        "engagement": {
+          "next_activity": {
+            "activity_type": "explore",
+            "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+            "source": "fallback"
+          },
+          "pathway_type": "mastery",
+          "streaks": {},
+          "xp": null
+        }
+      },
+      "why_it_happened": {
+        "misconceptions": [],
+        "learning_gaps": {
+          "has_gaps": false
+        },
+        "explainability": {
+          "decision_id": "path_1f5eca9b",
+          "decision_type": "pathway",
+          "choice": "mastery",
+          "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+          "evidence": [
+            {
+              "factor": "presentation_mode",
+              "value": "standard"
+            },
+            {
+              "factor": "step_count",
+              "value": 0
+            },
+            {
+              "factor": "accessibility_profiles",
+              "value": [
+                "standard"
+              ]
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.86,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        }
+      },
+      "what_is_likely_next": {
+        "risk_of_falling_behind": 0.15,
+        "probability_of_mastery": 0.4,
+        "recommended_intervention_timing": "monitor",
+        "revision_urgency": "low",
+        "assessment_readiness": false,
+        "engagement_decline_risk": 0.1,
+        "dropout_risk_indicator": {
+          "value": 0.1,
+          "note": "Educational engagement proxy only \u2014 not clinical"
+        },
+        "recommendation_confidence": 0.72,
+        "explanatory_factors": [
+          {
+            "factor": "at_risk_concepts",
+            "value": 0
+          },
+          {
+            "factor": "mastered_concepts",
+            "value": 0
+          },
+          {
+            "factor": "confidence",
+            "value": 0.5
+          },
+          {
+            "factor": "completion_rate",
+            "value": 0.5
+          },
+          {
+            "factor": "motivation",
+            "value": 0.5
+          }
+        ],
+        "explainability": {
+          "decision_id": "predict",
+          "decision_type": "prediction",
+          "choice": "monitor",
+          "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+          "evidence": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.72,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        },
+        "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+      },
+      "recommended_intervention": [
+        {
+          "recommendation_id": "rec_e196fc85",
+          "audience": "student",
+          "title": "AI Tutor session on next activity",
+          "reason": "Targeted tutoring from ALE next activity",
+          "evidence": [
+            {
+              "next_activity": {
+                "activity_type": "explore",
+                "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                "source": "fallback"
+              }
+            }
+          ],
+          "confidence": 0.77,
+          "priority": 25,
+          "expected_outcome": "Clarify misconceptions with verified grounding",
+          "kind": "intervention"
+        }
+      ],
+      "recommendation_confidence": 0.72,
+      "supporting_evidence": [
+        {
+          "factor": "at_risk_concepts",
+          "value": 0
+        },
+        {
+          "factor": "mastered_concepts",
+          "value": 0
+        },
+        {
+          "factor": "confidence",
+          "value": 0.5
+        },
+        {
+          "factor": "completion_rate",
+          "value": 0.5
+        },
+        {
+          "factor": "motivation",
+          "value": 0.5
+        }
+      ],
+      "learner_analytics": {
+        "learner_id": "anonymous",
+        "learning_progress": {
+          "mastered_count": 0,
+          "developing_count": 0,
+          "at_risk_count": 0,
+          "mastered": [],
+          "developing": [],
+          "at_risk": []
+        },
+        "mastery_growth": {},
+        "curriculum_coverage": {
+          "matched_concepts": 0,
+          "learning_outcomes": 0,
+          "primary_concept_id": null
+        },
+        "competency_progression": [],
+        "accessibility_usage": {
+          "profiles": [
+            "standard"
+          ],
+          "supports": [],
+          "interface": {
+            "font": "system",
+            "font_size_px": 18,
+            "colour_theme": "default",
+            "contrast": "aa",
+            "line_spacing": 1.5,
+            "paragraph_spacing": 1.2,
+            "margins": "comfortable",
+            "reading_ruler": false,
+            "focus_mode": false,
+            "animation_reduction": false,
+            "keyboard_navigation": true,
+            "touch_targets": "standard",
+            "icon_size": "standard",
+            "toolbar_layout": "full",
+            "navigation_complexity": "standard",
+            "distraction_level": "low"
+          }
+        },
+        "reading_behaviour": {
+          "lesson_reading_level": "Grade 9",
+          "complexity_score": 67,
+          "reader_time_sec": null,
+          "scroll_depth": null,
+          "bookmarks": [],
+          "notes_count": 0,
+          "focus_mode": null,
+          "tts_usage": null,
+          "completion": null
+        },
+        "assessment_history": {
+          "exam_readiness": {},
+          "misconceptions": [],
+          "revision_plan": {}
+        },
+        "learning_confidence": {
+          "confidence": 0.5,
+          "band": "moderate",
+          "factors": [
+            {
+              "name": "baseline",
+              "value": 0.5,
+              "weight": 1.0
+            }
+          ]
+        },
+        "engagement": {
+          "next_activity": {
+            "activity_type": "explore",
+            "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+            "source": "fallback"
+          },
+          "pathway_type": "mastery",
+          "streaks": {},
+          "xp": null
+        },
+        "motivation": {
+          "quests": [],
+          "badges": [],
+          "motivation_level": 0.5
+        },
+        "study_consistency": {
+          "learning_streak": 0,
+          "completion_rate": 0.0
+        },
+        "ai_tutor_interactions": {
+          "modes": [
+            "socratic",
+            "guided_discovery",
+            "direct_instruction",
+            "worked_example",
+            "step_coaching",
+            "retrieval_practice",
+            "spaced_review",
+            "exam_prep",
+            "reflection",
+            "executive_function",
+            "parent_explanation",
+            "teacher_explanation"
+          ],
+          "verified_artifact_count": 0,
+          "adaptive_brief": {
+            "decision_id": "path_1f5eca9b",
+            "decision_type": "pathway",
+            "choice": "mastery",
+            "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+            "evidence": [
+              {
+                "factor": "presentation_mode",
+                "value": "standard"
+              },
+              {
+                "factor": "step_count",
+                "value": 0
+              },
+              {
+                "factor": "accessibility_profiles",
+                "value": [
+                  "standard"
+                ]
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              }
+            ],
+            "confidence": 0.86,
+            "teacher_override_allowed": true,
+            "overridden_by": null,
+            "override_reason": null
+          }
+        },
+        "recommended_next_steps": [],
+        "risk_indicators": {
+          "risk_of_failure": 0.15,
+          "risk_of_disengagement": 0.1,
+          "probability_of_mastery": 0.4,
+          "estimated_completion_time_min": 15,
+          "recommended_intervention_timing": "monitor",
+          "readiness_for_assessment": false,
+          "confidence": 0.72,
+          "explanatory_factors": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "explainability": {
+            "decision_id": "predict",
+            "decision_type": "prediction",
+            "choice": "monitor",
+            "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+            "evidence": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "confidence": 0.72,
+            "teacher_override_allowed": true,
+            "overridden_by": null,
+            "override_reason": null
+          },
+          "exam_readiness_ref": {}
+        },
+        "lesson_metadata": {
+          "complexity_score": 67,
+          "reading_level": "Grade 9",
+          "objective_count": 1
+        },
+        "philosophy": {
+          "what": "Aggregated learner state from verified engines",
+          "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+          "policy": "insights_only_no_content_mutation"
+        }
+      },
+      "teacher_analytics": {
+        "class_overview": {
+          "size": 1,
+          "topic": "Vocabulary Study \u2014 Tissues in Action"
+        },
+        "mastery_heatmaps": {},
+        "curriculum_coverage": {
+          "outcomes": 0,
+          "concepts": 0,
+          "graph_stats": {
+            "concepts": 19,
+            "outcomes": 5,
+            "edges": 11,
+            "cross_links": 13
+          }
+        },
+        "assessment_quality": {
+          "official_items": 8,
+          "exam_bundle_keys": [
+            "exemplar",
+            "previous_year",
+            "sample",
+            "competency",
+            "hots"
+          ],
+          "policy": "official_answers_only"
+        },
+        "accessibility_effectiveness": {},
+        "learning_gaps": {
+          "has_gaps": false
+        },
+        "common_misconceptions": [],
+        "students_requiring_intervention": [],
+        "students_ready_for_enrichment": [],
+        "lesson_effectiveness": {
+          "complexity_score": 67,
+          "reading_level": "Grade 9",
+          "objective_count": 1
+        },
+        "question_effectiveness": {
+          "note": "Requires longitudinal attempt data from AME store",
+          "bank_items_available": 8
+        },
+        "time_on_task": 0.0,
+        "assignment_completion": 0.0,
+        "explainability": {
+          "decision_id": "path_1f5eca9b",
+          "decision_type": "pathway",
+          "choice": "mastery",
+          "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+          "evidence": [
+            {
+              "factor": "presentation_mode",
+              "value": "standard"
+            },
+            {
+              "factor": "step_count",
+              "value": 0
+            },
+            {
+              "factor": "accessibility_profiles",
+              "value": [
+                "standard"
+              ]
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.86,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        }
+      },
+      "curriculum_analytics": {
+        "coverage_by_curriculum": {
+          "curriculum_id": "ncert_cbse_class8_science_v1",
+          "board": "CBSE",
+          "programme": "Secondary",
+          "grade": "8",
+          "subject": "Science",
+          "version": "1.0.0",
+          "language": "en",
+          "original_labels": {
+            "curriculum": "NCERT",
+            "edition": "NCERT Class VIII Science (pilot)"
+          }
+        },
+        "coverage_by_standard": [],
+        "bloom_distribution": {},
+        "dok_distribution": {},
+        "competency_completion": [],
+        "prerequisite_completion": {
+          "has_gaps": false
+        },
+        "concept_mastery_bindings": [],
+        "knowledge_gaps": {
+          "has_gaps": false
+        }
+      },
+      "mastery_analytics": {
+        "mastery_summary": {},
+        "learner_model_bands": {
+          "mastered": [],
+          "developing": [],
+          "at_risk": []
+        },
+        "exam_readiness": {},
+        "revision_effectiveness": {
+          "plan": {},
+          "spaced_repetition": []
+        },
+        "growth_over_time": {
+          "note": "Compare sequential AME mastery snapshots"
+        }
+      },
+      "assessment_analytics": {
+        "question_difficulty": "derived_from_item_metadata_when_attempts_exist",
+        "distractor_effectiveness": "requires_option_level_attempt_logs",
+        "common_misconceptions": [],
+        "mastery_trends": {},
+        "revision_effectiveness": {},
+        "assessment_reliability": {
+          "policy": "official_bank_keys_only"
+        },
+        "growth_over_time": {
+          "note": "Snapshot AME mastery_pct series"
+        }
+      },
+      "accessibility_analytics": {
+        "font_usage": "system",
+        "theme_usage": "default",
+        "tts_usage": false,
+        "reading_ruler": false,
+        "focus_mode": null,
+        "spacing_preferences": {
+          "line": 1.5,
+          "paragraph": 1.2
+        },
+        "accommodation_effectiveness": {
+          "supports": [],
+          "note": "Correlate support usage with mastery deltas longitudinally"
+        },
+        "support_adoption": [
+          "standard"
+        ],
+        "wcag_compliance_metrics": {
+          "target": "WCAG 2.2 AA",
+          "udl": "UDL 3.0",
+          "facts_immutable": true
+        }
+      },
+      "engagement_analytics": {
+        "daily_activity": {},
+        "weekly_activity": {},
+        "monthly_activity": {},
+        "session_length": 0.0,
+        "learning_streaks": {
+          "days": 0
+        },
+        "xp_growth": 0,
+        "quest_completion": [],
+        "motivation_trends": 0.5,
+        "consistency": 0.0
+      },
+      "ai_tutor_analytics": {
+        "questions_asked": null,
+        "hints_requested": null,
+        "conversation_length": null,
+        "concept_confusion": [],
+        "help_seeking_behaviour": [
+          "socratic",
+          "guided_discovery",
+          "direct_instruction",
+          "worked_example",
+          "step_coaching",
+          "retrieval_practice",
+          "spaced_review",
+          "exam_prep",
+          "reflection",
+          "executive_function",
+          "parent_explanation",
+          "teacher_explanation"
+        ],
+        "confidence_growth": {
+          "confidence": 0.5,
+          "band": "moderate",
+          "factors": [
+            {
+              "name": "baseline",
+              "value": 0.5,
+              "weight": 1.0
+            }
+          ]
+        },
+        "response_effectiveness": {
+          "grounding": "ENGINE_ARTIFACTS + RAG + CIE + AME \u2014 never general knowledge first",
+          "verified_artifact_count": 0
+        },
+        "session_history": []
+      },
+      "intervention_analytics": {
+        "active_interventions": [],
+        "enrichment": [],
+        "teacher_recs": [],
+        "success_tracking": {
+          "note": "Compare mastery before/after intervention_id in AME evidence"
+        }
+      },
+      "predictions": {
+        "risk_of_falling_behind": 0.15,
+        "probability_of_mastery": 0.4,
+        "recommended_intervention_timing": "monitor",
+        "revision_urgency": "low",
+        "assessment_readiness": false,
+        "engagement_decline_risk": 0.1,
+        "dropout_risk_indicator": {
+          "value": 0.1,
+          "note": "Educational engagement proxy only \u2014 not clinical"
+        },
+        "recommendation_confidence": 0.72,
+        "explanatory_factors": [
+          {
+            "factor": "at_risk_concepts",
+            "value": 0
+          },
+          {
+            "factor": "mastered_concepts",
+            "value": 0
+          },
+          {
+            "factor": "confidence",
+            "value": 0.5
+          },
+          {
+            "factor": "completion_rate",
+            "value": 0.5
+          },
+          {
+            "factor": "motivation",
+            "value": 0.5
+          }
+        ],
+        "explainability": {
+          "decision_id": "predict",
+          "decision_type": "prediction",
+          "choice": "monitor",
+          "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+          "evidence": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "confidence": 0.72,
+          "teacher_override_allowed": true,
+          "overridden_by": null,
+          "override_reason": null
+        },
+        "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+      },
+      "recommendations": [
+        {
+          "recommendation_id": "rec_e196fc85",
+          "audience": "student",
+          "title": "AI Tutor session on next activity",
+          "reason": "Targeted tutoring from ALE next activity",
+          "evidence": [
+            {
+              "next_activity": {
+                "activity_type": "explore",
+                "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                "source": "fallback"
+              }
+            }
+          ],
+          "confidence": 0.77,
+          "priority": 25,
+          "expected_outcome": "Clarify misconceptions with verified grounding",
+          "kind": "intervention"
+        }
+      ],
+      "alerts": [],
+      "dashboard": {
+        "role": "student",
+        "dashboard": {
+          "learner_id": "anonymous",
+          "learning_progress": {
+            "mastered_count": 0,
+            "developing_count": 0,
+            "at_risk_count": 0,
+            "mastered": [],
+            "developing": [],
+            "at_risk": []
+          },
+          "mastery_growth": {},
+          "curriculum_coverage": {
+            "matched_concepts": 0,
+            "learning_outcomes": 0,
+            "primary_concept_id": null
+          },
+          "competency_progression": [],
+          "accessibility_usage": {
+            "profiles": [
+              "standard"
+            ],
+            "supports": [],
+            "interface": {
+              "font": "system",
+              "font_size_px": 18,
+              "colour_theme": "default",
+              "contrast": "aa",
+              "line_spacing": 1.5,
+              "paragraph_spacing": 1.2,
+              "margins": "comfortable",
+              "reading_ruler": false,
+              "focus_mode": false,
+              "animation_reduction": false,
+              "keyboard_navigation": true,
+              "touch_targets": "standard",
+              "icon_size": "standard",
+              "toolbar_layout": "full",
+              "navigation_complexity": "standard",
+              "distraction_level": "low"
+            }
+          },
+          "reading_behaviour": {
+            "lesson_reading_level": "Grade 9",
+            "complexity_score": 67,
+            "reader_time_sec": null,
+            "scroll_depth": null,
+            "bookmarks": [],
+            "notes_count": 0,
+            "focus_mode": null,
+            "tts_usage": null,
+            "completion": null
+          },
+          "assessment_history": {
+            "exam_readiness": {},
+            "misconceptions": [],
+            "revision_plan": {}
+          },
+          "learning_confidence": {
+            "confidence": 0.5,
+            "band": "moderate",
+            "factors": [
+              {
+                "name": "baseline",
+                "value": 0.5,
+                "weight": 1.0
+              }
+            ]
+          },
+          "engagement": {
+            "next_activity": {
+              "activity_type": "explore",
+              "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+              "source": "fallback"
+            },
+            "pathway_type": "mastery",
+            "streaks": {},
+            "xp": null
+          },
+          "motivation": {
+            "quests": [],
+            "badges": [],
+            "motivation_level": 0.5
+          },
+          "study_consistency": {
+            "learning_streak": 0,
+            "completion_rate": 0.0
+          },
+          "ai_tutor_interactions": {
+            "modes": [
+              "socratic",
+              "guided_discovery",
+              "direct_instruction",
+              "worked_example",
+              "step_coaching",
+              "retrieval_practice",
+              "spaced_review",
+              "exam_prep",
+              "reflection",
+              "executive_function",
+              "parent_explanation",
+              "teacher_explanation"
+            ],
+            "verified_artifact_count": 0,
+            "adaptive_brief": {
+              "decision_id": "path_1f5eca9b",
+              "decision_type": "pathway",
+              "choice": "mastery",
+              "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+              "evidence": [
+                {
+                  "factor": "presentation_mode",
+                  "value": "standard"
+                },
+                {
+                  "factor": "step_count",
+                  "value": 0
+                },
+                {
+                  "factor": "accessibility_profiles",
+                  "value": [
+                    "standard"
+                  ]
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.86,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            }
+          },
+          "recommended_next_steps": [],
+          "risk_indicators": {
+            "risk_of_failure": 0.15,
+            "risk_of_disengagement": 0.1,
+            "probability_of_mastery": 0.4,
+            "estimated_completion_time_min": 15,
+            "recommended_intervention_timing": "monitor",
+            "readiness_for_assessment": false,
+            "confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "exam_readiness_ref": {}
+          },
+          "lesson_metadata": {
+            "complexity_score": 67,
+            "reading_level": "Grade 9",
+            "objective_count": 1
+          },
+          "philosophy": {
+            "what": "Aggregated learner state from verified engines",
+            "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+            "policy": "insights_only_no_content_mutation"
+          }
+        },
+        "filters_supported": [
+          "topic",
+          "grade",
+          "date_range",
+          "profile"
+        ],
+        "exports_supported": [
+          "json",
+          "csv",
+          "excel",
+          "pdf"
+        ],
+        "accessibility": {
+          "wcag": "WCAG 2.2 AA",
+          "responsive": true,
+          "dark_mode_ready": true,
+          "print_ready": true
+        },
+        "alerts": [],
+        "recommendations": [
+          {
+            "recommendation_id": "rec_ec47cb46",
+            "audience": "student",
+            "title": "AI Tutor session on next activity",
+            "reason": "Targeted tutoring from ALE next activity",
+            "evidence": [
+              {
+                "next_activity": {
+                  "activity_type": "explore",
+                  "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                  "source": "fallback"
+                }
+              }
+            ],
+            "confidence": 0.77,
+            "priority": 25,
+            "expected_outcome": "Clarify misconceptions with verified grounding",
+            "kind": "intervention"
+          }
+        ],
+        "predictions": {
+          "risk_of_falling_behind": 0.15,
+          "probability_of_mastery": 0.4,
+          "recommended_intervention_timing": "monitor",
+          "revision_urgency": "low",
+          "assessment_readiness": false,
+          "engagement_decline_risk": 0.1,
+          "dropout_risk_indicator": {
+            "value": 0.1,
+            "note": "Educational engagement proxy only \u2014 not clinical"
+          },
+          "recommendation_confidence": 0.72,
+          "explanatory_factors": [
+            {
+              "factor": "at_risk_concepts",
+              "value": 0
+            },
+            {
+              "factor": "mastered_concepts",
+              "value": 0
+            },
+            {
+              "factor": "confidence",
+              "value": 0.5
+            },
+            {
+              "factor": "completion_rate",
+              "value": 0.5
+            },
+            {
+              "factor": "motivation",
+              "value": 0.5
+            }
+          ],
+          "explainability": {
+            "decision_id": "predict",
+            "decision_type": "prediction",
+            "choice": "monitor",
+            "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+            "evidence": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "confidence": 0.72,
+            "teacher_override_allowed": true,
+            "overridden_by": null,
+            "override_reason": null
+          },
+          "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+        }
+      },
+      "role_views": {
+        "student": {
+          "role": "student",
+          "dashboard": {
+            "learner_id": "anonymous",
+            "learning_progress": {
+              "mastered_count": 0,
+              "developing_count": 0,
+              "at_risk_count": 0,
+              "mastered": [],
+              "developing": [],
+              "at_risk": []
+            },
+            "mastery_growth": {},
+            "curriculum_coverage": {
+              "matched_concepts": 0,
+              "learning_outcomes": 0,
+              "primary_concept_id": null
+            },
+            "competency_progression": [],
+            "accessibility_usage": {
+              "profiles": [
+                "standard"
+              ],
+              "supports": [],
+              "interface": {
+                "font": "system",
+                "font_size_px": 18,
+                "colour_theme": "default",
+                "contrast": "aa",
+                "line_spacing": 1.5,
+                "paragraph_spacing": 1.2,
+                "margins": "comfortable",
+                "reading_ruler": false,
+                "focus_mode": false,
+                "animation_reduction": false,
+                "keyboard_navigation": true,
+                "touch_targets": "standard",
+                "icon_size": "standard",
+                "toolbar_layout": "full",
+                "navigation_complexity": "standard",
+                "distraction_level": "low"
+              }
+            },
+            "reading_behaviour": {
+              "lesson_reading_level": "Grade 9",
+              "complexity_score": 67,
+              "reader_time_sec": null,
+              "scroll_depth": null,
+              "bookmarks": [],
+              "notes_count": 0,
+              "focus_mode": null,
+              "tts_usage": null,
+              "completion": null
+            },
+            "assessment_history": {
+              "exam_readiness": {},
+              "misconceptions": [],
+              "revision_plan": {}
+            },
+            "learning_confidence": {
+              "confidence": 0.5,
+              "band": "moderate",
+              "factors": [
+                {
+                  "name": "baseline",
+                  "value": 0.5,
+                  "weight": 1.0
+                }
+              ]
+            },
+            "engagement": {
+              "next_activity": {
+                "activity_type": "explore",
+                "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                "source": "fallback"
+              },
+              "pathway_type": "mastery",
+              "streaks": {},
+              "xp": null
+            },
+            "motivation": {
+              "quests": [],
+              "badges": [],
+              "motivation_level": 0.5
+            },
+            "study_consistency": {
+              "learning_streak": 0,
+              "completion_rate": 0.0
+            },
+            "ai_tutor_interactions": {
+              "modes": [
+                "socratic",
+                "guided_discovery",
+                "direct_instruction",
+                "worked_example",
+                "step_coaching",
+                "retrieval_practice",
+                "spaced_review",
+                "exam_prep",
+                "reflection",
+                "executive_function",
+                "parent_explanation",
+                "teacher_explanation"
+              ],
+              "verified_artifact_count": 0,
+              "adaptive_brief": {
+                "decision_id": "path_1f5eca9b",
+                "decision_type": "pathway",
+                "choice": "mastery",
+                "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+                "evidence": [
+                  {
+                    "factor": "presentation_mode",
+                    "value": "standard"
+                  },
+                  {
+                    "factor": "step_count",
+                    "value": 0
+                  },
+                  {
+                    "factor": "accessibility_profiles",
+                    "value": [
+                      "standard"
+                    ]
+                  },
+                  {
+                    "factor": "confidence",
+                    "value": 0.5
+                  }
+                ],
+                "confidence": 0.86,
+                "teacher_override_allowed": true,
+                "overridden_by": null,
+                "override_reason": null
+              }
+            },
+            "recommended_next_steps": [],
+            "risk_indicators": {
+              "risk_of_failure": 0.15,
+              "risk_of_disengagement": 0.1,
+              "probability_of_mastery": 0.4,
+              "estimated_completion_time_min": 15,
+              "recommended_intervention_timing": "monitor",
+              "readiness_for_assessment": false,
+              "confidence": 0.72,
+              "explanatory_factors": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "explainability": {
+                "decision_id": "predict",
+                "decision_type": "prediction",
+                "choice": "monitor",
+                "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+                "evidence": [
+                  {
+                    "factor": "at_risk_concepts",
+                    "value": 0
+                  },
+                  {
+                    "factor": "mastered_concepts",
+                    "value": 0
+                  },
+                  {
+                    "factor": "confidence",
+                    "value": 0.5
+                  },
+                  {
+                    "factor": "completion_rate",
+                    "value": 0.5
+                  },
+                  {
+                    "factor": "motivation",
+                    "value": 0.5
+                  }
+                ],
+                "confidence": 0.72,
+                "teacher_override_allowed": true,
+                "overridden_by": null,
+                "override_reason": null
+              },
+              "exam_readiness_ref": {}
+            },
+            "lesson_metadata": {
+              "complexity_score": 67,
+              "reading_level": "Grade 9",
+              "objective_count": 1
+            },
+            "philosophy": {
+              "what": "Aggregated learner state from verified engines",
+              "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+              "policy": "insights_only_no_content_mutation"
+            }
+          },
+          "filters_supported": [
+            "topic",
+            "grade",
+            "date_range",
+            "profile"
+          ],
+          "exports_supported": [
+            "json",
+            "csv",
+            "excel",
+            "pdf"
+          ],
+          "accessibility": {
+            "wcag": "WCAG 2.2 AA",
+            "responsive": true,
+            "dark_mode_ready": true,
+            "print_ready": true
+          },
+          "alerts": [],
+          "recommendations": [
+            {
+              "recommendation_id": "rec_2f2dc6bd",
+              "audience": "student",
+              "title": "AI Tutor session on next activity",
+              "reason": "Targeted tutoring from ALE next activity",
+              "evidence": [
+                {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  }
+                }
+              ],
+              "confidence": 0.77,
+              "priority": 25,
+              "expected_outcome": "Clarify misconceptions with verified grounding",
+              "kind": "intervention"
+            }
+          ],
+          "predictions": {
+            "risk_of_falling_behind": 0.15,
+            "probability_of_mastery": 0.4,
+            "recommended_intervention_timing": "monitor",
+            "revision_urgency": "low",
+            "assessment_readiness": false,
+            "engagement_decline_risk": 0.1,
+            "dropout_risk_indicator": {
+              "value": 0.1,
+              "note": "Educational engagement proxy only \u2014 not clinical"
+            },
+            "recommendation_confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+          }
+        },
+        "teacher": {
+          "role": "teacher",
+          "dashboard": {
+            "class_overview": {
+              "size": 1,
+              "topic": "Vocabulary Study \u2014 Tissues in Action"
+            },
+            "mastery_heatmaps": {},
+            "curriculum_coverage": {
+              "outcomes": 0,
+              "concepts": 0,
+              "graph_stats": {
+                "concepts": 19,
+                "outcomes": 5,
+                "edges": 11,
+                "cross_links": 13
+              }
+            },
+            "assessment_quality": {
+              "official_items": 8,
+              "exam_bundle_keys": [
+                "exemplar",
+                "previous_year",
+                "sample",
+                "competency",
+                "hots"
+              ],
+              "policy": "official_answers_only"
+            },
+            "accessibility_effectiveness": {
+              "standard": 1
+            },
+            "learning_gaps": {
+              "has_gaps": false
+            },
+            "common_misconceptions": [],
+            "students_requiring_intervention": [],
+            "students_ready_for_enrichment": [],
+            "lesson_effectiveness": {
+              "complexity_score": 67,
+              "reading_level": "Grade 9",
+              "objective_count": 1
+            },
+            "question_effectiveness": {
+              "note": "Requires longitudinal attempt data from AME store",
+              "bank_items_available": 8
+            },
+            "time_on_task": 0.0,
+            "assignment_completion": 0.0,
+            "explainability": {
+              "decision_id": "path_1f5eca9b",
+              "decision_type": "pathway",
+              "choice": "mastery",
+              "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+              "evidence": [
+                {
+                  "factor": "presentation_mode",
+                  "value": "standard"
+                },
+                {
+                  "factor": "step_count",
+                  "value": 0
+                },
+                {
+                  "factor": "accessibility_profiles",
+                  "value": [
+                    "standard"
+                  ]
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.86,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            }
+          },
+          "class": {
+            "class_size": 1,
+            "mastery_heatmaps": {},
+            "common_misconceptions": [],
+            "students_requiring_intervention": [],
+            "students_ready_for_enrichment": [],
+            "accessibility_profile_distribution": {
+              "standard": 1
+            },
+            "learners": [
+              {
+                "learner_id": "anonymous",
+                "learning_progress": {
+                  "mastered_count": 0,
+                  "developing_count": 0,
+                  "at_risk_count": 0,
+                  "mastered": [],
+                  "developing": [],
+                  "at_risk": []
+                },
+                "mastery_growth": {},
+                "curriculum_coverage": {
+                  "matched_concepts": 0,
+                  "learning_outcomes": 0,
+                  "primary_concept_id": null
+                },
+                "competency_progression": [],
+                "accessibility_usage": {
+                  "profiles": [
+                    "standard"
+                  ],
+                  "supports": [],
+                  "interface": {
+                    "font": "system",
+                    "font_size_px": 18,
+                    "colour_theme": "default",
+                    "contrast": "aa",
+                    "line_spacing": 1.5,
+                    "paragraph_spacing": 1.2,
+                    "margins": "comfortable",
+                    "reading_ruler": false,
+                    "focus_mode": false,
+                    "animation_reduction": false,
+                    "keyboard_navigation": true,
+                    "touch_targets": "standard",
+                    "icon_size": "standard",
+                    "toolbar_layout": "full",
+                    "navigation_complexity": "standard",
+                    "distraction_level": "low"
+                  }
+                },
+                "reading_behaviour": {
+                  "lesson_reading_level": "Grade 9",
+                  "complexity_score": 67,
+                  "reader_time_sec": null,
+                  "scroll_depth": null,
+                  "bookmarks": [],
+                  "notes_count": 0,
+                  "focus_mode": null,
+                  "tts_usage": null,
+                  "completion": null
+                },
+                "assessment_history": {
+                  "exam_readiness": {},
+                  "misconceptions": [],
+                  "revision_plan": {}
+                },
+                "learning_confidence": {
+                  "confidence": 0.5,
+                  "band": "moderate",
+                  "factors": [
+                    {
+                      "name": "baseline",
+                      "value": 0.5,
+                      "weight": 1.0
+                    }
+                  ]
+                },
+                "engagement": {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  },
+                  "pathway_type": "mastery",
+                  "streaks": {},
+                  "xp": null
+                },
+                "motivation": {
+                  "quests": [],
+                  "badges": [],
+                  "motivation_level": 0.5
+                },
+                "study_consistency": {
+                  "learning_streak": 0,
+                  "completion_rate": 0.0
+                },
+                "ai_tutor_interactions": {
+                  "modes": [
+                    "socratic",
+                    "guided_discovery",
+                    "direct_instruction",
+                    "worked_example",
+                    "step_coaching",
+                    "retrieval_practice",
+                    "spaced_review",
+                    "exam_prep",
+                    "reflection",
+                    "executive_function",
+                    "parent_explanation",
+                    "teacher_explanation"
+                  ],
+                  "verified_artifact_count": 0,
+                  "adaptive_brief": {
+                    "decision_id": "path_1f5eca9b",
+                    "decision_type": "pathway",
+                    "choice": "mastery",
+                    "explanation": "Pathway 'mastery' for learner anonymous: 0 steps, presentation='standard'. Next activity: none at difficulty 'n/a' because mastery/confidence and accessibility profile drove sequencing and pacing.",
+                    "evidence": [
+                      {
+                        "factor": "presentation_mode",
+                        "value": "standard"
+                      },
+                      {
+                        "factor": "step_count",
+                        "value": 0
+                      },
+                      {
+                        "factor": "accessibility_profiles",
+                        "value": [
+                          "standard"
+                        ]
+                      },
+                      {
+                        "factor": "confidence",
+                        "value": 0.5
+                      }
+                    ],
+                    "confidence": 0.86,
+                    "teacher_override_allowed": true,
+                    "overridden_by": null,
+                    "override_reason": null
+                  }
+                },
+                "recommended_next_steps": [],
+                "risk_indicators": {
+                  "risk_of_failure": 0.15,
+                  "risk_of_disengagement": 0.1,
+                  "probability_of_mastery": 0.4,
+                  "estimated_completion_time_min": 15,
+                  "recommended_intervention_timing": "monitor",
+                  "readiness_for_assessment": false,
+                  "confidence": 0.72,
+                  "explanatory_factors": [
+                    {
+                      "factor": "at_risk_concepts",
+                      "value": 0
+                    },
+                    {
+                      "factor": "mastered_concepts",
+                      "value": 0
+                    },
+                    {
+                      "factor": "confidence",
+                      "value": 0.5
+                    },
+                    {
+                      "factor": "completion_rate",
+                      "value": 0.5
+                    },
+                    {
+                      "factor": "motivation",
+                      "value": 0.5
+                    }
+                  ],
+                  "explainability": {
+                    "decision_id": "predict",
+                    "decision_type": "prediction",
+                    "choice": "monitor",
+                    "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+                    "evidence": [
+                      {
+                        "factor": "at_risk_concepts",
+                        "value": 0
+                      },
+                      {
+                        "factor": "mastered_concepts",
+                        "value": 0
+                      },
+                      {
+                        "factor": "confidence",
+                        "value": 0.5
+                      },
+                      {
+                        "factor": "completion_rate",
+                        "value": 0.5
+                      },
+                      {
+                        "factor": "motivation",
+                        "value": 0.5
+                      }
+                    ],
+                    "confidence": 0.72,
+                    "teacher_override_allowed": true,
+                    "overridden_by": null,
+                    "override_reason": null
+                  },
+                  "exam_readiness_ref": {}
+                },
+                "lesson_metadata": {
+                  "complexity_score": 67,
+                  "reading_level": "Grade 9",
+                  "objective_count": 1
+                },
+                "philosophy": {
+                  "what": "Aggregated learner state from verified engines",
+                  "why": "Evidence from AME/CIE/AIE/ALE \u2014 not LLM invention",
+                  "policy": "insights_only_no_content_mutation"
+                }
+              }
+            ]
+          },
+          "filters_supported": [
+            "topic",
+            "grade",
+            "date_range",
+            "profile"
+          ],
+          "exports_supported": [
+            "json",
+            "csv",
+            "excel",
+            "pdf"
+          ],
+          "accessibility": {
+            "wcag": "WCAG 2.2 AA",
+            "responsive": true,
+            "dark_mode_ready": true,
+            "print_ready": true
+          },
+          "alerts": [],
+          "recommendations": [
+            {
+              "recommendation_id": "rec_34fee179",
+              "audience": "student",
+              "title": "AI Tutor session on next activity",
+              "reason": "Targeted tutoring from ALE next activity",
+              "evidence": [
+                {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  }
+                }
+              ],
+              "confidence": 0.77,
+              "priority": 25,
+              "expected_outcome": "Clarify misconceptions with verified grounding",
+              "kind": "intervention"
+            }
+          ],
+          "predictions": {
+            "risk_of_falling_behind": 0.15,
+            "probability_of_mastery": 0.4,
+            "recommended_intervention_timing": "monitor",
+            "revision_urgency": "low",
+            "assessment_readiness": false,
+            "engagement_decline_risk": 0.1,
+            "dropout_risk_indicator": {
+              "value": 0.1,
+              "note": "Educational engagement proxy only \u2014 not clinical"
+            },
+            "recommendation_confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+          }
+        },
+        "parent": {
+          "role": "parent",
+          "dashboard": {
+            "learner_id": "anonymous",
+            "progress_summary": {
+              "mastered": 0,
+              "needs_support": 0,
+              "confidence": {
+                "confidence": 0.5,
+                "band": "moderate",
+                "factors": [
+                  {
+                    "name": "baseline",
+                    "value": 0.5,
+                    "weight": 1.0
+                  }
+                ]
+              },
+              "exam_readiness": {}
+            },
+            "learning_strengths": [],
+            "areas_needing_support": [],
+            "reading_habits": {
+              "lesson_reading_level": "Grade 9",
+              "complexity_score": 67,
+              "reader_time_sec": null,
+              "scroll_depth": null,
+              "bookmarks": [],
+              "notes_count": 0,
+              "focus_mode": null,
+              "tts_usage": null,
+              "completion": null
+            },
+            "homework_completion": 0.0,
+            "accessibility_supports": [
+              "standard"
+            ],
+            "achievement_timeline": [],
+            "suggested_home_activities": [
+              {
+                "priority": 1,
+                "action": "home_support",
+                "detail": "Short retrieval practice using official questions only"
+              }
+            ],
+            "encouragement_tips": [
+              "Celebrate small mastery gains \u2014 progress over perfection.",
+              "Keep sessions short if attention support is active.",
+              "Ask the learner to explain one concept in their own words."
+            ],
+            "interface_summary": {
+              "font": "system",
+              "font_size_px": 18,
+              "colour_theme": "default",
+              "contrast": "aa",
+              "line_spacing": 1.5,
+              "paragraph_spacing": 1.2,
+              "margins": "comfortable",
+              "reading_ruler": false,
+              "focus_mode": false,
+              "animation_reduction": false,
+              "keyboard_navigation": true,
+              "touch_targets": "standard",
+              "icon_size": "standard",
+              "toolbar_layout": "full",
+              "navigation_complexity": "standard",
+              "distraction_level": "low"
+            },
+            "policy": "no_medical_diagnoses_functional_supports_only"
+          },
+          "filters_supported": [
+            "topic",
+            "grade",
+            "date_range",
+            "profile"
+          ],
+          "exports_supported": [
+            "json",
+            "csv",
+            "excel",
+            "pdf"
+          ],
+          "accessibility": {
+            "wcag": "WCAG 2.2 AA",
+            "responsive": true,
+            "dark_mode_ready": true,
+            "print_ready": true
+          },
+          "alerts": [],
+          "recommendations": [
+            {
+              "recommendation_id": "rec_10a368bf",
+              "audience": "student",
+              "title": "AI Tutor session on next activity",
+              "reason": "Targeted tutoring from ALE next activity",
+              "evidence": [
+                {
+                  "next_activity": {
+                    "activity_type": "explore",
+                    "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+                    "source": "fallback"
+                  }
+                }
+              ],
+              "confidence": 0.77,
+              "priority": 25,
+              "expected_outcome": "Clarify misconceptions with verified grounding",
+              "kind": "intervention"
+            }
+          ],
+          "predictions": {
+            "risk_of_falling_behind": 0.15,
+            "probability_of_mastery": 0.4,
+            "recommended_intervention_timing": "monitor",
+            "revision_urgency": "low",
+            "assessment_readiness": false,
+            "engagement_decline_risk": 0.1,
+            "dropout_risk_indicator": {
+              "value": 0.1,
+              "note": "Educational engagement proxy only \u2014 not clinical"
+            },
+            "recommendation_confidence": 0.72,
+            "explanatory_factors": [
+              {
+                "factor": "at_risk_concepts",
+                "value": 0
+              },
+              {
+                "factor": "mastered_concepts",
+                "value": 0
+              },
+              {
+                "factor": "confidence",
+                "value": 0.5
+              },
+              {
+                "factor": "completion_rate",
+                "value": 0.5
+              },
+              {
+                "factor": "motivation",
+                "value": 0.5
+              }
+            ],
+            "explainability": {
+              "decision_id": "predict",
+              "decision_type": "prediction",
+              "choice": "monitor",
+              "explanation": "Predicted failure_risk=15%, disengagement=10%, mastery_probability=40%, assessment_ready=False from mastery evidence and engagement signals.",
+              "evidence": [
+                {
+                  "factor": "at_risk_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "mastered_concepts",
+                  "value": 0
+                },
+                {
+                  "factor": "confidence",
+                  "value": 0.5
+                },
+                {
+                  "factor": "completion_rate",
+                  "value": 0.5
+                },
+                {
+                  "factor": "motivation",
+                  "value": 0.5
+                }
+              ],
+              "confidence": 0.72,
+              "teacher_override_allowed": true,
+              "overridden_by": null,
+              "override_reason": null
+            },
+            "educator_control": "Predictions support \u2014 never replace \u2014 educator judgment"
+          }
+        }
+      },
+      "policy": {
+        "insights_only": true,
+        "no_curriculum_mutation": true,
+        "no_answer_mutation": true,
+        "no_accessibility_override": true,
+        "no_medical_diagnoses": true,
+        "educator_final_authority": true,
+        "explainable_auditable": true
+      },
+      "laie_version": "2.0.0",
+      "philosophy": [
+        "What happened?",
+        "Why did it happen?",
+        "What is likely next?",
+        "What intervention?",
+        "How confident?",
+        "Which evidence?"
+      ]
+    },
+    "deterministic": true,
+    "assets": []
+  },
+  "gamification": {
+    "ok": true,
+    "payload": {
+      "system": "LMAS",
+      "engine": "learning_motivation",
+      "enabled": true,
+      "xp": 0,
+      "badges": [],
+      "streaks": {
+        "daily": 0,
+        "weekly": 0,
+        "monthly": 0,
+        "grace_days_used": 0,
+        "best_daily": 0
+      },
+      "quests": [
+        "Complete one focused lesson block",
+        "Three healthy study sessions",
+        "Revise a weak concept",
+        "Plan before you start",
+        "General practice",
+        "Official practice set",
+        "Mini project"
+      ],
+      "quest_objects": [
+        {
+          "quest_id": "q_a92e4da3",
+          "type": "daily",
+          "title": "Complete one focused lesson block",
+          "description": "Finish a meaningful chunk of today's lesson.",
+          "reward_xp_hint": 25,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429599+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_0e01a1c3",
+          "type": "weekly",
+          "title": "Three healthy study sessions",
+          "description": "Show up three days this week \u2014 grace days allowed.",
+          "reward_xp_hint": 45,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429606+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_d4724345",
+          "type": "revision",
+          "title": "Revise a weak concept",
+          "description": "Review: a prior concept.",
+          "reward_xp_hint": 18,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429608+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_bc1f72cc",
+          "type": "executive_function",
+          "title": "Plan before you start",
+          "description": "Write a 3-step plan, then begin step 1.",
+          "reward_xp_hint": 12,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429609+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_aa91f27c",
+          "type": "subject",
+          "title": "General practice",
+          "description": "Complete subject practice with understanding over speed.",
+          "reward_xp_hint": 20,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429611+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_cfe53289",
+          "type": "exam_preparation",
+          "title": "Official practice set",
+          "description": "Attempt official/exam-style items via AME \u2014 no guessing farm.",
+          "reward_xp_hint": 30,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429612+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        },
+        {
+          "quest_id": "q_b0d02d46",
+          "type": "project",
+          "title": "Mini project",
+          "description": "Create or explain one applied example from the lesson.",
+          "reward_xp_hint": 50,
+          "competitive": false,
+          "status": "active",
+          "created_at": "2026-07-17T12:50:11.429614+00:00",
+          "types_available": [
+            "daily",
+            "weekly",
+            "revision",
+            "project",
+            "executive_function",
+            "subject",
+            "exam_preparation"
+          ]
+        }
+      ],
+      "certificates": [],
+      "level": {
+        "level": {
+          "id": "explorer"
+        }
+      },
+      "achievements": [],
+      "skill_tree": {
+        "nodes": [
+          {
+            "concept_id": "foundations",
+            "prerequisites": [],
+            "status": "current"
+          },
+          {
+            "concept_id": "core_idea",
+            "prerequisites": [
+              "foundations"
+            ],
+            "status": "locked"
+          },
+          {
+            "concept_id": "application",
+            "prerequisites": [
+              "core_idea"
+            ],
+            "status": "locked"
+          },
+          {
+            "concept_id": "enrichment",
+            "prerequisites": [
+              "application"
+            ],
+            "status": "locked"
+          }
+        ],
+        "mastered": [],
+        "current": [
+          "foundations"
+        ],
+        "recommended_next": [
+          "foundations"
+        ],
+        "enrichment_paths": [],
+        "source": [
+          "curriculum",
+          "assessment",
+          "adaptive_learning"
+        ],
+        "interactive": true
+      },
+      "learning_journey": {
+        "milestones": [
+          {
+            "id": "start",
+            "label": "Began journey",
+            "done": true
+          },
+          {
+            "id": "first_badge",
+            "label": "First badge",
+            "done": false
+          },
+          {
+            "id": "scholar",
+            "label": "Reach Scholar",
+            "done": false
+          },
+          {
+            "id": "certificate",
+            "label": "Earn a certificate",
+            "done": false
+          }
+        ],
+        "completed_competencies": [],
+        "current_progress": {
+          "level": {
+            "id": "explorer",
+            "name": "Explorer",
+            "min_xp": 0
+          },
+          "next": {
+            "id": "discoverer",
+            "name": "Discoverer",
+            "min_xp": 100
+          },
+          "xp": 0,
+          "progress_to_next": 0.0,
+          "policy": "levels_reflect_learning_growth_not_time_only"
+        },
+        "upcoming_goals": [
+          {
+            "goal": "Complete next recommended skill"
+          }
+        ],
+        "adaptive_recommendations": {
+          "activity_type": "explore",
+          "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+          "source": "fallback"
+        },
+        "certificates_earned": [],
+        "quests_active": [
+          {
+            "quest_id": "q_a92e4da3",
+            "type": "daily",
+            "title": "Complete one focused lesson block",
+            "description": "Finish a meaningful chunk of today's lesson.",
+            "reward_xp_hint": 25,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429599+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_0e01a1c3",
+            "type": "weekly",
+            "title": "Three healthy study sessions",
+            "description": "Show up three days this week \u2014 grace days allowed.",
+            "reward_xp_hint": 45,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429606+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_d4724345",
+            "type": "revision",
+            "title": "Revise a weak concept",
+            "description": "Review: a prior concept.",
+            "reward_xp_hint": 18,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429608+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_bc1f72cc",
+            "type": "executive_function",
+            "title": "Plan before you start",
+            "description": "Write a 3-step plan, then begin step 1.",
+            "reward_xp_hint": 12,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429609+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_aa91f27c",
+            "type": "subject",
+            "title": "General practice",
+            "description": "Complete subject practice with understanding over speed.",
+            "reward_xp_hint": 20,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429611+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          }
+        ]
+      },
+      "competency_map": {
+        "heat_map": [],
+        "mastery_map": {
+          "mastered": [],
+          "at_risk": []
+        },
+        "curriculum_coverage": {
+          "curriculum_nodes": 0,
+          "mastered": 0,
+          "gaps": 0
+        },
+        "strengths": [],
+        "gaps": [],
+        "source": [
+          "curriculum",
+          "assessment"
+        ],
+        "policy": "maps_visualize_verified_mastery_only"
+      },
+      "personalization": {
+        "notification_style": "standard",
+        "visual_complexity": "standard",
+        "reward_frequency": "medium",
+        "interaction_style": "supportive",
+        "celebration_intensity": "standard",
+        "source": "accessibility",
+        "presentation_only": true
+      },
+      "rewards_summary": {
+        "xp_total": 0,
+        "level_id": "explorer",
+        "badges_count": 0,
+        "achievements_count": 0,
+        "certificates_count": 0,
+        "quests_completed": 0,
+        "framing": "Recognition of growth \u2014 not a pay-to-win economy",
+        "competitive_leaderboards": false
+      },
+      "alcis": {
+        "xp": 0,
+        "badges": [],
+        "streaks": {
+          "daily": 0,
+          "weekly": 0,
+          "monthly": 0,
+          "grace_days_used": 0,
+          "best_daily": 0
+        },
+        "new_badges": [],
+        "new_achievements": [],
+        "owner": "learning_motivation_engine"
+      },
+      "atie": {
+        "level": "explorer",
+        "recent_achievements": [],
+        "active_quests": [
+          {
+            "quest_id": "q_a92e4da3",
+            "type": "daily",
+            "title": "Complete one focused lesson block",
+            "description": "Finish a meaningful chunk of today's lesson.",
+            "reward_xp_hint": 25,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429599+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_0e01a1c3",
+            "type": "weekly",
+            "title": "Three healthy study sessions",
+            "description": "Show up three days this week \u2014 grace days allowed.",
+            "reward_xp_hint": 45,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429606+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_d4724345",
+            "type": "revision",
+            "title": "Revise a weak concept",
+            "description": "Review: a prior concept.",
+            "reward_xp_hint": 18,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429608+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          }
+        ],
+        "policy": "reference_only_do_not_change_curriculum"
+      },
+      "vmle": {
+        "announcements": []
+      },
+      "dashboard": {
+        "role": "learner",
+        "rewards": {
+          "xp_total": 0,
+          "level_id": "explorer",
+          "badges_count": 0,
+          "achievements_count": 0,
+          "certificates_count": 0,
+          "quests_completed": 0,
+          "framing": "Recognition of growth \u2014 not a pay-to-win economy",
+          "competitive_leaderboards": false
+        },
+        "journey": {
+          "milestones": [
+            {
+              "id": "start",
+              "label": "Began journey",
+              "done": true
+            },
+            {
+              "id": "first_badge",
+              "label": "First badge",
+              "done": false
+            },
+            {
+              "id": "scholar",
+              "label": "Reach Scholar",
+              "done": false
+            },
+            {
+              "id": "certificate",
+              "label": "Earn a certificate",
+              "done": false
+            }
+          ],
+          "completed_competencies": [],
+          "current_progress": {
+            "level": {
+              "id": "explorer",
+              "name": "Explorer",
+              "min_xp": 0
+            },
+            "next": {
+              "id": "discoverer",
+              "name": "Discoverer",
+              "min_xp": 100
+            },
+            "xp": 0,
+            "progress_to_next": 0.0,
+            "policy": "levels_reflect_learning_growth_not_time_only"
+          },
+          "upcoming_goals": [
+            {
+              "goal": "Complete next recommended skill"
+            }
+          ],
+          "adaptive_recommendations": {
+            "activity_type": "explore",
+            "reason": "No queued steps \u2014 continue with standard pathway from CIE recommendations",
+            "source": "fallback"
+          },
+          "certificates_earned": [],
+          "quests_active": [
+            {
+              "quest_id": "q_a92e4da3",
+              "type": "daily",
+              "title": "Complete one focused lesson block",
+              "description": "Finish a meaningful chunk of today's lesson.",
+              "reward_xp_hint": 25,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429599+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_0e01a1c3",
+              "type": "weekly",
+              "title": "Three healthy study sessions",
+              "description": "Show up three days this week \u2014 grace days allowed.",
+              "reward_xp_hint": 45,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429606+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_d4724345",
+              "type": "revision",
+              "title": "Revise a weak concept",
+              "description": "Review: a prior concept.",
+              "reward_xp_hint": 18,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429608+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_bc1f72cc",
+              "type": "executive_function",
+              "title": "Plan before you start",
+              "description": "Write a 3-step plan, then begin step 1.",
+              "reward_xp_hint": 12,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429609+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            },
+            {
+              "quest_id": "q_aa91f27c",
+              "type": "subject",
+              "title": "General practice",
+              "description": "Complete subject practice with understanding over speed.",
+              "reward_xp_hint": 20,
+              "competitive": false,
+              "status": "active",
+              "created_at": "2026-07-17T12:50:11.429611+00:00",
+              "types_available": [
+                "daily",
+                "weekly",
+                "revision",
+                "project",
+                "executive_function",
+                "subject",
+                "exam_preparation"
+              ]
+            }
+          ]
+        },
+        "quests": [
+          {
+            "quest_id": "q_a92e4da3",
+            "type": "daily",
+            "title": "Complete one focused lesson block",
+            "description": "Finish a meaningful chunk of today's lesson.",
+            "reward_xp_hint": 25,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429599+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_0e01a1c3",
+            "type": "weekly",
+            "title": "Three healthy study sessions",
+            "description": "Show up three days this week \u2014 grace days allowed.",
+            "reward_xp_hint": 45,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429606+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_d4724345",
+            "type": "revision",
+            "title": "Revise a weak concept",
+            "description": "Review: a prior concept.",
+            "reward_xp_hint": 18,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429608+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_bc1f72cc",
+            "type": "executive_function",
+            "title": "Plan before you start",
+            "description": "Write a 3-step plan, then begin step 1.",
+            "reward_xp_hint": 12,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429609+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_aa91f27c",
+            "type": "subject",
+            "title": "General practice",
+            "description": "Complete subject practice with understanding over speed.",
+            "reward_xp_hint": 20,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429611+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_cfe53289",
+            "type": "exam_preparation",
+            "title": "Official practice set",
+            "description": "Attempt official/exam-style items via AME \u2014 no guessing farm.",
+            "reward_xp_hint": 30,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429612+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          },
+          {
+            "quest_id": "q_b0d02d46",
+            "type": "project",
+            "title": "Mini project",
+            "description": "Create or explain one applied example from the lesson.",
+            "reward_xp_hint": 50,
+            "competitive": false,
+            "status": "active",
+            "created_at": "2026-07-17T12:50:11.429614+00:00",
+            "types_available": [
+              "daily",
+              "weekly",
+              "revision",
+              "project",
+              "executive_function",
+              "subject",
+              "exam_preparation"
+            ]
+          }
+        ],
+        "badges": [],
+        "no_public_leaderboard": true
+      },
+      "analytics": {
+        "learner_id": "anonymous",
+        "xp_total": 0,
+        "event_counts": {
+          "motivation_plan": 1
+        },
+        "metrics": {
+          "xp_growth": 0,
+          "achievement_rates": 0,
+          "quest_completion": 0,
+          "streak_health": 0,
+          "certificates": 0
+        },
+        "events": [
+          {
+            "ts": "2026-07-19T05:28:24.328371+00:00",
+            "event_type": "motivation_plan",
+            "learner_id": "anonymous",
+            "payload": {
+              "xp": 0
+            },
+            "destination": "laie"
+          }
+        ],
+        "forward_to": "learning_analytics"
+      },
+      "design": "accessibility-first intrinsic motivation",
+      "policy": {
+        "intrinsic_before_extrinsic": true,
+        "no_dark_patterns": true,
+        "no_pay_to_win": true,
+        "no_public_competitive_leaderboards": true,
+        "no_punish_missed_days": true,
+        "never_alter_curriculum_or_assessment": true,
+        "anti_farming": true
+      },
+      "note": "LMAS owns motivation economy; curriculum/assessment unchanged"
+    },
+    "deterministic": true,
+    "assets": []
+  },
+  "qa_report": {
+    "passed": false,
+    "checks": [
+      {
+        "code": "diagram_availability",
+        "ok": true,
+        "detail": "2 deterministic visual(s) selected"
+      },
+      {
+        "code": "diagram_correctness",
+        "ok": true,
+        "detail": "Verified visuals resolve on disk or via iframe"
+      },
+      {
+        "code": "optional_curriculum_enrichment",
+        "ok": true,
+        "severity": "warning",
+        "detail": "No curriculum references available."
+      },
+      {
+        "code": "bloom_coverage",
+        "ok": true,
+        "detail": "Bloom tags in exam bundle: ['n/a']"
+      },
+      {
+        "code": "learning_objective_coverage",
+        "ok": false,
+        "detail": "No exam items"
+      },
+      {
+        "code": "deterministic_exactness",
+        "ok": true,
+        "detail": "0 verified value(s) preserved"
+      },
+      {
+        "code": "source_grounding",
+        "ok": true,
+        "detail": "100.0% of factual units reference valid uploaded source blocks"
+      },
+      {
+        "code": "accessibility_structure",
+        "ok": true,
+        "detail": "Adaptation sections present"
+      },
+      {
+        "code": "reading_level",
+        "ok": true,
+        "detail": "Flesch\u2013Kincaid grade \u2248 9.43"
+      },
+      {
+        "code": "hallucination_detection",
+        "ok": true,
+        "detail": "No unresolved NEED_ENGINE/NEED_SOURCE markers"
+      },
+      {
+        "code": "wcag_brand_palette",
+        "ok": true,
+        "detail": "Engine visuals use Alora navy/teal high-contrast palette"
+      },
+      {
+        "code": "wcag_alt_text",
+        "ok": true,
+        "detail": "NCERT figures have alt/caption"
+      }
+    ],
+    "blocked_reason": "No exam items",
+    "publish_blocked": false,
+    "scorecard": {
+      "bloom_levels": [],
+      "source_grounding_coverage": 100.0,
+      "reading_grade": 9.43,
+      "accessibility_score": 100
+    }
+  },
+  "grounding_mode": "uploaded_source",
+  "grounding_coverage": 100.0,
+  "lifecycle_state": "validated",
+  "orchestration_trace": [
+    {
+      "agent_id": "curriculum_planner",
+      "role": "Curriculum Planner",
+      "status": "done",
+      "detail": "Uploaded source first; curriculum enrichment optional"
+    },
+    {
+      "agent_id": "lesson_analyzer",
+      "role": "Lesson Analyzer",
+      "status": "done",
+      "detail": "context built"
+    },
+    {
+      "agent_id": "knowledge_retrieval",
+      "role": "Knowledge Retrieval Agent",
+      "status": "done",
+      "detail": "0 citations"
+    },
+    {
+      "agent_id": "subject_expert",
+      "role": "Subject Expert",
+      "status": "done",
+      "detail": "engines routed"
+    },
+    {
+      "agent_id": "stem_verification",
+      "role": "STEM Verification Agent",
+      "status": "done",
+      "detail": "0 artifacts"
+    },
+    {
+      "agent_id": "accessibility",
+      "role": "Accessibility Specialist",
+      "status": "done",
+      "detail": "adaptations generated"
+    },
+    {
+      "agent_id": "neurodiversity",
+      "role": "Neurodiversity Specialist",
+      "status": "done",
+      "detail": "LD / ADHD / autism variants as configured"
+    },
+    {
+      "agent_id": "visual_learning",
+      "role": "Visual Learning Agent",
+      "status": "done",
+      "detail": "2 visuals"
+    },
+    {
+      "agent_id": "assessment_designer",
+      "role": "Assessment Designer",
+      "status": "done",
+      "detail": "worksheet + exam bundle"
+    },
+    {
+      "agent_id": "qa_agent",
+      "role": "QA Agent",
+      "status": "failed",
+      "detail": "No exam items"
+    },
+    {
+      "agent_id": "publishing",
+      "role": "Publishing Agent",
+      "status": "done",
+      "detail": "publish gate evaluated"
+    }
+  ],
+  "chapter_approved": false,
+  "version_history": [
+    {
+      "version": 1,
+      "at": "2026-07-19T05:31:06.168429+00:00",
+      "note": "VLIE package build"
+    }
+  ],
+  "adaptations_keys": [
+    "vocabulary",
+    "worksheet",
+    "standard",
+    "auditory",
+    "ld",
+    "visual",
+    "ell",
+    "parent",
+    "teacher"
+  ],
+  "merged_engine_summary": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  },
+  "audit_trail": [
+    {
+      "ts": "2026-07-19T05:28:08.435481+00:00",
+      "event": "vlie_start",
+      "run_id": "3f8060f1a933"
+    },
+    {
+      "ts": "2026-07-19T05:28:08.435520+00:00",
+      "event": "stage_status",
+      "stage": "source_ingestion",
+      "engine": "knowledge_ingestion",
+      "status": "success",
+      "message": "Readable source content extracted.",
+      "warnings": [],
+      "fallback_used": "native_extraction",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "d4f2b9e1cfadae670f6b6ba1e0669ed3f8453ecc117789dd096245b083598b57"
+    },
+    {
+      "ts": "2026-07-19T05:28:08.440104+00:00",
+      "event": "stage_status",
+      "stage": "content_classification",
+      "engine": "content_classifier",
+      "status": "success",
+      "message": "Classified 58 source blocks.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "04da6f9163c75bac74e8cacf8d75a23217597d8c8ffe9e00f7c11493efe2264d"
+    },
+    {
+      "ts": "2026-07-19T05:28:08.450959+00:00",
+      "event": "stage_status",
+      "stage": "universal_profile",
+      "engine": "universal_curriculum",
+      "status": "success",
+      "message": "Source profile created; curriculum status is unknown.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "237b5673b2e0140f2863ee0f7d32295e99bde7976fe301b4109f6bea019df93d"
+    },
+    {
+      "ts": "2026-07-19T05:28:08.452574+00:00",
+      "event": "stage_status",
+      "stage": "engine_knowledge_ingestion",
+      "engine": "knowledge_ingestion",
+      "status": "success",
+      "message": "knowledge_ingestion completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "5abc0cfad9d4589476af4788c2c1b4e0f1832d8d3856f838e658b8c2b664fea8"
+    },
+    {
+      "ts": "2026-07-19T05:28:09.296967+00:00",
+      "event": "stage_status",
+      "stage": "engine_universal_curriculum",
+      "engine": "universal_curriculum",
+      "status": "success",
+      "message": "universal_curriculum completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "e9e40440abfd5237263d92309e6e2491b19fd82c920367c8529aa2057f0ec323"
+    },
+    {
+      "ts": "2026-07-19T05:28:09.304438+00:00",
+      "event": "stage_status",
+      "stage": "engine_curriculum_expansion",
+      "engine": "curriculum_expansion",
+      "status": "success",
+      "message": "curriculum_expansion completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "4c4904c62852a8b974bd8f19807e639b2786a6b2f975eb181aa4a40d1568b512"
+    },
+    {
+      "ts": "2026-07-19T05:28:09.384771+00:00",
+      "event": "stage_status",
+      "stage": "engine_curriculum_migration",
+      "engine": "curriculum_migration",
+      "status": "success",
+      "message": "curriculum_migration completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "9538536a81c76a2ca678ce2329708e5dabf8f83a148a35b5f6e1017c56c32057"
+    },
+    {
+      "ts": "2026-07-19T05:28:09.419440+00:00",
+      "event": "stage_status",
+      "stage": "engine_curriculum",
+      "engine": "curriculum",
+      "status": "success",
+      "message": "curriculum completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "bbd76e14f34638b7905f3c77f41345d99973dfb143307afafc2697d829d33308"
+    },
+    {
+      "ts": "2026-07-19T05:28:09.467717+00:00",
+      "event": "stage_status",
+      "stage": "engine_scientific_accuracy",
+      "engine": "scientific_accuracy",
+      "status": "success",
+      "message": "scientific_accuracy completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "fe3b927abfa4cd94d651091d55c38b7ced1e97e873edf197b4e6d6e27e4425be"
+    },
+    {
+      "ts": "2026-07-19T05:28:23.913886+00:00",
+      "event": "stage_status",
+      "stage": "engine_assessment",
+      "engine": "assessment",
+      "status": "success",
+      "message": "assessment completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "09d415368a387d73eb1bd9550274ba26a486a7f49ac0a2df8d92d49f1b5f8b9a"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.002321+00:00",
+      "event": "stage_status",
+      "stage": "engine_accessibility",
+      "engine": "accessibility",
+      "status": "success",
+      "message": "accessibility completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "c6a5982e0441361aea1515e74ab0dbe4c57e13d0a086fa0d580839a7644b4aa9"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.012151+00:00",
+      "event": "stage_status",
+      "stage": "engine_adaptive_learning",
+      "engine": "adaptive_learning",
+      "status": "success",
+      "message": "adaptive_learning completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "6506e16ab7da3f6aacbc5757b44154ffc265c86f8659e8b607d352333c31ffc0"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.203016+00:00",
+      "event": "stage_status",
+      "stage": "engine_ai_tutor",
+      "engine": "ai_tutor",
+      "status": "success",
+      "message": "ai_tutor completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "e873f88a6977b5fab14784584353724a48b46f1fb4e0a043187f73e7bf21b192"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.238592+00:00",
+      "event": "stage_status",
+      "stage": "engine_voice_multimodal",
+      "engine": "voice_multimodal",
+      "status": "success",
+      "message": "voice_multimodal completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "e4a05388a974c0d3a9711168143282a3dcb52dfecda382b914c58d7968dcdac1"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.242390+00:00",
+      "event": "stage_status",
+      "stage": "engine_learning_analytics",
+      "engine": "learning_analytics",
+      "status": "success",
+      "message": "learning_analytics completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "47ff9f281b14756bfe3c83985a4bc507af088691ed241614e26c38e67554f0ef"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.328604+00:00",
+      "event": "stage_status",
+      "stage": "engine_learning_motivation",
+      "engine": "learning_motivation",
+      "status": "success",
+      "message": "learning_motivation completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "b7aea88647459c0b24f5a1cfb86ee85ab1485aff8a949619d91c4fe62bcfa512"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.330667+00:00",
+      "event": "stage_status",
+      "stage": "engine_gamification",
+      "engine": "gamification",
+      "status": "success",
+      "message": "gamification completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "254323eb5c78a2b83e060b77eaf753fb10bc93cc8fa7096c050741ed6545ac2c"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.371737+00:00",
+      "event": "stage_status",
+      "stage": "engine_learning_companion",
+      "engine": "learning_companion",
+      "status": "success",
+      "message": "learning_companion completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "b3347263cfc73d974b05862dab9b458198a19ac6aad0569c32517c30f8571057"
+    },
+    {
+      "ts": "2026-07-19T05:28:24.372846+00:00",
+      "event": "teaching_start"
+    },
+    {
+      "ts": "2026-07-19T05:30:58.978598+00:00",
+      "event": "stage_status",
+      "stage": "adaptation_generation",
+      "engine": "multi_agent",
+      "status": "success",
+      "message": "Nine source-grounded adaptations generated.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "0cc034dd996b58cbdc0d5cbf9d02a854de1750dfdba8ad8dfd89e0ac0836588b"
+    },
+    {
+      "ts": "2026-07-19T05:30:58.995982+00:00",
+      "event": "stage_status",
+      "stage": "engine_quality_assurance",
+      "engine": "quality_assurance",
+      "status": "partial",
+      "message": "quality_assurance consumed completed adaptations.",
+      "warnings": [],
+      "fallback_used": "post_stage_omitted",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "f1301a7e480112c07496cbe9327db26d013edef7c2696844c1d971bf4fd12b0d"
+    },
+    {
+      "ts": "2026-07-19T05:31:06.168309+00:00",
+      "event": "stage_status",
+      "stage": "engine_learning_experience",
+      "engine": "learning_experience",
+      "status": "success",
+      "message": "learning_experience consumed completed adaptations.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "0f88bc718608d8b8ea6c2e492e998fa5466e44ff446c3a7758670789910a7ae8"
+    },
+    {
+      "ts": "2026-07-19T05:31:06.168335+00:00",
+      "event": "teaching_done"
+    }
+  ],
+  "vlie_validation": {
+    "ok": true,
+    "publish_blocked": false,
+    "errors": [],
+    "scorecard": {
+      "bloom_levels": [],
+      "source_grounding_coverage": 100.0,
+      "reading_grade": 9.43,
+      "accessibility_score": 100
+    }
+  },
+  "curriculum_resolution": {
+    "status": "unknown",
+    "curriculum": null,
+    "confidence": 0.0,
+    "provenance": "no_source_marker"
+  },
+  "stage_status": {
+    "source_ingestion": {
+      "stage": "source_ingestion",
+      "engine": "knowledge_ingestion",
+      "status": "success",
+      "message": "Readable source content extracted.",
+      "warnings": [],
+      "fallback_used": "native_extraction",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "d4f2b9e1cfadae670f6b6ba1e0669ed3f8453ecc117789dd096245b083598b57"
+    },
+    "content_classification": {
+      "stage": "content_classification",
+      "engine": "content_classifier",
+      "status": "success",
+      "message": "Classified 58 source blocks.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "04da6f9163c75bac74e8cacf8d75a23217597d8c8ffe9e00f7c11493efe2264d"
+    },
+    "universal_profile": {
+      "stage": "universal_profile",
+      "engine": "universal_curriculum",
+      "status": "success",
+      "message": "Source profile created; curriculum status is unknown.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "237b5673b2e0140f2863ee0f7d32295e99bde7976fe301b4109f6bea019df93d"
+    },
+    "engine_knowledge_ingestion": {
+      "stage": "engine_knowledge_ingestion",
+      "engine": "knowledge_ingestion",
+      "status": "success",
+      "message": "knowledge_ingestion completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "5abc0cfad9d4589476af4788c2c1b4e0f1832d8d3856f838e658b8c2b664fea8"
+    },
+    "engine_universal_curriculum": {
+      "stage": "engine_universal_curriculum",
+      "engine": "universal_curriculum",
+      "status": "success",
+      "message": "universal_curriculum completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "e9e40440abfd5237263d92309e6e2491b19fd82c920367c8529aa2057f0ec323"
+    },
+    "engine_curriculum_expansion": {
+      "stage": "engine_curriculum_expansion",
+      "engine": "curriculum_expansion",
+      "status": "success",
+      "message": "curriculum_expansion completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "4c4904c62852a8b974bd8f19807e639b2786a6b2f975eb181aa4a40d1568b512"
+    },
+    "engine_curriculum_migration": {
+      "stage": "engine_curriculum_migration",
+      "engine": "curriculum_migration",
+      "status": "success",
+      "message": "curriculum_migration completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "9538536a81c76a2ca678ce2329708e5dabf8f83a148a35b5f6e1017c56c32057"
+    },
+    "engine_curriculum": {
+      "stage": "engine_curriculum",
+      "engine": "curriculum",
+      "status": "success",
+      "message": "curriculum completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "bbd76e14f34638b7905f3c77f41345d99973dfb143307afafc2697d829d33308"
+    },
+    "engine_scientific_accuracy": {
+      "stage": "engine_scientific_accuracy",
+      "engine": "scientific_accuracy",
+      "status": "success",
+      "message": "scientific_accuracy completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "fe3b927abfa4cd94d651091d55c38b7ced1e97e873edf197b4e6d6e27e4425be"
+    },
+    "engine_assessment": {
+      "stage": "engine_assessment",
+      "engine": "assessment",
+      "status": "success",
+      "message": "assessment completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "09d415368a387d73eb1bd9550274ba26a486a7f49ac0a2df8d92d49f1b5f8b9a"
+    },
+    "engine_accessibility": {
+      "stage": "engine_accessibility",
+      "engine": "accessibility",
+      "status": "success",
+      "message": "accessibility completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "c6a5982e0441361aea1515e74ab0dbe4c57e13d0a086fa0d580839a7644b4aa9"
+    },
+    "engine_adaptive_learning": {
+      "stage": "engine_adaptive_learning",
+      "engine": "adaptive_learning",
+      "status": "success",
+      "message": "adaptive_learning completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "6506e16ab7da3f6aacbc5757b44154ffc265c86f8659e8b607d352333c31ffc0"
+    },
+    "engine_ai_tutor": {
+      "stage": "engine_ai_tutor",
+      "engine": "ai_tutor",
+      "status": "success",
+      "message": "ai_tutor completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "e873f88a6977b5fab14784584353724a48b46f1fb4e0a043187f73e7bf21b192"
+    },
+    "engine_voice_multimodal": {
+      "stage": "engine_voice_multimodal",
+      "engine": "voice_multimodal",
+      "status": "success",
+      "message": "voice_multimodal completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "e4a05388a974c0d3a9711168143282a3dcb52dfecda382b914c58d7968dcdac1"
+    },
+    "engine_learning_analytics": {
+      "stage": "engine_learning_analytics",
+      "engine": "learning_analytics",
+      "status": "success",
+      "message": "learning_analytics completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "47ff9f281b14756bfe3c83985a4bc507af088691ed241614e26c38e67554f0ef"
+    },
+    "engine_learning_motivation": {
+      "stage": "engine_learning_motivation",
+      "engine": "learning_motivation",
+      "status": "success",
+      "message": "learning_motivation completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "b7aea88647459c0b24f5a1cfb86ee85ab1485aff8a949619d91c4fe62bcfa512"
+    },
+    "engine_gamification": {
+      "stage": "engine_gamification",
+      "engine": "gamification",
+      "status": "success",
+      "message": "gamification completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "254323eb5c78a2b83e060b77eaf753fb10bc93cc8fa7096c050741ed6545ac2c"
+    },
+    "engine_learning_companion": {
+      "stage": "engine_learning_companion",
+      "engine": "learning_companion",
+      "status": "success",
+      "message": "learning_companion completed.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "b3347263cfc73d974b05862dab9b458198a19ac6aad0569c32517c30f8571057"
+    },
+    "adaptation_generation": {
+      "stage": "adaptation_generation",
+      "engine": "multi_agent",
+      "status": "success",
+      "message": "Nine source-grounded adaptations generated.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "0cc034dd996b58cbdc0d5cbf9d02a854de1750dfdba8ad8dfd89e0ac0836588b"
+    },
+    "engine_quality_assurance": {
+      "stage": "engine_quality_assurance",
+      "engine": "quality_assurance",
+      "status": "partial",
+      "message": "quality_assurance consumed completed adaptations.",
+      "warnings": [],
+      "fallback_used": "post_stage_omitted",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "f1301a7e480112c07496cbe9327db26d013edef7c2696844c1d971bf4fd12b0d"
+    },
+    "engine_learning_experience": {
+      "stage": "engine_learning_experience",
+      "engine": "learning_experience",
+      "status": "success",
+      "message": "learning_experience consumed completed adaptations.",
+      "warnings": [],
+      "fallback_used": "none",
+      "run_id": "3f8060f1a933",
+      "source_id": "src_40eb8e1ab1146ae8",
+      "input_hash": "0f88bc718608d8b8ea6c2e492e998fa5466e44ff446c3a7758670789910a7ae8"
+    }
+  }
+}
