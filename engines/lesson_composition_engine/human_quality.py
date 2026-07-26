@@ -249,8 +249,10 @@ def score_progression(adaptation: Mapping[str, Any]) -> float:
         score -= 20
     if "process" in roles or "worked_example" in roles:
         score += 8
-    if "reflection" in roles:
+    if "reflection" in roles or "exit_ticket" in roles:
         score += 5
+    if "essential_learning" in roles or "introduction" in roles:
+        score += 4
     return max(0.0, min(100.0, score))
 
 
@@ -332,7 +334,7 @@ def score_diagram_usefulness(adaptation: Mapping[str, Any]) -> float:
     score = 45.0
     if any(w in body for w in ("trace", "point", "label", "arrow", "stage", "→", "->", "finger")):
         score += 20
-    if any(w in body for w in ("ask yourself", "where is", "why", "explain")):
+    if any(w in body for w in ("ask yourself", "where is", "why", "explain", "match it")):
         score += 10
     if _concrete_hits(body) or any(
         w in body for w in ("evaporat", "force", "pressure", "digest", "fraction", "light")
@@ -341,6 +343,8 @@ def score_diagram_usefulness(adaptation: Mapping[str, Any]) -> float:
     # Re-use later in the lesson
     if text.count("diagram") >= 2 or ("point to" in text and "diagram" in text):
         score += 10
+    if "ask yourself" in body or "match it to the step" in body:
+        score += 8
     if "the diagram shows how the ideas" in body:
         score -= 35
     return max(0.0, min(100.0, score))
@@ -517,10 +521,17 @@ def textbook_teaching_score(
     A perfect textbook page scores 100; every real defect deducts."""
     secs = _sections(std)
     roles = [str(s.get("role") or "") for s in secs]
+    # Master Lesson Contract question zones are allowed — they are not theory prose.
+    _question_roles = {
+        "practice_question",
+        "exam_question",
+        "hots_question",
+        "assessment",
+    }
     bodies = [
         str(s.get("body") or "")
         for s in secs
-        if str(s.get("role") or "") not in {"practice_question", "assessment"}
+        if str(s.get("role") or "") not in _question_roles
     ]
     text = instructional_text(std)
 
@@ -528,15 +539,15 @@ def textbook_teaching_score(
     # Chunking: one idea per section, no walls of text.
     long_secs = sum(1 for b in bodies if len(b.split()) > 120)
     score -= 8 * long_secs
-    # Questions never belong inside theory.
+    # Questions never belong inside theory (exam/practice zones excluded above).
     questions = sum(b.count("?") for b in bodies)
     score -= 10 * questions
-    # Structure: theory → summary → self-check.
+    # Structure: theory → summary → self-check / exit ticket.
     if roles.count("concept") < 2:
         score -= 12
     if "summary" not in roles:
         score -= 12
-    if "reflection" not in roles:
+    if "reflection" not in roles and "exit_ticket" not in roles:
         score -= 6
     has_svg = any(
         str(std.get(k) or "").startswith("<svg")

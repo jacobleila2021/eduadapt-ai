@@ -135,7 +135,10 @@ def test_compose_lesson_package_adaptations():
     assert std.get("mermaid_diagram") in ("", None)
     roles = {s.get("role") for s in std["sections"]}
     assert "summary" in roles or any("Summary" in str(s.get("title")) for s in std["sections"])
-    assert "reflection" in roles or any("Reflect" in str(s.get("title")) for s in std["sections"])
+    assert "exit_ticket" in roles or "reflection" in roles or any(
+        "Understand" in str(s.get("title")) or "Reflect" in str(s.get("title"))
+        for s in std["sections"]
+    )
 
 
 def test_flow_includes_concept_teaching_steps():
@@ -147,8 +150,8 @@ def test_flow_includes_concept_teaching_steps():
     )
     sections = pkg["adaptations"]["standard"].get("sections") or []
     roles = {s.get("role") for s in sections}
-    for step in ("concept", "summary", "reflection"):
-        assert step in roles
+    for step in ("concept", "summary", "exit_ticket"):
+        assert step in roles or (step == "exit_ticket" and "reflection" in roles)
     # No question marks inside learner theory sections.
     for sec in sections:
         role = str(sec.get("role") or "")

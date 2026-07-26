@@ -582,21 +582,71 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 f"Together, these points show how {name} fits into {topic} "
                 f"and why it matters in this lesson."
             )
+        # Progressive demand: understanding → application across long answers.
+        if i == 0:
+            prompt = f"Explain '{name}' in detail with examples from the lesson. (Understanding)"
+        elif i == 1:
+            prompt = (
+                f"Apply '{name}' to one everyday situation from the lesson and "
+                f"show each step. (Application)"
+            )
+        else:
+            prompt = f"Explain '{name}' in detail with examples from the lesson."
         long_q.append(
             {
-                "question": f"Explain '{name}' in detail with examples from the lesson.",
+                "question": prompt,
                 "marks": 8,
                 "lines": 10,
                 "model_answer": _para(*answer_parts)
                 if answer_parts
                 else f"{name} is explained step by step in the lesson.",
+                "bloom": "application" if i == 1 else "understanding",
             }
         )
+
+    # HOTS — higher-order items mapped only to taught concepts.
+    hots: list[dict[str, Any]] = []
+    concept_names_for_hots = [
+        str(c.get("name") or "").strip()
+        for c in (concepts or [])
+        if isinstance(c, dict) and str(c.get("name") or "").strip()
+    ] or [topic]
+    first = concept_names_for_hots[0]
+    second = concept_names_for_hots[1] if len(concept_names_for_hots) > 1 else topic
+    hots.append(
+        {
+            "question": (
+                f"Predict what would change about {first.lower()} if the conditions "
+                f"around it were reversed. Use lesson evidence. (HOTS)"
+            ),
+            "marks": 5,
+            "lines": 8,
+            "model_answer": pool[0] if pool else f"A reasoned prediction about {first} from the lesson.",
+            "bloom": "hots",
+        }
+    )
+    hots.append(
+        {
+            "question": (
+                f"A classmate confuses {first.lower()} with {second.lower()}. "
+                f"Write the correction using Must Know language. (HOTS)"
+            ),
+            "marks": 5,
+            "lines": 8,
+            "model_answer": (
+                f"{first} and {second} are different ideas in {topic}; "
+                + (pool[1] if len(pool) > 1 else f"explain each using the lesson.")
+            ),
+            "bloom": "hots",
+        }
+    )
+
     vocab_q = [
         {
             "question": f"Use the term '{t}' correctly in an exam-style sentence.",
             "marks": 2,
             "model_answer": f"A correct sentence uses {t} with the lesson meaning.",
+            "bloom": "recall",
         }
         for t in terms[:6]
     ] or [
@@ -604,6 +654,7 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             "question": f"Define a key term from {topic}.",
             "marks": 2,
             "model_answer": "Give the lesson definition with one example.",
+            "bloom": "recall",
         }
     ]
 
@@ -635,6 +686,14 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         answer_key.append(
             {"question_ref": f"Part D Q{i+1}", "model_answer": row["model_answer"], "marks_notes": "2 marks"}
         )
+    for i, row in enumerate(hots):
+        answer_key.append(
+            {"question_ref": f"Part E Q{i+1}", "model_answer": row["model_answer"], "marks_notes": "5 marks"}
+        )
+
+    # Tag short answers as recall / understanding for progressive exam design.
+    for i, row in enumerate(short):
+        row.setdefault("bloom", "recall" if i < 3 else "understanding")
 
     return {
         "header": {
@@ -642,9 +701,11 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             "topic": topic,
             "time_allowed": "45-60 minutes",
             "total_marks": 40,
+            "progression": ["recall", "understanding", "application", "hots"],
         },
         "short_answer": short,
         "long_answer": long_q,
+        "hots": hots,
         "diagram_question": {
             "question": "Study the source-grounded concept organiser. Redraw and label each main idea accurately.",
             "marks": 5,
@@ -656,15 +717,18 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         "student_checklist": [
             "Read every question twice before writing.",
             "Use lesson vocabulary in answers.",
-            "Check timing: short answers first, then long answers.",
+            "Check timing: short answers first, then long answers, then HOTS.",
             "Review the diagram question labels.",
+            "Every answer must use a Must Know idea from the Master Lesson.",
         ],
         "teacher_differentiation": (
-            "Assign chunked Parts for ADHD/dyslexia supports; keep board vocabulary for ELL; "
-            "prefer visual organiser for visual learners. Do not change verified facts."
+            "Same worksheet for every learner — progressive recall → understanding → "
+            "application → HOTS. Assign chunked Parts for ADHD/dyslexia supports; keep "
+            "board vocabulary for ELL; prefer visual organiser for visual learners. "
+            "Do not change verified facts or remove questions."
         ),
         "answer_key": answer_key,
-        "_lce": {"frequency_based": False, "from_clg": True},
+        "_lce": {"frequency_based": False, "from_clg": True, "from_master_lesson": True},
     }
 
 

@@ -292,6 +292,16 @@ def compose_vocabulary_page(
 
     return {
         "topic": topic,
+        "pre_teach": [
+            {
+                "term": c.term,
+                "meaning": c.definition,
+                "pronunciation": c.pronunciation or f"Say: {c.term}",
+                "picture": c.picture,
+                "context_usage": c.lesson_context or c.example_sentence,
+            }
+            for c in cards
+        ],
         "word_wall": word_wall,
         "flashcards": flashcards,
         "picture_words": picture_words,
@@ -307,7 +317,13 @@ def compose_vocabulary_page(
         "concept_map_svg": concept_map_svg,
         "flowchart_svg": flowchart_svg,
         "misconceptions_addressed": list(misconceptions or [])[:6],
-        "lce": {"schema": "1.0.0", "premium_cards": True, "pqle": True},
+        "lce": {
+            "schema": "1.0.0",
+            "premium_cards": True,
+            "pqle": True,
+            "pre_teach": True,
+            "from_master_lesson": True,
+        },
     }
 
 
