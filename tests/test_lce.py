@@ -139,19 +139,23 @@ def test_compose_lesson_package_adaptations():
 
 
 def test_flow_includes_concept_teaching_steps():
+    # Product law (textbook theory): student pages teach clean theory —
+    # concepts, diagram reading, summary, self-check. Questions live only in
+    # the exam module and vocabulary practice, never inside lesson theory.
     pkg = compose_lesson_package(
         _sample_uli(), sif=_sample_sif(), uvie=_sample_uvie(), topic_hint="Force and Pressure"
     )
-    roles = {s.get("role") for s in (pkg["adaptations"]["standard"].get("sections") or [])}
-    for step in (
-        "concept",
-        "simple_explanation",
-        "real_life_example",
-        "worked_example",
-        "practice_question",
-        "reflection",
-    ):
+    sections = pkg["adaptations"]["standard"].get("sections") or []
+    roles = {s.get("role") for s in sections}
+    for step in ("concept", "summary", "reflection"):
         assert step in roles
+    # No question marks inside learner theory sections.
+    for sec in sections:
+        role = str(sec.get("role") or "")
+        title = str(sec.get("title") or "").lower()
+        if role in {"practice_question", "assessment"} or "exam" in title or "practice" in title:
+            continue
+        assert "?" not in str(sec.get("body") or ""), (sec.get("title"), sec.get("body"))
     assert set(CONCEPT_TEACHING_STEPS)
 
 

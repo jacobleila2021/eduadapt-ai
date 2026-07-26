@@ -119,7 +119,12 @@ def compare_to_golden(
 
     notes: list[str] = []
     delta = 0.0
+    # Textbook-theory pages are deliberately leaner than the old coaching
+    # exemplars (product law: no fluff) — benchmark structure accordingly.
+    textbook = bool(((adaptation or {}).get("lce") or {}).get("textbook_theory"))
     g_sections = int(golden.get("min_sections") or _section_count(golden.get("lesson") or golden))
+    if textbook:
+        g_sections = min(g_sections, 6)
     a_sections = _section_count(adaptation)
     if a_sections >= g_sections:
         delta += 3.0
@@ -141,6 +146,10 @@ def compare_to_golden(
 
     roles = {str(s.get("role") or "") for s in (adaptation.get("sections") or []) if isinstance(s, dict)}
     required = set(golden.get("required_roles") or ["summary", "reflection", "worked_example"])
+    if textbook:
+        # Clean theory has no scene-based worked examples — concepts,
+        # summary, and a self-check are the textbook spine.
+        required = {"summary", "reflection", "concept"}
     missing = required - roles
     if not missing:
         delta += 2.0

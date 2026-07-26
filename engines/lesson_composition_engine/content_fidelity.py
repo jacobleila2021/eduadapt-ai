@@ -130,23 +130,35 @@ def scrub_prompt_leaks(text: str) -> str:
         "",
         out,
     )
-    kept: list[str] = []
-    for sent in re.split(r"(?<=[.!?])\s+", out):
-        if prompt_leak_hits(sent):
-            continue
-        # Strip inline labels like "Prompt:" at start
-        cleaned = re.sub(
-            r"(?i)^(prompt|instruction|system|user|assistant|metadata|context)\s*[:\-–]\s*",
-            "",
-            sent,
-        ).strip()
-        # Remove residual banned phrases inside otherwise useful sentences
-        for phrase in PROMPT_LEAK_PHRASES:
-            cleaned = re.sub(re.escape(phrase), "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;:-")
-        if cleaned and not prompt_leak_hits(cleaned):
-            kept.append(cleaned)
-    return " ".join(kept).strip()
+    # Line-aware so bullet lists ("- fact") and one-sentence-per-line
+    # layouts survive the scrub.
+    out_lines: list[str] = []
+    for line in out.split("\n"):
+        bullet = ""
+        work = line
+        marker = re.match(r"^(\s*[-•]\s+)(.*)$", line)
+        if marker:
+            bullet, work = marker.group(1), marker.group(2)
+        kept: list[str] = []
+        for sent in re.split(r"(?<=[.!?])\s+", work):
+            if prompt_leak_hits(sent):
+                continue
+            # Strip inline labels like "Prompt:" at start
+            cleaned = re.sub(
+                r"(?i)^(prompt|instruction|system|user|assistant|metadata|context)\s*[:\-–]\s*",
+                "",
+                sent,
+            ).strip()
+            # Remove residual banned phrases inside otherwise useful sentences
+            for phrase in PROMPT_LEAK_PHRASES:
+                cleaned = re.sub(re.escape(phrase), "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;")
+            if cleaned and not prompt_leak_hits(cleaned):
+                kept.append(cleaned)
+        joined = " ".join(kept).strip()
+        if joined:
+            out_lines.append(bullet + joined)
+    return "\n".join(out_lines).strip()
 
 
 def split_long_paragraphs(text: str, *, max_words: int = 140, chunk_words: int = 90) -> str:
@@ -191,6 +203,25 @@ def ensure_svg_accessibility(svg: str, *, topic: str) -> str:
     return s.replace("<svg", f'<svg role="img" aria-label="{safe_topic} diagram"', 1)
 
 
+def strip_theory_questions(text: str) -> str:
+    """Remove interrogative sentences from lesson theory.
+
+    Product decision: students study clean textbook theory without being
+    questioned mid-lesson; questions live only in the exam module and
+    vocabulary practice.
+    """
+    if not (text or "").strip() or "?" not in text:
+        return text or ""
+    kept: list[str] = []
+    for line in text.split("\n"):
+        parts = [
+            s for s in re.split(r"(?<=[.!?])\s+", line) if s.strip() and not s.strip().endswith("?")
+        ]
+        if parts or not line.strip():
+            kept.append(" ".join(parts))
+    return "\n".join(kept).strip()
+
+
 def scrub_teacher_voice(text: str) -> str:
     """Remove classroom-management sentences from learner self-study pages.
 
@@ -203,12 +234,16 @@ def scrub_teacher_voice(text: str) -> str:
 
     if not (text or "").strip():
         return text or ""
-    kept = [
-        sent
-        for sent in re.split(r"(?<=[.!?])\s+", text)
-        if sent.strip() and not is_teacher_facing_text(sent)
-    ]
-    return " ".join(kept).strip()
+    # Line-aware so bullet lists and one-sentence-per-line layouts survive.
+    lines: list[str] = []
+    for line in text.split("\n"):
+        kept = [
+            sent
+            for sent in re.split(r"(?<=[.!?])\s+", line)
+            if sent.strip() and not is_teacher_facing_text(sent)
+        ]
+        lines.append(" ".join(kept))
+    return "\n".join(lines).strip()
 
 
 def simplify_vocab_card(row: dict[str, Any], *, topic: str = "this lesson") -> dict[str, Any]:
@@ -404,7 +439,8 @@ def ensure_concept_primer(
         )
 
         c = claim.strip()
-        if len(c.split()) < 6 or not c.endswith((".", "!", "?")):
+        # A question never explains a concept — the primer teaches meanings.
+        if len(c.split()) < 6 or not c.endswith((".", "!")):
             return False
         if is_teacher_facing_text(c):
             return False
@@ -490,29 +526,17 @@ def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[s
     parent_refs = _section_source_refs(sections)
     blob = " ".join(str(s.get("body") or "") for s in sections).lower()
     if "diagram" not in blob and "see the" not in blob:
+        # Teach the diagram with statements only — questions belong to the
+        # exam module and vocabulary practice, never inside lesson theory.
         sections.insert(
             min(2, len(sections)),
             {
                 "title": "Using the Diagram",
                 "role": "visual",
                 "box": "visual",
-                "body": (
-                    f"{pkg['explanation']} {pkg['caption']}. "
-                    f"Practice: {pkg['practice_question']}"
-                ),
+                "body": f"{pkg['explanation']} {pkg['caption']}.",
                 "source_refs": list(parent_refs),
             },
-        )
-    # Ensure a practice section mentions the diagram
-    if "diagram" not in " ".join(str(s.get("body") or "") for s in sections if str(s.get("role")) == "practice_question").lower():
-        sections.append(
-            {
-                "title": "Diagram Practice",
-                "role": "practice_question",
-                "box": "practice",
-                "body": str(pkg["practice_question"]),
-                "source_refs": list(parent_refs),
-            }
         )
     page["sections"] = sections
     return page
@@ -581,6 +605,11 @@ def _break_clone_paragraphs(adaptations: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(value, dict):
             continue
         page = dict(value)
+        # Textbook-theory pages share the same verified claims by product law
+        # — that is mandated content, not clone-wrapping. Never inject
+        # "[LD focus]" style rewrites into clean theory.
+        if bool((page.get("lce") or {}).get("textbook_theory")):
+            continue
         sections = [dict(s) for s in (page.get("sections") or []) if isinstance(s, dict)]
         new_sections = []
         for idx, sec in enumerate(sections):
@@ -593,31 +622,18 @@ def _break_clone_paragraphs(adaptations: dict[str, Any]) -> dict[str, Any]:
             body = str(row.get("body") or "").rstrip()
             norm = " ".join(body.lower().split())
             if len(norm) > 80 and norm in seen and seen[norm] != key:
-                sig = signatures.get(key, f"Now explain this idea in the way that suits {key} learners.")
-                # Full rewrite so clone ratio cannot stay ≥50%
+                sig = signatures.get(key, "Now explain this idea in your own words.")
+                # Keep the lead teaching sentences and close with the
+                # profile's own study move — never bracket tags or section
+                # numbers, which are authoring metadata a learner must
+                # never see.
                 sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", body) if s.strip()]
                 keep = sentences[: max(1, min(2, len(sentences)))]
                 lead = " ".join(keep)
-                row["body"] = (
-                    f"{lead} [{key.upper()} focus] {sig} "
-                    f"Finish this idea in your own words for section {idx + 1}."
-                ).strip()
+                row["body"] = f"{lead} {sig}".strip()
             elif len(norm) > 80:
                 seen[norm] = key
             new_sections.append(row)
-        closer = signatures.get(key)
-        if closer and new_sections:
-            last = dict(new_sections[-1])
-            body_l = str(last.get("body") or "")
-            if closer.lower() not in body_l.lower():
-                last["body"] = (body_l.rstrip() + " " + closer).strip()
-                new_sections[-1] = last
-            # Unique fingerprint so residual shared summaries still diverge
-            last = dict(new_sections[-1])
-            tag = f"(Adaptation note for {key}: use the support style above.)"
-            if tag.lower() not in str(last.get("body") or "").lower():
-                last["body"] = (str(last.get("body") or "").rstrip() + " " + tag).strip()
-                new_sections[-1] = last
         page["sections"] = new_sections
         out[key] = page
     return out
@@ -664,6 +680,18 @@ def apply_content_fidelity(
                     # whole block is a lesson-plan activity, not learner theory.
                     continue
                 row["body"] = scrub_teacher_voice(row["body"])
+                role_low = str(row.get("role") or "").lower()
+                title_low2 = row["title"].lower()
+                is_question_zone = (
+                    key == "worksheet"
+                    or role_low in {"practice_question", "assessment"}
+                    or "exam" in title_low2
+                    or "practice" in title_low2
+                )
+                if not is_question_zone:
+                    # Theory sections teach — questions belong only to the
+                    # exam module and vocabulary practice.
+                    row["body"] = strip_theory_questions(row["body"])
             row["body"] = split_long_paragraphs(row["body"])
             title_low = row["title"].lower()
             if not row.get("role") and (
@@ -759,6 +787,10 @@ def ensure_classroom_content_fidelity(
                     continue
                 if not isinstance(value, dict):
                     continue
+                # Never stamp fingerprints into textbook theory — shared
+                # verified claims across lenses are mandated content.
+                if bool((value.get("lce") or {}).get("textbook_theory")):
+                    continue
                 page = dict(value)
                 sections = []
                 for idx, sec in enumerate(page.get("sections") or []):
@@ -808,6 +840,10 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
         if key.startswith("_") or key in {"vocabulary", "worksheet", "teacher", "parent"}:
             continue
         if not isinstance(value, dict):
+            continue
+        # Textbook-theory pages teach the same verified claims by product law
+        # — shared theory across lenses is mandated, not clone-wrapping.
+        if bool((value.get("lce") or {}).get("textbook_theory")):
             continue
         paras = set()
         for sec in value.get("sections") or []:

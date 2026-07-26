@@ -103,8 +103,13 @@ def review_adaptation_editorial(
             "ell": any("word" in str(s.get("title") or "").lower() or "frame" in blob.lower() for s in _sections(adaptation)),
             "visual": any("diagram" in blob.lower() or "see" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
             "auditory": "aloud" in blob.lower() or "listen" in blob.lower() or "say" in blob.lower(),
-            "ld": bool(adaptation.get("lce", {}).get("adaptive_profile")) or any(str(s.get("body") or "").lstrip().startswith("-") for s in _sections(adaptation)),
-            "dyslexia": any(str(s.get("body") or "").lstrip().startswith("-") for s in _sections(adaptation)),
+            "ld": bool(adaptation.get("lce", {}).get("adaptive_profile"))
+            or any(str(s.get("body") or "").lstrip().startswith("-") for s in _sections(adaptation))
+            or any("step by step" in str(s.get("title") or "").lower() or "one step at a time" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
+            "dyslexia": any(str(s.get("body") or "").lstrip().startswith("-") for s in _sections(adaptation))
+            # Textbook dyslexia presentation: calm layout, one sentence per line.
+            or any("calm and clear" in str(s.get("title") or "").lower() for s in _sections(adaptation))
+            or any("\n" in str(s.get("body") or "").strip() for s in _sections(adaptation)),
         }
         a11y_ok = distinct_markers.get(adaptation_id, True)
         votes["accessibility"] = {

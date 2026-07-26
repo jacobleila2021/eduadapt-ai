@@ -13,8 +13,9 @@ import textstat
 
 # Explicit curriculum labels beat readability estimates for Indian board PDFs.
 _GRADE_PATTERNS = (
-    r"(?i)\b(?:class|grade|std\.?|standard)\s*[-–:]?\s*([0-9]{1,2})\b",
-    r"(?i)\b(?:class|grade|std\.?|standard)\s*([IVXLC]{1,6})\b",
+    # "Grade 6", "Class VI", and lesson-plan style "Grade Level: 6"
+    r"(?i)\b(?:class|grade|std\.?|standard)\s*(?:level)?\s*[-–:]?\s*([0-9]{1,2})\b",
+    r"(?i)\b(?:class|grade|std\.?|standard)\s*(?:level)?\s*[-–:]?\s*([IVXLC]{1,6})\b",
     r"(?i)\b(?:year|yr\.?)\s*([0-9]{1,2})\b",
 )
 

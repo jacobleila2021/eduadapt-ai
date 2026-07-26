@@ -179,15 +179,14 @@ def _lesson_prompt(
     {"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"},
     {"title": "Summary", "body": "recap all key points for revision", "box": "orange"}"""
     else:
-        section_skeleton = """    {"title": "What You Will Learn", "body": "120+ words written to the student — the ideas you will master", "box": "teal"},
-    {"title": "Meristematic Tissue", "body": "120+ words of clear self-study theory explaining this concept to the student", "box": "blue"},
-    {"title": "Permanent Tissue", "body": "120+ words of clear self-study theory explaining this concept to the student", "box": "blue"},
-    {"title": "Worked Examples", "body": "step-by-step examples the student can follow alone", "box": "green"},
-    {"title": "Practice On Your Own", "body": "questions the student answers alone, with answers to self-check", "box": "green"},
-    {"title": "Common Mistakes to Avoid", "body": "misconceptions students often have about these concepts, each corrected with lesson facts", "box": "orange"},
-    {"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"},
-    {"title": "Summary", "body": "recap all key points for revision", "box": "orange"},
-    {"title": "Reflect and Check", "body": "3-5 self-check questions so the student can confirm they understood each concept", "box": "teal"}"""
+        section_skeleton = """    {"title": "What You Will Learn", "body": "80+ words written to the student — statements describing the ideas you will master (no questions)", "box": "teal"},
+    {"title": "Meristematic Tissue", "body": "120+ words of clear textbook theory explaining this concept to the student — statements only, no questions", "box": "blue"},
+    {"title": "Permanent Tissue", "body": "120+ words of clear textbook theory explaining this concept to the student — statements only, no questions", "box": "blue"},
+    {"title": "Worked Examples", "body": "step-by-step examples written as statements the student can follow alone", "box": "green"},
+    {"title": "Common Mistakes to Avoid", "body": "misconceptions students often have about these concepts, each corrected with lesson facts — statements only", "box": "orange"},
+    {"title": "Exam Practice", "body": "board-style short + long questions with model answers (the ONLY section allowed to contain questions)", "box": "orange"},
+    {"title": "Summary", "body": "recap all key points for revision as clear statements", "box": "orange"},
+    {"title": "Reflect: I Can", "body": "short 'I can …' statements listing what the student is now able to do — statements, never questions", "box": "teal"}"""
 
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 

@@ -124,11 +124,13 @@ def test_adaptation_personalities_distinct():
     ad = pkg["adaptations"]
     # ADHD/Autism versions cancelled (product decision) — never composed.
     assert "adhd" not in ad and "autism" not in ad
+    # Textbook theory: same verified claims, lens-specific presentation.
     visual_titles = " ".join(s.get("title", "") for s in ad["visual"]["sections"])
     auditory_titles = " ".join(s.get("title", "") for s in ad["auditory"]["sections"])
-    assert "Key Words First" in " ".join(s.get("title", "") for s in ad["ell"]["sections"])
-    assert "See the Big Picture" in visual_titles or "See It First" in visual_titles
-    assert "Listen" in auditory_titles or "Hear" in auditory_titles
+    ell_titles = " ".join(s.get("title", "") for s in ad["ell"]["sections"])
+    assert "Key word" in ell_titles or "plain words" in ell_titles
+    assert "diagram" in visual_titles.lower() or "picture" in visual_titles.lower()
+    assert "aloud" in auditory_titles.lower() or "hear" in auditory_titles.lower()
 
 
 def test_eerl_rejects_robotic_and_missing_diagram():

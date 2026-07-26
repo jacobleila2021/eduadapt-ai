@@ -305,6 +305,245 @@ def _practice_set(names: list[str], claims: list[str], topic: str) -> list[dict[
     return out[:5]
 
 
+# Student lenses read textbook theory — questions live only in the exam
+# module and vocabulary practice (product decision). Teacher/Parent keep
+# the classroom composition.
+_TEXTBOOK_LENSES = frozenset(
+    {"standard", "visual", "auditory", "ell", "ld", "dyslexia", "adhd", "autism"}
+)
+
+
+def _textbook_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[str]:
+    """Technical terms exactly as the curriculum names them.
+
+    Textbook theory teaches "Evaporation", "Condensation" — never label
+    repairs like "Rising" or heading junk like "Introduction (10"."""
+    topic = str(board.get("topic") or "").strip()
+    names: list[str] = []
+    seen: set[str] = set()
+    for c in board.get("concepts") or []:
+        if not isinstance(c, dict):
+            continue
+        raw = str(c.get("name") or "").strip()
+        low = raw.lower()
+        if (
+            not raw
+            or len(low) < 3
+            or low in seen
+            or any(ch.isdigit() for ch in low)
+            or any(ch in raw for ch in "(|:")
+            or low in {"how", "what", "why", "when", "where", "which", "who", "does"}
+        ):
+            continue
+        seen.add(low)
+        names.append(raw)
+    if not names:
+        for claim in claims[:5]:
+            label = extract_concept_label(claim, topic, avoid=seen)
+            if label and label.lower() not in seen:
+                seen.add(label.lower())
+                names.append(label)
+    return names[:6] or ([topic] if topic else ["Idea"])
+
+
+def _format_theory_body(sentences: list[str], *, version_id: str) -> str:
+    """Lens-specific presentation of the same verified theory sentences."""
+    rows = [s.strip().rstrip(".") + "." for s in sentences if s.strip()]
+    if not rows:
+        return ""
+    if version_id == "ld":
+        return "\n".join(f"- {r}" for r in rows)
+    if version_id == "dyslexia":
+        return "\n".join(rows)
+    return " ".join(rows)
+
+
+def _compose_textbook_adaptation(
+    board: Mapping[str, Any],
+    version_id: str,
+    *,
+    topic: str,
+    claims: list[str],
+    names: list[str],
+    misc: list[dict[str, str]],
+    flowchart_svg: str,
+    concept_map_svg: str,
+    age: str,
+) -> dict[str, Any]:
+    """Clean self-study theory: overview → one section per concept → diagram →
+    mix-up → summary → self-check. No questions, hooks, or activities —
+    learners study the theory; questions belong to the exam and vocabulary."""
+    # Curriculum names verbatim — not repaired labels.
+    names = _textbook_concept_names(board, claims)
+    # Questions never teach theory — keep only declarative claims.
+    teach_claims = [c for c in claims if not c.strip().endswith("?")]
+    used: set[str] = set()
+
+    def _take(pred, limit: int) -> list[str]:
+        out: list[str] = []
+        for c in teach_claims:
+            if c in used or not pred(c):
+                continue
+            used.add(c)
+            out.append(c)
+            if len(out) >= limit:
+                break
+        return out
+
+    overview_titles = {
+        "standard": f"Understanding {topic}",
+        "visual": f"{topic} — the whole picture first",
+        "auditory": f"{topic} — read this aloud",
+        "ell": f"{topic} — the key idea in plain words",
+        "ld": f"{topic}, one step at a time",
+        "dyslexia": f"{topic} — calm and clear",
+    }
+    sections: list[dict[str, Any]] = []
+    topic_low = topic.lower()
+    overview = _take(lambda c: topic_low in c.lower(), 2) or _take(lambda c: True, 2)
+    if overview:
+        sections.append(
+            {
+                "title": overview_titles.get(version_id, f"Understanding {topic}"),
+                "role": "concept",
+                "body": _format_theory_body(overview, version_id=version_id),
+            }
+        )
+
+    concept_titles = {
+        "standard": "{name}",
+        "visual": "{name} — see it in the diagram",
+        "auditory": "{name} — say it once aloud",
+        "ell": "Key word: {name}",
+        "ld": "{name} — step by step",
+        "dyslexia": "{name}",
+    }
+    for name in names[:5]:
+        low = name.lower()
+        if low == topic_low:
+            continue
+        body_claims = _take(lambda c: low in c.lower(), 3)
+        if not body_claims:
+            continue
+        sections.append(
+            {
+                "title": concept_titles.get(version_id, "{name}").format(
+                    name=name[:1].upper() + name[1:]
+                ),
+                "role": "concept",
+                "body": _format_theory_body(body_claims, version_id=version_id),
+            }
+        )
+
+    leftovers = _take(lambda c: True, 3)
+    if leftovers:
+        sections.append(
+            {
+                "title": "More ideas from this lesson",
+                "role": "concept",
+                "body": _format_theory_body(leftovers, version_id=version_id),
+            }
+        )
+
+    if flowchart_svg or concept_map_svg:
+        stage_names = [n for n in names if n.lower() != topic_low][:5]
+        flow = " → ".join(stage_names) if len(stage_names) >= 2 else topic
+        sections.append(
+            {
+                "title": "What the diagram shows",
+                "role": "visual",
+                "body": (
+                    f"The diagram shows {topic} as connected stages: {flow}. "
+                    f"Read each labelled part in order and match it to the "
+                    f"explanation above."
+                ),
+            }
+        )
+
+    for row in misc[:1]:
+        label = str(row.get("label") or "").strip()
+        correction = str(row.get("correction") or "").strip()
+        if label and correction:
+            sections.append(
+                {
+                    "title": "A common mistake to avoid",
+                    "role": "common_misconception",
+                    "body": f"Some learners think {label.rstrip('.')}. In fact, {correction}",
+                }
+            )
+
+    recap = [n[:1].upper() + n[1:] for n in names[:5] if n.lower() != topic_low]
+    summary_lines = [
+        f"{topic} is the main idea of this lesson.",
+    ]
+    if recap:
+        summary_lines.append(
+            "The technical terms to remember are: " + ", ".join(recap) + "."
+        )
+    first_claim = next((c for c in teach_claims if topic_low in c.lower()), "")
+    if first_claim:
+        summary_lines.append(first_claim)
+    sections.append(
+        {
+            "title": "What should stay with you",
+            "role": "summary",
+            "body": " ".join(s.rstrip(".") + "." for s in summary_lines),
+        }
+    )
+    sections.append(
+        {
+            "title": "I understand this",
+            "role": "reflection",
+            "body": (
+                f"I can explain {topic} in my own words, and I can state the "
+                f"meaning of each technical term without looking back."
+            ),
+        }
+    )
+
+    sections = _sequence_sections(_dedupe_prose(sections))
+    for sec in sections:
+        validate_learner_prose(str(sec.get("body") or ""))
+
+    big = teach_claims[0] if teach_claims else f"Clear ideas help you explain {topic}."
+    if len(teach_claims) >= 2 and len(str(big).split()) < 12:
+        big = f"{teach_claims[0]} {teach_claims[1]}"
+
+    from engines.lesson_composition_engine.educational_banks import lookup_banks
+    from engines.lesson_composition_engine.pmes import _diagram_package
+
+    bank_meta = lookup_banks(
+        topic, subject=str(board.get("subject") or ""), claim=teach_claims[0] if teach_claims else ""
+    )
+    svg = flowchart_svg or concept_map_svg
+    page = {
+        "big_idea": str(big)[:400],
+        "sections": sections,
+        "topic": topic,
+        "title": f"{topic} — {version_id.title()}",
+        "flowchart_svg": flowchart_svg,
+        "concept_map_svg": concept_map_svg,
+        "svg_diagram": svg,
+        "revision_points": [f"Explain: {n}" for n in names[:6]],
+        "practice": _practice_set(names, claims, topic),
+        "lce": {
+            "version_id": version_id,
+            "teacher_composition": True,
+            "textbook_theory": True,
+            "educational_banks": True,
+            "bank_covered": bool(bank_meta.get("covered")),
+            "no_generic_fallback": bool(bank_meta.get("covered")),
+            "composed_independently": True,
+            "from_intelligence_board": True,
+            "pedagogically_distinct": True,
+            "age_band": age,
+        },
+    }
+    if str(svg or "").startswith("<svg"):
+        page["diagram_package"] = _diagram_package(page, topic=topic, concepts=names)
+    return page
+
+
 def compose_publisher_adaptation(
     board: Mapping[str, Any],
     version_id: str,
@@ -321,6 +560,24 @@ def compose_publisher_adaptation(
 
     if not claims and not names:
         return _fail_package(topic, "No verified claims or concepts on the board.", version_id=version_id)
+
+    if version_id in _TEXTBOOK_LENSES:
+        try:
+            return _compose_textbook_adaptation(
+                board,
+                version_id,
+                topic=topic,
+                claims=claims,
+                names=names,
+                misc=misc,
+                flowchart_svg=flowchart_svg,
+                concept_map_svg=concept_map_svg,
+                age=age,
+            )
+        except CompositionFailure as exc:
+            return _fail_package(topic, str(exc), version_id=version_id)
+        except Exception as exc:  # noqa: BLE001
+            return _fail_package(topic, f"Composition error: {exc}", version_id=version_id)
 
     try:
         sections: list[dict[str, Any]] = []

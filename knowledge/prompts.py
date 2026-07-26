@@ -45,14 +45,16 @@ SELF_STUDY_TEACHING_RULES = """
 SELF-STUDY THEORY FLOW (mandatory for student adaptations):
 - The reader is a STUDENT studying alone — write directly to the student, never to a teacher or parent.
 - If the source document is a teacher lesson plan, CONVERT it into student self-study theory: state the facts, explanations, and examples directly.
-- NEVER include classroom-management content: pair/group work, "ask students…", "I will show you…", writing on the board, hands-on class activities (e.g. standing in the rain), timing cues, grade/duration/materials metadata, or teacher objectives ("Students will…").
-- Teach ONLY the concepts that clearly help the student succeed in assessments.
+- TEXTBOOK VOICE: theory sections contain STATEMENTS ONLY — never rhetorical or thinking questions. Every question mark belongs exclusively in the Exam Practice section.
+- Explain the topic and EVERY technical term properly and completely, like a good textbook: what it is, how it works, one clear example.
+- NEVER include classroom-management content: pair/group work, "ask students…", "I will show you…", writing on the board, hands-on class activities (e.g. standing in the rain or next to a puddle), timing cues, grade/duration/materials metadata, or teacher objectives ("Students will…").
+- Teach ONLY the concepts that clearly help the student succeed in assessments — no fluff, no filler, no coaching commentary.
 - Required flow (use real concept titles from the source; do not invent facts):
-  1) What You Will Learn (written to the student)
+  1) What You Will Learn (statements)
   2) Theory: teach each core concept fully (one clear segment per major idea)
-  3) Worked Examples the student can follow alone
-  4) Practice On Your Own (with answers to self-check)
-  5) Exam Practice / Board Check
+  3) Worked Examples written as statements
+  4) Common Mistakes to Avoid (statements with corrections)
+  5) Exam Practice / Board Check (the only place questions may appear)
   6) Summary for revision
 - Never replace teaching with vague outlines, truncated blurbs ending in "...", or one-line stubs.
 """

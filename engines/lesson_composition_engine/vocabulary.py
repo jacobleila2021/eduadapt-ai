@@ -214,6 +214,17 @@ def compose_vocabulary_page(
     if len(solid) >= 3:
         cards = solid
 
+    # Everyday words ("cloud", "rain") do not belong on a word wall when the
+    # lesson offers enough real technical terms — learners study the terms
+    # they will actually be assessed on.
+    _everyday = {
+        "cloud", "clouds", "rain", "sun", "water", "air", "soil",
+        "plant", "plants", "earth", "sky", "sea", "land",
+    }
+    technical = [c for c in cards if c.term.strip().lower() not in _everyday]
+    if len(technical) >= 5:
+        cards = technical
+
     word_wall = [c.to_word_wall_row() for c in cards]
     flashcards = [
         {

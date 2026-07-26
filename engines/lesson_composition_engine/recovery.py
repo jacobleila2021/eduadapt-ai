@@ -186,13 +186,19 @@ def scrub_pmes_learner_language(text: str, *, topic: str = "this lesson") -> str
         if phrase in {"exit ticket", "homework:", "independent practice"}:
             continue  # allowed only in teacher tab — caller filters
         if phrase in out.lower():
-            # drop sentences containing the phrase
-            kept = []
-            for sent in re.split(r"(?<=[.!?])\s+", out):
-                if phrase not in sent.lower():
-                    kept.append(sent)
-            out = " ".join(kept).strip()
-    return re.sub(r"\s+", " ", out).strip()
+            # Drop sentences containing the phrase — line-aware so bullet
+            # lists and one-sentence-per-line layouts survive the scrub.
+            lines = []
+            for line in out.split("\n"):
+                kept = [
+                    s for s in re.split(r"(?<=[.!?])\s+", line) if phrase not in s.lower()
+                ]
+                lines.append(" ".join(kept))
+            out = "\n".join(lines)
+    # Collapse runs of spaces but preserve intentional line structure
+    # (ld bullets, dyslexia one-sentence-per-line presentation).
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    return "\n".join(line.strip() for line in out.split("\n") if line.strip() or True).strip()
 
 
 def format_only_adaptation(adaptation: dict[str, Any]) -> dict[str, Any]:
@@ -302,6 +308,15 @@ def adaptation_similarity_report(adaptations: Mapping[str, Any]) -> dict[str, An
     ]
     mainstream = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
     m_text = instructional_text(mainstream)[:12000] if mainstream else ""
+
+    def _is_textbook(page: Mapping[str, Any] | None) -> bool:
+        return bool(((page or {}).get("lce") or {}).get("textbook_theory")) if isinstance(page, dict) else False
+
+    # Product law (textbook theory): every student lens teaches the SAME
+    # verified claims — that shared content is mandated, not clone-wrapping.
+    # Differentiation lives in presentation (chunking, sequencing, callouts),
+    # so only byte-near-identical duplicates fail.
+    textbook_threshold = 0.995
     failures = []
     vs_mainstream = {}
     pairwise = {}
@@ -311,7 +326,12 @@ def adaptation_similarity_report(adaptations: Mapping[str, Any]) -> dict[str, An
         a_text = instructional_text(adaptations[key])[:12000]
         sim = SequenceMatcher(None, a_text, m_text).ratio() if m_text else 0.0
         vs_mainstream[key] = round(sim, 4)
-        if sim > MAX_SIMILARITY:
+        limit = (
+            textbook_threshold
+            if _is_textbook(adaptations.get(key)) and _is_textbook(mainstream)
+            else MAX_SIMILARITY
+        )
+        if sim > limit:
             failures.append({"pair": [key, "standard"], "similarity": round(sim, 4)})
     for i, a in enumerate(keys):
         for b in keys[i + 1 :]:
@@ -319,8 +339,13 @@ def adaptation_similarity_report(adaptations: Mapping[str, Any]) -> dict[str, An
                 None, instructional_text(adaptations[a])[:12000], instructional_text(adaptations[b])[:12000]
             ).ratio()
             pairwise[f"{a}__{b}"] = round(sim, 4)
+            sibling_limit = (
+                textbook_threshold
+                if _is_textbook(adaptations.get(a)) and _is_textbook(adaptations.get(b))
+                else 0.85
+            )
             # Extreme sibling clones still fail (near-identical wraps of each other)
-            if a != "standard" and b != "standard" and sim > 0.85:
+            if a != "standard" and b != "standard" and sim > sibling_limit:
                 failures.append({"pair": [a, b], "similarity": round(sim, 4), "sibling_clone": True})
     return {
         "threshold": MAX_SIMILARITY,

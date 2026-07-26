@@ -102,12 +102,28 @@ def build_lesson_intelligence_board(
     from_clg = bool(concepts_raw)
     if not concepts_raw:
         concepts_raw = list(profile.get("concepts") or profile.get("key_concepts") or [])
+
+    def _valid_concept_name(name: str) -> bool:
+        """Concepts must be teachable domain terms — never document scaffolding.
+
+        Real uploads produced junk concepts from headings like "Introduction
+        (10 minutes)" and question words from "How does water travel…?", which
+        then became broken section titles ("Check How for yourself")."""
+        low = name.strip().lower()
+        if len(low) < 3:
+            return False
+        if any(ch.isdigit() for ch in low) or "(" in low or "|" in low or ":" in low:
+            return False
+        if low in {"how", "what", "why", "when", "where", "which", "who", "does"}:
+            return False
+        return not is_teacher_facing_text(name)
+
     concepts: list[dict[str, Any]] = []
     for item in concepts_raw:
         if isinstance(item, dict):
             name = str(item.get("name") or item.get("title") or "").strip()
             # CLG concepts are already curated — do not drop science words like Water/Cycle.
-            if name and (from_clg or not is_junk_term(name)):
+            if name and _valid_concept_name(name) and (from_clg or not is_junk_term(name)):
                 concepts.append(
                     {
                         "name": name,
@@ -116,7 +132,7 @@ def build_lesson_intelligence_board(
                 )
         else:
             name = str(item or "").strip()
-            if name and (from_clg or not is_junk_term(name)):
+            if name and _valid_concept_name(name) and (from_clg or not is_junk_term(name)):
                 concepts.append({"name": name, "explanation": ""})
 
     # If junk filtering emptied the board, rebuild concepts from verified claims.

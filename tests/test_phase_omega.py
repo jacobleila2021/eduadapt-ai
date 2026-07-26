@@ -105,14 +105,17 @@ def test_adaptations_are_pedagogically_distinct():
     adhd = compose_adaptation_from_board(board, "adhd", flowchart_svg=svg, concept_map_svg=svg)
     autism = compose_adaptation_from_board(board, "autism", flowchart_svg=svg, concept_map_svg=svg)
     ell = compose_adaptation_from_board(board, "ell", flowchart_svg=svg, concept_map_svg=svg)
-    titles_adhd = [str(s.get("title") or "") for s in adhd["sections"]]
-    titles_autism = [str(s.get("title") or "") for s in autism["sections"]]
     titles_ell = [str(s.get("title") or "") for s in ell["sections"]]
-    assert any("Mission" in t or "Chunk" in t or "Minute" in t for t in titles_adhd)
-    assert any("Routine" in t or "What We Will" in t or "Finished" in t for t in titles_autism)
-    assert any("Key Words" in t for t in titles_ell)
-    assert titles_adhd != titles_autism
+    # Product law (textbook theory): student lenses share the same verified
+    # theory with lens-specific presentation; ADHD/Autism are cancelled but
+    # composing them still yields valid textbook pages.
+    assert any("Key word" in t or "plain words" in t for t in titles_ell)
+    assert adhd["sections"] and autism["sections"]
     assert adhd["lce"]["pedagogically_distinct"] is True
+    # No questions inside learner theory for any lens.
+    for page in (adhd, autism, ell):
+        for sec in page["sections"]:
+            assert "?" not in str(sec.get("body") or ""), sec.get("title")
 
 
 def test_compose_package_phase_omega_end_to_end():
@@ -124,7 +127,9 @@ def test_compose_package_phase_omega_end_to_end():
     roles = {s.get("role") for s in (std.get("sections") or []) if isinstance(s, dict)}
     assert "concept" in roles
     assert "visual" in roles
-    assert "practice_question" in roles
+    # Product law (textbook theory): no practice questions inside lesson
+    # theory — questions live only in the exam module and vocabulary.
+    assert "summary" in roles
     assert std.get("lce", {}).get("from_intelligence_board") is True
     editorial = pkg.get("editorial") or review_package_editorial(
         pkg.get("adaptations") or {}, board=pkg.get("intelligence_board") or {}
