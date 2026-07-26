@@ -66,7 +66,6 @@ def export_vocabulary_html(data: Any) -> str:
     parts = [f'<p class="meta"><strong>Topic:</strong> {html.escape(vocab.get("topic", ""))}</p>']
 
     parts.append("<h2>1. Word Wall — Study First</h2>")
-    seen_pictures: set[str] = set()
     for index, word in enumerate(vocab.get("word_wall") or []):
         if not isinstance(word, dict):
             continue
@@ -80,29 +79,10 @@ def export_vocabulary_html(data: Any) -> str:
             or word.get("definition")
             or ""
         ).strip()
-        example = str(word.get("example_sentence") or word.get("example") or "").strip()
-        memory = str(word.get("remember_this") or word.get("memory_tip") or "").strip()
-        use_this = str(word.get("use_this_word") or word.get("lesson_context") or "").strip()
-        picture = str(
-            word.get("draw_this") or word.get("picture") or word.get("visual_description") or ""
-        ).strip()
-        pic_norm = " ".join(picture.lower().split())
-        # Skip empty or repeated picture cues — they create adjacent duplicate paragraphs in print.
-        if not picture or pic_norm in seen_pictures or pic_norm == " ".join(meaning.lower().split()):
-            picture = ""
-        elif pic_norm:
-            seen_pictures.add(pic_norm)
+        # Product decision: a word-wall card shows the word and its meaning only.
         body = []
         if meaning:
             body.append(f"<p><strong>Meaning</strong> {html.escape(meaning)}</p>")
-        if example:
-            body.append(f"<p><strong>Real-life example</strong> <em>{html.escape(example)}</em></p>")
-        if picture:
-            body.append(f"<p><strong>Picture idea</strong> {html.escape(picture)}</p>")
-        if memory:
-            body.append(f"<p><strong>Remember this</strong> {html.escape(memory)}</p>")
-        if use_this:
-            body.append(f"<p><strong>Use this word</strong> {html.escape(use_this)}</p>")
         parts.append(
             f'<div class="card" style="background:{bg}">'
             f'<h3>{html.escape(str(word.get("emoji") or "📘"))} {html.escape(term)}</h3>'

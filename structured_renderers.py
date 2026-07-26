@@ -121,26 +121,13 @@ def _word_wall_card_html(word: dict, index: int = 0) -> str:
         or word.get("definition")
         or ""
     )
-    example = html.escape(word.get("example") or word.get("example_sentence") or "")
-    memory = html.escape(str(word.get("remember_this") or word.get("memory_tip") or ""))
-    use_this = html.escape(str(word.get("use_this_word") or word.get("lesson_context") or ""))
-    picture = html.escape(
-        str(word.get("draw_this") or word.get("picture") or word.get("visual_description") or "")
-    )
     num = int(word.get("card_number") or (index + 1))
     emoji = html.escape(str(word.get("emoji") or "📘"))
 
+    # Product decision: a word-wall card shows the word and its meaning only.
     body_parts = []
     if meaning:
-        body_parts.append(f'<p class="alora-vocab-simple"><strong>Meaning</strong> {meaning}</p>')
-    if example:
-        body_parts.append(f'<p class="alora-vocab-example"><strong>Real-life example</strong> <em>{example}</em></p>')
-    if picture:
-        body_parts.append(f'<p class="alora-vocab-pic"><strong>Picture idea</strong> {picture}</p>')
-    if memory:
-        body_parts.append(f'<p class="alora-vocab-tip"><strong>Remember this</strong> {memory}</p>')
-    if use_this:
-        body_parts.append(f'<p class="alora-vocab-ctx"><strong>Use this word</strong> {use_this}</p>')
+        body_parts.append(f'<p class="alora-vocab-simple">{meaning}</p>')
 
     return (
         f'<article class="alora-word-wall-card pqle-vocab-card student-flashcard" data-card="{num}">'

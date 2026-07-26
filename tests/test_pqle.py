@@ -112,7 +112,9 @@ def test_vocabulary_pqle_fields_and_dominant_term():
     assert card.get("academic_definition") or card.get("definition")
     html = vocabulary_card_html(card)
     assert "lce-vocab-term" in html or "alora-word-wall-term" in html
-    assert "Remember" in html or "memory" in html.lower() or "Draw this" in html
+    # Product decision: the rendered card shows the word and its meaning only
+    # (memory tips stay in the data model but never on the learner card).
+    assert "Remember" not in html and "Draw this" not in html
 
 
 def test_adaptation_personalities_distinct():

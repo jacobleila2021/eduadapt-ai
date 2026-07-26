@@ -292,7 +292,8 @@ def _as_list(value: Any) -> list[str]:
 
 
 def vocabulary_card_html(card: dict[str, Any]) -> str:
-    """Student flashcard — WORD, Meaning, Real-life example, Picture idea, Remember, Use."""
+    """Student flashcard — WORD and its meaning only (product decision:
+    no example / picture idea / memory tip / usage apparatus on the card)."""
     import html as html_lib
 
     raw_term = str(card.get("term") or "Term").strip()
@@ -306,23 +307,14 @@ def vocabulary_card_html(card: dict[str, Any]) -> str:
             or ""
         )
     )
-    example = html_lib.escape(str(card.get("example_sentence") or card.get("example") or ""))
-    memory = html_lib.escape(str(card.get("remember_this") or card.get("memory_tip") or ""))
-    use_this = html_lib.escape(str(card.get("use_this_word") or card.get("lesson_context") or ""))
-    picture = html_lib.escape(
-        str(card.get("draw_this") or card.get("picture") or card.get("visual_description") or "")
-    )
     color = html_lib.escape(str(card.get("color") or "#FFFDF6"))
     emoji = html_lib.escape(str(card.get("emoji") or "📘"))
 
-    rows = [
-        f'<p class="lce-vocab-simple"><strong>Meaning</strong> {meaning}</p>' if meaning else "",
-        f'<p class="lce-vocab-ex"><strong>Real-life example</strong> <em>{example}</em></p>' if example else "",
-        f'<p class="lce-vocab-pic"><strong>Picture idea</strong> {picture}</p>' if picture else "",
-        f'<p class="lce-vocab-tip"><strong>Remember this</strong> {memory}</p>' if memory else "",
-        f'<p class="lce-vocab-ctx"><strong>Use this word</strong> {use_this}</p>' if use_this else "",
-    ]
-    body = "".join(r for r in rows if r)
+    body = (
+        f'<p class="lce-vocab-simple">{meaning}</p>'
+        if meaning
+        else f'<p class="lce-vocab-simple">An important word in this lesson.</p>'
+    )
     return (
         f'<article class="lce-vocab-card alora-word-wall-card pqle-vocab-card pmes-flashcard student-flashcard" '
         f'style="background:{color};border-top:6px solid #008C95;">'

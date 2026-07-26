@@ -67,10 +67,22 @@ def _student_goal(goal: str, *, topic: str) -> str:
     return text if text.endswith((".", "!", "?")) else text + "."
 
 
+def _teachable_fact(text: str) -> bool:
+    """Objectives and authoring lines ('Students will explain…') are not facts a
+    learner can be shown as a model answer."""
+    import re as _re
+
+    return not _re.search(
+        r"(?i)\b(students?|learners?)\s+will\b|\bobjectives?\b|\byou will learn\b"
+        r"|\blesson plan\b|\bmarks?\s*:\s*\d",
+        text,
+    )
+
+
 def _fact_pool(clg: Mapping[str, Any]) -> list[str]:
     facts = [str(f.get("text") or "") for f in (clg.get("facts") or []) if f]
     claims = [str(c) for c in (clg.get("claim_texts") or []) if c]
-    pool = [t for t in facts + claims if t.strip()]
+    pool = [t for t in facts + claims if t.strip() and _teachable_fact(t)]
     return pool or [
         f"The uploaded lesson centres on {clg.get('topic') or 'this topic'}.",
     ]
@@ -482,7 +494,7 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             q = str(outcome["prompt"])
         else:
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
-            q = f"In 1–2 sentences, explain {name}."
+            q = f"In 1–2 sentences, explain '{name}'."
         evidence = pool[i % len(pool)] if pool else f"Accurate brief explanation of the idea in {topic}."
         short.append(
             {
@@ -492,33 +504,51 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 "model_answer": evidence[:220],
             }
         )
-    # Guarantee exam breadth for EERL pedagogical flow
+    # Guarantee exam breadth for EERL pedagogical flow — every filler question
+    # must be grounded in a distinct lesson fact, never a numbered template.
     while len(short) < 6:
         idx = len(short)
-        evidence = pool[idx % len(pool)] if pool else f"Key idea {idx+1} from {topic}."
-        short.append(
-            {
-                "question": f"State one important fact about {topic} (point {idx+1}).",
-                "marks": 2,
-                "lines": 4,
-                "model_answer": evidence[:220],
-            }
-        )
+        evidence = pool[idx % len(pool)] if pool else ""
+        if evidence:
+            short.append(
+                {
+                    "question": (
+                        "In your own words, explain this idea from the lesson: "
+                        f"{evidence[:110].rstrip('.')}."
+                    ),
+                    "marks": 2,
+                    "lines": 4,
+                    "model_answer": evidence[:220],
+                }
+            )
+        else:
+            short.append(
+                {
+                    "question": f"State one important fact about {topic}.",
+                    "marks": 2,
+                    "lines": 4,
+                    "model_answer": f"One accurate fact about {topic} from the lesson.",
+                }
+            )
     long_q = []
     for i, concept in enumerate(concepts[:4] or [{"name": topic}]):
         name = str(concept.get("name") or topic)
+        # Model answer = the lesson's own facts about this concept, so
+        # "Show Answer" teaches content — never marking advice for teachers.
+        support = [t for t in pool if name.lower() in t.lower()][:3]
+        if not support and pool:
+            start = min(i, len(pool) - 1)
+            support = pool[start : start + 2]
+        explanation = str(concept.get("explanation") or "").strip()
+        answer_parts = ([explanation] if explanation else []) + support
         long_q.append(
             {
-                "question": f"Explain {name} in detail with examples from the lesson.",
+                "question": f"Explain '{name}' in detail with examples from the lesson.",
                 "marks": 8,
                 "lines": 10,
-                "model_answer": _para(
-                    pool[min(i, len(pool) - 1)] if pool else f"{name} is explained in the lesson.",
-                    f"A strong answer defines {name}, gives one example, and links it to {topic}.",
-                    "Use accurate lesson vocabulary throughout.",
-                    "Avoid mixing this idea with a related but different term.",
-                    "End with one clear concluding sentence.",
-                ),
+                "model_answer": _para(*answer_parts)
+                if answer_parts
+                else f"{name} is explained step by step in the lesson.",
             }
         )
     vocab_q = [

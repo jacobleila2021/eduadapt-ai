@@ -26,6 +26,28 @@ _STOPWORDS = {
     "objectives", "objective", "instructions", "note", "notes", "figure",
     "table", "copyright", "published", "reprint", "edition", "board",
 }
+# Verbs and generic nouns that are never teachable concepts on their own
+# ("moves", "changes state", "time") even when frequent in the source.
+_GENERIC_CONCEPT_WORDS = {
+    "changes", "change", "changing", "changed", "moves", "move", "moving",
+    "called", "become", "becomes", "became", "form", "forms", "forming",
+    "gives", "give", "given", "makes", "make", "making", "made", "explains",
+    "explain", "means", "mean", "stays", "stay", "falls", "fall", "fallen",
+    "grows", "grow", "release", "releases", "heats", "heat", "begins",
+    "begin", "collects", "collect", "soaks", "soak", "rises", "rise",
+    "cools", "cool", "turns", "turn", "keeps", "keep", "shows", "show",
+    "time", "times", "state", "states", "stage", "stages", "thing",
+    "things", "idea", "ideas", "way", "ways", "kind", "kinds", "part",
+    "parts", "example", "examples", "important", "different", "amount",
+    "number", "back", "again", "constantly", "continuous",
+    # prepositions / connectives / participles that pass the length filter
+    "during", "within", "without", "around", "across", "towards", "toward",
+    "under", "over", "above", "below", "along", "among", "while", "until",
+    "although", "though", "however", "therefore", "every", "always", "often",
+    "usually", "sometimes", "powered", "formed", "heated", "cooled",
+    "released", "collected", "known", "seen", "used", "found",
+}
+
 _SKILL_VERBS = {
     "analyse", "analyze", "apply", "calculate", "classify", "compare",
     "construct", "create", "define", "describe", "design", "discuss",
@@ -173,30 +195,72 @@ def build_universal_lesson_profile(
     title = (first_heading or first_line or "Uploaded Lesson")[:160]
     topic = re.split(r"[.:!?]", title, 1)[0][:100].strip() or "Uploaded Lesson"
 
+    # Concepts must be teachable phrases, not raw frequency words. Counting
+    # single words split "The Water Cycle" into the junk concepts "water" and
+    # "cycle", which then became broken exam questions ("Explain cycle in
+    # detail…") and meaningless diagram labels. Prefer repeated two-word
+    # phrases ("water cycle"), then single content words not already covered
+    # by a chosen phrase.
+    def _concept_word(token: str) -> bool:
+        return (
+            len(token) >= 4
+            and token not in _STOPWORDS
+            and token not in _GENERIC_CONCEPT_WORDS
+        )
+
     word_rows: list[tuple[str, str]] = []
+    bigram_rows: list[tuple[str, str]] = []
     for block in blocks:
         block_id = str(block.get("block_id") or "")
-        for word in re.findall(r"\b[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]{3,}\b", str(block["text"])):
-            normalized = word.lower()
-            if normalized not in _STOPWORDS:
-                word_rows.append((normalized, block_id))
+        # Tokenize EVERY word (including short ones) so bigram adjacency is
+        # true adjacency in the source — dropping "on" from "water on Earth"
+        # previously invented the junk phrase "water earth".
+        tokens = [
+            w.lower()[:-2] if w.lower().endswith("'s") else w.lower()
+            for w in re.findall(r"\b[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\b", str(block["text"]))
+        ]
+        for word in tokens:
+            if _concept_word(word):
+                word_rows.append((word, block_id))
+        for first, second in zip(tokens, tokens[1:]):
+            if _concept_word(first) and _concept_word(second):
+                bigram_rows.append((f"{first} {second}", block_id))
     counts = Counter(word for word, _ in word_rows)
-    top_words = [word for word, _ in counts.most_common(20)]
+    bigram_counts = Counter(phrase for phrase, _ in bigram_rows)
+
+    phrase_terms: list[str] = []
+    covered_words: set[str] = set()
+    for phrase, freq in bigram_counts.most_common(20):
+        if freq < 2 or len(phrase_terms) >= 6:
+            break
+        phrase_terms.append(phrase)
+        covered_words.update(phrase.split())
+    single_terms = [
+        word for word, _ in counts.most_common(30) if word not in covered_words
+    ]
+    top_terms = phrase_terms + single_terms
+
+    def _term_refs(term: str) -> list[str]:
+        rows = bigram_rows if " " in term else word_rows
+        return sorted({ref for token, ref in rows if token == term})[:8]
+
+    def _term_freq(term: str) -> int:
+        return bigram_counts[term] if " " in term else counts[term]
 
     concepts = [
         {
-            "concept": word,
-            "source_refs": sorted({ref for token, ref in word_rows if token == word})[:8],
-            "frequency": counts[word],
+            "concept": term,
+            "source_refs": _term_refs(term),
+            "frequency": _term_freq(term),
         }
-        for word in top_words[:12]
+        for term in top_terms[:12]
     ]
     vocabulary = [
         {
-            "term": word,
-            "source_refs": sorted({ref for token, ref in word_rows if token == word})[:8],
+            "term": term,
+            "source_refs": _term_refs(term),
         }
-        for word in top_words[:15]
+        for term in top_terms[:15]
     ]
 
     objectives: list[dict[str, Any]] = []
