@@ -149,6 +149,48 @@ def scrub_prompt_leaks(text: str) -> str:
     return " ".join(kept).strip()
 
 
+def split_long_paragraphs(text: str, *, max_words: int = 140, chunk_words: int = 90) -> str:
+    """Break paragraphs longer than max_words at sentence boundaries.
+
+    Publisher standard: no wall-of-text paragraphs on a learner page
+    (EATS: "Oversized paragraph (>140 words)").
+    """
+    if not (text or "").strip():
+        return text or ""
+    out_paras: list[str] = []
+    for para in re.split(r"\n\s*\n", text):
+        if len(para.split()) <= max_words:
+            out_paras.append(para)
+            continue
+        chunk: list[str] = []
+        count = 0
+        chunks: list[str] = []
+        for sent in re.split(r"(?<=[.!?])\s+", para):
+            chunk.append(sent)
+            count += len(sent.split())
+            if count >= chunk_words:
+                chunks.append(" ".join(chunk))
+                chunk, count = [], 0
+        if chunk:
+            chunks.append(" ".join(chunk))
+        out_paras.append("\n\n".join(chunks))
+    return "\n\n".join(out_paras)
+
+
+def ensure_svg_accessibility(svg: str, *, topic: str) -> str:
+    """Give unlabelled SVG diagrams an accessible name (role + aria-label)."""
+    s = svg or ""
+    if (
+        not s.strip().startswith("<svg")
+        or "aria-label" in s
+        or 'role="img"' in s
+        or "<title" in s
+    ):
+        return s
+    safe_topic = (topic or "Lesson").replace('"', "'")
+    return s.replace("<svg", f'<svg role="img" aria-label="{safe_topic} diagram"', 1)
+
+
 def scrub_teacher_voice(text: str) -> str:
     """Remove classroom-management sentences from learner self-study pages.
 
@@ -622,8 +664,21 @@ def apply_content_fidelity(
                     # whole block is a lesson-plan activity, not learner theory.
                     continue
                 row["body"] = scrub_teacher_voice(row["body"])
+            row["body"] = split_long_paragraphs(row["body"])
+            title_low = row["title"].lower()
+            if not row.get("role") and (
+                "what you will learn" in title_low or "learning goal" in title_low
+            ):
+                # LLM-authored sections carry no roles — label the objectives
+                # section so pedagogy checks see it.
+                row["role"] = "objective"
             if row["body"]:
                 sections.append(row)
+        for svg_field in ("flowchart_svg", "svg_diagram", "concept_map_svg"):
+            if page.get(svg_field):
+                page[svg_field] = ensure_svg_accessibility(
+                    str(page[svg_field]), topic=topic
+                )
         page_has_diagram = any(
             str(page.get(field) or "").startswith("<svg")
             for field in ("flowchart_svg", "svg_diagram", "concept_map_svg")

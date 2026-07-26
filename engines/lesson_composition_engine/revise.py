@@ -9,7 +9,6 @@ from typing import Any, Mapping
 
 from engines.lesson_composition_engine.diagrams import (
     build_concept_map_svg,
-    build_subject_flowchart,
     prefer_svg_over_mermaid,
 )
 from engines.lesson_composition_engine.eerl import review_package
@@ -24,16 +23,24 @@ MAX_REVISE_PASSES = 3
 
 
 def _enrich_diagrams(adaptation: dict[str, Any], *, topic: str, subject: str, concepts: list[str]) -> dict[str, Any]:
-    """Ensure SVG organisers exist. Does not inject Quick Revision boilerplate."""
+    """Ensure SVG organisers exist. Does not inject Quick Revision boilerplate.
+
+    Only DOMAIN diagrams built from real lesson concepts are ever injected —
+    the generic pedagogy flowchart is rejected by EATS as "not a domain
+    diagram", so injecting it guaranteed quarantine. Missing beats generic.
+    """
+    from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+
     out = prefer_svg_over_mermaid(dict(adaptation), allow_mermaid=False)
-    if not str(out.get("flowchart_svg") or "").startswith("<svg"):
-        out["flowchart_svg"] = build_subject_flowchart(subject or "general", topic or "Lesson")
-    if not str(out.get("concept_map_svg") or "").startswith("<svg"):
-        out["concept_map_svg"] = build_concept_map_svg(
-            topic or "Lesson", concepts or ["Idea", "Example", "Practice"]
+    names = [str(c).strip() for c in (concepts or []) if str(c).strip()]
+    if not str(out.get("flowchart_svg") or "").startswith("<svg") and len(names) >= 2:
+        out["flowchart_svg"] = build_educational_flowchart_svg(
+            topic or "Lesson", names[:6], subtitle="Key ideas in order"
         )
+    if not str(out.get("concept_map_svg") or "").startswith("<svg") and names:
+        out["concept_map_svg"] = build_concept_map_svg(topic or "Lesson", names)
     if not str(out.get("svg_diagram") or "").startswith("<svg"):
-        out["svg_diagram"] = out.get("flowchart_svg") or out.get("concept_map_svg")
+        out["svg_diagram"] = out.get("flowchart_svg") or out.get("concept_map_svg") or ""
     return out
 
 
@@ -103,8 +110,19 @@ def apply_publisher_quality_excellence(
     )
 
     seed_default_golden_lessons()
-    clg = clg or {}
-    board = dict(board or adaptations.get("_intelligence_board") or {})
+    # The pipeline stores the publisher spine under _meta — without this
+    # fallback the EATS revise loop ran with an EMPTY board, so PMES had no
+    # concepts and injected the generic pedagogy flowchart that EATS itself
+    # rejects ("Generic subject-sequence flowchart is not a domain diagram").
+    meta = adaptations.get("_meta") if isinstance(adaptations.get("_meta"), dict) else {}
+    clg = dict(clg or meta.get("canonical_lesson_graph") or (meta.get("lce") or {}).get("clg") or {})
+    board = dict(
+        board
+        or adaptations.get("_intelligence_board")
+        or meta.get("intelligence_board")
+        or (meta.get("lce") or {}).get("intelligence_board")
+        or {}
+    )
     contribution_log: list[dict[str, Any]] = []
 
     before_pqle = educational_quality_score(adaptations)

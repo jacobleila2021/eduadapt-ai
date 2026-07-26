@@ -184,8 +184,10 @@ def _lesson_prompt(
     {"title": "Permanent Tissue", "body": "120+ words of clear self-study theory explaining this concept to the student", "box": "blue"},
     {"title": "Worked Examples", "body": "step-by-step examples the student can follow alone", "box": "green"},
     {"title": "Practice On Your Own", "body": "questions the student answers alone, with answers to self-check", "box": "green"},
+    {"title": "Common Mistakes to Avoid", "body": "misconceptions students often have about these concepts, each corrected with lesson facts", "box": "orange"},
     {"title": "Exam Practice", "body": "board-style short + long questions with model answers", "box": "orange"},
-    {"title": "Summary", "body": "recap all key points for revision", "box": "orange"}"""
+    {"title": "Summary", "body": "recap all key points for revision", "box": "orange"},
+    {"title": "Reflect and Check", "body": "3-5 self-check questions so the student can confirm they understood each concept", "box": "teal"}"""
 
     return f"""You are EduAdapt AI. Create ONE comprehensive lesson adaptation.
 

@@ -247,7 +247,6 @@ def _rewrite_from_comments(
     from engines.lesson_composition_engine.diagrams import (
         build_concept_map_svg,
         build_educational_flowchart_svg,
-        build_subject_flowchart,
     )
     from engines.lesson_composition_engine.publisher_remediation import remediate_adaptation
     from engines.lesson_composition_engine.recovery import (
@@ -271,15 +270,17 @@ def _rewrite_from_comments(
     # Diagram SVG may be enriched for rendering — no template prose injection.
     if "diagram" in joined or "visual" in joined or "decorative" in joined:
         if not str(out.get("flowchart_svg") or "").startswith("<svg"):
+            # Only inject a DOMAIN flowchart built from real lesson concepts.
+            # The generic pedagogy-stage flowchart (Hook → Explain → Practice)
+            # is rejected by EATS as "not a domain diagram" — injecting it made
+            # the revise loop sabotage its own score. Missing beats generic.
             if len(concepts) >= 2:
                 svg = build_educational_flowchart_svg(
                     topic, concepts[:6], subtitle=f"{subject.title()} key ideas"
                 )
-            else:
-                svg = build_subject_flowchart(subject, topic)
-            out["flowchart_svg"] = svg
-            out["svg_diagram"] = svg
-            out["concept_map_svg"] = build_concept_map_svg(topic, concepts or [topic])
+                out["flowchart_svg"] = svg
+                out["svg_diagram"] = svg
+                out["concept_map_svg"] = build_concept_map_svg(topic, concepts)
         out["diagram_package"] = _diagram_package(out, topic=topic, concepts=concepts)
 
     if "curriculum" in joined and claims:

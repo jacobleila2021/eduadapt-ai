@@ -268,7 +268,13 @@ def check_educational(adaptation: Mapping[str, Any], *, adaptation_id: str = "")
             4,
             "objectives",
         ),
-        (any(r in roles for r in ("hook", "prior", "activate", "warm", "connect")), 4, "prior knowledge"),
+        (
+            # concept_primer = the "Must-Learn Ideas" opener that activates the
+            # key ideas before any activity — real prior-knowledge activation.
+            any(r in roles for r in ("hook", "prior", "activate", "warm", "connect", "concept_primer")),
+            4,
+            "prior knowledge",
+        ),
         (
             any(r in roles for r in ("concept", "teach", "explain", "concept_teaching", "instruction"))
             or len(sections) >= 4,
