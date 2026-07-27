@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 from engines.base import EngineResultBundle
 from engines.verified_learning_engine.audit_logger import AuditLogger
@@ -335,6 +338,11 @@ class VerifiedLearningOrchestrator:
                     result = engine.validate(context, result)
                     result = engine.enrich(context, result)
                 except Exception:
+                    logger.exception(
+                        "Optional planning engine %s failed (run %s)",
+                        engine.engine_id,
+                        ctx.run_id,
+                    )
                     result = EngineResultBundle(
                         engine_id=engine.engine_id,
                         ok=False,
@@ -367,11 +375,21 @@ class VerifiedLearningOrchestrator:
                     universal_profile=profile,
                     grounding_mode="uploaded_source",
                 )
-            except Exception:
+            except Exception as exc:
+                logger.exception(
+                    "Adaptation generation failed (run %s)", ctx.run_id
+                )
+                self.audit.log(
+                    "teaching_failed",
+                    run_id=ctx.run_id,
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+                cause = str(exc).strip() or type(exc).__name__
                 result = failed(
                     "adaptation_generation",
                     "multi_agent",
-                    "Required lesson adaptations could not be generated after retries.",
+                    "Required lesson adaptations could not be generated after retries. "
+                    f"Cause: {cause[:300]}",
                     retryable=True,
                     recovery="Retry generation or verify the AI service configuration.",
                     fallback_used="bounded_retries_exhausted",
