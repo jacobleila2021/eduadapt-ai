@@ -530,6 +530,32 @@ def build_canonical_lesson(
         }
     )
 
+    # Curriculum completeness — every canonical claim must be taught somewhere
+    # in the Master Lesson. Claims that did not map to a concept step (e.g. a
+    # supporting process the source covers in one sentence, like transpiration
+    # in a water-cycle chapter) are carried in Must Know, so every adaptation
+    # inherits them and the curriculum fidelity hard gate stays satisfiable.
+    section_blob = re.sub(
+        r"\s+",
+        " ",
+        " ".join(
+            f"{s.get('title') or ''} {s.get('body') or ''}"
+            for s in sections
+            if isinstance(s, dict)
+        ),
+    ).lower()
+    uncovered_claims = [c for c in claims if not _claim_present(c, section_blob)]
+    if uncovered_claims:
+        carried = " ".join(str(c).strip().rstrip(".") + "." for c in uncovered_claims[:8])
+        for sec in sections:
+            if sec.get("role") == "essential_learning":
+                sec["body"] = (
+                    str(sec.get("body") or "").rstrip()
+                    + " Also examinable: "
+                    + carried
+                ).strip()
+                break
+
     big = claims[0] if claims else f"Clear ideas help you explain {topic}."
     if len(claims) >= 2 and len(str(big).split()) < 12:
         big = f"{claims[0]} {claims[1]}"
