@@ -48,6 +48,26 @@ def _token_set(text: str) -> set[str]:
     return {t for t in re.findall(r"[a-z0-9']+", text.lower()) if len(t) > 2}
 
 
+def _support_share(adaptation: Mapping[str, Any]) -> float:
+    """Fraction of sections that are lens-specific presentation support.
+
+    Master Lesson Contract (v3.3): curriculum sections are identical across
+    lenses by design; the lens's educational value is the *additive* support
+    it interleaves (reading strips, see-it panels, routines, frames).
+    """
+    sections = [s for s in (adaptation.get("sections") or []) if isinstance(s, dict)]
+    if not sections:
+        return 0.0
+    support = [
+        s
+        for s in sections
+        if s.get("presentation_only")
+        or str(s.get("role") or "").startswith("presentation_")
+        or str(s.get("role") or "").endswith("_support")
+    ]
+    return len(support) / len(sections)
+
+
 SIGNATURES: dict[str, tuple[str, ...]] = {
     "adhd": ("chunk", "mission", "minute", "break", "checklist"),
     "autism": ("routine", "finished", "what we will", "first", "next"),
@@ -106,6 +126,12 @@ def score_pair_differentiation(
         score -= 12
     if not sig_hit_b and sig_b:
         score -= 12
+
+    # Master Lesson Contract (v3.3): lenses keep curriculum titles/sequence
+    # identical by design, so credit interleaved lens-specific support
+    # sections instead of demanding divergence the contract forbids.
+    support_share = _support_share(b if id_b != "standard" else a)
+    score += min(20.0, support_share * 60)
 
     score = max(0.0, min(100.0, score))
     # Cosmetic only when nearly cloned AND missing profile signature

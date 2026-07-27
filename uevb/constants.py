@@ -37,11 +37,10 @@ CURRICULA = (
     "professional",
 )
 
+# "adhd"/"autism" lenses cancelled (v3.1.6 product decision) — not composed by LCE.
 ADAPTATIONS = (
     "standard",
     "vocabulary",
-    "adhd",
-    "autism",
     "dyslexia",
     "ell",
     "visual",

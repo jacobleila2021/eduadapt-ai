@@ -26,6 +26,7 @@ reports/peec/
 reports/pobr/
 reports/release/
 reports/screenshots/
+reports/*.log
 
 # Large media / recording artifacts (keep out of git)
 *.mp4

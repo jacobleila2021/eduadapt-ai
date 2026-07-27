@@ -55,12 +55,11 @@ def classify_package_defects(package: Mapping[str, Any], *, corpus_id: str = "")
             auto_fixable=True,
         )
 
-    # Adaptation coverage — match production LCE / UEVB adaptation set
+    # Adaptation coverage — match production LCE adaptation set
+    # ("adhd"/"autism" lenses cancelled in v3.1.6 — not composed, not required)
     required = (
         "standard",
         "vocabulary",
-        "adhd",
-        "autism",
         "dyslexia",
         "ell",
         "visual",

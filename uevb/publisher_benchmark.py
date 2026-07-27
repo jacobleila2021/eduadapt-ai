@@ -69,7 +69,8 @@ def publisher_benchmark_lesson(
         comments.append("Assessment quality insufficient.")
 
     # Accessibility: distinct adaptations present
-    for key in ("adhd", "autism", "ell", "visual"):
+    # ("adhd"/"autism" cancelled in v3.1.6 — no longer part of the product set)
+    for key in ("dyslexia", "ld", "ell", "visual"):
         if key not in adaptations:
             dimensions["accessibility"] -= 8
             comments.append(f"Missing {key} adaptation for accessibility coverage.")

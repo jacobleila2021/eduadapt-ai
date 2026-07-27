@@ -59,10 +59,10 @@ def test_differentiation_rejects_clones():
             {"title": "Done Checklist", "role": "summary", "body": "Tick each idea."},
         ],
     }
-    bad = measure_adaptation_differentiation({"standard": standard, "adhd": clone})
-    good = measure_adaptation_differentiation({"standard": standard, "adhd": distinct})
+    bad = measure_adaptation_differentiation({"standard": standard, "ld": clone})
+    good = measure_adaptation_differentiation({"standard": standard, "ld": distinct})
     assert bad["adaptation_differentiation_score"] < good["adaptation_differentiation_score"]
-    assert "adhd" in bad["cosmetic_failures"] or not bad["ok"]
+    assert "ld" in bad["cosmetic_failures"] or not bad["ok"]
 
 
 def test_engine_contribution_flags_empty_package():
