@@ -166,7 +166,13 @@ def check_writing(adaptation: Mapping[str, Any], *, adaptation_id: str = "") -> 
     if adaptation_id == "worksheet" and _practice_items(adaptation):
         score += 8
 
-    ai_hits = [p for p in AI_PHRASES if p in lower]
+    # Teacher pages legitimately say "students will" / "learners will".
+    ai_phrases = AI_PHRASES
+    if adaptation_id == "teacher":
+        ai_phrases = tuple(
+            p for p in AI_PHRASES if p not in {"students will", "learners will"}
+        )
+    ai_hits = [p for p in ai_phrases if p in lower]
     if ai_hits:
         score -= min(22, 6 * len(ai_hits))
         issues.append(f"Robotic AI phrasing: {', '.join(ai_hits[:3])}")
@@ -291,7 +297,17 @@ def check_educational(adaptation: Mapping[str, Any], *, adaptation_id: str = "")
             "practice",
         ),
         ("summary" in roles or "summary" in titles or "revision" in titles, 5, "summary/revision"),
-        ("reflect" in roles or "reflect" in titles or "think" in titles, 3, "reflection"),
+        (
+            # Master Lesson uses exit_ticket ("I Understand This") as the reflection beat.
+            "reflect" in roles
+            or "reflect" in titles
+            or "think" in titles
+            or "exit_ticket" in roles
+            or "i understand" in titles
+            or "i understand" in blob,
+            3,
+            "reflection",
+        ),
         ("misconception" in blob or "mistake" in blob, 4, "misconceptions"),
         ("real" in blob or "everyday" in blob or "world" in blob, 3, "real-world"),
     ]
@@ -613,6 +629,9 @@ def check_pedagogy(adaptation: Mapping[str, Any], *, adaptation_id: str) -> Dime
     ):
         if needle in titles or needle in " ".join(roles) or needle in _blob(adaptation).lower():
             score += pts
+    # Master Lesson Contract reflection beat
+    if "exit_ticket" in roles or "i understand" in titles:
+        score += 3
 
     return DimensionScore("pedagogy", clamp(score), notes, issues)
 
@@ -791,16 +810,23 @@ def evaluate_adaptation(
         )
 
         blob = _blob(adaptation)
-        hits = template_hits(blob)
-        if hits:
-            share = min(18.0, 3.5 * len(hits)) / 2.0
-            for key in ("writing_quality", "educational_quality"):
-                dims[key].score = clamp(dims[key].score - share)
-                dims[key].issues.append(f"Template teaching phrases: {', '.join(hits[:3])}")
-        if has_teacher_objective_leak(blob):
-            for key in ("writing_quality", "educational_quality", "pedagogy"):
-                dims[key].score = clamp(dims[key].score - 8)
-                dims[key].issues.append("Teacher/objective wording leaked into student lesson.")
+        # Teacher pages are meant for teachers — objective language and
+        # checkpoint cues are the product, not student-facing leaks.
+        if adaptation_id != "teacher":
+            hits = template_hits(blob)
+            if hits:
+                share = min(18.0, 3.5 * len(hits)) / 2.0
+                for key in ("writing_quality", "educational_quality"):
+                    dims[key].score = clamp(dims[key].score - share)
+                    dims[key].issues.append(
+                        f"Template teaching phrases: {', '.join(hits[:3])}"
+                    )
+            if has_teacher_objective_leak(blob):
+                for key in ("writing_quality", "educational_quality", "pedagogy"):
+                    dims[key].score = clamp(dims[key].score - 8)
+                    dims[key].issues.append(
+                        "Teacher/objective wording leaked into student lesson."
+                    )
     except Exception:  # noqa: BLE001
         pass
 

@@ -145,7 +145,8 @@ def critique_adaptation(
             note("language_editor", f"Remove authoring language: “{phrase}”.")
             break
     if has_teacher_objective_leak(blob) or template_hits(blob):
-        note("educational_editor", "This still reads like a template or teacher objective sheet.")
+        if adaptation_id != "teacher":
+            note("educational_editor", "This still reads like a template or teacher objective sheet.")
     if _avg_sentence_words(blob) > MAX_SENTENCE_WORDS + 4:
         note("language_editor", "The paragraph is too long — shorten sentences for rhythm.")
     if any(len(str(s.get("body") or "").split()) > 160 for s in sections):
@@ -301,7 +302,8 @@ def _rewrite_from_comments(
             for c in concepts[:4]
         ]
 
-    out = remediate_adaptation(out, claims=claims)
+    if version_id != "teacher":
+        out = remediate_adaptation(out, claims=claims)
     out = clarity_edit_adaptation(out, topic=topic)
     if not educational_meaning_preserved(before, out):
         out = clarity_edit_adaptation(before, topic=topic)

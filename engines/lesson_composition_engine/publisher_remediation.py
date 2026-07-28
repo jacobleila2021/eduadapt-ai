@@ -360,6 +360,10 @@ def remediate_package(adaptations: dict[str, Any], *, claims: list[str] | None =
     for key, value in list(out.items()):
         if key.startswith("_") or not isinstance(value, dict):
             continue
+        if key == "teacher":
+            # Teacher pages intentionally use objective / "students will" language.
+            out[key] = value
+            continue
         if key == "worksheet":
             # Worksheet: scrub only objective leaks in text fields; keep structure
             out[key] = remediate_adaptation(value, claims=claims)

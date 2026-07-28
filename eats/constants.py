@@ -18,13 +18,12 @@ MAX_REVISE_ATTEMPTS = 3
 GOLDEN_PROMOTION_SCORE = 98
 
 # Adaptations evaluated independently (product + LCE extras)
+# "adhd"/"autism" cancelled in v3.1.6 — not composed, not evaluated.
 EATS_ADAPTATION_KEYS = (
     "standard",  # Mainstream
     "vocabulary",
     "visual",
     "auditory",
-    "adhd",
-    "autism",
     "dyslexia",
     "ell",
     "ld",
