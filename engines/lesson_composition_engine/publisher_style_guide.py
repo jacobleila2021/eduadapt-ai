@@ -14,10 +14,10 @@ STYLE_GUIDE_VERSION = "2.0.0"
 # Cream textbook canvas + publisher ink (Pearson/Oxford/Cambridge-adjacent)
 CREAM = "#FFF9EE"
 CREAM_CARD = "#FFFDF6"
-NAVY = "#0B2E59"
+NAVY = "#0B3C5D"
 TEAL = "#008C95"
-INK = "#1C2A3A"
-MUTED = "#5C6B7A"
+INK = "#111827"
+MUTED = "#374151"
 SOFT_GOLD = "#C4A35A"
 CORAL = "#C45C48"
 LEAF = "#2F6B4F"
@@ -203,5 +203,13 @@ def style_guide_css() -> str:
   color: var(--alora-ink);
   line-height: 1.55;
   margin: 0.45rem 0;
+}}
+.pmes-diagram-figure ul, .pmes-diagram-figure li {{
+  color: var(--alora-ink) !important;
+  font-size: 1.02rem;
+  line-height: 1.55;
+}}
+.pmes-diagram-figure li {{
+  margin: 0.35rem 0;
 }}
 """.strip()

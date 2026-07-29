@@ -9,10 +9,10 @@ import html
 import math
 from typing import Any
 
-NAVY = "#0B2E59"
+NAVY = "#0B3C5D"
 TEAL = "#008C95"
-INK = "#1e293b"
-MUTED = "#64748b"
+INK = "#111827"
+MUTED = "#374151"
 WHITE = "#ffffff"
 CARD_FILLS = (
     "#e6f7f8",

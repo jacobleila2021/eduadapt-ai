@@ -25,10 +25,13 @@ VOCAB_STOPWORDS = frozenset(
         "first", "next", "then", "after", "before", "during", "through", "across",
         "between", "under", "above", "below", "around", "again", "still", "also",
         "because", "however", "therefore", "thus", "hence", "look", "looking",
-        # Title / prompt fragments that must never become vocab cards
+        # Bare title / prompt fragments that must never become vocab or diagram nodes
         "travel", "travels", "travelling", "traveling", "system", "systems",
         "matter", "life", "why", "how", "together", "points", "fits", "fit",
         "continuous", "movement", "moves", "moving", "among", "among", "surface",
+        # Everyday props from teacher warm-ups — never process-stage nodes
+        "faucet", "faucets", "tap", "taps", "puddle", "puddles",
+        "raindrop", "raindrops", "umbrella", "bucket", "hose",
     }
 )
 
@@ -195,6 +198,54 @@ def picture_cue_for_term(term: str, *, definition: str = "") -> str:
         return f"Draw a simple labelled sketch that shows: {definition[:120]}"
     display = (term or "this idea").strip()
     return f"Draw a simple classroom sketch that helps you remember what {display} means."
+
+
+def is_diagram_stage(term: str, *, topic: str = "", claim_blob: str = "") -> bool:
+    """True only for concepts safe to put on a flowchart / concept map."""
+    raw = (term or "").strip()
+    # Stage labels are short nouns by design — do not apply sentence orphan rules.
+    if not raw or is_junk_term(raw) or is_teacher_facing_text(raw):
+        return False
+    low = raw.lower()
+    topic_l = (topic or "").lower()
+    blob = f"{claim_blob} {topic_l}".lower()
+    # Water-cycle lessons: only scientific stages (never warm-up nouns).
+    if any(k in blob for k in ("water cycle", "evaporat", "condens", "precipitat")):
+        allowed = {t.lower() for t, _ in WATER_CYCLE_TERMS}
+        allowed |= {"runoff", "infiltration", "groundwater"}
+        if low not in allowed and not any(a in low or low in a for a in allowed):
+            return False
+    return True
+
+
+def filter_diagram_stages(
+    stages: list[str],
+    *,
+    topic: str = "",
+    claims: list[str] | None = None,
+    limit: int = 6,
+) -> list[str]:
+    """Semantic filter for diagram nodes — drop unrelated / hallucinated labels."""
+    blob = " ".join(str(c) for c in (claims or []))
+    out: list[str] = []
+    seen: set[str] = set()
+    for raw in stages:
+        text = str(raw or "").strip()
+        key = text.lower()
+        if not text or key in seen or not is_diagram_stage(text, topic=topic, claim_blob=blob):
+            continue
+        seen.add(key)
+        out.append(text)
+        if len(out) >= limit:
+            break
+    # Prefer canonical water-cycle order when teaching that topic.
+    if any(k in f"{topic} {blob}".lower() for k in ("water cycle", "evaporat")):
+        order = [t for t, _ in WATER_CYCLE_TERMS if t.lower() != "water cycle"]
+        by = {n.lower(): n for n in out}
+        ordered = [by[o.lower()] for o in order if o.lower() in by]
+        rest = [n for n in out if n.lower() not in {x.lower() for x in ordered}]
+        out = (ordered + rest)[:limit]
+    return out
 
 
 def is_junk_term(term: str) -> bool:

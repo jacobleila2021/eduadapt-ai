@@ -765,22 +765,30 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
 
 
 def _diagrams_from_board(board: Mapping[str, Any], clg: Mapping[str, Any]) -> tuple[str, str]:
+    from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
+
     topic = str(board.get("topic") or clg.get("topic") or "Lesson")
     subject = str(board.get("subject") or clg.get("subject_key") or "general")
+    claims = [str(c) for c in (board.get("verified_claims") or []) if str(c).strip()]
     concept_names = [
         str(c.get("name") or "").strip()
         for c in (board.get("concepts") or [])
         if isinstance(c, dict) and str(c.get("name") or "").strip()
     ]
-    if len(concept_names) >= 2:
+    # Also accept plain string concepts from some boards.
+    for c in board.get("concepts") or []:
+        if isinstance(c, str) and c.strip():
+            concept_names.append(c.strip())
+    stages = filter_diagram_stages(concept_names, topic=topic, claims=claims, limit=6)
+    if len(stages) >= 2:
         flowchart = build_educational_flowchart_svg(
             topic,
-            concept_names[:6],
+            stages,
             subtitle=f"{subject.title()} key ideas in order",
         )
     else:
         flowchart = build_subject_flowchart(subject, topic)
-    concept_map = build_concept_map_svg(topic, concept_names or [topic])
+    concept_map = build_concept_map_svg(topic, stages or [topic])
     return flowchart, concept_map
 
 
@@ -853,6 +861,14 @@ def compose_adaptations_from_clg(
             out[vid]["lce"]["intelligence_board_version"] = intelligence.get("version")
             out[vid]["lce"]["composed_from_clg"] = True
             out[vid]["lce"]["not_a_clone"] = True
+        # Shared visuals — generated once, reused on every adaptation.
+        if flowchart:
+            out[vid]["flowchart_svg"] = flowchart
+            out[vid]["svg_diagram"] = flowchart
+        if concept_map:
+            out[vid]["concept_map_svg"] = concept_map
+        if frozen.get("diagram_package"):
+            out[vid]["diagram_package"] = copy.deepcopy(frozen["diagram_package"])
 
     out["_canonical"] = {
         "core": core,

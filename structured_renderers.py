@@ -912,6 +912,164 @@ def _is_practice_section(title: str) -> bool:
     return "practice" in (title or "").lower()
 
 
+def _is_question_section(title: str, role: str = "") -> bool:
+    blob = f"{title} {role}".lower()
+    return any(
+        k in blob
+        for k in (
+            "practice",
+            "exam",
+            "hots",
+            "mcq",
+            "assertion",
+            "case study",
+            "application",
+            "question",
+        )
+    ) and "answer key" not in blob
+
+
+def _parse_qa_pairs(body: str) -> list[dict[str, Any]]:
+    """Parse 'N. question / Answer: …' blocks even if newlines were collapsed."""
+    text = (body or "").strip()
+    if not text:
+        return []
+    # Restore structure when whitespace was flattened into one paragraph.
+    text = re.sub(r"\s+(Answer\s*:)", r"\n\1", text, flags=re.I)
+    text = re.sub(r"(?<!\n)\s+(\d+)\.\s+", r"\n\1. ", text)
+    pairs: list[dict[str, Any]] = []
+    chunks = re.split(r"(?m)^\s*(?=\d+\.\s)", text)
+    for chunk in chunks:
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        m = re.match(r"^(\d+)\.\s*(.*)$", chunk, re.S)
+        if not m:
+            continue
+        num = int(m.group(1))
+        rest = m.group(2).strip()
+        parts = re.split(r"(?im)^answer\s*:\s*", rest, maxsplit=1)
+        if len(parts) == 1:
+            parts = re.split(r"(?i)\bAnswer\s*:\s*", rest, maxsplit=1)
+        question = parts[0].strip()
+        answer = parts[1].strip() if len(parts) > 1 else ""
+        if not question:
+            continue
+        marks_m = re.search(r"\((\d+)\s*marks?\)", question, re.I)
+        pairs.append(
+            {
+                "n": num,
+                "question": question,
+                "answer": answer,
+                "marks": int(marks_m.group(1)) if marks_m else None,
+            }
+        )
+    return pairs
+
+
+def _qa_marking_scheme(marks: int | None, answer: str) -> str:
+    n = marks or max(1, min(6, max(1, len(answer.split()) // 12)))
+    if n <= 1:
+        return "1 mark — award for one accurate fact taught in the lesson."
+    if n == 2:
+        return (
+            "2 marks — 1 mark for each clear taught point "
+            "(meaning + connection)."
+        )
+    if n == 3:
+        return (
+            "3 marks — 1 mark for definition, 1 mark for how it connects to the "
+            "lesson topic, 1 mark for a precise taught detail."
+        )
+    if n == 4:
+        return (
+            "4 marks — similarity (1), difference (1), accurate meaning of each "
+            "idea (1+1)."
+        )
+    if n == 5:
+        return (
+            "5 marks — opening idea (1), explained teaching points (2), "
+            "example or reason (1), clear close (1)."
+        )
+    return (
+        f"{n} marks — introduce the situation (1), name taught ideas (2), "
+        "explain each briefly (2), conclude with the lesson link (1)."
+    )
+
+
+def _qa_support_tabs(pair: dict[str, Any], *, teacher_mode: bool) -> None:
+    answer = str(pair.get("answer") or "").strip() or "See the lesson theory above."
+    marks = pair.get("marks")
+    words = answer.split()
+    hint = " ".join(words[:12]).rstrip(".,;") + ("…" if len(words) > 12 else ".")
+    expl_label = "Teacher Explanation" if teacher_mode else "Explanation"
+    tabs = st.tabs(
+        [
+            "Answer",
+            expl_label,
+            "Marking Scheme",
+            "Common Mistakes",
+            "Hint",
+            "Why this is correct",
+        ]
+    )
+    with tabs[0]:
+        st.markdown(answer)
+    with tabs[1]:
+        st.markdown(
+            "Use only ideas from the lesson above. "
+            + (
+                f"A full-credit response develops about {marks} clear points."
+                if marks
+                else "State the meaning, then connect it to the lesson topic."
+            )
+        )
+        if teacher_mode:
+            st.markdown(
+                "Prompt cold-call: ask the learner to point to the matching "
+                "diagram stage before writing."
+            )
+    with tabs[2]:
+        st.markdown(_qa_marking_scheme(marks if isinstance(marks, int) else None, answer))
+    with tabs[3]:
+        st.markdown(
+            "- Mixing neighbouring concepts from the same lesson.\n"
+            "- Giving a one-line answer when several marks are available.\n"
+            "- Adding ideas that were not taught in this reading."
+        )
+    with tabs[4]:
+        st.markdown(f"Start with: {hint}")
+    with tabs[5]:
+        st.markdown(
+            "This answer is correct because it stays inside the taught concepts "
+            "and matches the mark demand for a clear, ordered explanation."
+        )
+
+
+def _render_qa_section(title: str, body: str, *, spec_id: str | None, variant: str) -> None:
+    """Investor-grade Q&A: one question card + tabs — never a single paragraph."""
+    pairs = _parse_qa_pairs(body)
+    accent = accent_for_variant(variant)
+    st.markdown(
+        f'<div class="alora-lesson-section" style="background:{BG_MAIN};border:6px solid {accent};'
+        f'border-radius:16px;padding:20px 24px 8px;margin:1.25rem 0;">'
+        f'<h3 style="color:{accent};font-weight:700;font-size:1.35rem;margin:0 0 0.75rem 0;">'
+        f"{html.escape(title)}</h3></div>",
+        unsafe_allow_html=True,
+    )
+    if not pairs:
+        # Fallback — preserve line breaks so Answer never runs into the next Q.
+        plain = _plain_lesson_text(body, preserve_lines=True)
+        st.markdown(section_card_html(title, plain, variant), unsafe_allow_html=True)
+        return
+    teacher_mode = spec_id == "teacher"
+    for pair in pairs:
+        st.markdown(f"#### Question {pair['n']}")
+        st.markdown(pair["question"])
+        _qa_support_tabs(pair, teacher_mode=teacher_mode)
+        st.markdown("")
+
+
 def _practice_section_card_html(title: str, body: str, variant: str) -> str:
     """Visual learner practice — numbered Q then A on separate lines."""
     accent = accent_for_variant(variant)
@@ -1114,7 +1272,17 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
         variant = classify_section(title, box, idx)
         st.markdown(f'<span id="sec_{idx}"></span>', unsafe_allow_html=True)
         if body:
-            keep_lines = (is_visual and _is_practice_section(title)) or is_ld
+            if _is_question_section(title, role):
+                _render_qa_section(
+                    title,
+                    str(body),
+                    spec_id=spec_id,
+                    variant=variant,
+                )
+                continue
+            keep_lines = (is_visual and _is_practice_section(title)) or is_ld or (
+                "Answer:" in str(body)
+            )
             plain_body = _plain_lesson_text(body, preserve_lines=keep_lines)
             if is_visual and _is_practice_section(title):
                 card = _practice_section_card_html(title, plain_body, variant)

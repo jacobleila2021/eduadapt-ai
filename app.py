@@ -260,14 +260,17 @@ def run_generation() -> None:
             )
             result_envelope = vlie_result.get("pipeline_result") or {}
             if result_envelope.get("status") in {"failed", "blocked"}:
-                st.error(
-                    f"**{str(result_envelope.get('stage') or 'Generation').replace('_', ' ').title()}** — "
-                    f"{result_envelope.get('message') or 'Generation could not complete.'}"
+                logger.error(
+                    "Generation blocked: stage=%s message=%s fallback=%s",
+                    result_envelope.get("stage"),
+                    result_envelope.get("message"),
+                    result_envelope.get("fallback_used"),
                 )
-                if result_envelope.get("recovery"):
-                    st.info(f"Recovery: {result_envelope['recovery']}")
-                if result_envelope.get("fallback_used") not in {"", "none", None}:
-                    st.caption(f"Fallback used: {result_envelope['fallback_used']}")
+                st.warning("**Preparing your lesson…** Generation needs another pass.")
+                st.info(
+                    result_envelope.get("recovery")
+                    or "Click **Generate Adaptations** again. Your uploaded lesson is still loaded."
+                )
                 return
             st.session_state.adaptations = vlie_result.get("adaptations")
             if isinstance(st.session_state.adaptations, dict):

@@ -368,13 +368,38 @@ class VerifiedLearningOrchestrator:
 
             teaching = AloraOrchestrator(on_progress=self.on_progress)
             try:
-                adaptations = teaching.run_lesson_pipeline(
-                    lesson_text,
-                    override_api_key=override_api_key,
-                    source_envelope=source_envelope,
-                    universal_profile=profile,
-                    grounding_mode="uploaded_source",
-                )
+                adaptations = None
+                last_exc: Exception | None = None
+                for attempt in range(3):
+                    try:
+                        if attempt:
+                            import time
+
+                            time.sleep(min(2 ** attempt, 6))
+                            self._emit(
+                                f"Recovering lesson… retry {attempt + 1} of 3",
+                                0.30 + attempt * 0.02,
+                            )
+                        else:
+                            self._emit("Generating lesson…", 0.30)
+                        adaptations = teaching.run_lesson_pipeline(
+                            lesson_text,
+                            override_api_key=override_api_key,
+                            source_envelope=source_envelope,
+                            universal_profile=profile,
+                            grounding_mode="uploaded_source",
+                        )
+                        last_exc = None
+                        break
+                    except Exception as attempt_exc:
+                        last_exc = attempt_exc
+                        logger.exception(
+                            "Adaptation generation attempt %s failed (run %s)",
+                            attempt + 1,
+                            ctx.run_id,
+                        )
+                if adaptations is None and last_exc is not None:
+                    raise last_exc
             except Exception as exc:
                 logger.exception(
                     "Adaptation generation failed (run %s)", ctx.run_id
@@ -384,14 +409,12 @@ class VerifiedLearningOrchestrator:
                     run_id=ctx.run_id,
                     error=f"{type(exc).__name__}: {exc}",
                 )
-                cause = str(exc).strip() or type(exc).__name__
                 result = failed(
                     "adaptation_generation",
                     "multi_agent",
-                    "Required lesson adaptations could not be generated after retries. "
-                    f"Cause: {cause[:300]}",
+                    "Your lesson is still being prepared. Please generate again in a moment.",
                     retryable=True,
-                    recovery="Retry generation or verify the AI service configuration.",
+                    recovery="Click Generate Adaptations again. Your uploaded file is still loaded.",
                     fallback_used="bounded_retries_exhausted",
                     audit_reference=ctx.run_id,
                 )

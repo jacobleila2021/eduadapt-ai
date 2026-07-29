@@ -1814,9 +1814,13 @@ def generate_adaptations(
         except Exception:
             merged.setdefault("_meta", {})["content_fidelity_error"] = "final_scrub_failed"
     except Exception as error:
+        import logging
+
+        logging.getLogger(__name__).exception(
+            "Adaptation composition failed (publisher path)"
+        )
         raise RuntimeError(
-            "Adaptation generation failed. Verified publisher_author is required; "
-            "silent legacy LCE fallback is disabled."
+            "Lesson composition could not finish. Please retry generation."
         ) from error
 
     return merged

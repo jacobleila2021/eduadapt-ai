@@ -7,11 +7,13 @@ from __future__ import annotations
 import html
 import re
 
-# ---- Palette ----
+# ---- Palette (WCAG AA — dark ink on cream, ≥7:1) ----
 BG_MAIN = "#FFF9EE"
-TEXT_BODY = "#333333"
+TEXT_BODY = "#111827"
+TEXT_SECONDARY = "#374151"
 BORDER_SUBTLE = "#E8E0CF"
 SOFT_YELLOW = "#FFF59D"
+HEADING_NAVY = "#0B3C5D"
 
 ACCENT_INTRO = "#059669"  # Emerald Green — Introduction
 ACCENT_INFO = "#1E3A8A"  # Dark Royal Blue — Information / Learn
