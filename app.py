@@ -5,16 +5,6 @@ Dashboard + dedicated adaptation workspace (never stacked on homepage).
 
 from __future__ import annotations
 
-# Streamlit Cloud ships an older system SQLite; Chroma needs >= 3.35.
-# pysqlite3-binary is installed on Linux only (see requirements.txt).
-try:
-    __import__("pysqlite3")
-    import sys as _sys
-
-    _sys.modules["sqlite3"] = _sys.modules.pop("pysqlite3")
-except Exception:
-    pass
-
 import json
 import logging
 import hashlib
@@ -40,10 +30,8 @@ _startup_stage = "application imports"
 try:
     _startup_stage = "adaptation specifications"
     from adaptation_specs import ADAPTATION_SPECS
-    _startup_stage = "verified learning engine"
-    from engines.verified_learning_engine import VerifiedLearningOrchestrator
-    _startup_stage = "adaptation generator"
-    from ai_generator import quality_report, validate_api_key
+    # Heavy VLIE / generator imports are deferred until Generate is clicked so
+    # Streamlit Cloud can paint the dashboard even if optional STEM deps are absent.
     _startup_stage = "analytics"
     from analytics_engine import build_analytics_report
     _startup_stage = "document export"
@@ -122,6 +110,12 @@ if "audio_voice" not in st.session_state:
     st.session_state.audio_voice = "Female"
 if "audio_speed" not in st.session_state:
     st.session_state.audio_speed = 1.0
+
+
+def _validate_api_key(api_key: str) -> bool:
+    from ai_generator import validate_api_key
+
+    return bool(validate_api_key(api_key))
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -235,6 +229,9 @@ def load_sample_lesson() -> None:
 
 
 def run_generation() -> None:
+    from ai_generator import quality_report, validate_api_key
+    from engines.verified_learning_engine import VerifiedLearningOrchestrator
+
     if not st.session_state.lesson_text.strip():
         st.warning("Upload a lesson first.")
         return
@@ -394,7 +391,7 @@ def inject_streamlit_accessibility_repairs() -> None:
 
 def render_api_sidebar() -> None:
     cloud_key = _cloud_api_key_configured()
-    active = validate_api_key(st.session_state.runtime_api_key)
+    active = _validate_api_key(st.session_state.runtime_api_key)
 
     if active:
         st.sidebar.markdown(
@@ -440,7 +437,7 @@ def render_api_sidebar() -> None:
                 logger.exception("Could not save settings locally")
                 st.warning("Settings could not be saved locally.")
 
-        if validate_api_key(st.session_state.runtime_api_key):
+        if _validate_api_key(st.session_state.runtime_api_key):
             st.caption("Configuration saved.")
         else:
             st.caption("Enter a valid API key to enable generation.")
@@ -546,7 +543,7 @@ def render_dashboard() -> None:
         with col_generate:
             can_generate = bool(
                 st.session_state.lesson_text
-                and validate_api_key(st.session_state.runtime_api_key)
+                and _validate_api_key(st.session_state.runtime_api_key)
             )
             if st.button(
                 "Generate Adaptations",

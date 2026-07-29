@@ -1,4 +1,0 @@
-# System packages for Streamlit Cloud (apt).
-# tesseract-ocr removed from Cloud boots — optional OCR already soft-fails without it
-# and apt installs were slowing/hanging provision. Install locally if needed.
-# (intentionally empty — keep file so Streamlit Cloud does not error)

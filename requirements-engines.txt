@@ -1,6 +1,6 @@
-# Alora AI — Computation Layer optional dependencies
+# Alora AI — optional / local-only dependencies
 # Install: pip install -r requirements-engines.txt
-# Keep core requirements.txt lean for Streamlit Cloud; add engines where hosting allows.
+# Do NOT add these to requirements.txt for Streamlit Cloud boots.
 
 sympy>=1.12
 numpy>=1.26
@@ -9,11 +9,13 @@ matplotlib>=3.8
 pandas>=2.0
 # Optional; do not add to Streamlit Cloud requirements.txt (pulls Jupyter via pyodesys).
 chempy>=0.8.0
-# Biology / NCERT ingest
+# PDF OCR / advanced PDF
 pymupdf>=1.24.0
-# RAG / question bank (Knowledge Layer)
+pytesseract>=0.3.10
+# RAG / question bank (Knowledge Layer) — hangs Streamlit Cloud installs
 chromadb>=0.5.0
-# Molecular structures — often unavailable on Streamlit Cloud; install for local/desktop
-# rdkit>=2023.9.1
+pysqlite3-binary
 # Circuit diagrams
 schemdraw>=0.17
+# Molecular structures — often unavailable on Streamlit Cloud
+# rdkit>=2023.9.1
