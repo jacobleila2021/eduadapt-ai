@@ -50,6 +50,15 @@ GENERIC_SUMMARY_MARKERS = (
     "summarise what you learned today in general",
 )
 
+AI_OPENER_MARKERS = (
+    "this lesson teaches",
+    "this lesson is about",
+    "in this lesson we will",
+    "today we will learn",
+    "let's explore",
+    "delve into",
+)
+
 DICTIONARY_FIELDS = (
     "pronunciation",
     "part_of_speech",
@@ -885,6 +894,52 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
             if any(m in body for m in GENERIC_SUMMARY_MARKERS):
                 issues.append("Summary is still generic template text.")
             break
+
+    # Professional publishing QA (v3.4) — extend fidelity; not a new engine.
+    from engines.lesson_composition_engine.vocab_quality import is_teacher_facing_text
+
+    theory_sents: list[str] = []
+    topic_low = str(std.get("topic") or "").strip().lower()
+    title_hits = 0
+    for sec in std.get("sections") or []:
+        if not isinstance(sec, dict):
+            continue
+        role = str(sec.get("role") or "")
+        title = str(sec.get("title") or "").strip()
+        body = str(sec.get("body") or "")
+        if topic_low and title.lower() == topic_low:
+            title_hits += 1
+        if role in {"introduction", "concept", "worked_example"}:
+            for sent in re.split(r"(?<=[.!?])\s+", body):
+                norm = " ".join(sent.lower().split())
+                if len(norm) > 24:
+                    theory_sents.append(norm)
+            low_body = body.lower()
+            if any(m in low_body for m in AI_OPENER_MARKERS):
+                issues.append("AI-sounding lesson opener still present.")
+            if is_teacher_facing_text(body):
+                issues.append("Teacher instructions leaked into learner theory.")
+        if role in {"practice_question", "exam_question", "hots_question"}:
+            for block in re.split(r"\n\s*\n", body):
+                m = re.search(r"\((\d+)\s*marks?\)", block, re.I)
+                ans = re.search(r"(?im)^answer:\s*(.+)$", block)
+                if m and ans:
+                    marks = int(m.group(1))
+                    words = len(ans.group(1).split())
+                    # Rough depth floor: ~8 words per mark for 3+; 1-mark may be short.
+                    need = 6 if marks <= 1 else marks * 8
+                    if words < need:
+                        issues.append(
+                            f"Mark–answer mismatch: {marks}-mark item has only {words} words."
+                        )
+                        break
+    if title_hits >= 2:
+        issues.append("Lesson title repeated as section headings.")
+    if len(theory_sents) >= 4:
+        unique = set(theory_sents)
+        dup_ratio = 1.0 - (len(unique) / max(len(theory_sents), 1))
+        if dup_ratio > 0.15:
+            issues.append(f"Duplicate paragraph ratio {dup_ratio:.0%} exceeds 15%.")
 
     svg = str(std.get("flowchart_svg") or std.get("svg_diagram") or "")
     slim_std = bool((std.get("lce") or {}).get("slim_theory"))

@@ -72,6 +72,7 @@ def build_narration(content: Any, spec_id: str) -> str:
 
     Excludes adaptation names, section/navigation labels, button text,
     "Audio transcript", diagram markup and download hints.
+    For auditory lessons, speak like a teacher — never re-read duplicate titles.
     """
     parsed = _coerce_dict(content) if spec_id != "original" else None
 
@@ -100,13 +101,41 @@ def build_narration(content: Any, spec_id: str) -> str:
 
     if parsed:
         out = []
+        topic = _clean_for_speech(parsed.get("topic") or parsed.get("title") or "")
         big_idea = _clean_for_speech(parsed.get("big_idea") or "")
-        if big_idea:
+        if big_idea and (not topic or big_idea.lower() != topic.lower()):
             out.append(big_idea)
+        spoken_keys: set[str] = set()
         for section in parsed.get("sections") or []:
+            if not isinstance(section, dict):
+                continue
+            role = str(section.get("role") or "")
+            # Never speak teacher-only advisory on student audio paths.
+            if role.endswith("_support") or role.startswith("presentation_"):
+                continue
             body = _clean_for_speech(section.get("body") or "")
-            if body:
-                out.append(body)
+            if not body:
+                continue
+            body = re.sub(r"(?i)\banswer:\s*", "The answer is ", body)
+            body = re.sub(r"\[Pause[^\]]*\]", " ", body)
+            body = re.sub(r"\s+", " ", body).strip()
+            key = re.sub(r"[^a-z0-9]+", " ", body.lower()).strip()[:80]
+            if key and key in spoken_keys:
+                continue
+            if key:
+                spoken_keys.add(key)
+            if spec_id == "auditory":
+                if role == "introduction":
+                    out.append("Let's begin.")
+                elif role == "concept":
+                    out.append("Here is the next idea.")
+                elif role == "worked_example":
+                    out.append("Now follow how it works.")
+                elif role in {"practice_question", "exam_question", "hots_question"}:
+                    out.append("Pause and try this yourself before you hear the answer.")
+            out.append(body)
+            if spec_id == "auditory" and role == "concept":
+                out.append("Can you say that idea in your own words?")
         if out:
             return " ".join(out)
 

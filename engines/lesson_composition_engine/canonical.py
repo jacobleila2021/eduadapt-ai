@@ -1,4 +1,4 @@
-"""Master Lesson Architecture (v3.3) — One Canonical Lesson, Many Presentations.
+"""Master Lesson Architecture (v3.4) — Professional publishing quality.
 
 FUNDAMENTAL DESIGN PRINCIPLE
     Alora AI never generates different lessons for different learners.
@@ -7,6 +7,12 @@ FUNDAMENTAL DESIGN PRINCIPLE
     it unchanged. Adaptation engines change PRESENTATION ONLY — they never
     remove curriculum, omit concepts, invent replacements, reorder the
     teaching sequence, or weaken outcomes.
+
+v3.4 PROFESSIONAL PUBLISHING
+    Every learner sentence must teach something new. No AI title/definition
+    loops, no teacher chrome, mark-depth answers, textbook page flow
+    (introduction → explanation → key points → mini recap), Bloom-balanced
+    assessment, and fidelity gates before display.
 
 ESSENTIAL LEARNING CORE
     Before any adaptation is derived, the engine extracts the Essential
@@ -70,6 +76,121 @@ def _qa_pairs_block(pairs: list[tuple[str, str]]) -> str:
         # Explicit blank line after each Answer (survives strip/polish passes).
         blocks.append(f"{i}. {q}\nAnswer: {a}\n")
     return "\n".join(blocks).rstrip() + "\n"
+
+
+def _norm_key(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
+
+
+def _unique_sentences(*chunks: str, seen: set[str] | None = None) -> tuple[list[str], set[str]]:
+    """Keep only sentences that add new information (semantic near-dedupe)."""
+    seen = seen if seen is not None else set()
+    out: list[str] = []
+    for chunk in chunks:
+        for sent in _sentences(str(chunk or "")):
+            key = _norm_key(sent)
+            if len(key) < 12:
+                continue
+            prefix = key[:56]
+            if key in seen or any(prefix == s[:56] for s in seen):
+                continue
+            seen.add(key)
+            out.append(sent.rstrip(".") + ".")
+    return out, seen
+
+
+def _point_bank(board: Mapping[str, Any], name: str, claims: list[str]) -> list[str]:
+    """Distinct teaching points for mark-depth answers — never one recycled line."""
+    points: list[str] = []
+    seen: set[str] = set()
+    expl = _concept_explanation(board, name, claims)
+    pool = [expl] + [c for c in claims if name.lower() in str(c).lower()]
+    for raw in pool:
+        for sent in _sentences(str(raw or "")):
+            key = _norm_key(sent)
+            if len(key) < 12 or key in seen:
+                continue
+            seen.add(key)
+            points.append(sent.rstrip(".") + ".")
+            if len(points) >= 8:
+                return points
+    if not points:
+        topic = str(board.get("topic") or "this lesson")
+        points.append(f"{name[:1].upper() + name[1:]} is a main idea in {topic}.")
+    return points
+
+
+def _mark_answer(
+    marks: int,
+    points: list[str],
+    *,
+    topic: str,
+    lead: str = "",
+    example: str = "",
+) -> str:
+    """Build an answer that genuinely earns the declared mark allocation."""
+    pts = [p.strip() for p in points if str(p).strip()]
+    topic_l = (topic or "this lesson").strip() or "this lesson"
+    filler = f"Link each point clearly back to {topic_l.lower()} using the taught order."
+    while len(pts) < min(max(marks, 1), 6):
+        pts.append(filler)
+        if pts.count(filler) >= 2:
+            break
+    if marks <= 1:
+        return pts[0]
+    if marks == 2:
+        return " ".join(pts[:2])
+    if marks == 3:
+        return " ".join(f"({i}) {p}" for i, p in enumerate(pts[:3], 1))
+    if marks == 4:
+        return (
+            f"Similarity: both ideas belong to {topic_l.lower()}. "
+            + " ".join(pts[:2])
+            + " Difference: "
+            + " ".join(pts[2:4])
+        )
+    intro = (lead or f"Start from the taught meaning of {topic_l.lower()}.").rstrip(".") + "."
+    body = " ".join(pts[: max(3, marks - 2)])
+    ex = (example or (pts[min(2, len(pts) - 1)] if pts else "")).strip()
+    close = f"Altogether, these points show secure understanding of {topic_l.lower()}."
+    if marks >= 6:
+        return f"{intro} {body} Example: {ex} {close}"
+    return f"{intro} {body} {close}"
+
+
+def _textbook_step_body(
+    name: str,
+    explanation: str,
+    body_claims: list[str],
+    *,
+    next_name: str | None,
+    seen: set[str],
+) -> tuple[str, set[str]]:
+    """Publisher page flow: explanation → key points → mini recap → next topic."""
+    display = name[:1].upper() + name[1:]
+    expl_sents, seen = _unique_sentences(explanation, seen=seen)
+    claim_sents, seen = _unique_sentences(*body_claims, seen=seen)
+    lines: list[str] = []
+    para = " ".join(expl_sents[:2] or claim_sents[:2])
+    if para:
+        lines.append(para)
+    bullets = claim_sents[:3] if claim_sents else expl_sents[1:4]
+    if bullets:
+        lines.append("Key points:")
+        for b in bullets:
+            words = b.split()
+            short = b if len(words) <= 18 else " ".join(words[:16]).rstrip(".,;") + "."
+            lines.append(f"• {short}")
+    seed = expl_sents[0] if expl_sents else (claim_sents[0] if claim_sents else "")
+    if seed:
+        words = seed.split()
+        recap = seed if len(words) <= 16 else " ".join(words[:14]).rstrip(".,;") + "."
+        lines.append(f"In short: {recap}")
+    if next_name:
+        nxt = next_name[:1].upper() + next_name[1:]
+        if nxt.lower() != display.lower():
+            lines.append(f"Next: {nxt}.")
+    return "\n".join(lines).strip(), seen
 
 
 # --------------------------------------------------------------------------
@@ -238,7 +359,11 @@ def build_canonical_lesson(
     Master Lesson Contract — every educational component below is mandatory.
     Adaptations inherit this lesson and change presentation only.
     """
-    from engines.lesson_composition_engine.vocab_quality import clean_topic
+    from engines.lesson_composition_engine.vocab_quality import (
+        clean_topic,
+        is_learner_safe_claim,
+        is_teacher_facing_text,
+    )
 
     raw_topic = str(board.get("topic") or "Lesson").strip()
     topic = clean_topic(raw_topic, fallback="Lesson")
@@ -246,7 +371,10 @@ def build_canonical_lesson(
     if ":" in topic and len(topic) > 36:
         topic = topic.split(":", 1)[0].strip() or topic
     topic_low = topic.lower()
-    claims = [c for c in _claims(dict(board)) if not c.strip().endswith("?")]
+    raw_claims = [c for c in _claims(dict(board)) if not c.strip().endswith("?")]
+    claims = [c for c in raw_claims if is_learner_safe_claim(c)]
+    if not claims:
+        claims = [c for c in raw_claims if not is_teacher_facing_text(c)][:12]
     names = _master_concept_names(board, claims)
     # Prefer scientific process order for science cycles.
     _PROCESS_ORDER = (
@@ -291,25 +419,36 @@ def build_canonical_lesson(
         return out
 
     sections: list[dict[str, Any]] = []
+    prose_seen: set[str] = set()
 
-    # 1) Lesson Introduction — short theory opener only
+    # 1) Lesson Introduction — teach, do not announce the title
     intro_claims = _take(lambda c: topic_low in c.lower(), 2) or _take(lambda c: True, 2)
-    intro_body = (
-        f"This lesson teaches {topic}. "
-        + (" ".join(s.rstrip(".") + "." for s in intro_claims) if intro_claims else "")
-    ).strip()
+    goal_text = _studentize(goals[0], topic) if goals else ""
+    intro_bits, prose_seen = _unique_sentences(goal_text, *intro_claims, seen=prose_seen)
+    if not intro_bits:
+        intro_bits = [
+            f"Each idea below helps you explain {topic.lower()} accurately, in the order it is taught."
+        ]
+        prose_seen.add(_norm_key(intro_bits[0]))
+    intro_body = " ".join(intro_bits[:3])
     if flowchart_svg or concept_map_svg:
-        intro_body += " See how each idea fits together in the lesson diagram."
+        cue = "Study the labelled diagram with each stage before you continue."
+        if _norm_key(cue) not in prose_seen:
+            intro_body = f"{intro_body} {cue}".strip()
+            prose_seen.add(_norm_key(cue))
     if any("area" in c.lower() and "pressure" in c.lower() for c in claims):
-        intro_body += (
-            " Start with a familiar picture: a drawing pin or a sharp knife — "
+        pin = (
+            "Start with a familiar picture: a drawing pin or a sharp knife — "
             "the same push on a small tip creates high pressure."
         )
+        pin_sents, prose_seen = _unique_sentences(pin, seen=prose_seen)
+        if pin_sents:
+            intro_body = f"{intro_body} {' '.join(pin_sents)}".strip()
     sections.append(
-        {"title": "Lesson Introduction", "role": "introduction", "body": intro_body.strip()}
+        {"title": "Introduction", "role": "introduction", "body": intro_body.strip()}
     )
 
-    # 2) Theory steps — one concept each (no Key Concepts / Must Know / More ideas)
+    # 2) Theory steps — textbook flow: explanation → key points → mini recap
     used_claims: set[str] = set()
     claim_owners: dict[str, list[str]] = {n: [] for n in term_names[:6]}
 
@@ -353,28 +492,24 @@ def build_canonical_lesson(
         claim_owners[owner].append(claim)
         used_claims.add(claim)
 
-    step = 0
-    for name in term_names[:6]:
+    teach_names = [n for n in term_names[:6]]
+    for idx, name in enumerate(teach_names):
         explanation = _concept_explanation(board, name, claims)
         body_claims = claim_owners.get(name) or []
-        parts: list[str] = []
-        for claim in body_claims:
-            parts.append(claim.rstrip(".") + ".")
-        if explanation:
-            expl = explanation.rstrip(".") + "."
-            claim_blob = " ".join(parts).lower()
-            if expl.lower() not in claim_blob and not any(
-                expl.rstrip(".").lower() in c.lower() or c.rstrip(".").lower() in expl.lower()
-                for c in body_claims
-            ):
-                parts.insert(0, expl)
-        merged_body = " ".join(parts) if parts else (explanation.rstrip(".") + "." if explanation else "")
+        next_name = teach_names[idx + 1] if idx + 1 < len(teach_names) else None
+        merged_body, prose_seen = _textbook_step_body(
+            name,
+            explanation,
+            body_claims,
+            next_name=next_name,
+            seen=prose_seen,
+        )
         if not merged_body.strip():
             continue
-        step += 1
+        display = name[:1].upper() + name[1:]
         sections.append(
             {
-                "title": f"Step {step} — {name[:1].upper() + name[1:]}",
+                "title": display,
                 "role": "concept",
                 "body": merged_body,
             }
@@ -384,17 +519,15 @@ def build_canonical_lesson(
     if leftovers and sections:
         last = sections[-1]
         if last.get("role") == "concept":
-            last["body"] = (
-                str(last.get("body") or "").rstrip()
-                + " "
-                + " ".join(s.rstrip(".") + "." for s in leftovers[:3])
-            ).strip()
-            used_claims.update(leftovers[:3])
+            extra, prose_seen = _unique_sentences(*leftovers[:3], seen=prose_seen)
+            if extra:
+                last["body"] = (str(last.get("body") or "").rstrip() + " " + " ".join(extra)).strip()
+                used_claims.update(leftovers[:3])
 
     # 3) Worked Examples — process walk / CRA (theory essential)
     if _is_mathematics(board) and stage_names:
         walk = (
-            f"Concrete–Representational–Abstract (CRA) worked example for {topic}. "
+            f"Concrete–Representational–Abstract (CRA) path for {stage_names[0].lower()}. "
             f"Concrete: use objects, drawings or a real situation to show "
             f"{stage_names[0].lower()}. "
             f"Representational: draw a diagram or table that shows "
@@ -404,7 +537,7 @@ def build_canonical_lesson(
             f"symbols and vocabulary. "
         )
         if examples:
-            walk += "Lesson example: " + examples[0].rstrip(".") + "."
+            walk += "Example: " + examples[0].rstrip(".") + "."
     elif len(stage_names) >= 2 and any(
         n.lower()
         in {
@@ -416,54 +549,58 @@ def build_canonical_lesson(
         }
         for n in stage_names
     ):
-        walk_bits: list[str] = [
-            f"Here is how {topic.lower()} works from start to finish."
-        ]
+        walk_bits: list[str] = ["Follow the process from start to finish."]
         for i, n in enumerate(stage_names):
-            expl = _concept_explanation(board, n, claims)
+            pts = _point_bank(board, n, claims)
             lead = "First" if i == 0 else ("Finally" if i == len(stage_names) - 1 else "Next")
-            walk_bits.append(f"{lead}, {expl}")
+            walk_bits.append(f"{lead}, {pts[0]}")
         walk = " ".join(walk_bits)
         if examples:
-            walk += " Lesson example: " + examples[0].rstrip(".") + "."
+            walk += " Example: " + examples[0].rstrip(".") + "."
     else:
         walk = (
-            f"Worked example for {topic}. "
-            + (
-                "Use a sharp knife or a drawing pin: the same push on a smaller tip "
-                "means higher pressure."
-                if any(n.lower() in {"force", "pressure", "area"} for n in term_names)
-                else f"Apply each idea from the Steps above to one clear everyday case of {topic.lower()}."
-            )
+            "Use a sharp knife or a drawing pin: the same push on a smaller tip "
+            "means higher pressure."
+            if any(n.lower() in {"force", "pressure", "area"} for n in term_names)
+            else f"Apply each idea above to one clear everyday case of {topic.lower()}."
         )
         if examples and examples[0].rstrip(".").lower() not in {
             c.rstrip(".").lower() for c in claims
         }:
-            walk += " Lesson example: " + examples[0].rstrip(".") + "."
-    if _is_science(board) and experiments:
-        walk += " Classroom / home check: " + experiments[0].rstrip(".") + "."
-    sections.append({"title": "Worked Examples", "role": "worked_example", "body": walk})
+            walk += " Example: " + examples[0].rstrip(".") + "."
+    if _is_science(board) and experiments and not is_teacher_facing_text(experiments[0]):
+        walk += " Try this check: " + experiments[0].rstrip(".") + "."
+    walk_clean, prose_seen = _unique_sentences(walk, seen=prose_seen)
+    sections.append(
+        {
+            "title": "Worked Example",
+            "role": "worked_example",
+            "body": " ".join(walk_clean) if walk_clean else walk,
+        }
+    )
 
-    # 4–6) Practice / Exam / HOTS — one Q per line, Answer on the next line
-    def _answer_for(name: str) -> str:
-        return _concept_explanation(board, name, claims) or (
-            next((c for c in claims if name.lower() in c.lower()), "")
-            or f"{name[:1].upper() + name[1:]} is one of the main ideas in {topic}."
-        )
+    # 4–6) Practice / Exam / HOTS — Bloom progression + mark-depth answers
+    example_line = examples[0].rstrip(".") + "." if examples else ""
 
     practice_pairs: list[tuple[str, str]] = []
     for name in (term_names[:4] or [topic]):
         practice_pairs.append(
             (
-                f"What is {name.lower()}?",
-                _answer_for(name),
+                f"What is {name.lower()}? (1 mark)",
+                _mark_answer(1, _point_bank(board, name, claims), topic=topic),
             )
         )
     if len(term_names) >= 2:
         practice_pairs.append(
             (
-                f"How are {term_names[0].lower()} and {term_names[1].lower()} connected in {topic.lower()}?",
-                f"{_answer_for(term_names[0])} {_answer_for(term_names[1])}",
+                f"How are {term_names[0].lower()} and {term_names[1].lower()} connected "
+                f"in {topic.lower()}? (2 marks)",
+                _mark_answer(
+                    2,
+                    _point_bank(board, term_names[0], claims)
+                    + _point_bank(board, term_names[1], claims),
+                    topic=topic,
+                ),
             )
         )
     sections.append(
@@ -478,8 +615,9 @@ def build_canonical_lesson(
     for name in (term_names[:3] or [topic]):
         exam_pairs.append(
             (
-                f"Explain {name.lower()} clearly. Include its meaning and how it connects to {topic.lower()}. (3 marks)",
-                _answer_for(name),
+                f"Explain {name.lower()}. Include its meaning and how it connects to "
+                f"{topic.lower()}. (3 marks)",
+                _mark_answer(3, _point_bank(board, name, claims), topic=topic),
             )
         )
     if len(term_names) >= 2:
@@ -487,10 +625,11 @@ def build_canonical_lesson(
             (
                 f"Compare {term_names[0].lower()} and {term_names[1].lower()}. "
                 f"State one similarity and one difference. (4 marks)",
-                (
-                    f"Both belong to {topic.lower()}. "
-                    f"{term_names[0][:1].upper() + term_names[0][1:]}: {_answer_for(term_names[0])} "
-                    f"{term_names[1][:1].upper() + term_names[1][1:]}: {_answer_for(term_names[1])}"
+                _mark_answer(
+                    4,
+                    _point_bank(board, term_names[0], claims)
+                    + _point_bank(board, term_names[1], claims),
+                    topic=topic,
                 ),
             )
         )
@@ -508,29 +647,48 @@ def build_canonical_lesson(
         (
             f"Predict what would change about {hots_anchor.lower()} if the conditions around it "
             f"were reversed. Give a reason from the lesson. (5 marks)",
-            (
-                f"If the conditions that cause {hots_anchor.lower()} were reversed, that stage "
-                f"would slow or stop. Lesson meaning: {_answer_for(hots_anchor)}"
+            _mark_answer(
+                5,
+                [
+                    f"If the conditions that cause {hots_anchor.lower()} were reversed, that stage would slow or stop."
+                ]
+                + _point_bank(board, hots_anchor, claims),
+                topic=topic,
+                lead=f"Begin with what {hots_anchor.lower()} needs in order to happen",
+                example=example_line,
             ),
         ),
         (
             f"A classmate confuses {hots_anchor.lower()} with {hots_second.lower()}. "
             f"Write the correction using ideas from this lesson. (5 marks)",
-            (
-                f"{hots_anchor[:1].upper() + hots_anchor[1:]}: {_answer_for(hots_anchor)} "
-                f"{hots_second[:1].upper() + hots_second[1:]}: {_answer_for(hots_second)} "
-                f"They are different stages/ideas in {topic.lower()}, not the same thing."
+            _mark_answer(
+                5,
+                [
+                    f"{hots_anchor[:1].upper() + hots_anchor[1:]} and "
+                    f"{hots_second[:1].upper() + hots_second[1:]} are different ideas in {topic.lower()}, not the same thing."
+                ]
+                + _point_bank(board, hots_anchor, claims)
+                + _point_bank(board, hots_second, claims),
+                topic=topic,
+                lead="Correct the confusion with the taught meanings",
             ),
         ),
         (
             f"Describe one everyday situation that shows {topic.lower()} at work, and name each "
             f"main idea inside it. (6 marks)",
-            (
-                f"Everyday case: watch water move through {topic.lower()} in nature or at home. "
-                + " ".join(
-                    f"{n[:1].upper() + n[1:]} — {_answer_for(n)}"
+            _mark_answer(
+                6,
+                [
+                    example_line
+                    or f"Watch {topic.lower()} at work in nature or at home."
+                ]
+                + [
+                    f"{n[:1].upper() + n[1:]} — {_point_bank(board, n, claims)[0]}"
                     for n in (term_names[:4] or [topic])
-                )
+                ],
+                topic=topic,
+                lead=f"Choose one clear everyday situation that shows {topic.lower()}",
+                example=example_line,
             ),
         ),
     ]
@@ -561,16 +719,15 @@ def build_canonical_lesson(
                 break
 
     practice = _practice_set(names, claims, topic)
-    big = claims[0] if claims else f"Clear ideas help you explain {topic}."
-    if len(claims) >= 2 and len(str(big).split()) < 12:
-        big = f"{claims[0]} {claims[1]}"
+    big_sents, _ = _unique_sentences(*(claims[:3] or [f"Clear ideas help you explain {topic}."]))
+    big = " ".join(big_sents[:2]) if big_sents else f"Clear ideas help you explain {topic}."
 
     svg = flowchart_svg or concept_map_svg
     page: dict[str, Any] = {
         "big_idea": str(big)[:400],
         "sections": sections,
         "topic": topic,
-        "title": f"{topic} — Master Lesson",
+        "title": topic,
         "flowchart_svg": flowchart_svg,
         "concept_map_svg": concept_map_svg,
         "svg_diagram": svg,
@@ -590,6 +747,8 @@ def build_canonical_lesson(
             "science_engine": _is_science(board),
             "mathematics_engine": _is_mathematics(board),
             "slim_theory": True,
+            "professional_publishing": True,
+            "publishing_v": "3.4",
         },
     }
     if str(svg or "").startswith("<svg"):
@@ -686,12 +845,14 @@ _LENS_PRESENTATION = {
         "css": {"bullets": True, "chunking": True},
     },
     "dyslexia": {
-        "note": "Lexend, large spacing, reading strips, colour emphasis, no walls of text",
+        "note": "Lexend 18–22px, large spacing, reading strips, colour emphasis, ≤80 words/paragraph",
         "css": {
             "font_family": "Lexend, 'OpenDyslexic', sans-serif",
+            "font_size_px": 20,
             "line_height": 1.9,
             "letter_spacing": "0.03em",
             "max_paragraph_sentences": 1,
+            "max_paragraph_words": 80,
             "reading_strips": True,
             "colour_emphasis": True,
         },
@@ -771,6 +932,55 @@ def _ell_present_body(body: str, concepts: list[str]) -> str:
     return text
 
 
+def _chunk_paragraphs_by_words(body: str, max_words: int = 80) -> str:
+    """Break walls of text for reading-support lenses."""
+    lines: list[str] = []
+    for line in body.split("\n"):
+        raw = line.strip()
+        if not raw:
+            lines.append("")
+            continue
+        if raw.lstrip().startswith(("-", "•", "☐")) or re.match(r"^\d+\.", raw):
+            lines.append(raw)
+            continue
+        words = raw.split()
+        if len(words) <= max_words:
+            lines.append(raw)
+            continue
+        for i in range(0, len(words), max_words):
+            lines.append(" ".join(words[i : i + max_words]))
+            lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _present_qa_zone(body: str, version_id: str) -> str:
+    """Same assessed questions — presentation differs by learner profile."""
+    text = body.strip()
+    if version_id in {"ld", "adhd", "dyslexia"}:
+        chunks = [c.strip() for c in re.split(r"\n\s*\n", text) if c.strip()]
+        spaced = []
+        for chunk in chunks:
+            spaced.append(chunk)
+            spaced.append("")
+        return "\n".join(spaced).rstrip() + "\n"
+    if version_id == "ell":
+        # Keep stems; add a one-line frame before the block.
+        return "Answer in short, clear sentences. Use the key words from the lesson.\n\n" + text
+    if version_id == "visual":
+        if "diagram" not in text.lower():
+            return "Use the lesson diagram to help you answer.\n\n" + text
+        return text
+    if version_id == "auditory":
+        parts = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+        out: list[str] = []
+        for i, part in enumerate(parts):
+            out.append(part)
+            if i < len(parts) - 1:
+                out.append("[Pause — try the question aloud before the answer]")
+        return "\n\n".join(out)
+    return text
+
+
 def _present_body(
     body: str,
     version_id: str,
@@ -783,15 +993,9 @@ def _present_body(
         return body
     concepts = [str(c) for c in (concepts or []) if str(c).strip()]
 
-    # Question zones keep every stem; only layout may change.
+    # Question zones keep every stem; only layout / support cues may change.
     if role in _QUESTION_ZONE_ROLES:
-        if version_id in {"ld", "adhd", "dyslexia"}:
-            return "\n\n".join(
-                line.strip()
-                for line in body.split("\n")
-                if line.strip()
-            )
-        return body
+        return _present_qa_zone(body, version_id)
 
     if version_id == "ell":
         return _ell_present_body(body, concepts)
@@ -804,7 +1008,7 @@ def _present_body(
                 continue
             for sent in _sentences(line):
                 lines.append(f"- {sent}")
-        return "\n".join(lines)
+        return _chunk_paragraphs_by_words("\n".join(lines), 80)
 
     if version_id == "dyslexia":
         # Reading strips: numbered one-sentence lines + colour emphasis + airy spacing.
@@ -820,20 +1024,30 @@ def _present_body(
                 n += 1
                 strips.append(f"{n}. {sent}")
                 strips.append("")
-        return "\n".join(strips).rstrip()
+        return _chunk_paragraphs_by_words("\n".join(strips).rstrip(), 80)
 
     if version_id == "visual":
         # Colour-code first examinable term hit; keep every sentence.
         return _emphasise_terms(body, concepts)
 
     if version_id == "auditory":
-        # Read-aloud friendly: keep content; mark listening breaths between paragraphs.
+        # Conversational teaching cues — content unchanged; never re-read titles.
         parts = [p.strip() for p in re.split(r"\n+", body) if p.strip()]
         out: list[str] = []
+        if role == "introduction" and parts:
+            out.append("Let's begin together.")
+        elif role == "concept" and parts:
+            out.append("Here is the next idea — listen carefully.")
+        elif role == "worked_example" and parts:
+            out.append("Now follow how it works, step by step.")
         for i, part in enumerate(parts):
             out.append(part)
             if i < len(parts) - 1 and role in {"concept", "worked_example", "summary"}:
                 out.append("[Pause — listen again]")
+            if role == "concept" and i == 0 and len(parts) > 1:
+                out.append("Think: can you say that idea in your own words?")
+        if role == "concept":
+            out.append("Quick recap: hold that idea before we move on.")
         return "\n".join(out)
 
     if version_id == "autism":
@@ -1066,11 +1280,11 @@ def augment_support_version(
                 "title": "Teacher Notes — Teaching Sequence",
                 "role": "teacher_support",
                 "body": (
-                    "Teach the Master Lesson in print order: Introduction → What You Will Learn → "
-                    "Must Know → Key Concepts → Step-by-Step → Worked Examples → Diagrams → "
-                    "Vocabulary → Real-life Applications → Misconceptions → Practice → Exam → "
-                    "HOTS → Summary → Quick Revision → Exit Ticket. "
-                    "Every adaptation keeps this sequence — only presentation changes."
+                    "Teach the Master Lesson in print order: Introduction → each concept "
+                    "(explanation, key points, mini recap) → Worked Example → Practice → "
+                    "Exam → HOTS. Every adaptation keeps this curriculum sequence — only "
+                    "presentation changes. Do not insert Must Know / Exit Ticket chrome "
+                    "into student pages."
                 ),
             }
         )
@@ -1109,9 +1323,10 @@ def augment_support_version(
                 "title": "Teacher Notes — Question Prompts",
                 "role": "teacher_support",
                 "body": (
-                    "Cold-call after each Step: “Explain this Must Know idea in one sentence.” "
-                    "Before Exam Questions: “Which Must Know idea does this item test?” "
-                    "Exit Ticket: every learner ticks I Understand This before leaving."
+                    "Cold-call after each concept: “Explain this idea in one sentence.” "
+                    "Before Exam Questions: “Which taught idea does this item test?” "
+                    "Close with a verbal check that every learner can name the main ideas "
+                    "in order — keep exit-ticket language in teacher notes only."
                 ),
             }
         )

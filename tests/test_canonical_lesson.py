@@ -1,9 +1,10 @@
-"""Master Lesson Architecture (v3.3) — ONE canonical lesson, presentation-only
+"""Master Lesson Architecture (v3.4) — ONE canonical lesson, presentation-only
 adaptations, locked Essential Learning Core, hard curriculum-fidelity gate.
 
-Product law (slim theory): reading lesson = Introduction + theory Steps +
-Worked Example + Practice/Exam/HOTS with answers. Vocabulary lives on the
-Vocabulary page. No Lesson Map / Must Know / Diagrams prose / exit tickets.
+Product law (slim theory + professional publishing): reading lesson =
+Introduction + concept sections (explanation / key points / mini recap) +
+Worked Example + Practice/Exam/HOTS with mark-depth answers. Vocabulary lives
+on the Vocabulary page. No Lesson Map / Must Know / Diagrams prose / exit tickets.
 """
 
 from __future__ import annotations
@@ -74,15 +75,21 @@ def test_canonical_lesson_contains_complete_mandated_sequence(canonical):
     assert canonical["lce"]["canonical"] is True
     assert canonical["lce"]["master_lesson"] is True
     assert canonical["lce"].get("slim_theory") is True
+    assert canonical["lce"].get("professional_publishing") is True
     titles = {s["title"] for s in canonical["sections"]}
     for expected in (
-        "Lesson Introduction",
-        "Worked Examples",
+        "Introduction",
+        "Worked Example",
         "Practice Questions",
         "Exam Questions",
         "HOTS Questions",
     ):
         assert expected in titles, f"missing Master Contract title: {expected}"
+    # Meaningful concept headings — not the lesson title repeated.
+    assert "Evaporation" in titles or any("Evaporat" in t for t in titles)
+    assert canonical["title"] == "The Water Cycle"
+    blob = " ".join(str(s.get("body") or "") for s in canonical["sections"]).lower()
+    assert "this lesson teaches" not in blob
     for banned in (
         "What You Will Learn",
         "Must Know",
@@ -102,6 +109,18 @@ def test_canonical_lesson_contains_complete_mandated_sequence(canonical):
     assert "Answer:" in practice["body"]
     assert practice["body"].count("Answer:") >= 2
     assert "1." in practice["body"] and "2." in practice["body"]
+    assert "(1 mark)" in practice["body"]
+    exam = next(s for s in canonical["sections"] if s["role"] == "exam_question")
+    assert "(3 marks)" in exam["body"]
+    # Mark-depth: a 3-mark answer must be longer than a recycled one-liner.
+    for block in exam["body"].split("\n\n"):
+        if "(3 marks)" in block and "Answer:" in block:
+            ans = block.split("Answer:", 1)[1].strip()
+            assert len(ans.split()) >= 20, ans
+            break
+    concept = next(s for s in canonical["sections"] if s["role"] == "concept")
+    assert "Key points:" in concept["body"]
+    assert "In short:" in concept["body"]
 
 
 def test_essential_learning_core_locked_with_hash(core):

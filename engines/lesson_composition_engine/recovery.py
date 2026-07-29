@@ -280,7 +280,12 @@ def clarity_edit_adaptation(adaptation: dict[str, Any], *, topic: str = "this le
         # Keep original title unless it is a forbidden solo label used as concept bait
         raw_title = str(row.get("title") or "")
         if raw_title.lower().strip() in FORBIDDEN_CONCEPT_LABELS:
-            row["title"] = topic if row.get("role") in {"hook", "introduction"} else raw_title
+            # Publisher page titles: keep a stable "Introduction" heading — never
+            # reprint the lesson topic (title appears once at page level).
+            if row.get("role") in {"hook", "introduction"}:
+                row["title"] = "Introduction"
+            else:
+                row["title"] = raw_title
         if row.get("body"):
             row["body"] = scrub_pmes_learner_language(str(row["body"]), topic=topic)
         sections.append(row)

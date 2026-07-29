@@ -77,6 +77,8 @@ _TEACHER_TEXT_PATTERNS = (
     r"\blearning\s+objectives?\b",
     r"\bsuccess\s+criteria\b",
     r"\bteacher\s+note\b",
+    r"\bteacher\s+should\b",
+    r"\btell\s+(the\s+)?(students?|class|learners?)\b",
     r"\bdifferentiat",
     r"\bexit\s+ticket\b",
     r"\bwarm[\s-]?up\b",
@@ -106,11 +108,23 @@ _TEACHER_TEXT_PATTERNS = (
     r"\bmaterials?\s*(needed|:)",
     r"\bguided\s+practice\b",
     r"\bindependent\s+practice\b",
-    r"\blesson\s+plan\b",
+    r"\blesson\s+plan(ning)?\b",
+    r"\blesson\s+duration\b",
+    r"\bintroduction\s*\(\s*\d+\s*minutes?\s*\)",
+    r"\b\d+\s*minutes?\b",
     r"\bclosure\b",
     r"\bhomework\b",
     r"\bkick\s+off\b",
     r"\blet'?s\s+(work\s+together|think\s+about)\b",
+)
+
+# Isolated planning debris / orphan fragments that must never become learner prose.
+_ORPHAN_CLAIM_PATTERNS = (
+    r"^(faucets?|minutes?|hours?|materials?|supplies|handout|worksheet)\.?$",
+    r"\bteacher notes?\b",
+    r"\blesson planning\b",
+    r"\bask learners?\b",
+    r"\btell students?\b",
 )
 
 
@@ -120,6 +134,29 @@ def is_teacher_facing_text(text: str) -> bool:
     if not low:
         return False
     return any(re.search(p, low) for p in _TEACHER_TEXT_PATTERNS)
+
+
+def is_orphan_claim(text: str) -> bool:
+    """True for isolated planning debris or fragments with no teachable meaning."""
+    raw = (text or "").strip()
+    if not raw:
+        return True
+    low = raw.lower()
+    if len(raw.split()) <= 2 and not any(ch in raw for ch in ".!?"):
+        # Bare nouns without a teaching sentence ("faucets", "minutes").
+        if re.fullmatch(r"[a-z][a-z\s-]{0,40}", low):
+            return True
+    return any(re.search(p, low) for p in _ORPHAN_CLAIM_PATTERNS)
+
+
+def is_learner_safe_claim(text: str) -> bool:
+    """Source sentence eligible for student theory (not teacher chrome / orphans)."""
+    raw = (text or "").strip()
+    if len(raw.split()) < 4:
+        return False
+    if is_teacher_facing_text(raw) or is_orphan_claim(raw):
+        return False
+    return True
 
 
 def student_safe_definition(text: str) -> str:
