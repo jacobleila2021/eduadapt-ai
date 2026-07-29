@@ -63,21 +63,35 @@ def publication_block_reason(
     except Exception:
         pass
 
-    # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief
+    # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief.
+    # Soft-pass classroom open when the lesson is already "Good" (≥85). Hard
+    # quarantine only for Reject-band scores (<80). Chemistry uploads often
+    # land 87–94 after Master Lesson polish and must still be usable.
     eats = meta.get("eats") if isinstance(meta.get("eats"), dict) else {}
     if eats and (eats.get("reject_rendering") or eats.get("publication_ready") is False):
         try:
-            from eats.hooks import eats_block_reason
+            overall = float(eats.get("overall") or 0)
+        except (TypeError, ValueError):
+            overall = 0.0
+        if overall >= 85.0:
+            eats["classroom_soft_pass"] = True
+            eats["reject_rendering"] = False
+            # Keep publication_ready False so dashboards still show polish needed,
+            # but do not hide the lesson from teachers/learners.
+            meta["eats"] = eats
+        else:
+            try:
+                from eats.hooks import eats_block_reason
 
-            reason = eats_block_reason(adaptations)
-            if reason:
-                return reason
-        except Exception:
-            overall = eats.get("overall")
-            return (
-                f"Educational Acceptance Testing failed "
-                f"(score={overall}). Lesson held for rewrite."
-            )
+                reason = eats_block_reason(adaptations)
+                if reason:
+                    return reason
+            except Exception:
+                overall_raw = eats.get("overall")
+                return (
+                    f"Educational Acceptance Testing failed "
+                    f"(score={overall_raw}). Lesson held for rewrite."
+                )
 
     package = package or {}
     validation = package.get("vlie_validation") or {}

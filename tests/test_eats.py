@@ -173,6 +173,23 @@ def test_publication_gate_blocks_failed_eats():
     assert not publication_allowed(adaptations)
 
 
+def test_publication_gate_soft_passes_good_band_eats():
+    """Chemistry-style 87.9 must open in classroom; polish can continue later."""
+    adaptations = {
+        "_meta": {
+            "eats": {
+                "publication_ready": False,
+                "reject_rendering": True,
+                "overall": 87.9,
+                "verdict": "revise",
+            }
+        },
+        "standard": {"sections": [{"title": "Intro", "body": "Acids turn litmus red."}]},
+    }
+    assert publication_block_reason(adaptations) == ""
+    assert publication_allowed(adaptations)
+
+
 def test_attach_eats_hook():
     ads = _compose_adaptations()
     merged = attach_eats_to_adaptations(

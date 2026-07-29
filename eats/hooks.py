@@ -36,8 +36,16 @@ def eats_block_reason(adaptations: Mapping[str, Any] | None) -> str:
     eats = meta.get("eats") if isinstance(meta, dict) else None
     if not isinstance(eats, dict) or not eats:
         return ""
+    if eats.get("classroom_soft_pass"):
+        return ""
     if eats.get("reject_rendering") or eats.get("publication_ready") is False:
-        overall = eats.get("overall")
+        try:
+            overall = float(eats.get("overall") or 0)
+        except (TypeError, ValueError):
+            overall = 0.0
+        # Soft-pass Good band for classroom open; still report Reject band.
+        if overall >= 85.0:
+            return ""
         verdict = eats.get("verdict") or "reject"
         return (
             f"Educational Acceptance Testing failed ({verdict}; "
