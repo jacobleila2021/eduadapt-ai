@@ -116,7 +116,7 @@ def build_narration(content: Any, spec_id: str) -> str:
             body = _clean_for_speech(section.get("body") or "")
             if not body:
                 continue
-            body = re.sub(r"(?i)\banswer:\s*", "The answer is ", body)
+            body = re.sub(r"(?i)\banswer:\s*", "", body)
             body = re.sub(r"\[Pause[^\]]*\]", " ", body)
             body = re.sub(r"\s+", " ", body).strip()
             key = re.sub(r"[^a-z0-9]+", " ", body.lower()).strip()[:80]

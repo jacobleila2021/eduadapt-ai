@@ -406,6 +406,21 @@ def inject_exam_practice_into_lessons(
             continue
         if key not in classroom_keys or not isinstance(lesson, dict):
             continue
+        # Master Lesson already carries Practice / Exam / HOTS — do not append
+        # an empty or duplicate "Exam Practice" shell.
+        lce = lesson.get("lce") if isinstance(lesson.get("lce"), dict) else {}
+        roles = {
+            str(s.get("role") or "")
+            for s in (lesson.get("sections") or [])
+            if isinstance(s, dict)
+        }
+        if (
+            lce.get("slim_theory")
+            or lce.get("textbook_theory")
+            or lce.get("master_lesson")
+            or roles & {"practice_question", "exam_question", "hots_question"}
+        ):
+            continue
         sections = list(lesson.get("sections") or [])
         if any(
             isinstance(s, dict)

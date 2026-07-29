@@ -1,15 +1,15 @@
-"""Master Lesson Architecture (v3.4) — ONE canonical lesson, presentation-only
+"""Master Lesson Architecture (v4) — ONE canonical lesson, presentation-only
 adaptations, locked Essential Learning Core, hard curriculum-fidelity gate.
 
-Product law (slim theory + professional publishing): reading lesson =
-Introduction + concept sections (explanation / key points / mini recap) +
-Worked Example + Practice/Exam/HOTS with mark-depth answers. Vocabulary lives
-on the Vocabulary page. No Lesson Map / Must Know / Diagrams prose / exit tickets.
+Product law: reading lesson = Introduction + concept sections (one teaching
+pass each) + Worked Example + Practice/Exam/HOTS with exam-ready answers.
+Vocabulary lives on the Vocabulary page.
 """
 
 from __future__ import annotations
 
 import copy
+import re
 
 import pytest
 
@@ -119,8 +119,14 @@ def test_canonical_lesson_contains_complete_mandated_sequence(canonical):
             assert len(ans.split()) >= 20, ans
             break
     concept = next(s for s in canonical["sections"] if s["role"] == "concept")
-    assert "Key points:" in concept["body"]
-    assert "In short:" in concept["body"]
+    body = concept["body"]
+    # One teaching pass — no duplicated "In short" / "Key points" / "Next:" chrome.
+    assert "In short:" not in body
+    assert "Key points:" not in body
+    assert not re.search(r"(?m)^Next:", body)
+    # Definition appears once, not thrice.
+    first = body.split("\n")[0].strip()
+    assert body.count(first) == 1
 
 
 def test_essential_learning_core_locked_with_hash(core):

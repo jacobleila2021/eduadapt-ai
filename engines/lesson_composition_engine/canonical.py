@@ -128,34 +128,59 @@ def _mark_answer(
     lead: str = "",
     example: str = "",
 ) -> str:
-    """Build an answer that genuinely earns the declared mark allocation."""
-    pts = [p.strip() for p in points if str(p).strip()]
+    """Exam-ready model answer — no coaching filler, no repeated openers."""
+    del lead  # never surface coaching leads in learner answers
+    pts: list[str] = []
+    seen: set[str] = set()
+    for p in points:
+        sent = str(p or "").strip()
+        if not sent:
+            continue
+        if not sent.endswith((".", "!", "?")):
+            sent += "."
+        key = _norm_key(sent)
+        if len(key) < 12 or key in seen or any(key[:56] == s[:56] for s in seen):
+            continue
+        low = sent.lower()
+        if any(
+            bad in low
+            for bad in (
+                "link each point",
+                "altogether, these points",
+                "start from the taught",
+                "choose one clear",
+                "secure understanding",
+                "begin with what",
+                "correct the confusion with the taught",
+                "the answer is",
+            )
+        ):
+            continue
+        seen.add(key)
+        pts.append(sent)
     topic_l = (topic or "this lesson").strip() or "this lesson"
-    filler = f"Link each point clearly back to {topic_l.lower()} using the taught order."
-    while len(pts) < min(max(marks, 1), 6):
-        pts.append(filler)
-        if pts.count(filler) >= 2:
-            break
+    if not pts:
+        pts = [f"{topic_l[:1].upper() + topic_l[1:]} is explained by the ideas taught above."]
+
     if marks <= 1:
         return pts[0]
     if marks == 2:
         return " ".join(pts[:2])
     if marks == 3:
-        return " ".join(f"({i}) {p}" for i, p in enumerate(pts[:3], 1))
+        return " ".join(pts[:3])
     if marks == 4:
-        return (
-            f"Similarity: both ideas belong to {topic_l.lower()}. "
-            + " ".join(pts[:2])
-            + " Difference: "
-            + " ".join(pts[2:4])
-        )
-    intro = (lead or f"Start from the taught meaning of {topic_l.lower()}.").rstrip(".") + "."
-    body = " ".join(pts[: max(3, marks - 2)])
-    ex = (example or (pts[min(2, len(pts) - 1)] if pts else "")).strip()
-    close = f"Altogether, these points show secure understanding of {topic_l.lower()}."
-    if marks >= 6:
-        return f"{intro} {body} Example: {ex} {close}"
-    return f"{intro} {body} {close}"
+        a, b = pts[0], pts[1] if len(pts) > 1 else pts[0]
+        c = pts[2] if len(pts) > 2 else ""
+        d = pts[3] if len(pts) > 3 else ""
+        return f"Both ideas belong to {topic_l.lower()}. {a} {b} {c} {d}".strip()
+    bits = list(pts[: max(4, marks)])
+    if example:
+        ex = example.strip()
+        if ex and _norm_key(ex) not in seen:
+            if not ex.endswith((".", "!", "?")):
+                ex += "."
+            bits.insert(0, ex)
+    return " ".join(bits)
 
 
 def _textbook_step_body(
@@ -166,30 +191,28 @@ def _textbook_step_body(
     next_name: str | None,
     seen: set[str],
 ) -> tuple[str, set[str]]:
-    """Publisher page flow: explanation → key points → mini recap → next topic."""
-    display = name[:1].upper() + name[1:]
+    """One clear teaching paragraph — never repeat as Key points / In short / Next."""
+    del next_name  # section order already shows what comes next
+    del name
     expl_sents, seen = _unique_sentences(explanation, seen=seen)
     claim_sents, seen = _unique_sentences(*body_claims, seen=seen)
     lines: list[str] = []
     para = " ".join(expl_sents[:2] or claim_sents[:2])
     if para:
         lines.append(para)
-    bullets = claim_sents[:3] if claim_sents else expl_sents[1:4]
-    if bullets:
-        lines.append("Key points:")
-        for b in bullets:
-            words = b.split()
-            short = b if len(words) <= 18 else " ".join(words[:16]).rstrip(".,;") + "."
-            lines.append(f"• {short}")
-    seed = expl_sents[0] if expl_sents else (claim_sents[0] if claim_sents else "")
-    if seed:
-        words = seed.split()
-        recap = seed if len(words) <= 16 else " ".join(words[:14]).rstrip(".,;") + "."
-        lines.append(f"In short: {recap}")
-    if next_name:
-        nxt = next_name[:1].upper() + next_name[1:]
-        if nxt.lower() != display.lower():
-            lines.append(f"Next: {nxt}.")
+    para_key = _norm_key(para)
+    extras: list[str] = []
+    for b in claim_sents:
+        key = _norm_key(b)
+        if not key or key[:56] == para_key[:56] or key in para_key or para_key in key:
+            continue
+        words = b.split()
+        short = b if len(words) <= 22 else " ".join(words[:20]).rstrip(".,;") + "."
+        extras.append(f"• {short}")
+        if len(extras) >= 2:
+            break
+    if extras:
+        lines.extend(extras)
     return "\n".join(lines).strip(), seen
 
 
