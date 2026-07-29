@@ -499,6 +499,10 @@ def ensure_concept_primer(
 
 def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[str, Any]:
     page = dict(adaptation)
+    # Slim theory reading lessons keep SVG assets but do not inject a Diagrams
+    # prose section — vocabulary/diagram tabs own the visual sheet.
+    if bool((page.get("lce") or {}).get("slim_theory")):
+        return page
     svg = str(
         page.get("flowchart_svg")
         or page.get("svg_diagram")
@@ -711,15 +715,19 @@ def apply_content_fidelity(
             str(page.get(field) or "").startswith("<svg")
             for field in ("flowchart_svg", "svg_diagram", "concept_map_svg")
         ) or bool(str(page.get("mermaid_diagram") or "").strip())
-        page["sections"] = _rewrite_summary(
-            sections, topic=topic, has_diagram=page_has_diagram
-        )
-        if key != "worksheet":
-            # Every lesson page opens with the condensed must-learn concepts
-            # before any question or activity (v2.x learner experience).
-            page = ensure_concept_primer(page, board=board, topic=topic)
-        if key not in {"parent", "teacher"}:
-            page = ensure_diagram_teaching(page, topic=topic)
+        slim = bool((page.get("lce") or {}).get("slim_theory"))
+        if slim:
+            # Slim theory: keep authored sections only — no Must-Learn Ideas /
+            # Lesson Summary / Using the Diagram chrome on the reading page.
+            page["sections"] = sections
+        else:
+            page["sections"] = _rewrite_summary(
+                sections, topic=topic, has_diagram=page_has_diagram
+            )
+            if key != "worksheet":
+                page = ensure_concept_primer(page, board=board, topic=topic)
+            if key not in {"parent", "teacher"}:
+                page = ensure_diagram_teaching(page, topic=topic)
         if key in {"worksheet", "exam", "standard"}:
             page = scrub_assessment_metadata(page, topic=topic)
         page.setdefault("lce", {})
@@ -879,7 +887,8 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
             break
 
     svg = str(std.get("flowchart_svg") or std.get("svg_diagram") or "")
-    if svg.startswith("<svg"):
+    slim_std = bool((std.get("lce") or {}).get("slim_theory"))
+    if svg.startswith("<svg") and not slim_std:
         std_blob = " ".join(
             str(s.get("body") or "") for s in (std.get("sections") or []) if isinstance(s, dict)
         ).lower()

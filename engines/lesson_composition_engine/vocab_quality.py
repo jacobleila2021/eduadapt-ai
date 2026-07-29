@@ -25,6 +25,10 @@ VOCAB_STOPWORDS = frozenset(
         "first", "next", "then", "after", "before", "during", "through", "across",
         "between", "under", "above", "below", "around", "again", "still", "also",
         "because", "however", "therefore", "thus", "hence", "look", "looking",
+        # Title / prompt fragments that must never become vocab cards
+        "travel", "travels", "travelling", "traveling", "system", "systems",
+        "matter", "life", "why", "how", "together", "points", "fits", "fit",
+        "continuous", "movement", "moves", "moving", "among", "among", "surface",
     }
 )
 
@@ -167,8 +171,26 @@ def is_junk_term(term: str) -> bool:
         return True
     if re.fullmatch(r"\d+", key):
         return True
-    if key in {"earth's", "water's", "sun's", "water", "cycle"}:
+    if key in {"earth's", "water's", "sun's", "water", "cycle", "earth", "science"}:
         # Bare fragments from titles — prefer "Water cycle" as one term
+        return True
+    if key in {
+        "physics",
+        "chemistry",
+        "biology",
+        "geography",
+        "history",
+        "civics",
+        "economics",
+        "english",
+        "mathematics",
+        "maths",
+        "math",
+        "general",
+        "studies",
+        "subject",
+        "topic",
+    }:
         return True
     if key.endswith("'s") and len(key) <= 8:
         return True
@@ -184,6 +206,12 @@ def clean_topic(topic: str, *, fallback: str = "Lesson Topic") -> str:
     t = re.sub(r"^(learning\s+objectives?|objectives?)\s*[:\-–]?\s*", "", t, flags=re.I).strip()
     if not t or t.lower() in META_TOPICS:
         return fallback
+    # Drop long subtitle tails ("The Water Cycle: How Earth's Water Moves…")
+    # so learner prose stays short and readable.
+    if ":" in t and len(t) > 36:
+        head = t.split(":", 1)[0].strip()
+        if len(head) >= 8:
+            t = head
     return t[:120]
 
 
@@ -200,19 +228,31 @@ def definition_from_claims(term: str, claims: Iterable[str]) -> str:
             continue
         low = text.lower()
         score = 1
-        if any(
-            p in low
-            for p in (f"{needle} is ", f"{needle} are ", f"{needle} means", "is when", "is the")
+        # Strong preference: this term is the grammatical subject being defined.
+        if (
+            low.startswith(needle + " ")
+            or low.startswith(needle + " is ")
+            or low.startswith(needle + ":")
+            or f"{needle} is " in low[: max(48, len(needle) + 8)]
+            or f"{needle} are " in low[: max(48, len(needle) + 8)]
+            or f"{needle} means" in low[: max(48, len(needle) + 12)]
         ):
-            score += 6
+            score += 8
+        elif "is when" in low or "is the" in low:
+            # Weak: term is only mentioned inside another definition.
+            score += 1
         if "students will" in low or "learning objective" in low:
             continue
+        lead = low.split()[0] if low.split() else ""
+        if lead and lead != needle and lead not in {"the", "a", "an", "for", "when", "in"}:
+            # Another noun leads the sentence — probably not defining this term.
+            score -= 5
         if len(text) > 40:
             score += 1
         if score > best_score:
             best_score = score
             best = text
-    return best[:280] if best_score >= 5 else (best[:280] if best_score >= 2 else "")
+    return best[:280] if best_score >= 5 else (best[:280] if best_score >= 3 else "")
 
 
 def enrich_water_cycle_terms(topic: str, existing: list[str]) -> list[tuple[str, str]]:
@@ -234,6 +274,8 @@ def enrich_water_cycle_terms(topic: str, existing: list[str]) -> list[tuple[str,
 def build_student_definition(term: str, academic: str, *, topic: str = "") -> str:
     academic = student_safe_definition(academic)
     display = (term or "").strip()
+    if not display or is_junk_term(display):
+        return ""
     canonical = canonical_definition(display)
     if canonical:
         return canonical
@@ -242,10 +284,8 @@ def build_student_definition(term: str, academic: str, *, topic: str = "") -> st
             first = re.split(r"(?<=[.!?])\s+", academic)[0]
             return first.strip()
         return academic
-    topic = clean_topic(topic, fallback="this topic")
-    # A meaning must read as a meaning — never a teaching instruction, and
-    # never a reference to a diagram the vocabulary page does not show.
-    return f"{display} is a key idea in {topic} — find where the lesson explains it."
+    # Never emit hollow filler ("X is taught in this lesson") — empty means skip.
+    return ""
 
 
 def normalize_vocab_items(
@@ -296,6 +336,8 @@ def normalize_vocab_items(
             definition = definition_from_claims(term, claims) or canonical_definition(term)
         if not definition:
             definition = build_student_definition(term, "", topic=topic)
+        if not definition or "is taught in this lesson" in definition.lower():
+            continue
 
         if not example or is_teacher_facing_text(example):
             example = definition_from_claims(term, claims) or definition
@@ -306,7 +348,7 @@ def normalize_vocab_items(
                 "term": term[:1].upper() + term[1:] if term else term,
                 "definition": definition,
                 "academic_definition": definition,
-                "simple_explanation": build_student_definition(term, definition, topic=topic),
+                "simple_explanation": build_student_definition(term, definition, topic=topic) or definition,
                 "example": example[:220],
                 "example_sentence": example[:220],
                 "picture": picture,

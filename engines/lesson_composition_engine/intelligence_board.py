@@ -99,7 +99,6 @@ def build_lesson_intelligence_board(
     ]
 
     concepts_raw = list(clg.get("core_concepts") or [])
-    from_clg = bool(concepts_raw)
     if not concepts_raw:
         concepts_raw = list(profile.get("concepts") or profile.get("key_concepts") or [])
 
@@ -122,8 +121,9 @@ def build_lesson_intelligence_board(
     for item in concepts_raw:
         if isinstance(item, dict):
             name = str(item.get("name") or item.get("title") or "").strip()
-            # CLG concepts are already curated — do not drop science words like Water/Cycle.
-            if name and _valid_concept_name(name) and (from_clg or not is_junk_term(name)):
+            # Always junk-filter — CLG frequency tokens like "earth"/"science"
+            # from title metadata must never become Must Know steps.
+            if name and _valid_concept_name(name) and not is_junk_term(name):
                 concepts.append(
                     {
                         "name": name,
@@ -132,7 +132,7 @@ def build_lesson_intelligence_board(
                 )
         else:
             name = str(item or "").strip()
-            if name and _valid_concept_name(name) and (from_clg or not is_junk_term(name)):
+            if name and _valid_concept_name(name) and not is_junk_term(name):
                 concepts.append({"name": name, "explanation": ""})
 
     # If junk filtering emptied the board, rebuild concepts from verified claims.

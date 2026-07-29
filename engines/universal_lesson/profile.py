@@ -55,6 +55,13 @@ _GENERIC_CONCEPT_WORDS = {
     # number words ("four stages") are counts, not concepts
     "zero", "once", "twice", "three", "four", "five", "seven", "eight",
     "nine", "first", "second", "third", "fourth", "fifth", "many", "several",
+    # Subject labels and title fragments — "Earth Science", "How Earth's Water…"
+    # must never become Must Know steps or vocabulary cards.
+    "science", "physics", "chemistry", "biology", "geography", "history",
+    "civics", "economics", "english", "mathematics", "maths", "math",
+    "earth", "world", "nature", "environment", "general", "studies",
+    "travel", "travels", "travelling", "traveling", "system", "systems",
+    "matter", "life", "how", "why", "together", "surface",
 }
 
 _SKILL_VERBS = {

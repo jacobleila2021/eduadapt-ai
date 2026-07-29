@@ -205,12 +205,14 @@ def review_adaptation(
     # Oversized paragraphs
     oversized = 0
     fragmented = 0
+    _q_roles = {"practice_question", "exam_question", "hots_question", "assessment"}
     for sec in adaptation.get("sections") or []:
         if not isinstance(sec, dict):
             continue
+        if str(sec.get("role") or "") in _q_roles:
+            continue
         body = str(sec.get("body") or "")
         wc = len(re.findall(r"\b\w+\b", body))
-        sc = len([p for p in re.split(r"[.!?]+", body) if p.strip()])
         if wc > 140:
             oversized += 1
         if 0 < wc < 10 and "\n- " not in body and adaptation_id in {"standard", "auditory", "teacher"}:
@@ -228,9 +230,15 @@ def review_adaptation(
     # Abrupt / missing educational sequencing for classroom lessons
     roles = {str(s.get("role") or "") for s in (adaptation.get("sections") or []) if isinstance(s, dict)}
     titles = " ".join(str(s.get("title") or "").lower() for s in (adaptation.get("sections") or []) if isinstance(s, dict))
+    slim = bool((adaptation.get("lce") or {}).get("slim_theory"))
     if adaptation_id in {"vocabulary", "worksheet", "parent"}:
         seq_ok = True
         seq_score = 1.0
+    elif slim:
+        # Slim theory closes with Practice / Exam / HOTS (answers included).
+        need = {"practice_question", "exam_question", "hots_question"}
+        seq_ok = need.issubset(roles)
+        seq_score = 1.0 if seq_ok else 0.4
     else:
         need = {"summary", "reflection"}
         seq_ok = all(n in roles or n in titles for n in need)
@@ -241,7 +249,7 @@ def review_adaptation(
             "Educational sequencing",
             passed=seq_ok,
             score=seq_score,
-            detail="summary+reflection" if seq_ok else "missing_close",
+            detail="slim_qa_close" if slim and seq_ok else ("summary+reflection" if seq_ok else "missing_close"),
         )
     )
 
@@ -285,10 +293,12 @@ def review_adaptation(
         )
     )
 
-    # Weak summary
+    # Weak summary — slim theory uses answered Practice/Exam as the close.
     has_summary = "summary" in roles or "summary" in titles or bool(adaptation.get("summary"))
     if adaptation_id in {"vocabulary", "worksheet"}:
         summary_ok = True
+    elif slim:
+        summary_ok = {"practice_question", "exam_question"}.issubset(roles)
     else:
         summary_ok = has_summary
     checks.append(
@@ -297,7 +307,7 @@ def review_adaptation(
             "Summary quality",
             passed=summary_ok,
             score=1.0 if summary_ok else 0.4,
-            detail="present" if summary_ok else "missing",
+            detail="slim_qa_close" if slim and summary_ok else ("present" if summary_ok else "missing"),
         )
     )
 

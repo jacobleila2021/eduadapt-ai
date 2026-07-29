@@ -26,6 +26,8 @@ def _scrub_mechanical(text: str) -> str:
 
 
 def _ensure_confidence_close(adaptation: dict[str, Any], *, topic: str) -> dict[str, Any]:
+    if bool((adaptation.get("lce") or {}).get("slim_theory")):
+        return adaptation
     sections = [s for s in (adaptation.get("sections") or []) if isinstance(s, dict)]
     if not sections:
         return adaptation
@@ -83,6 +85,8 @@ def _ensure_diagram_purpose(adaptation: dict[str, Any], *, topic: str) -> dict[s
     pkg["svg"] = svg
     adaptation["diagram_package"] = pkg
 
+    if bool((adaptation.get("lce") or {}).get("slim_theory")):
+        return adaptation
     blob = " ".join(
         str(s.get("body") or "") + str(s.get("title") or "")
         for s in (adaptation.get("sections") or [])

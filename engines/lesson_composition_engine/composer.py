@@ -469,7 +469,11 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                     extras.append(
                         {
                             "term": token.title(),
-                            "definition": claims[0] if claims else f"{token} is a key idea in {topic}.",
+                            "definition": (
+                                claims[0]
+                                if claims
+                                else f"{token} is taught carefully in {topic}."
+                            ),
                             "example": claims[0] if claims else f"Use {token} accurately in {topic}.",
                         }
                     )
@@ -488,15 +492,26 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    from engines.lesson_composition_engine.vocab_quality import (
+        build_student_definition,
+        canonical_definition,
+        definition_from_claims,
+        is_junk_term,
+    )
+
     topic = str(clg.get("topic") or "Lesson")
     subject = str(clg.get("subject_key") or "Science")
     pool = _fact_pool(clg)
     assessments = list(clg.get("assessment_outcomes") or [])
-    concepts = list(clg.get("core_concepts") or [])
+    concepts = [
+        c
+        for c in (clg.get("core_concepts") or [])
+        if isinstance(c, dict) and not is_junk_term(str(c.get("name") or ""))
+    ]
     terms = [
         str(w.get("term") or "")
         for w in ((vocabulary or {}).get("word_wall") or clg.get("vocabulary") or [])
-        if isinstance(w, dict)
+        if isinstance(w, dict) and str(w.get("term") or "").strip() and not is_junk_term(str(w.get("term") or ""))
     ][:8]
 
     # v3.3: every worksheet question must map back to a taught concept —
@@ -641,22 +656,39 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         }
     )
 
-    vocab_q = [
-        {
-            "question": f"Use the term '{t}' correctly in an exam-style sentence.",
-            "marks": 2,
-            "model_answer": f"A correct sentence uses {t} with the lesson meaning.",
-            "bloom": "recall",
-        }
-        for t in terms[:6]
-    ] or [
-        {
-            "question": f"Define a key term from {topic}.",
-            "marks": 2,
-            "model_answer": "Give the lesson definition with one example.",
-            "bloom": "recall",
-        }
-    ]
+    vocab_q = []
+    for t in terms[:6]:
+        if is_junk_term(t):
+            continue
+        answer = (
+            canonical_definition(t)
+            or definition_from_claims(t, pool)
+            or build_student_definition(t, "", topic=topic)
+        )
+        if not answer or "key idea" in answer.lower() or "is taught in this lesson" in answer.lower():
+            answer = next(
+                (p for p in pool if t.lower() in str(p).lower() and len(str(p).split()) >= 5),
+                "",
+            )
+        if not answer:
+            continue
+        vocab_q.append(
+            {
+                "question": f"Use the term '{t}' correctly in an exam-style sentence.",
+                "marks": 2,
+                "model_answer": str(answer).rstrip(".") + ".",
+                "bloom": "recall",
+            }
+        )
+    if not vocab_q:
+        vocab_q = [
+            {
+                "question": f"Define a key term from {topic}.",
+                "marks": 2,
+                "model_answer": pool[0] if pool else f"State the lesson definition of a key term in {topic}.",
+                "bloom": "recall",
+            }
+        ]
 
     concept_names = [
         str(c.get("name") or "").strip()

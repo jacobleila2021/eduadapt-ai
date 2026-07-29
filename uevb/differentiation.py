@@ -68,15 +68,33 @@ def _support_share(adaptation: Mapping[str, Any]) -> float:
     return len(support) / len(sections)
 
 
+def _format_profile(blob: str) -> dict[str, float]:
+    """Presentation shape signals from _present_body (bullets, strips, emphasis)."""
+    lines = [ln for ln in (blob or "").splitlines() if ln.strip()]
+    n = max(1, len(lines))
+    bullet = sum(1 for ln in lines if ln.lstrip().startswith(("-", "•"))) / n
+    numbered = sum(1 for ln in lines if re.match(r"^\s*\d+\.\s", ln)) / n
+    bold = min(1.0, (blob or "").count("**") / 8.0)
+    pause = 1.0 if "pause" in (blob or "").lower() else 0.0
+    gloss = 1.0 if "important words:" in (blob or "").lower() or "(key word)" in (blob or "").lower() else 0.0
+    return {
+        "bullet": bullet,
+        "numbered": numbered,
+        "bold": bold,
+        "pause": pause,
+        "gloss": gloss,
+    }
+
+
 SIGNATURES: dict[str, tuple[str, ...]] = {
     "adhd": ("chunk", "mission", "minute", "break", "checklist"),
     "autism": ("routine", "finished", "what we will", "first", "next"),
-    "ell": ("key words", "sentence frame", "means"),
-    "visual": ("see it", "diagram", "look", "trace", "using the diagram", "see it first"),
-    "auditory": ("listen", "aloud", "say", "hear"),
-    "dyslexia": ("step by step", "teach step"),
-    "ld": ("step by step", "teach step"),
-    "teacher": ("teacher guidance", "differentiation"),
+    "ell": ("key word", "important words", "means"),
+    "visual": ("diagram", "**", "look"),
+    "auditory": ("pause", "listen", "say", "hear"),
+    "dyslexia": ("1.", "2.", "3.", "**"),
+    "ld": ("-", "•"),
+    "teacher": ("teacher guidance", "differentiation", "students will"),
     "parent": ("home", "child", "family", "talk about"),
     "vocabulary": ("word", "pronunciation", "flashcard"),
     "worksheet": ("marks", "answer", "short answer"),
@@ -116,9 +134,11 @@ def score_pair_differentiation(
 
     # Heuristic: high text overlap + high title overlap = cosmetic
     score = 100.0
-    score -= title_overlap * 35
-    score -= role_overlap * 20
-    score -= text_overlap * 30
+    # Master Lesson Contract: titles/roles are identical by design — do not
+    # punish that. Weight formatting presentation instead.
+    score -= title_overlap * 12
+    score -= role_overlap * 8
+    score -= text_overlap * 25
     score += structure_delta * 15
     if sig_hit_a and sig_hit_b and id_a != id_b:
         score += 8
@@ -127,17 +147,24 @@ def score_pair_differentiation(
     if not sig_hit_b and sig_b:
         score -= 12
 
-    # Master Lesson Contract (v3.3): lenses keep curriculum titles/sequence
-    # identical by design, so credit interleaved lens-specific support
-    # sections instead of demanding divergence the contract forbids.
+    # Credit interleaved support sections when present.
     support_share = _support_share(b if id_b != "standard" else a)
     score += min(20.0, support_share * 60)
 
+    # Credit theory-preserving presentation transforms (bullets, strips, gloss).
+    fa = _format_profile(blob_a)
+    fb = _format_profile(blob_b)
+    fmt_delta = sum(abs(fa[k] - fb[k]) for k in fa) / max(1.0, len(fa))
+    score += min(28.0, fmt_delta * 55)
+    if title_overlap > 0.9 and role_overlap > 0.9 and fmt_delta >= 0.15:
+        score += 12  # contract-aligned, presentation-distinct
+
     score = max(0.0, min(100.0, score))
-    # Cosmetic only when nearly cloned AND missing profile signature
+    # Cosmetic only when nearly cloned AND missing profile signature AND no format delta
     cosmetic = (
-        text_overlap > 0.82
-        and title_overlap > 0.7
+        text_overlap > 0.92
+        and title_overlap > 0.9
+        and fmt_delta < 0.08
         and float(score) < DIFFERENTIATION_MIN
         and not (sig_hit_b if id_b != "standard" else sig_hit_a)
     )

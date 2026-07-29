@@ -6,6 +6,7 @@ Not a new engine — review layer over composed learner content.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 from engines.lesson_composition_engine.publisher_remediation import (
@@ -100,14 +101,37 @@ def review_adaptation_editorial(
         distinct_markers = {
             "adhd": any("chunk" in str(s.get("title") or "").lower() or "mission" in str(s.get("title") or "").lower() or "minute" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
             "autism": any("routine" in str(s.get("title") or "").lower() or "what we will" in str(s.get("title") or "").lower() or "finished" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
-            "ell": any("word" in str(s.get("title") or "").lower() or "frame" in blob.lower() for s in _sections(adaptation)),
-            "visual": any("diagram" in blob.lower() or "see" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
-            "auditory": "aloud" in blob.lower() or "listen" in blob.lower() or "say" in blob.lower(),
+            "ell": any(
+                "word" in str(s.get("title") or "").lower()
+                or "frame" in blob.lower()
+                or "important words:" in blob.lower()
+                or "(key word)" in blob.lower()
+                for s in _sections(adaptation)
+            ),
+            "visual": any(
+                "diagram" in blob.lower()
+                or "see" in str(s.get("title") or "").lower()
+                or "**" in blob
+                for s in _sections(adaptation)
+            ),
+            "auditory": (
+                "aloud" in blob.lower()
+                or "listen" in blob.lower()
+                or "say" in blob.lower()
+                or "pause" in blob.lower()
+            ),
             "ld": bool(adaptation.get("lce", {}).get("adaptive_profile"))
             or any(str(s.get("body") or "").lstrip().startswith("-") for s in _sections(adaptation))
-            or any("step by step" in str(s.get("title") or "").lower() or "one step at a time" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
+            or any(
+                "step by step" in str(s.get("title") or "").lower()
+                or "one step at a time" in str(s.get("title") or "").lower()
+                for s in _sections(adaptation)
+            ),
             "dyslexia": any(str(s.get("body") or "").lstrip().startswith("-") for s in _sections(adaptation))
-            # Textbook dyslexia presentation: calm layout, one sentence per line.
+            or any(
+                re.search(r"(?m)^\s*\d+\.\s", str(s.get("body") or ""))
+                for s in _sections(adaptation)
+            )
             or any("calm and clear" in str(s.get("title") or "").lower() for s in _sections(adaptation))
             or any("\n" in str(s.get("body") or "").strip() for s in _sections(adaptation)),
         }

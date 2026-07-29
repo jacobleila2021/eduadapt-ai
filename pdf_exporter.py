@@ -27,6 +27,13 @@ def _lesson_lines(title: str, content: Any, spec_id: str = "") -> list[str]:
     for sec in data.get("sections") or []:
         if not isinstance(sec, dict):
             continue
+        role = str(sec.get("role") or "").lower()
+        if spec_id != "teacher" and (
+            sec.get("presentation_only")
+            or role.startswith("presentation_")
+            or role.endswith("_support")
+        ):
+            continue
         lines.append(_plain(sec.get("title") or "Section"))
         lines.append(_plain(sec.get("body") or ""))
         lines.append("")

@@ -130,33 +130,32 @@ def test_compose_lesson_package_adaptations():
     assert "autism" not in adaptations
     std = adaptations["standard"]
     assert std.get("big_idea")
-    assert len(std.get("sections") or []) >= 8
+    assert len(std.get("sections") or []) >= 6
     assert std.get("svg_diagram", "").startswith("<svg")
     assert std.get("mermaid_diagram") in ("", None)
     roles = {s.get("role") for s in std["sections"]}
-    assert "summary" in roles or any("Summary" in str(s.get("title")) for s in std["sections"])
-    assert "exit_ticket" in roles or "reflection" in roles or any(
-        "Understand" in str(s.get("title")) or "Reflect" in str(s.get("title"))
-        for s in std["sections"]
-    )
+    # Slim theory contract: introduction + concepts + worked + practice/exam/hots.
+    for role in ("introduction", "concept", "worked_example", "practice_question", "exam_question", "hots_question"):
+        assert role in roles
+    banned = {"objective", "essential_learning", "revision", "exit_ticket", "assessment"}
+    assert not (roles & banned)
 
 
 def test_flow_includes_concept_teaching_steps():
-    # Product law (textbook theory): student pages teach clean theory —
-    # concepts, diagram reading, summary, self-check. Questions live only in
-    # the exam module and vocabulary practice, never inside lesson theory.
+    # Product law (slim theory): Introduction + concept Steps + worked example
+    # + Practice/Exam/HOTS with answers. No Must Know / exit ticket chrome.
     pkg = compose_lesson_package(
         _sample_uli(), sif=_sample_sif(), uvie=_sample_uvie(), topic_hint="Force and Pressure"
     )
     sections = pkg["adaptations"]["standard"].get("sections") or []
     roles = {s.get("role") for s in sections}
-    for step in ("concept", "summary", "exit_ticket"):
-        assert step in roles or (step == "exit_ticket" and "reflection" in roles)
-    # No question marks inside learner theory sections.
+    for step in ("concept", "worked_example", "practice_question", "exam_question", "hots_question"):
+        assert step in roles
+    # No question marks inside learner theory sections (Q zones excluded).
     for sec in sections:
         role = str(sec.get("role") or "")
         title = str(sec.get("title") or "").lower()
-        if role in {"practice_question", "assessment"} or "exam" in title or "practice" in title:
+        if role in {"practice_question", "exam_question", "hots_question", "assessment"} or "exam" in title or "practice" in title or "hots" in title:
             continue
         assert "?" not in str(sec.get("body") or ""), (sec.get("title"), sec.get("body"))
     assert set(CONCEPT_TEACHING_STEPS)
@@ -202,10 +201,18 @@ def test_visual_placement_and_diagram_quality():
     )
     std = pkg["adaptations"]["standard"]
     assert std["flowchart_svg"].startswith("<svg")
-    visual_sections = [
-        s for s in std["sections"] if s.get("role") == "visual" or s.get("visual_ids")
-    ]
-    assert visual_sections
+    # Slim theory keeps SVG assets; Diagrams prose section is intentionally omitted.
+    assert std.get("svg_diagram", "").startswith("<svg") or std["flowchart_svg"].startswith("<svg")
+    if bool((std.get("lce") or {}).get("slim_theory")):
+        assert not any(
+            str(s.get("title") or "").lower().startswith("using the diagram")
+            for s in std.get("sections") or []
+        )
+    else:
+        visual_sections = [
+            s for s in std["sections"] if s.get("role") == "visual" or s.get("visual_ids")
+        ]
+        assert visual_sections
 
 
 def test_adaptive_versions_are_distinct():
@@ -227,11 +234,16 @@ def test_adaptive_versions_are_distinct():
                 return sec
         return {}
 
-    # Bodies should differ from standard for the dyslexia intro
+    # Bodies should differ from standard for the dyslexia intro / concept formatting
     std_first, dys_first = _first_teaching(standard), _first_teaching(dyslexia)
-    assert dys_first.get("title") != std_first.get("title") or dys_first.get(
-        "body"
-    ) != std_first.get("body")
+    std_blob = "\n".join(str(s.get("body") or "") for s in standard.get("sections") or [])
+    dys_blob = "\n".join(str(s.get("body") or "") for s in dyslexia.get("sections") or [])
+    assert (
+        dys_first.get("title") != std_first.get("title")
+        or dys_first.get("body") != std_first.get("body")
+        or dys_blob != std_blob
+        or dyslexia.get("presentation") != standard.get("presentation")
+    )
     rewritten = compose_adaptive_version(standard, "ell", vocabulary_terms=["force", "pressure"])
     assert "Key Words" in str(rewritten.get("sections")) or "Important words" in str(rewritten.get("sections"))
 

@@ -56,10 +56,14 @@ def vary_openings(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Ensure consecutive sections do not share identical openings — without AI scaffolding prefixes."""
     seen: list[str] = []
     out: list[dict[str, Any]] = []
+    _q_roles = {"practice_question", "exam_question", "hots_question", "assessment"}
     for sec in sections:
         if not isinstance(sec, dict):
             continue
         row = dict(sec)
+        if str(row.get("role") or "") in _q_roles:
+            out.append(row)
+            continue
         body = str(row.get("body") or "").strip()
         if not body:
             out.append(row)
@@ -113,6 +117,11 @@ def polish_adaptation(adaptation: dict[str, Any]) -> dict[str, Any]:
         row = dict(sec)
         title = str(row.get("title") or "")
         body = str(row.get("body") or "")
+        role = str(row.get("role") or "")
+        # Keep Q → Answer layout intact (do not collapse blank lines).
+        if role in {"practice_question", "exam_question", "hots_question", "assessment"}:
+            sections.append(row)
+            continue
         # Preserve intentional bullet scaffolds for ADHD/dyslexia etc.
         if body.lstrip().startswith("-"):
             polished_lines = []

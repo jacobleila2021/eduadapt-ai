@@ -877,6 +877,13 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
     for index, section in enumerate(lesson.get("sections") or []):
         if not isinstance(section, dict):
             continue
+        role = str(section.get("role") or "").lower()
+        if (
+            section.get("presentation_only")
+            or role.startswith("presentation_")
+            or role.endswith("_support")
+        ):
+            continue
         body = _plain_lesson_text(section.get("body") or "")
         raw_title = section.get("title") or f"Section {index + 1}"
         title = normalize_section_title(raw_title, body, index)
@@ -1089,6 +1096,17 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
             )
 
     for idx, section in enumerate(sections):
+        if not isinstance(section, dict):
+            continue
+        # Teacher-procedure / presentation chrome is not lesson theory.
+        # Student tabs show curriculum sections only; teacher tab keeps extras.
+        role = str(section.get("role") or "").lower()
+        if spec_id != "teacher" and (
+            section.get("presentation_only")
+            or role.startswith("presentation_")
+            or role.endswith("_support")
+        ):
+            continue
         raw_title = section.get("title", "") or f"Section {idx + 1}"
         body = section.get("body", "")
         title = normalize_section_title(raw_title, body, idx)
@@ -1116,29 +1134,8 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     if spec_id == "teacher":
         _render_teacher_answer_key(lesson)
 
-    items = _lesson_map_items(lesson)
-    st.markdown("#### Lesson Map")
-    st.caption("A section-by-section guide generated from the lesson shown above.")
-    cols = st.columns(min(len(items), 5) or 1)
-    for index, item in enumerate(items[:5]):
-        with cols[index % len(cols)]:
-            icon = item.get("icon", f"{index + 1:02d}")
-            idea = item.get("idea", "")
-            title = item.get("title", "")
-            hex_color = item.get("hex", "#0F766E")
-            st.markdown(
-                f'<div style="background:{BG_MAIN};border-left:6px solid {hex_color};'
-                f'padding:0.9rem;min-height:128px;border-radius:16px;color:{TEXT_BODY};'
-                f'box-shadow:0 5px 18px rgba(11,46,89,0.08);">'
-                f'<span style="display:inline-block;color:{hex_color};font-weight:800;'
-                f'font-size:0.78rem;letter-spacing:0.08em;margin-bottom:0.45rem;">'
-                f'{html.escape(str(icon))}</span><br/>'
-                f'<strong style="color:{TEXT_BODY};line-height:1.25;">'
-                f'{html.escape(title)}</strong><br/>'
-                f'<span style="display:block;margin-top:0.4rem;font-size:0.86rem;'
-                f'line-height:1.45;color:{TEXT_BODY};">{html.escape(idea)}</span></div>',
-                unsafe_allow_html=True,
-            )
+    # Lesson Map removed — theory + Q/A sections already show the reading path.
+    return
 
 
 def vocabulary_to_text(data: Any) -> str:

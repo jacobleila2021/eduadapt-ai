@@ -223,7 +223,11 @@ def score_engagement(adaptation: Mapping[str, Any]) -> float:
     score = 40.0 + min(35, 12 * _story_hits(text)) + min(25, 8 * _concrete_hits(text))
     if _weak_hits(text):
         score -= min(40, 5 * len(_weak_hits(text)))
-    hooks = _role_bodies(adaptation, "hook")
+    hooks = (
+        _role_bodies(adaptation, "hook")
+        or _role_bodies(adaptation, "introduction")
+        or _role_bodies(adaptation, "concept_primer")
+    )
     if hooks and _story_hits(hooks[0]) + _concrete_hits(hooks[0]) >= 1:
         score += 10
     return max(0.0, min(100.0, score))
@@ -241,17 +245,28 @@ def score_storytelling(adaptation: Mapping[str, Any]) -> float:
 
 def score_progression(adaptation: Mapping[str, Any]) -> float:
     roles = [str(s.get("role") or "") for s in _sections(adaptation)]
-    needed = ["hook", "visual", "concept", "simple_explanation", "real_life_example", "summary"]
-    present = sum(1 for r in needed if r in roles)
+    role_set = set(roles)
+    # Master Lesson Contract uses introduction/essential_learning instead of
+    # hook/simple_explanation — count those aliases so theory pages are not
+    # unfairly docked for following the mandated sequence.
+    needed_groups = (
+        {"hook", "introduction", "concept_primer"},
+        {"visual"},
+        {"concept"},
+        {"simple_explanation", "essential_learning"},
+        {"real_life_example"},
+        {"summary"},
+    )
+    present = sum(1 for group in needed_groups if role_set & group)
     score = 15.0 * present
     # Penalise role spam / clone depth without teaching
     if len(roles) > 28:
         score -= 20
-    if "process" in roles or "worked_example" in roles:
+    if "process" in role_set or "worked_example" in role_set:
         score += 8
-    if "reflection" in roles or "exit_ticket" in roles:
+    if "reflection" in role_set or "exit_ticket" in role_set:
         score += 5
-    if "essential_learning" in roles or "introduction" in roles:
+    if "essential_learning" in role_set or "introduction" in role_set:
         score += 4
     return max(0.0, min(100.0, score))
 
@@ -324,6 +339,9 @@ def score_diagram_usefulness(adaptation: Mapping[str, Any]) -> float:
         str(adaptation.get(k) or "").startswith("<svg")
         for k in ("flowchart_svg", "concept_map_svg", "svg_diagram")
     )
+    # Slim theory keeps SVG assets without a Diagrams prose section.
+    if bool((adaptation.get("lce") or {}).get("slim_theory")) and svg:
+        return 88.0
     visual_bodies = _role_bodies(adaptation, "visual")
     text = instructional_text(adaptation).lower()
     if not svg:
@@ -542,29 +560,41 @@ def textbook_teaching_score(
     # Questions never belong inside theory (exam/practice zones excluded above).
     questions = sum(b.count("?") for b in bodies)
     score -= 10 * questions
-    # Structure: theory → summary → self-check / exit ticket.
+    # Slim theory contract: introduction + concept steps + practice/exam/hots.
+    slim = (
+        "practice_question" in roles
+        and "exam_question" in roles
+        and "hots_question" in roles
+    )
     if roles.count("concept") < 2:
         score -= 12
-    if "summary" not in roles:
-        score -= 12
-    if "reflection" not in roles and "exit_ticket" not in roles:
-        score -= 6
-    has_svg = any(
-        str(std.get(k) or "").startswith("<svg")
-        for k in ("flowchart_svg", "concept_map_svg", "svg_diagram")
-    )
-    if has_svg and "visual" not in roles:
-        score -= 6
+    if not slim:
+        if "summary" not in roles:
+            score -= 12
+        if "reflection" not in roles and "exit_ticket" not in roles:
+            score -= 6
+        has_svg = any(
+            str(std.get(k) or "").startswith("<svg")
+            for k in ("flowchart_svg", "concept_map_svg", "svg_diagram")
+        )
+        if has_svg and "visual" not in roles:
+            score -= 6
     # Every verified claim must reach the learner.
     alignment = _claim_alignment(std, claims)
     score -= 25 * (1.0 - alignment)
-    # Template junk and repetition still fail.
+    # Template junk and repetition still fail (theory body only — Q/A zones
+    # intentionally restate definitions as answers).
     weak = _weak_hits(text)
     score -= 6 * len(weak)
-    rep = repetition_ratio(text)
-    if rep > 0.18:
+    theory_text = " ".join(bodies)
+    rep = repetition_ratio(theory_text or text)
+    # Slim theory restates stage names across Steps + worked walk; allow a
+    # slightly higher soft floor before docking publisher pride.
+    soft_floor = 0.20 if slim else 0.12
+    hard_floor = 0.24 if slim else 0.18
+    if rep > hard_floor:
         score -= 12
-    elif rep > 0.12:
+    elif rep > soft_floor:
         score -= 6
     score = max(0.0, min(100.0, score))
     detail = {
