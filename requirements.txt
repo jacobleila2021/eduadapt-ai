@@ -18,10 +18,10 @@ sympy>=1.12
 numpy>=1.26,<2.3
 matplotlib>=3.8
 schemdraw>=0.17
-# Phase 2 Knowledge Layer (NCERT pilot + RAG)
-chromadb>=0.5.0,<0.6.0
-# Streamlit Cloud Linux needs a newer SQLite for Chroma
-pysqlite3-binary; platform_system=="Linux"
-# deploy rebuild: v3.3.3-drop-chempy-cloud-install
+# Phase 2 Knowledge Layer — Chroma/RAG is OPTIONAL on Streamlit Cloud.
+# chromadb + pysqlite3-binary hang/fail Cloud rebuilds ("app in the oven").
+# Local/full installs: pip install -r requirements-engines.txt
+# Runtime already falls back to keyword retrieval when Chroma is absent.
+# deploy rebuild: v3.3.9-drop-chromadb-cloud-install
 # Beta readiness - optional nicer PDF typography (fallback PDF always available)
 fpdf2>=2.7.0,<3.0.0
