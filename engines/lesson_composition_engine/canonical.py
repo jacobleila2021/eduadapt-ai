@@ -180,6 +180,15 @@ def _mark_answer(
             if not ex.endswith((".", "!", "?")):
                 ex += "."
             bits.insert(0, ex)
+            seen.add(_norm_key(ex))
+    # Ensure higher-mark answers name enough distinct taught points for the paper.
+    while len(bits) < min(marks, 6) and len(pts) > len(bits):
+        for p in pts:
+            if _norm_key(p) not in {_norm_key(b) for b in bits}:
+                bits.append(p)
+                break
+        else:
+            break
     return " ".join(bits)
 
 

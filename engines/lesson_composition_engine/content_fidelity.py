@@ -922,15 +922,25 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
         if role in {"practice_question", "exam_question", "hots_question"}:
             for block in re.split(r"\n\s*\n", body):
                 m = re.search(r"\((\d+)\s*marks?\)", block, re.I)
-                ans = re.search(r"(?im)^answer:\s*(.+)$", block)
-                if m and ans:
+                ans_m = re.search(
+                    r"(?is)answer\s*:\s*(.+?)(?=\n\s*\d+\.\s|\Z)",
+                    block,
+                )
+                if m and ans_m:
                     marks = int(m.group(1))
-                    words = len(ans.group(1).split())
-                    # Rough depth floor: ~8 words per mark for 3+; 1-mark may be short.
-                    need = 6 if marks <= 1 else marks * 8
-                    if words < need:
+                    answer = re.sub(r"\s+", " ", ans_m.group(1)).strip()
+                    words = len(answer.split())
+                    sentences = [
+                        s for s in re.split(r"(?<=[.!?])\s+", answer) if s.strip()
+                    ]
+                    # Exam-ready prose is concise — require substance, not filler
+                    # padding. Floor: ~5 words/mark, or roughly one clear point per mark.
+                    need_words = 5 if marks <= 1 else max(12, marks * 5)
+                    need_sents = 1 if marks <= 2 else max(2, (marks + 1) // 2)
+                    if words < need_words and len(sentences) < need_sents:
                         issues.append(
-                            f"Mark–answer mismatch: {marks}-mark item has only {words} words."
+                            f"Mark–answer mismatch: {marks}-mark item has only "
+                            f"{words} words / {len(sentences)} sentences."
                         )
                         break
     if title_hits >= 2:
