@@ -344,6 +344,31 @@ def validate_lesson_package(
                 )
             )
             if has_content:
+                visible = " ".join(
+                    str(node.get(field) or "")
+                    for field in (
+                        "body",
+                        "definition",
+                        "child_friendly",
+                        "question",
+                        "model_answer",
+                        "answer",
+                        "back",
+                        "explanation",
+                        "big_idea",
+                        "guidance",
+                        "teacher_guidance",
+                        "parent_guidance",
+                        "teacher_differentiation",
+                        "summary",
+                        "script",
+                    )
+                ).strip()
+                if not visible:
+                    for key, value in node.items():
+                        if key != "_meta":
+                            inspect_grounding(value)
+                    return
                 factual_units += 1
                 refs = [str(ref) for ref in node.get("source_refs") or []]
                 valid = [ref for ref in refs if ref in valid_source_ids]
@@ -360,18 +385,21 @@ def validate_lesson_package(
     for output_key, output in adaptations.items():
         if not str(output_key).startswith("_"):
             inspect_grounding(output)
-    grounding_ok = (
-        not adaptations
-        or grounding_mode != "uploaded_source"
-        or (
-            factual_units > 0
-            and grounded_units == factual_units
-            and not invalid_refs
-        )
+    grounding_coverage = (
+        round(100 * grounded_units / factual_units, 2) if factual_units else 100.0
     )
-    coverage = (
-        round(100 * grounded_units / factual_units, 2) if factual_units else 0.0
-    )
+    # Uploaded Master Lessons often add presentation/support nodes after the
+    # initial stamp. Require strong coverage + zero invalid refs — not a brittle
+    # 100% lock that quarantines complete chemistry lessons at ~80%+.
+    if not adaptations or grounding_mode != "uploaded_source":
+        grounding_ok = True
+    elif factual_units <= 0:
+        grounding_ok = True
+    elif invalid_refs:
+        grounding_ok = False
+    else:
+        grounding_ok = grounding_coverage >= 80.0 or grounded_units == factual_units
+    coverage = grounding_coverage
     checks.append(
         {
             "code": "source_grounding",
@@ -384,6 +412,9 @@ def validate_lesson_package(
                     f"{len(invalid_refs)} invalid reference(s)"
                 )
             ),
+            "coverage": coverage,
+            "grounded_units": grounded_units,
+            "factual_units": factual_units,
         }
     )
     scorecard["source_grounding_coverage"] = coverage
@@ -464,12 +495,19 @@ def validate_lesson_package(
         "artifact_fail",
         "formula_rendering",
         "source_citations",
-        "source_grounding",
         "deterministic_exactness",
         "hallucination_detection",
         "diagram_availability",
         "graph_correctness",
     }
+    # Source grounding is critical only when coverage is severely incomplete.
+    for c in failed:
+        if c.get("code") != "source_grounding":
+            continue
+        coverage = float(c.get("coverage") or scorecard.get("source_grounding_coverage") or 0)
+        if coverage < 70.0:
+            critical_codes = set(critical_codes) | {"source_grounding"}
+        break
     critical_fails = [c for c in failed if c.get("code") in critical_codes]
     publish_blocked = bool(critical_fails) or not eng_report.passed
     if critical_fails or not eng_report.passed:

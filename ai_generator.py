@@ -1777,7 +1777,12 @@ def generate_adaptations(
                     repaired.setdefault("lce", {})
                     if isinstance(repaired.get("lce"), dict):
                         repaired["lce"]["fidelity_repaired"] = True
-                    merged[key] = inject_verified_visuals_into_lesson(repaired, preferred)
+                    merged[key] = _apply_v3_output_contract(
+                        inject_verified_visuals_into_lesson(repaired, preferred),
+                        key=key,
+                        valid_source_refs=source_refs,
+                        fallback_used="fidelity_repaired",
+                    )
                 except Exception:
                     _log.exception("Fidelity repair failed for %s", key)
             fidelity = validate_curriculum_fidelity(canonical_core, merged)
@@ -1803,6 +1808,19 @@ def generate_adaptations(
         else:
             fidelity["ok"] = True
         merged["_meta"]["curriculum_fidelity"] = fidelity
+
+        # Re-stamp provenance after any fidelity repair / inject so chemistry
+        # lessons are not quarantined for presentation nodes missing source_refs.
+        for _prov_key, _prov_val in list(merged.items()):
+            if not str(_prov_key).startswith("_") and isinstance(_prov_val, dict):
+                _prev_contract = _prov_val.get("_contract") or {}
+                merged[_prov_key] = _apply_v3_output_contract(
+                    _prov_val,
+                    key=_prov_key,
+                    valid_source_refs=source_refs,
+                    fallback_used=str(_prev_contract.get("fallback_used") or "none"),
+                    retry_history=_prev_contract.get("retry_history") or [],
+                )
 
         package_qa = validate_lesson_package(
             artifacts=stem["artifacts"],
