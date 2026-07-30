@@ -59,7 +59,7 @@ def presentation_presets_for_mode(mode: str) -> dict[str, Any]:
     """UI/content presentation hints consumed by toolbar / generators."""
     presets = {
         "standard": {"font": "system", "bullets": False, "grade_band": "on-level"},
-        "dyslexia": {"font": "OpenDyslexic/Atkinson", "bullets": True, "grade_band": "3-4", "ruler": True},
+        "dyslexia": {"font": "OpenDyslexic/Atkinson", "bullets": True, "grade_band": "on-level", "ruler": True},
         "adhd": {"chunk_minutes": 2, "checkpoints": True, "focus_mode": True},
         "autism": {"literal": True, "predictable_structure": True, "sensory_calm": True},
         "ell": {"glossary": True, "sentence_frames": True, "dual_language_ready": True},

@@ -818,7 +818,9 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
                     ACIDS_BASES_SALTS_TERMS,
                 )
 
-                topic = str((sheet.get("header") or {}).get("topic") or "Lesson")
+                topic = str((sheet.get("header") or {}).get("topic") or "").strip()
+                if not topic or topic.lower() in {"lesson", "lesson topic"}:
+                    topic = "Acids, Bases and Salts"
                 stages = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:5]
                 if any(k in topic.lower() for k in ("acid", "base", "salt")):
                     svg = build_educational_flowchart_svg(

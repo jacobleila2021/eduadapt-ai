@@ -67,8 +67,18 @@ def _wrap_label(text: str, max_len: int = 22) -> list[str]:
 def _lesson_topic(lesson: dict) -> str:
     for key in ("topic", "title"):
         value = (lesson.get(key) or "").strip()
-        if value:
+        if value and value.lower() not in {"lesson", "lesson topic", "topic"}:
             return value
+    header = lesson.get("header") if isinstance(lesson.get("header"), dict) else {}
+    header_topic = str(header.get("topic") or "").strip()
+    if header_topic and header_topic.lower() not in {"lesson", "lesson topic"}:
+        return header_topic
+    # Infer from chemistry diagram stages / section titles
+    blob = " ".join(
+        str(s.get("title") or "") for s in (lesson.get("sections") or []) if isinstance(s, dict)
+    ).lower()
+    if any(k in blob for k in ("acid", "base", "salt")):
+        return "Acids, Bases and Salts"
     big = (lesson.get("big_idea") or "").strip()
     return big[:60] if big else "Lesson Topic"
 

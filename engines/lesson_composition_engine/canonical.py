@@ -587,9 +587,27 @@ def build_canonical_lesson(
         if not merged_body.strip():
             continue
         display = name[:1].upper() + name[1:]
+        # Pedagogical section titles (same depth for Mainstream and Dyslexia Smart).
+        from engines.lesson_composition_engine.vocab_quality import is_plural_concept
+
+        low_name = name.strip().lower()
+        if low_name in {"acid", "acids", "base", "bases", "salt", "salts"}:
+            plural = {
+                "acid": "Acids",
+                "acids": "Acids",
+                "base": "Bases",
+                "bases": "Bases",
+                "salt": "Salts",
+                "salts": "Salts",
+            }[low_name]
+            section_title = f"What are {plural}?"
+        elif is_plural_concept(name):
+            section_title = f"What are {display}?"
+        else:
+            section_title = f"Understanding {display}"
         sections.append(
             {
-                "title": display,
+                "title": section_title,
                 "role": "concept",
                 "body": merged_body,
             }

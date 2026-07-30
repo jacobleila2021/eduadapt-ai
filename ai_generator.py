@@ -418,6 +418,15 @@ def _valid_lesson(lesson: dict, *, classroom: bool = False) -> bool:
             if isinstance(s, dict)
         }
         required = {
+            "introduction",
+            "concept",
+            "worked_example",
+            "practice_question",
+            "exam_question",
+            "hots_question",
+        }
+        # Accept either current Master role set or legacy Must-Know set.
+        legacy = {
             "objective",
             "essential_learning",
             "concept",
@@ -425,8 +434,12 @@ def _valid_lesson(lesson: dict, *, classroom: bool = False) -> bool:
             "practice_question",
             "exam_question",
         }
-        if not required.issubset(roles):
-            return False
+        if not (required.issubset(roles) or legacy.issubset(roles)):
+            # Slim theory Masters may omit worked_example when source is thin —
+            # still valid if they teach concepts + practice.
+            slim_ok = {"introduction", "concept", "practice_question"}.issubset(roles)
+            if not slim_ok:
+                return False
         # Stub-bullet check only on teaching prose — revision/exit checklists
         # are intentionally short one-liners.
         skip_stub_roles = {
@@ -1521,37 +1534,22 @@ def generate_adaptations(
         merged["_meta"]["essential_learning_core"] = canonical_core
 
         for key in other_keys:
-            candidate = lce_adaptations.get(key) or {}
-            classroom = key in CLASSROOM_LESSON_KEYS
-            parent_ok = key == "parent" and candidate.get("sections") and candidate.get("big_idea")
-            canonical_candidate = bool(
-                isinstance(candidate.get("lce"), dict)
-                and candidate["lce"].get("derived_from_canonical")
-            )
-            if (canonical_candidate and (_valid_lesson(candidate, classroom=classroom) or parent_ok)):
-                # LCE candidate already inherits the canonical lesson.
-                merged[key] = _apply_v3_output_contract(
-                    inject_verified_visuals_into_lesson(candidate, preferred),
-                    key=key,
-                    valid_source_refs=source_refs,
-                    fallback_used="lce",
+            # Master Lesson Contract: every classroom adaptation inherits the
+            # frozen Mainstream lesson — presentation only (never a second curriculum).
+            if key in {"teacher", "parent"}:
+                derived = augment_support_version(
+                    canonical_frozen, canonical_core, board_meta, key
                 )
             else:
-                # Derive directly from the frozen canonical lesson.
-                if key in {"teacher", "parent"}:
-                    derived = augment_support_version(
-                        canonical_frozen, canonical_core, board_meta, key
-                    )
-                else:
-                    derived = derive_presentation_adaptation(
-                        canonical_frozen, canonical_core, key
-                    )
-                merged[key] = _apply_v3_output_contract(
-                    inject_verified_visuals_into_lesson(derived, preferred),
-                    key=key,
-                    valid_source_refs=source_refs,
-                    fallback_used="canonical_derived",
+                derived = derive_presentation_adaptation(
+                    canonical_frozen, canonical_core, key
                 )
+            merged[key] = _apply_v3_output_contract(
+                inject_verified_visuals_into_lesson(derived, preferred),
+                key=key,
+                valid_source_refs=source_refs,
+                fallback_used="canonical_derived",
+            )
             done += 1
             step(
                 f"Lesson adaptations… {done}/{total} complete",
@@ -1567,20 +1565,16 @@ def generate_adaptations(
             # generate=True product set. ADHD and Autism versions are cancelled
             # (product decision) and must never be merged or shown.
             for extra_key in ("dyslexia",):
-                candidate = lce_adaptations.get(extra_key)
-                if not (
-                    isinstance(candidate, dict)
-                    and (candidate.get("sections") or candidate.get("big_idea"))
-                ):
-                    # v3.3: never regenerate — inherit the canonical lesson.
-                    candidate = derive_presentation_adaptation(
-                        canonical_frozen, canonical_core, extra_key
-                    )
+                # Always inherit the frozen Master — never keep a divergent LCE
+                # draft that could out-depth Mainstream (Master Lesson Contract).
+                candidate = derive_presentation_adaptation(
+                    canonical_frozen, canonical_core, extra_key
+                )
                 merged[extra_key] = _apply_v3_output_contract(
                     inject_verified_visuals_into_lesson(candidate, preferred),
                     key=extra_key,
                     valid_source_refs=source_refs,
-                    fallback_used="lce",
+                    fallback_used="canonical_derived",
                 )
             merged = attach_lce_to_adaptations(
                 merged, lesson_text=lesson_text, reject_on_fail=False

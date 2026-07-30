@@ -566,44 +566,46 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
     for i, outcome in enumerate(seed[:8] or concepts[:8] or [{"name": topic}]):
         if isinstance(outcome, dict) and outcome.get("prompt"):
             q = _anchor_to_lesson(str(outcome["prompt"]))
+            name = str((outcome or {}).get("name") or topic)
         else:
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
-            q = f"In 1–2 sentences, explain '{name}'."
-        evidence = pool[i % len(pool)] if pool else f"Accurate brief explanation of the idea in {topic}."
+            q = f"Explain {name} using evidence from the lesson."
+        # Model answer must TEACH — never echo the question stem or raw OCR fact.
+        answer = (
+            canonical_definition(name)
+            or build_student_definition(name, str((outcome or {}).get("explanation") or "") if isinstance(outcome, dict) else "", topic=topic)
+            or (pool[i % len(pool)] if pool else "")
+        )
+        if answer and answer.rstrip(".").lower() in q.lower():
+            answer = canonical_definition(name) or (
+                pool[(i + 1) % len(pool)] if len(pool) > 1 else answer
+            )
+        if not answer or "one of the ideas taught" in answer.lower():
+            continue
         short.append(
             {
-                "question": q,
+                "question": q if not q.lower().startswith("in your own words, explain this idea") else f"Explain {name} using evidence from the lesson.",
                 "marks": 2,
                 "lines": 4,
-                "model_answer": evidence[:220],
+                "model_answer": answer[:420] if answer.endswith((".", "!", "?")) else (answer[:420].rstrip(".") + "."),
             }
         )
-    # Guarantee exam breadth for EERL pedagogical flow — every filler question
-    # must be grounded in a distinct lesson fact, never a numbered template.
+    # Guarantee exam breadth — distinct concept prompts, never fact-echo fillers.
     while len(short) < 6:
         idx = len(short)
-        evidence = pool[idx % len(pool)] if pool else ""
-        if evidence:
-            short.append(
-                {
-                    "question": (
-                        "In your own words, explain this idea from the lesson: "
-                        f"{evidence[:110].rstrip('.')}."
-                    ),
-                    "marks": 2,
-                    "lines": 4,
-                    "model_answer": evidence[:220],
-                }
-            )
-        else:
-            short.append(
-                {
-                    "question": f"State one important fact about {topic}.",
-                    "marks": 2,
-                    "lines": 4,
-                    "model_answer": f"One accurate fact about {topic} from the lesson.",
-                }
-            )
+        concept = concepts[idx % len(concepts)] if concepts else {"name": topic}
+        name = str(concept.get("name") or topic)
+        answer = canonical_definition(name) or (pool[idx % len(pool)] if pool else "")
+        if not answer:
+            break
+        short.append(
+            {
+                "question": f"Explain {name} using evidence from the lesson.",
+                "marks": 2,
+                "lines": 4,
+                "model_answer": answer if answer.endswith((".", "!", "?")) else answer + ".",
+            }
+        )
     long_q = []
     for i, concept in enumerate(concepts[:4] or [{"name": topic}]):
         name = str(concept.get("name") or topic)
@@ -618,10 +620,21 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         seen_parts: set[str] = set()
         for part in ([explanation] if explanation else []) + direct[:3] + context_facts[:2]:
             cleaned = str(part or "").strip()
+            try:
+                from engines.lesson_composition_engine.vocab_quality import (
+                    clean_learner_claim,
+                    repair_ocr_prose,
+                )
+
+                cleaned = clean_learner_claim(cleaned) or repair_ocr_prose(cleaned)
+            except Exception:
+                pass
             key = cleaned.lower()
             if not cleaned or key in seen_parts:
                 continue
             if "one of the ideas taught" in key or "in this chapter" in key:
+                continue
+            if _re.search(r"(?i)\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b", cleaned):
                 continue
             seen_parts.add(key)
             answer_parts.append(cleaned if cleaned.endswith((".", "!", "?")) else cleaned + ".")

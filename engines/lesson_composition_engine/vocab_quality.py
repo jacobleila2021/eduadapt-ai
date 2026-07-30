@@ -77,17 +77,63 @@ WATER_CYCLE_PICTURES = {
     "transpiration": "Draw a tree with tiny arrows of vapour leaving the leaves toward the sky.",
 }
 
-# CBSE Class 8 Science — Acids, Bases and Salts (deterministic teaching bank).
+# CBSE Class 8–10 Science — Acids, Bases and Salts (Master Lesson teaching bank).
+# Depth includes formulae so Mainstream matches Dyslexia Smart quality — never Grade-6 only.
 ACIDS_BASES_SALTS_TERMS = (
-    ("Acid", "An acid is a substance that tastes sour and turns blue litmus red."),
-    ("Base", "A base is a substance that tastes bitter, feels soapy, and turns red litmus blue."),
-    ("Salt", "A salt is the substance formed when an acid and a base react and cancel each other's effect."),
-    ("Indicator", "An indicator is a dye that changes colour in acidic or basic solutions."),
-    ("Litmus", "Litmus is a natural indicator: blue litmus turns red in acid; red litmus turns blue in base."),
-    ("Neutralisation", "Neutralisation is the reaction in which an acid and a base cancel each other and form salt and water."),
-    ("Baking soda", "Baking soda (sodium hydrogencarbonate) is a mild base used in cooking and as an antacid."),
-    ("Phenolphthalein", "Phenolphthalein is a synthetic indicator that turns pink in a basic solution and colourless in an acid."),
-    ("Methyl orange", "Methyl orange is a synthetic indicator that is red in acid and yellow in base."),
+    (
+        "Acid",
+        "An acid is a substance that tastes sour and turns blue litmus red. "
+        "Common laboratory acids include hydrochloric acid (HCl), sulphuric acid (H₂SO₄) "
+        "and acetic acid (CH₃COOH). Acids release hydrogen ions (H⁺) in water, so acidic "
+        "solutions can conduct electricity and react with metals to form a salt and hydrogen gas.",
+    ),
+    (
+        "Base",
+        "A base is a substance that tastes bitter, feels soapy or slippery, and turns red litmus blue. "
+        "Bases release hydroxide ions (OH⁻) in solution. Common bases include sodium hydroxide (NaOH) "
+        "and potassium hydroxide (KOH). Bases react with acids in neutralisation to form salt and water, "
+        "which is why mild bases are used in antacids and cleaning products.",
+    ),
+    (
+        "Salt",
+        "A salt is the substance formed when an acid and a base cancel each other's effect "
+        "(neutralisation), usually along with water. Everyday examples include common salt (NaCl) "
+        "from hydrochloric acid and sodium hydroxide, and salts formed when acids react with metals "
+        "or metal carbonates.",
+    ),
+    (
+        "Indicator",
+        "An indicator is a dye that changes colour in acidic or basic solutions so you can classify "
+        "a substance without tasting it. Natural indicators include litmus and turmeric; synthetic "
+        "indicators include phenolphthalein and methyl orange.",
+    ),
+    (
+        "Litmus",
+        "Litmus is a natural indicator from lichens: blue litmus turns red in an acid; red litmus "
+        "turns blue in a base. When a litmus solution is neither acidic nor basic (neutral), "
+        "its colour is purple.",
+    ),
+    (
+        "Neutralisation",
+        "Neutralisation is the reaction in which an acid and a base cancel each other and form "
+        "salt and water. In ionic terms, H⁺ from the acid and OH⁻ from the base combine to form water. "
+        "Baking soda solution is a safe everyday remedy for acidity because it is a mild base.",
+    ),
+    (
+        "Baking soda",
+        "Baking soda is sodium hydrogencarbonate (NaHCO₃), a mild base used in cooking and as an "
+        "antacid. It reacts with acids to form a salt, water and carbon dioxide, which is why it "
+        "relieves acidity better than lemon juice or vinegar (both acidic).",
+    ),
+    (
+        "Phenolphthalein",
+        "Phenolphthalein is a synthetic indicator that is colourless in acidic solution and turns "
+        "pink in a basic solution.",
+    ),
+    (
+        "Methyl orange",
+        "Methyl orange is a synthetic indicator that is red in acid and yellow in base.",
+    ),
 )
 
 # Sentence fragments that OCR/title scraping wrongly promotes to "concepts".
@@ -204,6 +250,16 @@ def repair_ocr_prose(text: str) -> str:
         if nxt == t:
             break
         t = nxt
+    # Chapter title + page number debris: "Acids, Bases and Salts 19"
+    t = re.sub(
+        r"(?i)\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b",
+        " ",
+        t,
+    )
+    t = re.sub(r"(?i)\b(water\s+cycle|force\s+and\s+pressure)\s+\d{1,3}\b", " ", t)
+    # Bare page-header claims: "Acids, Bases and Salts 19" as whole string
+    if re.fullmatch(r"(?i)[\w\s,]{6,50}\s+\d{1,3}", t.strip()):
+        return ""
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
@@ -215,6 +271,14 @@ def is_ocr_garbage_claim(text: str) -> bool:
     if not raw:
         return True
     low = raw.lower()
+    # Page header only (title + page number)
+    if re.fullmatch(r"(?i)[\w\s,]{6,50}\s+\d{1,3}", original.strip()):
+        return True
+    if re.search(r"(?i)\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b", original):
+        # Still garbage if the claim is mostly header debris
+        stripped = re.sub(r"(?i)\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b", "", original)
+        if len(stripped.split()) < 6:
+            return True
     if re.search(r"\bchapter\b|\bactivity\s+\d", low):
         return True
     if "in this chapter" in low or "we will study" in low:
