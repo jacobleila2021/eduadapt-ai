@@ -64,16 +64,16 @@ def publication_block_reason(
         pass
 
     # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief.
-    # Soft-pass classroom open when the lesson is already "Good" (≥85). Hard
-    # quarantine only for Reject-band scores (<80). Chemistry uploads often
-    # land 87–94 after Master Lesson polish and must still be usable.
+    # Soft-pass classroom open whenever the score is not Reject-band (<80).
+    # Publisher-ready (≥95) remains the polish target; chemistry uploads often
+    # land 80–94 after Master Lesson polish and must still be usable.
     eats = meta.get("eats") if isinstance(meta.get("eats"), dict) else {}
     if eats and (eats.get("reject_rendering") or eats.get("publication_ready") is False):
         try:
             overall = float(eats.get("overall") or 0)
         except (TypeError, ValueError):
             overall = 0.0
-        if overall >= 85.0:
+        if overall >= 80.0:
             eats["classroom_soft_pass"] = True
             eats["reject_rendering"] = False
             # Keep publication_ready False so dashboards still show polish needed,

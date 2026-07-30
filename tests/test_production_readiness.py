@@ -158,6 +158,19 @@ def test_publication_gate_blocks_every_known_failure_source():
     }
     assert "Educational Acceptance" in publication_block_reason(eats_blocked)
     assert not publication_allowed(eats_blocked)
+    # Near-Good chemistry scores (e.g. 84.1) must soft-open — not quarantine at 95.
+    eats_soft = {
+        "_meta": {
+            "eats": {
+                "publication_ready": False,
+                "reject_rendering": True,
+                "overall": 84.1,
+                "verdict": "revise",
+            }
+        }
+    }
+    assert publication_allowed(eats_soft)
+    assert not publication_block_reason(eats_soft)
     # Soft PQLE audit must not quarantine classroom sessions without render_blocked
     soft_pqle = {
         "_meta": {

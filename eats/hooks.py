@@ -43,12 +43,14 @@ def eats_block_reason(adaptations: Mapping[str, Any] | None) -> str:
             overall = float(eats.get("overall") or 0)
         except (TypeError, ValueError):
             overall = 0.0
-        # Soft-pass Good band for classroom open; still report Reject band.
-        if overall >= 85.0:
+        # Soft-pass classroom open at ≥80 (Reject band only). Publisher-ready
+        # still targets PUBLISHER_READY (95) for dashboards / export polish.
+        if overall >= 80.0:
             return ""
         verdict = eats.get("verdict") or "reject"
         return (
             f"Educational Acceptance Testing failed ({verdict}; "
-            f"score={overall}, need ≥{PUBLISHER_READY}). Lesson held for rewrite."
+            f"score={overall}, need ≥80 to open). "
+            f"Publisher polish target remains ≥{PUBLISHER_READY}."
         )
     return ""
