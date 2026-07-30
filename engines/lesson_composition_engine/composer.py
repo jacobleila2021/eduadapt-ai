@@ -88,10 +88,28 @@ def _teachable_fact(text: str) -> bool:
 
 
 def _fact_pool(clg: Mapping[str, Any]) -> list[str]:
+    try:
+        from engines.lesson_composition_engine.vocab_quality import (
+            ACIDS_BASES_SALTS_TERMS,
+            clean_learner_claim,
+        )
+    except Exception:  # pragma: no cover
+        clean_learner_claim = lambda t: str(t or "").strip()  # noqa: E731
+        ACIDS_BASES_SALTS_TERMS = ()
+
     facts = [str(f.get("text") or "") for f in (clg.get("facts") or []) if f]
     claims = [str(c) for c in (clg.get("claim_texts") or []) if c]
-    pool = [t for t in facts + claims if t.strip() and _teachable_fact(t)]
-    return pool or [
+    pool = []
+    for t in facts + claims:
+        fixed = clean_learner_claim(t) if callable(clean_learner_claim) else str(t).strip()
+        if fixed and _teachable_fact(fixed):
+            pool.append(fixed)
+    if pool:
+        return pool
+    topic = str(clg.get("topic") or "").lower()
+    if any(k in topic for k in ("acid", "base", "salt")) and ACIDS_BASES_SALTS_TERMS:
+        return [defn for _term, defn in ACIDS_BASES_SALTS_TERMS]
+    return [
         f"The uploaded lesson centres on {clg.get('topic') or 'this topic'}.",
     ]
 
@@ -508,6 +526,18 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         for c in (clg.get("core_concepts") or [])
         if isinstance(c, dict) and not is_junk_term(str(c.get("name") or ""))
     ]
+    # Seed CBSE Acids/Bases/Salts concepts when OCR left the board empty/junk.
+    topic_low = topic.lower()
+    if any(k in topic_low for k in ("acid", "base", "salt")) and len(concepts) < 3:
+        from engines.lesson_composition_engine.vocab_quality import ACIDS_BASES_SALTS_TERMS
+
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in ACIDS_BASES_SALTS_TERMS:
+            if term.lower() not in have:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
+            if len(concepts) >= 6:
+                break
     terms = [
         str(w.get("term") or "")
         for w in ((vocabulary or {}).get("word_wall") or clg.get("vocabulary") or [])
@@ -577,33 +607,39 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
     long_q = []
     for i, concept in enumerate(concepts[:4] or [{"name": topic}]):
         name = str(concept.get("name") or topic)
-        # An 8-mark model answer must be substantial: the concept's own
-        # explanation, every lesson fact that mentions it, related lesson facts
-        # for context, and a closing sentence that ties it back to the topic.
+        # Prefer deterministic curriculum definitions over OCR mush.
+        canon = canonical_definition(name) or build_student_definition(
+            name, str(concept.get("explanation") or ""), topic=topic
+        )
         direct = [t for t in pool if name.lower() in t.lower()]
         context_facts = [t for t in pool if t not in direct]
-        explanation = str(concept.get("explanation") or "").strip()
+        explanation = canon or str(concept.get("explanation") or "").strip()
         answer_parts: list[str] = []
         seen_parts: set[str] = set()
-        for part in ([explanation] if explanation else []) + direct[:4] + context_facts[:2]:
-            key = part.strip().lower()
-            if key and key not in seen_parts:
-                seen_parts.add(key)
-                answer_parts.append(part)
+        for part in ([explanation] if explanation else []) + direct[:3] + context_facts[:2]:
+            cleaned = str(part or "").strip()
+            key = cleaned.lower()
+            if not cleaned or key in seen_parts:
+                continue
+            if "one of the ideas taught" in key or "in this chapter" in key:
+                continue
+            seen_parts.add(key)
+            answer_parts.append(cleaned if cleaned.endswith((".", "!", "?")) else cleaned + ".")
             if len(answer_parts) >= 5:
                 break
+        if not answer_parts and canon:
+            answer_parts = [canon]
         if answer_parts:
             answer_parts.append(
-                f"Together, these points show how {name} fits into {topic} "
-                f"and why it matters in this lesson."
+                f"These points show what {name} means in {topic} and how it is used in the lesson."
             )
         # Progressive demand: understanding → application across long answers.
         if i == 0:
-            prompt = f"Explain '{name}' in detail with examples from the lesson. (Understanding)"
+            prompt = f"Explain '{name}' in detail with examples from the lesson."
         elif i == 1:
             prompt = (
                 f"Apply '{name}' to one everyday situation from the lesson and "
-                f"show each step. (Application)"
+                f"show each step."
             )
         else:
             prompt = f"Explain '{name}' in detail with examples from the lesson."
@@ -614,7 +650,10 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 "lines": 10,
                 "model_answer": _para(*answer_parts)
                 if answer_parts
-                else f"{name} is explained step by step in the lesson.",
+                else (
+                    canonical_definition(name)
+                    or f"{name} is a key idea in {topic}."
+                ),
                 "bloom": "application" if i == 1 else "understanding",
             }
         )
@@ -628,15 +667,21 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
     ] or [topic]
     first = concept_names_for_hots[0]
     second = concept_names_for_hots[1] if len(concept_names_for_hots) > 1 else topic
+    first_def = canonical_definition(first) or (pool[0] if pool else f"{first} is taught in this lesson.")
+    second_def = canonical_definition(second) or (pool[1] if len(pool) > 1 else f"{second} is a different idea.")
     hots.append(
         {
             "question": (
-                f"Predict what would change about {first.lower()} if the conditions "
-                f"around it were reversed. Use lesson evidence. (HOTS)"
+                f"Predict what would change if an acid were mixed with a base until "
+                f"the solution became neutral. Give a reason from the lesson."
             ),
             "marks": 5,
             "lines": 8,
-            "model_answer": pool[0] if pool else f"A reasoned prediction about {first} from the lesson.",
+            "model_answer": _para(
+                first_def,
+                "When an acid and a base cancel each other's effect, salt and water form (neutralisation).",
+                "The sharp sour or bitter properties become milder as the mixture approaches neutral.",
+            ),
             "bloom": "hots",
         }
     )
@@ -644,13 +689,14 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         {
             "question": (
                 f"A classmate confuses {first.lower()} with {second.lower()}. "
-                f"Write the correction using Must Know language. (HOTS)"
+                f"Write the correction using ideas from this lesson."
             ),
             "marks": 5,
             "lines": 8,
-            "model_answer": (
-                f"{first} and {second} are different ideas in {topic}; "
-                + (pool[1] if len(pool) > 1 else f"explain each using the lesson.")
+            "model_answer": _para(
+                f"{first} and {second} are different ideas in {topic}.",
+                first_def,
+                second_def,
             ),
             "bloom": "hots",
         }
@@ -690,12 +736,23 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             }
         ]
 
-    concept_names = [
-        str(c.get("name") or "").strip()
-        for c in (clg.get("core_concepts") or [])
-        if isinstance(c, dict) and str(c.get("name") or "").strip()
-    ]
     from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+    from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
+
+    concept_names = filter_diagram_stages(
+        [
+            str(c.get("name") or "").strip()
+            for c in concepts
+            if isinstance(c, dict) and str(c.get("name") or "").strip()
+        ],
+        topic=topic,
+        claims=pool,
+        limit=6,
+    )
+    if len(concept_names) < 2 and any(k in topic.lower() for k in ("acid", "base", "salt")):
+        from engines.lesson_composition_engine.vocab_quality import ACIDS_BASES_SALTS_TERMS
+
+        concept_names = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:5]
 
     if len(concept_names) >= 2:
         flowchart = build_educational_flowchart_svg(
@@ -739,11 +796,18 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         "long_answer": long_q,
         "hots": hots,
         "diagram_question": {
-            "question": "Study the source-grounded concept organiser. Redraw and label each main idea accurately.",
+            "question": (
+                f"Study the labelled diagram for {topic}. "
+                f"Redraw it and label each main idea accurately."
+            ),
             "marks": 5,
             "svg_diagram": flowchart,
-            "model_answer": "A correct response reproduces the organiser and labels the main ideas exactly as shown.",
-            "alt_text": f"Labelled concept organiser for {topic}.",
+            "model_answer": (
+                "A correct response redraws the pathway and labels each main idea exactly: "
+                + ", ".join(concept_names[:6])
+                + "."
+            ),
+            "alt_text": f"Labelled concept pathway for {topic}: {', '.join(concept_names[:6])}.",
         },
         "vocab_questions": vocab_q,
         "student_checklist": [

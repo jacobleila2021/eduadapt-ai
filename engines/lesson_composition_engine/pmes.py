@@ -68,7 +68,7 @@ def _diagram_package(
     )
     labels = [c for c in concepts if c][:6] or [topic]
     callouts = [str(lab) for lab in labels[:4]]
-    caption = f"{topic}: how the key ideas connect"
+    caption = f"Labelled pathway for {topic}"
     explanation = (
         f"This diagram teaches the structure of {topic}. "
         f"Read each labelled part in order, then match it to the explanation in the lesson."

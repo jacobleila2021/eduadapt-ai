@@ -76,13 +76,8 @@ def apply_persona_intent(
             box="speak",
         )
     elif version_id == "visual":
-        sections = _ensure_section(
-            sections,
-            role="visual",
-            title="See · Label · Trace",
-            body=f"Look at the {topic} diagram. Label one part. Trace the path with your finger, then explain it.",
-            box="visual",
-        )
+        # Visual differentiation is the diagram itself — never a scaffold tab.
+        pass
     elif version_id == "auditory":
         sections = _ensure_section(
             sections,
@@ -92,13 +87,8 @@ def apply_persona_intent(
             box="listen",
         )
     elif version_id in {"ld", "dyslexia"}:
-        sections = _ensure_section(
-            sections,
-            role="hook",
-            title="Step by Step",
-            body=f"Read one short line about {topic}. Pause. Then write one word that captures the meaning.",
-            box="steps",
-        )
+        # Load reduction via shorter lines — never a "Step by Step" chrome tab.
+        pass
     elif version_id == "parent":
         sections = _ensure_section(
             sections,

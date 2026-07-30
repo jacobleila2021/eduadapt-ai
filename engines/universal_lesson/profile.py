@@ -209,7 +209,33 @@ def build_universal_lesson_profile(
     )
     first_line = next((line.strip() for line in text.splitlines() if line.strip()), "")
     title = (first_heading or first_line or "Uploaded Lesson")[:160]
-    topic = re.split(r"[.:!?]", title, 1)[0][:100].strip() or "Uploaded Lesson"
+    # NCERT PDFs often wrap chapter titles across lines ("Acids, Bases\nand Salts").
+    if not first_heading and first_line:
+        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        if len(lines) >= 2:
+            nxt = lines[1]
+            # Join short continuation lines that complete the chapter title.
+            if (
+                len(nxt.split()) <= 4
+                and len(nxt) <= 40
+                and not re.search(r"[.:!?]$", first_line)
+                and (
+                    nxt.lower().startswith("and ")
+                    or (nxt[:1].islower() and not re.match(r"^(you|in|the|a|an|this)\b", nxt, re.I))
+                )
+            ):
+                title = f"{first_line} {nxt}"[:160]
+    topic = re.split(r"[.:!?]", title, 1)[0][:120].strip() or "Uploaded Lesson"
+    # Prefer a fuller upload stem when OCR truncated the chapter title.
+    upload_hint = str(
+        source_envelope.get("filename")
+        or source_envelope.get("name")
+        or source_envelope.get("title")
+        or ""
+    )
+    if upload_hint and "acid" in upload_hint.lower() and "salt" in upload_hint.lower():
+        if "salt" not in topic.lower():
+            topic = "Acids, Bases and Salts"
 
     # Concepts must be teachable phrases, not raw frequency words. Counting
     # single words split "The Water Cycle" into the junk concepts "water" and

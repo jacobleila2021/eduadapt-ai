@@ -68,45 +68,24 @@ def _ensure_diagram_purpose(adaptation: dict[str, Any], *, topic: str) -> dict[s
         or ""
     )
     if not svg.startswith("<svg"):
+        adaptation.pop("diagram_package", None)
         return adaptation
     pkg = dict(adaptation.get("diagram_package") or {})
     pkg.setdefault("title", topic)
-    pkg.setdefault("caption", f"{topic}: how the key ideas connect")
+    pkg.setdefault("caption", f"Labelled pathway for {topic}")
     pkg.setdefault(
         "explanation",
-        f"This diagram is here to make {topic} easier to see and remember. "
-        "Trace each label, then match it to the explanation.",
+        f"Read each labelled part of the {topic} diagram in order, then match it to the lesson text.",
     )
     pkg.setdefault(
         "practice_question",
         f"Point to one part of the diagram and explain it in one clear sentence.",
     )
-    pkg.setdefault("callouts", [f"Label: {topic}"])
+    pkg.setdefault("callouts", [])
     pkg["svg"] = svg
     adaptation["diagram_package"] = pkg
-
-    if bool((adaptation.get("lce") or {}).get("slim_theory")):
-        return adaptation
-    blob = " ".join(
-        str(s.get("body") or "") + str(s.get("title") or "")
-        for s in (adaptation.get("sections") or [])
-        if isinstance(s, dict)
-    ).lower()
-    if "diagram" not in blob and "see" not in blob:
-        sections = list(adaptation.get("sections") or [])
-        sections.insert(
-            0,
-            {
-                "title": "Using the Diagram",
-                "role": "visual",
-                "box": "visual",
-                "body": (
-                    f"{pkg['explanation']} {pkg['caption']}. "
-                    f"Practice: {pkg['practice_question']}"
-                ),
-            },
-        )
-        adaptation["sections"] = sections
+    # Never inject a separate "Using the Diagram" theory section — the figure
+    # caption under the SVG is the teaching chrome.
     return adaptation
 
 

@@ -445,12 +445,12 @@ def get_custom_css() -> str:
     }}
 
     .exam-answer-reveal {{
-        background: #FFF9C4;
-        color: #059669;
+        background: #FFF9EE;
+        color: #0F172A;
         font-weight: 600;
         padding: 0.75rem 1rem;
         border-radius: 10px;
-        border: 1px solid #FDE68A;
+        border: 1px solid #E8E0CF;
         margin: 0.35rem 0 0.75rem 0;
         line-height: 1.65;
         white-space: pre-wrap;

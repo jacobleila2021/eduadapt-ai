@@ -336,6 +336,16 @@ def build_study_diagram_svg(lesson: Any) -> str:
         from flowchart_builder import _water_cycle_visual_svg
 
         return _water_cycle_visual_svg(topic)
+    if any(k in blob for k in ("acid", "base", "salt", "litmus", "neutralis")):
+        from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+        from engines.lesson_composition_engine.vocab_quality import ACIDS_BASES_SALTS_TERMS
+
+        stages = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:5]
+        return build_educational_flowchart_svg(
+            topic or "Acids, Bases and Salts",
+            stages,
+            subtitle="Label each idea in order",
+        )
     if not nodes:
         from concept_map_builder import build_vocabulary_concept_map_svg
 

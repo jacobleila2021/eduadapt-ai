@@ -12,6 +12,31 @@ from typing import Any, Mapping
 CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK = True
 FIDELITY_VERSION = "1.0.0"
 
+# Learner-facing scaffold chrome — never publish as section titles / cards.
+FORBIDDEN_LEARNER_CHROME_TITLES = frozenset(
+    {
+        "step by step",
+        "reflect: i can",
+        "reflect i can",
+        "must-learn ideas",
+        "must learn ideas",
+        "must know",
+        "big idea",
+        "key ideas connect",
+        "how the key ideas connect",
+        "using the diagram",
+        "see · label · trace",
+        "see label trace",
+        "see · label · trace",
+        "what you will learn",
+    }
+)
+FORBIDDEN_LEARNER_CHROME_ROLES = frozenset(
+    {
+        "concept_primer",
+    }
+)
+
 # Must never appear in learner-facing content (prompt / pipeline / metadata leaks)
 PROMPT_LEAK_PHRASES = (
     "using the uploaded source",
@@ -423,6 +448,67 @@ def _rewrite_summary(
     return out
 
 
+def scrub_learner_chrome(page: dict[str, Any]) -> dict[str, Any]:
+    """Drop scaffold tabs/sections that add no teaching value for the learner."""
+    out = dict(page)
+    # Big Idea card chrome — keep claim only if it is teachable prose; never a labelled tab.
+    big = str(out.get("big_idea") or "").strip()
+    if big:
+        low = big.lower()
+        if (
+            "how the key ideas connect" in low
+            or "must-learn" in low
+            or len(big.split()) < 6
+        ):
+            out["big_idea"] = ""
+        else:
+            # Fold into introduction later; suppress the labelled Big Idea card.
+            out["_opening_claim"] = big
+            out["big_idea"] = ""
+    sections: list[dict[str, Any]] = []
+    for sec in out.get("sections") or []:
+        if not isinstance(sec, dict):
+            continue
+        title = str(sec.get("title") or "").strip()
+        role = str(sec.get("role") or "").strip().lower()
+        title_low = title.lower().strip(" .")
+        if role in FORBIDDEN_LEARNER_CHROME_ROLES:
+            continue
+        if title_low in FORBIDDEN_LEARNER_CHROME_TITLES:
+            continue
+        if any(t in title_low for t in ("step by step", "reflect:", "must-learn", "using the diagram", "see · label", "key ideas connect")):
+            continue
+        sections.append(sec)
+    out["sections"] = sections
+
+    # Diagram package: only keep teaching captions when a real SVG is attached.
+    svg = str(
+        out.get("flowchart_svg")
+        or out.get("svg_diagram")
+        or out.get("concept_map_svg")
+        or ((out.get("diagram_package") or {}) if isinstance(out.get("diagram_package"), dict) else {}).get("svg")
+        or ""
+    )
+    pkg = out.get("diagram_package") if isinstance(out.get("diagram_package"), dict) else None
+    if pkg is not None:
+        if not str(svg).startswith("<svg"):
+            out.pop("diagram_package", None)
+        else:
+            clean_pkg = dict(pkg)
+            caption = str(clean_pkg.get("caption") or "")
+            if "key ideas connect" in caption.lower() or "must-learn" in caption.lower():
+                topic = str(out.get("topic") or "this lesson")
+                clean_pkg["caption"] = f"Labelled pathway for {topic}"
+            explain = str(clean_pkg.get("explanation") or "")
+            if "key ideas connect" in explain.lower():
+                clean_pkg["explanation"] = (
+                    f"Read each labelled part of the {out.get('topic') or 'lesson'} diagram in order."
+                )
+            clean_pkg["svg"] = svg if str(svg).startswith("<svg") else clean_pkg.get("svg")
+            out["diagram_package"] = clean_pkg
+    return out
+
+
 def ensure_concept_primer(
     page: dict[str, Any],
     *,
@@ -522,10 +608,10 @@ def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[s
         return page
     pkg = dict(page.get("diagram_package") or {})
     pkg.setdefault("title", topic)
-    pkg.setdefault("caption", f"How the ideas in {topic} connect")
+    pkg.setdefault("caption", f"Labelled pathway for {topic}")
     pkg.setdefault(
         "explanation",
-        f"This diagram helps you see {topic}. Trace each label, then match it to the explanation.",
+        f"Read each labelled part of the {topic} diagram in order, then match it to the lesson text.",
     )
     pkg.setdefault(
         "practice_question",
@@ -533,25 +619,7 @@ def ensure_diagram_teaching(adaptation: dict[str, Any], *, topic: str) -> dict[s
     )
     pkg["svg"] = svg
     page["diagram_package"] = pkg
-
-    sections = [dict(s) for s in (page.get("sections") or []) if isinstance(s, dict)]
-    # Inherit provenance so newly-created diagram sections are born source-grounded.
-    parent_refs = _section_source_refs(sections)
-    blob = " ".join(str(s.get("body") or "") for s in sections).lower()
-    if "diagram" not in blob and "see the" not in blob:
-        # Teach the diagram with statements only — questions belong to the
-        # exam module and vocabulary practice, never inside lesson theory.
-        sections.insert(
-            min(2, len(sections)),
-            {
-                "title": "Using the Diagram",
-                "role": "visual",
-                "box": "visual",
-                "body": f"{pkg['explanation']} {pkg['caption']}.",
-                "source_refs": list(parent_refs),
-            },
-        )
-    page["sections"] = sections
+    # Caption under the SVG is enough — do not inject a "Using the Diagram" section.
     return page
 
 
@@ -725,20 +793,14 @@ def apply_content_fidelity(
             for field in ("flowchart_svg", "svg_diagram", "concept_map_svg")
         ) or bool(str(page.get("mermaid_diagram") or "").strip())
         slim = bool((page.get("lce") or {}).get("slim_theory"))
-        if slim:
-            # Slim theory: keep authored sections only — no Must-Learn Ideas /
-            # Lesson Summary / Using the Diagram chrome on the reading page.
-            page["sections"] = sections
-        else:
-            page["sections"] = _rewrite_summary(
-                sections, topic=topic, has_diagram=page_has_diagram
-            )
-            if key != "worksheet":
-                page = ensure_concept_primer(page, board=board, topic=topic)
-            if key not in {"parent", "teacher"}:
-                page = ensure_diagram_teaching(page, topic=topic)
+        # Never inject Must-Learn / Using the Diagram / Summary chrome — keep
+        # authored teaching sections only. Diagrams live under Lesson Visual.
+        page["sections"] = sections if slim else _rewrite_summary(
+            sections, topic=topic, has_diagram=page_has_diagram
+        )
         if key in {"worksheet", "exam", "standard"}:
             page = scrub_assessment_metadata(page, topic=topic)
+        page = scrub_learner_chrome(page)
         page.setdefault("lce", {})
         if isinstance(page["lce"], dict):
             page["lce"]["content_fidelity"] = True

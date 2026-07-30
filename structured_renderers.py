@@ -799,7 +799,7 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
         _show_answer_button(ref, ans, f"{key_prefix}_la_{index}", exam_style=True)
         st.markdown("")
 
-    # Part C — Diagram
+    # Part C — Diagram (always show a labelled SVG for chemistry / science pathways)
     diagram = sheet.get("diagram_question") or {}
     if diagram:
         st.markdown("### Part C — Diagram Question")
@@ -807,9 +807,30 @@ def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
             f"**({diagram.get('marks', 4)} marks)** {diagram.get('question', '')}"
         )
         svg = diagram.get("svg_diagram") or diagram.get("svg", "")
+        if not _valid_svg_diagram(svg):
+            # Recover a teaching diagram from the worksheet topic rather than
+            # asking learners to redraw an empty box.
+            try:
+                from engines.lesson_composition_engine.diagrams import (
+                    build_educational_flowchart_svg,
+                )
+                from engines.lesson_composition_engine.vocab_quality import (
+                    ACIDS_BASES_SALTS_TERMS,
+                )
+
+                topic = str((sheet.get("header") or {}).get("topic") or "Lesson")
+                stages = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:5]
+                if any(k in topic.lower() for k in ("acid", "base", "salt")):
+                    svg = build_educational_flowchart_svg(
+                        topic, stages, subtitle="Label each idea"
+                    )
+            except Exception:
+                svg = ""
         if _valid_svg_diagram(svg):
             _render_svg(svg)
-        st.markdown("_Label the diagram above on your answer sheet._")
+            st.markdown("_Label the diagram above on your answer sheet._")
+        else:
+            st.caption("Diagram unavailable — answer using the lesson pathway labels.")
         dia_ans = diagram.get("model_answer", "") or _lookup_answer(answer_key, "Part C")
         _show_answer_button("Part C", dia_ans, f"{key_prefix}_dia", exam_style=True)
 
@@ -1176,31 +1197,29 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
 
             st.caption("A labelled study diagram built directly from this lesson.")
             _render_svg(resolve_study_diagram_svg(lesson))
-    big_idea = lesson.get("big_idea", "")
-    if big_idea:
-        if is_ld:
-            st.markdown(
-                dyslexia_luxe_section_card_html(
-                    "Big Idea",
-                    _plain_lesson_text(big_idea),
-                    "introduction",
-                    index=0,
-                ),
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                section_card_html(
-                    "Big Idea",
-                    _plain_lesson_text(big_idea),
-                    "introduction",
-                    bullet_mode=bullet_mode,
-                ),
-                unsafe_allow_html=True,
-            )
 
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):
+            continue
+        title_low = str(section.get("title") or "").strip().lower()
+        if (
+            title_low
+            in {
+                "step by step",
+                "reflect: i can",
+                "must-learn ideas",
+                "must learn ideas",
+                "must know",
+                "big idea",
+                "using the diagram",
+                "see · label · trace",
+                "see label trace",
+                "what you will learn",
+                "key ideas connect",
+            }
+            or "key ideas connect" in title_low
+            or title_low.startswith("reflect")
+        ):
             continue
         # Teacher-procedure / presentation chrome is not lesson theory.
         # Student tabs show curriculum sections only; teacher tab keeps extras.
@@ -1209,6 +1228,7 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
             section.get("presentation_only")
             or role.startswith("presentation_")
             or role.endswith("_support")
+            or role == "concept_primer"
         ):
             continue
         raw_title = section.get("title", "") or f"Section {idx + 1}"

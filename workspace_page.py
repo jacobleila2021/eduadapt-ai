@@ -30,9 +30,9 @@ def _clean_title(raw: str) -> str:
     cleaned = _TITLE_NOISE.sub(" ", text)
     cleaned = re.sub(r"\d+", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,:-")
-    # Keep it short and professional (max 5 words).
+    # Keep curriculum titles intact (e.g. "Acids, Bases and Salts") — up to 8 words.
     words = cleaned.split()
-    return " ".join(words[:5]).title()
+    return " ".join(words[:8])
 
 
 def lesson_display_title() -> str:

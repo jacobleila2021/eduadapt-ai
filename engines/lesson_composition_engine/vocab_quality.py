@@ -420,6 +420,16 @@ def filter_diagram_stages(
         ordered = [by[o.lower()] for o in order if o.lower() in by]
         rest = [n for n in out if n.lower() not in {x.lower() for x in ordered}]
         out = (ordered + rest)[:limit]
+    # Acids / Bases / Salts — seed CBSE teaching nodes when OCR left junk stages.
+    chem_blob = f"{topic} {blob}".lower()
+    if any(k in chem_blob for k in ("acid", "base", "salt", "litmus", "neutralis")):
+        order = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:limit]
+        by = {n.lower(): n for n in out}
+        ordered = [by[o.lower()] for o in order if o.lower() in by]
+        if len(ordered) < 3:
+            ordered = order
+        rest = [n for n in out if n.lower() not in {x.lower() for x in ordered}]
+        out = (ordered + rest)[:limit]
     return out
 
 
