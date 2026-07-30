@@ -761,6 +761,15 @@ def apply_content_fidelity(
                     # whole block is a lesson-plan activity, not learner theory.
                     continue
                 row["body"] = scrub_teacher_voice(row["body"])
+                try:
+                    from engines.lesson_composition_engine.canonical import (
+                        strip_colour_markers,
+                    )
+
+                    row["body"] = strip_colour_markers(row["body"])
+                    row["title"] = strip_colour_markers(row["title"])
+                except Exception:
+                    pass
                 role_low = str(row.get("role") or "").lower()
                 title_low2 = row["title"].lower()
                 is_question_zone = (

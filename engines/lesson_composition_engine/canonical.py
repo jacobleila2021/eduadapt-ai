@@ -965,7 +965,21 @@ _LENS_PRESENTATION = {
     },
 }
 
-_COLOUR_MARKERS = ("●", "◆", "▲", "■", "★", "✦")
+_COLOUR_MARKERS = ("●", "◆", "▲", "■", "★", "✦", "▀")
+
+
+def strip_colour_markers(text: str) -> str:
+    """Remove decorative emphasis glyphs from learner prose (Visual lens legacy)."""
+    if not text:
+        return text
+    out = re.sub(r"[●◆▲■★✦▀]", "", text)
+    # Restore acid-base compounds broken by mid-word marker removal.
+    out = re.sub(r"\b(acid)-\s*(base)-?\s*", r"\1-\2 ", out, flags=re.IGNORECASE)
+    out = re.sub(r"(?i)\b(base)-\s*(acid)-?\s*", r"\1-\2 ", out)
+    # Collapse spaces left by removed markers, keep newlines.
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    out = re.sub(r" *\n *", "\n", out)
+    return out.strip() if text.strip() == text else out
 
 
 def _syllabify(term: str) -> str:
@@ -980,15 +994,13 @@ def _syllabify(term: str) -> str:
 
 
 def _emphasise_terms(body: str, concepts: list[str]) -> str:
-    """Colour-emphasis markers around examinable terms — content unchanged."""
-    text = body
-    for i, name in enumerate(concepts):
-        if not name or len(name) < 3:
-            continue
-        marker = _COLOUR_MARKERS[i % len(_COLOUR_MARKERS)]
-        pattern = re.compile(rf"\b({re.escape(name)})\b", re.IGNORECASE)
-        text = pattern.sub(rf"{marker} \1 {marker}", text, count=1)
-    return text
+    """Visual emphasis without injecting decorative characters into the text.
+
+    Diagrams and layout carry the visual load — wrapping terms in ★/●/◆ made
+    the lesson look broken and did not help learners.
+    """
+    del concepts  # reserved for future CSS/HTML highlighting
+    return strip_colour_markers(body)
 
 
 def _ell_present_body(body: str, concepts: list[str]) -> str:
@@ -1125,8 +1137,8 @@ def _present_body(
         return _chunk_paragraphs_by_words("\n".join(strips).rstrip(), 80)
 
     if version_id == "visual":
-        # Colour-code first examinable term hit; keep every sentence.
-        return _emphasise_terms(body, concepts)
+        # Visual load is the diagram + cream cards — never decorate the prose.
+        return strip_colour_markers(body)
 
     if version_id == "auditory":
         # Conversational teaching cues — content unchanged; never re-read titles.
