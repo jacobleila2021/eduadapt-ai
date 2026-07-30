@@ -623,21 +623,13 @@ def _render_svg(svg: str, height: int = 260) -> None:
 
 
 def _render_picture_words(picture_words: list[dict], topic: str, key_prefix: str) -> None:
-    """Picture Words — polished deterministic lesson visual."""
-    st.markdown("### 3. Picture Words — Lesson Visual")
-    if not picture_words:
-        st.caption("No picture vocabulary generated.")
-        return
-
-    from flowchart_builder import build_vocabulary_visual_svg
-
-    vocab_stub = {"topic": topic, "picture_words": picture_words}
-    st.caption("A clear, colour-coded visual built from this lesson.")
-    _render_svg(build_vocabulary_visual_svg(vocab_stub))
+    """Picture Words retired — no learner value; keep stub for callers."""
+    del picture_words, topic, key_prefix
+    return
 
 
 def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
-    """Word Wall, Flashcards, Picture Words, Practice, Self-Test — always visible."""
+    """Word Wall, Flashcards, Practice, Self-Test — always visible."""
     vocab = _coerce_dict(data)
     if not vocab or not vocab.get("word_wall"):
         st.error(
@@ -688,17 +680,10 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
         with st.expander(f"Card {index}: **{front}** — tap to reveal"):
             st.write(back)
 
-    # --- 3. Picture Words ---
-    picture_words = vocab.get("picture_words") or []
-    if not picture_words and word_wall:
-        picture_words = [
-            {"term": w.get("term"), "draw_this": w.get("picture") or w.get("draw_this")}
-            for w in word_wall[:8]
-        ]
-    _render_picture_words(picture_words, topic, key_prefix)
+    # Picture Words / Picture Wall removed — no educational value for learners.
 
-    # --- 4. Say · Spell · Use ---
-    st.markdown("### 4. Say It · Spell It · Use It")
+    # --- 3. Say · Spell · Use ---
+    st.markdown("### 3. Say It · Spell It · Use It")
     practice = _prepare_practice(word_wall, topic) or vocab.get("practice") or []
     for index, item in enumerate(practice, 1):
         term = item.get("term", "")
@@ -707,13 +692,13 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
         if blank:
             st.markdown(f"_{blank}_")
 
-    # --- 5. Self-Test ---
-    st.markdown("### 5. Match & Review (Self-Test)")
+    # --- 4. Self-Test ---
+    st.markdown("### 4. Match & Review (Self-Test)")
     self_test = vocab.get("self_test") or {}
     _render_self_test(self_test, word_wall, key_prefix, topic=str(topic))
 
-    # --- 6. Quick Reference ---
-    st.markdown("### 6. Quick Reference Chart")
+    # --- 5. Quick Reference ---
+    st.markdown("### 5. Quick Reference Chart")
     chart = vocab.get("reference_chart") or []
     if chart:
         st.table(
@@ -728,9 +713,9 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
             ]
         )
 
-    # --- 7. Concept Map (built from Word Wall — does not need AI mermaid) ---
+    # --- 6. Concept Map (built from Word Wall — does not need AI mermaid) ---
     st.markdown("---")
-    st.markdown("### 7. Concept Map")
+    st.markdown("### 6. Concept Map")
     st.caption("Study how all vocabulary terms connect to the main topic.")
     from concept_map_builder import render_concept_map_streamlit
 
@@ -1287,15 +1272,12 @@ def vocabulary_to_text(data: Any) -> str:
     lines.append("\n## 2. Flashcards")
     for card in vocab.get("flashcards") or []:
         lines.append(f"- Front: {card.get('front', '')} | Back: {card.get('back', '')}")
-    lines.append("\n## 3. Picture Words")
-    for row in vocab.get("picture_words") or []:
-        lines.append(f"- {row.get('term', '')}: {row.get('draw_this', '')}")
-    lines.append("\n## 4. Say · Spell · Use")
+    lines.append("\n## 3. Say · Spell · Use")
     practice = _prepare_practice(vocab.get("word_wall") or [], vocab.get("topic", ""))
     for index, item in enumerate(practice, 1):
         blank = _clean_practice_blank(item.get("sentence_blank", ""))
         lines.append(f"{index}. {item.get('term', '')}: {blank}")
-    lines.append("\n## 5. Self-Test")
+    lines.append("\n## 4. Self-Test")
     self_test = _prepare_self_test(vocab.get("self_test") or {}, vocab.get("word_wall") or [])
     if self_test.get("matching_terms"):
         lines.append("Part A — Matching")
@@ -1307,7 +1289,7 @@ def vocabulary_to_text(data: Any) -> str:
         lines.append("Part B — Fill in the blank")
         for index, sentence in enumerate(self_test["fill_blanks"], 1):
             lines.append(f"{index}. {_clean_fill_blank_display(sentence)}")
-    lines.append("\n## 6. Quick Reference")
+    lines.append("\n## 5. Quick Reference")
     for row in vocab.get("reference_chart") or []:
         lines.append(
             f"- **{row.get('term', '')}**: {row.get('definition', '')} "
