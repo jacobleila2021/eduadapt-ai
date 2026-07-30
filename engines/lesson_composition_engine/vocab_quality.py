@@ -32,6 +32,10 @@ VOCAB_STOPWORDS = frozenset(
         # Everyday props from teacher warm-ups — never process-stage nodes
         "faucet", "faucets", "tap", "taps", "puddle", "puddles",
         "raindrop", "raindrops", "umbrella", "bucket", "hose",
+        # Sentence scraps from NCERT intros that must never become concept titles
+        "previous", "evious", "classes", "tastes", "bitter", "sour", "respectively",
+        "learnt", "learned", "provided", "tubes", "activity", "chapter", "understanding",
+        "laboratory", "substance", "substances", "interesting", "things",
     }
 )
 
@@ -72,6 +76,39 @@ WATER_CYCLE_PICTURES = {
     "water cycle": "Draw a full loop: sun → rising vapour → cloud → rain → lake → back to sun.",
     "transpiration": "Draw a tree with tiny arrows of vapour leaving the leaves toward the sky.",
 }
+
+# CBSE Class 8 Science — Acids, Bases and Salts (deterministic teaching bank).
+ACIDS_BASES_SALTS_TERMS = (
+    ("Acid", "An acid is a substance that tastes sour and turns blue litmus red."),
+    ("Base", "A base is a substance that tastes bitter, feels soapy, and turns red litmus blue."),
+    ("Salt", "A salt is the substance formed when an acid and a base react and cancel each other's effect."),
+    ("Indicator", "An indicator is a dye that changes colour in acidic or basic solutions."),
+    ("Litmus", "Litmus is a natural indicator: blue litmus turns red in acid; red litmus turns blue in base."),
+    ("Neutralisation", "Neutralisation is the reaction in which an acid and a base cancel each other and form salt and water."),
+    ("Baking soda", "Baking soda (sodium hydrogencarbonate) is a mild base used in cooking and as an antacid."),
+    ("Phenolphthalein", "Phenolphthalein is a synthetic indicator that turns pink in a basic solution and colourless in an acid."),
+    ("Methyl orange", "Methyl orange is a synthetic indicator that is red in acid and yellow in base."),
+)
+
+# Sentence fragments that OCR/title scraping wrongly promotes to "concepts".
+_FRAGMENT_JUNK = frozenset(
+    {
+        "previous", "evious", "classes", "class", "tastes", "taste", "bitter", "sour",
+        "respectively", "present", "them", "food", "learnt", "learned", "provided",
+        "three", "test", "tubes", "tube", "activity", "chapter", "understanding",
+        "chemical", "properties", "laboratory", "substance", "substances", "colour",
+        "color", "change", "changes", "day", "life", "interesting", "things",
+        "many", "more", "study", "reactions", "reaction", "effects", "effect",
+        "cancel", "cancels", "out", "each", "other", "you", "have", "been",
+    }
+)
+
+_OCR_JOIN_PREFIXES = frozenset(
+    {
+        "pr", "lear", "thr", "und", "resp", "indic", "prov", "chem", "neut",
+        "phen", "meth", "litt", "synt",
+    }
+)
 
 _TEACHER_TEXT_PATTERNS = (
     r"\bstudents?\s+will\b",
@@ -119,6 +156,14 @@ _TEACHER_TEXT_PATTERNS = (
     r"\bhomework\b",
     r"\bkick\s+off\b",
     r"\blet'?s\s+(work\s+together|think\s+about)\b",
+    # NCERT chapter chrome / textbook asides — never learner answers
+    r"\bin this chapter\b",
+    r"\bwe will study\b",
+    r"\byou already know that\b",
+    r"\bsurely you must have\b",
+    r"\byou have been provided\b",
+    r"\btry this point to each part\b",
+    r"\bstudy the labelled diagram\b",
 )
 
 # Isolated planning debris / orphan fragments that must never become learner prose.
@@ -129,6 +174,127 @@ _ORPHAN_CLAIM_PATTERNS = (
     r"\bask learners?\b",
     r"\btell students?\b",
 )
+
+
+def repair_ocr_prose(text: str) -> str:
+    """Repair common NCERT/PDF OCR damage before any learner-facing use."""
+    t = str(text or "")
+    if not t.strip():
+        return ""
+    # Chapter / unit chrome fused into prose
+    t = re.sub(r"\b\d+\s*CHAPTER\b", " ", t, flags=re.I)
+    t = re.sub(r"\bCHAPTER\s*\d*\b", " ", t, flags=re.I)
+    t = re.sub(r"\bActivity\s+\d+(?:\.\d+)*\b", " ", t, flags=re.I)
+    # Collapse runaway repeated chunks ("UNDERSTUNDERST…", "ACIDS AND BASESACIDS…")
+    t = re.sub(r"(\b[\w']{4,}\b)(?:\s*\1){1,}", r"\1", t, flags=re.I)
+    t = re.sub(r"([A-Za-z]{5,})\1{1,}", r"\1", t)
+    # Isolated capital + rest of word: "Y ou" → "You"
+    t = re.sub(r"\b([A-Z])\s+([a-z]{2,})\b", r"\1\2", t)
+    # Mid-word OCR breaks: "lear nt", "pr evious"
+    for _ in range(4):
+        def _join(m: re.Match[str]) -> str:
+            a, b = m.group(1), m.group(2)
+            if a.lower() in _OCR_JOIN_PREFIXES or len(a) <= 3 and b.lower()[:2] in {
+                "ev", "nt", "ee", "id", "or", "al", "at", "en", "er",
+            }:
+                return a + b
+            return m.group(0)
+
+        nxt = re.sub(r"\b([A-Za-z]{1,4})\s+([a-z]{2,10})\b", _join, t)
+        if nxt == t:
+            break
+        t = nxt
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def is_ocr_garbage_claim(text: str) -> bool:
+    """True for chapter intros / OCR mush that must never teach learners."""
+    original = str(text or "")
+    raw = repair_ocr_prose(original)
+    if not raw:
+        return True
+    low = raw.lower()
+    if re.search(r"\bchapter\b|\bactivity\s+\d", low):
+        return True
+    if "in this chapter" in low or "we will study" in low:
+        return True
+    if "you have learnt" in low or "you have learned" in low:
+        return True
+    if "you already know that" in low or "surely you must have" in low:
+        return True
+    if "previous classes" in low and ("sour" in low or "bitter" in low):
+        return True
+    # Section / page debris from scanned NCERT PDFs
+    if re.search(r"\bscience\s*\d{1,3}\b|\b\d+\.\d+(?:\.\d+){1,}\b", low) and (
+        "acid" in low or "base" in low or "chapter" in low or "underst" in low
+    ):
+        return True
+    # Concatenated heading mush / broken stems from PDF extractors
+    if re.search(
+        r"underst|chemicanding|properties ofal|acids and basesacids|anding the chemic",
+        low,
+    ):
+        return True
+    if len(re.findall(r"[A-Z]{6,}", original)) >= 3:
+        return True
+    # Unrepaired OCR still visible in the original
+    if re.search(r"\b[A-Za-z]\s+[a-z]{2,}\b", original) and len(
+        re.findall(r"\b[a-z]{1,3}\s+[a-z]{2,}\b", original.lower())
+    ) >= 2:
+        # Only garbage if repair did not fully clear the mush
+        if len(re.findall(r"\b[a-z]{1,3}\s+[a-z]{2,}\b", low)) >= 2:
+            return True
+    # Same 8+ letter token repeated → paste/OCR loop
+    tokens = re.findall(r"[A-Za-z]{8,}", raw)
+    if tokens and tokens.count(max(set(tokens), key=tokens.count)) >= 3:
+        return True
+    return False
+
+
+def clean_learner_claim(text: str) -> str:
+    """Return cleaned teachable prose, or empty if unsuitable."""
+    raw = repair_ocr_prose(text)
+    if not raw or is_ocr_garbage_claim(text) or is_teacher_facing_text(raw):
+        return ""
+    if is_orphan_claim(raw):
+        return ""
+    if len(raw.split()) < 4:
+        return ""
+    return raw
+
+
+def is_plural_concept(name: str) -> bool:
+    low = (name or "").strip().lower()
+    if low in {"acids", "bases", "salts", "indicators"}:
+        return True
+    if low.endswith("s") and low not in {"gas", "glass", "basis", "litmus", "focus", "class"}:
+        if " " not in low and len(low) > 3:
+            return True
+    return False
+
+
+def question_what_is(name: str, *, marks: int = 1) -> str:
+    display = (name or "this idea").strip()
+    mark_label = f"{marks} mark" if marks == 1 else f"{marks} marks"
+    if is_plural_concept(display):
+        return f"What are {display.lower()}? ({mark_label})"
+    if " " in display:
+        return f"What is {display.lower()}? ({mark_label})"
+    article = "an" if display[:1].lower() in "aeiou" else "a"
+    return f"What is {article} {display.lower()}? ({mark_label})"
+
+
+def enrich_acids_bases_salts_terms(topic: str, existing: list[str]) -> list[tuple[str, str]]:
+    blob = (topic or "").lower() + " " + " ".join(existing).lower()
+    if not any(k in blob for k in ("acid", "base", "salt", "litmus", "neutralis", "neutraliz")):
+        return []
+    have = {e.lower() for e in existing}
+    out: list[tuple[str, str]] = []
+    for term, definition in ACIDS_BASES_SALTS_TERMS:
+        if term.lower() not in have and not is_junk_term(term):
+            out.append((term, definition))
+    return out
 
 
 def is_teacher_facing_text(text: str) -> bool:
@@ -184,7 +350,16 @@ def student_safe_definition(text: str) -> str:
 
 def canonical_definition(term: str) -> str:
     key = (term or "").strip().lower()
-    for name, definition in WATER_CYCLE_TERMS:
+    # Singularize common exam plurals so "Bases" / "Acids" resolve.
+    aliases = {
+        "acids": "acid",
+        "bases": "base",
+        "salts": "salt",
+        "indicators": "indicator",
+        "neutralization": "neutralisation",
+    }
+    key = aliases.get(key, key)
+    for name, definition in WATER_CYCLE_TERMS + ACIDS_BASES_SALTS_TERMS:
         if name.lower() == key:
             return definition
     return ""
@@ -253,11 +428,16 @@ def is_junk_term(term: str) -> bool:
     if len(raw) < 3:
         return True
     key = raw.lower().strip(" .,;:!?\"'`")
-    if not key or key in VOCAB_STOPWORDS:
+    if not key or key in VOCAB_STOPWORDS or key in _FRAGMENT_JUNK:
         return True
     if key.endswith("'s") and key[:-2] in VOCAB_STOPWORDS:
         return True
     if re.fullmatch(r"\d+", key):
+        return True
+    # OCR crumbs: leading vowel missing ("evious"), or ALLCAPS fragment under 8 with no curriculum meaning
+    if key in {"evious", "nderstanding", "hemical", "roperties"}:
+        return True
+    if re.fullmatch(r"[a-z]{4,8}", key) and key.startswith(("evi", "prv", "cls")):
         return True
     if key in {"earth's", "water's", "sun's", "water", "cycle", "earth", "science"}:
         # Bare fragments from titles — prefer "Water cycle" as one term
@@ -383,13 +563,21 @@ def normalize_vocab_items(
     claims: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Filter junk and attach student-safe, claim-grounded definitions."""
-    claims = [c for c in (claims or []) if student_safe_definition(str(c))]
+    cleaned_claims: list[str] = []
+    for c in claims or []:
+        fixed = clean_learner_claim(str(c)) or student_safe_definition(str(c))
+        if fixed and "one of the ideas taught" not in fixed.lower():
+            cleaned_claims.append(fixed)
+    claims = cleaned_claims
     topic = clean_topic(topic)
     out: list[dict[str, Any]] = []
     seen: set[str] = set()
     waterish = any(
         k in topic.lower()
         for k in ("water cycle", "evaporat", "precipitat", "condens")
+    )
+    chemistryish = any(
+        k in topic.lower() for k in ("acid", "base", "salt", "litmus", "neutralis", "neutraliz")
     )
 
     for item in terms:
@@ -412,22 +600,31 @@ def normalize_vocab_items(
             example = ""
         if not term or is_junk_term(term):
             continue
+        # Repair OCR crumbs in the term itself before accepting
+        term = repair_ocr_prose(term).strip() or term
+        if is_junk_term(term):
+            continue
         key = term.lower()
         if key in seen:
             continue
-        seen.add(key)
 
-        # Water-cycle lessons: always prefer scientific canonical wording
-        if waterish and canonical_definition(term):
+        # Prefer scientific canonical wording for known curriculum packs
+        if (waterish or chemistryish) and canonical_definition(term):
             definition = canonical_definition(term)
-        elif not definition:
+        elif not definition or is_ocr_garbage_claim(definition) or "one of the ideas taught" in definition.lower():
             definition = definition_from_claims(term, claims) or canonical_definition(term)
         if not definition:
             definition = build_student_definition(term, "", topic=topic)
-        if not definition or "is taught in this lesson" in definition.lower():
+        if (
+            not definition
+            or "is taught in this lesson" in definition.lower()
+            or "one of the ideas taught" in definition.lower()
+            or is_ocr_garbage_claim(definition)
+        ):
             continue
 
-        if not example or is_teacher_facing_text(example):
+        seen.add(key)
+        if not example or is_teacher_facing_text(example) or is_ocr_garbage_claim(example):
             example = definition_from_claims(term, claims) or definition
 
         picture = picture_cue_for_term(term, definition=definition)
@@ -444,7 +641,9 @@ def normalize_vocab_items(
             }
         )
 
-    for term, definition in enrich_water_cycle_terms(topic, list(seen)):
+    for term, definition in enrich_water_cycle_terms(topic, list(seen)) + enrich_acids_bases_salts_terms(
+        topic, list(seen)
+    ):
         if term.lower() in seen:
             continue
         seen.add(term.lower())
@@ -457,7 +656,7 @@ def normalize_vocab_items(
                 "example": definition,
                 "example_sentence": definition,
                 "picture": picture_cue_for_term(term, definition=definition),
-                "lesson_context": f"{term} is a key stage in {topic}.",
+                "lesson_context": f"{term} is a key idea in {topic}.",
             }
         )
 
@@ -471,6 +670,14 @@ def normalize_vocab_items(
         "water vapor": 5,
         "water cycle": 6,
         "runoff": 7,
+        "acid": 0,
+        "base": 1,
+        "salt": 2,
+        "indicator": 3,
+        "litmus": 4,
+        "neutralisation": 5,
+        "neutralization": 5,
+        "baking soda": 6,
     }
     out.sort(key=lambda r: priority.get(str(r.get("term") or "").lower(), 50))
     return out[:12]

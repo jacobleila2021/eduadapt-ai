@@ -115,8 +115,14 @@ def _point_bank(board: Mapping[str, Any], name: str, claims: list[str]) -> list[
             if len(points) >= 8:
                 return points
     if not points:
-        topic = str(board.get("topic") or "this lesson")
-        points.append(f"{name[:1].upper() + name[1:]} is a main idea in {topic}.")
+        from engines.lesson_composition_engine.vocab_quality import canonical_definition
+
+        canon = canonical_definition(name)
+        if canon:
+            points.append(canon.rstrip(".") + ".")
+        else:
+            # Prefer silence over hollow stubs — caller skips empty banks.
+            return []
     return points
 
 
@@ -249,9 +255,12 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
     lessons, scientific stage terms are preferred when present in the source.
     """
     from engines.lesson_composition_engine.vocab_quality import (
+        ACIDS_BASES_SALTS_TERMS,
         WATER_CYCLE_TERMS,
+        enrich_acids_bases_salts_terms,
         enrich_water_cycle_terms,
         is_junk_term,
+        repair_ocr_prose,
     )
 
     topic = str(board.get("topic") or "").strip()
@@ -259,7 +268,7 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
     seen: set[str] = set()
 
     def _add(raw: str) -> None:
-        text = str(raw or "").strip()
+        text = repair_ocr_prose(str(raw or "")).strip()
         low = text.lower()
         if (
             not text
@@ -309,6 +318,20 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
             ordered = stages + [n for n in names if n.lower() not in {s.lower() for s in stages}]
             return ordered[:8]
 
+    # Acids / Bases / Salts — prefer CBSE Class 8 teaching bank over OCR scraps.
+    if any(k in claim_blob for k in ("acid", "base", "salt", "litmus", "neutralis", "neutraliz")):
+        pack = [t for t, _ in ACIDS_BASES_SALTS_TERMS]
+        # If names are mostly junk fragments, replace with the pack.
+        clean_names = [n for n in names if not is_junk_term(n)]
+        if len(clean_names) < 3:
+            return pack[:8]
+        for term, _definition in enrich_acids_bases_salts_terms(topic, clean_names):
+            _add(term)
+        # Lead with curriculum terms already present, then remaining pack order.
+        lead = [t for t in pack if t.lower() in seen]
+        rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
+        return (lead + rest)[:8] or pack[:8]
+
     return names[:8] or [n for n in _textbook_concept_names(board, claims) if not is_junk_term(n)][:8]
 
 
@@ -317,7 +340,9 @@ def _concept_explanation(board: Mapping[str, Any], name: str, claims: list[str])
     from engines.lesson_composition_engine.vocab_quality import (
         build_student_definition,
         canonical_definition,
+        clean_learner_claim,
         definition_from_claims,
+        is_ocr_garbage_claim,
     )
 
     low = name.lower()
@@ -329,17 +354,23 @@ def _concept_explanation(board: Mapping[str, Any], name: str, claims: list[str])
         if isinstance(item, dict):
             item_name = str(item.get("name") or "").strip().lower()
             expl = str(item.get("explanation") or item.get("definition") or "").strip()
-            if item_name == low and expl and "key idea" not in expl.lower():
+            expl = clean_learner_claim(expl) or ("" if is_ocr_garbage_claim(expl) else expl)
+            if (
+                item_name == low
+                and expl
+                and "key idea" not in expl.lower()
+                and "one of the ideas taught" not in expl.lower()
+            ):
                 return expl.rstrip(".") + "."
     from_claims = definition_from_claims(name, claims)
-    if from_claims:
+    if from_claims and not is_ocr_garbage_claim(from_claims):
         return from_claims.rstrip(".") + "."
     # Prefer a claim that defines THIS term as the subject — never steal a
     # neighbouring definition that merely mentions the word (Area ≠ Pressure).
     subject_hits: list[str] = []
     mention_hits: list[str] = []
     for claim in claims:
-        cl = str(claim or "").strip()
+        cl = clean_learner_claim(str(claim or "")) or ""
         if not cl or low not in cl.lower() or len(cl.split()) < 6:
             continue
         cl_low = cl.lower()
@@ -358,10 +389,15 @@ def _concept_explanation(board: Mapping[str, Any], name: str, claims: list[str])
     if mention_hits:
         return mention_hits[0].rstrip(".") + "."
     built = build_student_definition(name, "", topic=topic)
-    if built and "key idea" not in built.lower() and "find where the lesson" not in built.lower():
+    if (
+        built
+        and "key idea" not in built.lower()
+        and "find where the lesson" not in built.lower()
+        and "one of the ideas taught" not in built.lower()
+    ):
         return built.rstrip(".") + "."
-    return f"{name[:1].upper() + name[1:]} is one of the ideas taught in {topic}."
-
+    # Never publish hollow stubs — skip with empty string (caller filters).
+    return ""
 
 def _body_word_count(text: str) -> int:
     return len(re.findall(r"\b\w+\b", text or ""))
@@ -392,6 +428,7 @@ def build_canonical_lesson(
     Adaptations inherit this lesson and change presentation only.
     """
     from engines.lesson_composition_engine.vocab_quality import (
+        clean_learner_claim,
         clean_topic,
         is_learner_safe_claim,
         is_teacher_facing_text,
@@ -404,9 +441,18 @@ def build_canonical_lesson(
         topic = topic.split(":", 1)[0].strip() or topic
     topic_low = topic.lower()
     raw_claims = [c for c in _claims(dict(board)) if not c.strip().endswith("?")]
-    claims = [c for c in raw_claims if is_learner_safe_claim(c)]
+    claims = []
+    for c in raw_claims:
+        fixed = clean_learner_claim(c)
+        if fixed and is_learner_safe_claim(fixed):
+            claims.append(fixed)
     if not claims:
-        claims = [c for c in raw_claims if not is_teacher_facing_text(c)][:12]
+        for c in raw_claims:
+            fixed = clean_learner_claim(c)
+            if fixed and not is_teacher_facing_text(fixed):
+                claims.append(fixed)
+            if len(claims) >= 12:
+                break
     names = _master_concept_names(board, claims)
     # Prefer scientific process order for science cycles.
     _PROCESS_ORDER = (
@@ -527,6 +573,8 @@ def build_canonical_lesson(
     teach_names = [n for n in term_names[:6]]
     for idx, name in enumerate(teach_names):
         explanation = _concept_explanation(board, name, claims)
+        if not explanation:
+            continue
         body_claims = claim_owners.get(name) or []
         next_name = teach_names[idx + 1] if idx + 1 < len(teach_names) else None
         merged_body, prose_seen = _textbook_step_body(
@@ -612,16 +660,16 @@ def build_canonical_lesson(
     )
 
     # 4–6) Practice / Exam / HOTS — Bloom progression + mark-depth answers
+    from engines.lesson_composition_engine.vocab_quality import question_what_is
+
     example_line = examples[0].rstrip(".") + "." if examples else ""
 
     practice_pairs: list[tuple[str, str]] = []
     for name in (term_names[:4] or [topic]):
-        practice_pairs.append(
-            (
-                f"What is {name.lower()}? (1 mark)",
-                _mark_answer(1, _point_bank(board, name, claims), topic=topic),
-            )
-        )
+        ans = _mark_answer(1, _point_bank(board, name, claims), topic=topic)
+        if not ans or "one of the ideas taught" in ans.lower():
+            continue
+        practice_pairs.append((question_what_is(name, marks=1), ans))
     if len(term_names) >= 2:
         practice_pairs.append(
             (

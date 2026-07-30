@@ -919,6 +919,13 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
                 issues.append("AI-sounding lesson opener still present.")
             if is_teacher_facing_text(body):
                 issues.append("Teacher instructions leaked into learner theory.")
+            if re.search(r"\b\d*CHAPTER\b|lear\s+nt|pr\s+evious|\bY\s+ou\b", body, re.I):
+                issues.append("OCR/PDF chapter chrome still visible to learners.")
+            if "one of the ideas taught" in body.lower() or "is a main idea in" in body.lower():
+                issues.append("Hollow stub answers still published.")
+            title_low = title.lower()
+            if title_low in {"evious", "classes", "tastes", "bitter", "previous", "respectively"}:
+                issues.append(f"Junk concept title published: {title}.")
         if role in {"practice_question", "exam_question", "hots_question"}:
             for block in re.split(r"\n\s*\n", body):
                 m = re.search(r"\((\d+)\s*marks?\)", block, re.I)

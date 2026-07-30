@@ -36,7 +36,14 @@ __all__ = [
 
 
 def _claims(board: Mapping[str, Any]) -> list[str]:
-    return [str(c) for c in (board.get("verified_claims") or []) if str(c).strip()]
+    from engines.lesson_composition_engine.vocab_quality import clean_learner_claim
+
+    out: list[str] = []
+    for c in board.get("verified_claims") or []:
+        fixed = clean_learner_claim(str(c))
+        if fixed:
+            out.append(fixed)
+    return out
 
 
 def _concept_names(board: Mapping[str, Any], claims: list[str]) -> list[str]:

@@ -64,7 +64,14 @@ def build_lesson_intelligence_board(
         studentize_goal,
         template_hits,
     )
-    from engines.lesson_composition_engine.vocab_quality import clean_topic, is_junk_term
+    from engines.lesson_composition_engine.vocab_quality import (
+        ACIDS_BASES_SALTS_TERMS,
+        clean_learner_claim,
+        clean_topic,
+        is_junk_term,
+        is_teacher_facing_text,
+        repair_ocr_prose,
+    )
 
     clg = dict(clg or {})
     uli = dict(uli or {})
@@ -84,19 +91,19 @@ def build_lesson_intelligence_board(
         + _texts(list(clg.get("claim_texts") or []))
         + _texts(list(profile.get("claim_ledger") or []), "text", "claim")
     )
-    from engines.lesson_composition_engine.vocab_quality import is_teacher_facing_text
 
     # The board feeds learner self-study versions — classroom-management lines
     # from a teacher lesson plan ("I want you to…", "Begin by asking students…")
     # must never become teaching claims, titles, or worked-example seeds. The
     # Teacher/Parent versions keep the full plan via their own authoring path.
-    claim_texts = [
-        c
-        for c in claim_texts
-        if not has_teacher_objective_leak(c)
-        and not template_hits(c)
-        and not is_teacher_facing_text(c)
-    ]
+    cleaned: list[str] = []
+    for c in claim_texts:
+        if has_teacher_objective_leak(c) or template_hits(c) or is_teacher_facing_text(c):
+            continue
+        fixed = clean_learner_claim(c)
+        if fixed:
+            cleaned.append(fixed)
+    claim_texts = _dedupe(cleaned)
 
     concepts_raw = list(clg.get("core_concepts") or [])
     if not concepts_raw:
@@ -120,18 +127,19 @@ def build_lesson_intelligence_board(
     concepts: list[dict[str, Any]] = []
     for item in concepts_raw:
         if isinstance(item, dict):
-            name = str(item.get("name") or item.get("title") or "").strip()
+            name = repair_ocr_prose(str(item.get("name") or item.get("title") or "")).strip()
             # Always junk-filter — CLG frequency tokens like "earth"/"science"
             # from title metadata must never become Must Know steps.
+            expl = repair_ocr_prose(str(item.get("explanation") or item.get("definition") or "")).strip()
             if name and _valid_concept_name(name) and not is_junk_term(name):
                 concepts.append(
                     {
                         "name": name,
-                        "explanation": str(item.get("explanation") or item.get("definition") or "").strip(),
+                        "explanation": clean_learner_claim(expl) if expl else "",
                     }
                 )
         else:
-            name = str(item or "").strip()
+            name = repair_ocr_prose(str(item or "")).strip()
             if name and _valid_concept_name(name) and not is_junk_term(name):
                 concepts.append({"name": name, "explanation": ""})
 
@@ -148,11 +156,27 @@ def build_lesson_intelligence_board(
                 # Fall back to first long token even if common (still teachable)
                 for word in str(claim).split():
                     clean = word.strip(".:;()[]\"'")
-                    if len(clean) >= 5:
+                    if len(clean) >= 5 and not is_junk_term(clean):
                         token = clean.title()
                         break
-            if token:
+            if token and not is_junk_term(token):
                 concepts.append({"name": token, "explanation": str(claim)})
+
+    # CBSE Acids/Bases/Salts — seed teachable concepts when OCR emptied the board.
+    topic_low = topic.lower()
+    if any(k in topic_low for k in ("acid", "base", "salt")) and (
+        not concepts or all(is_junk_term(str(c.get("name") or "")) for c in concepts)
+    ):
+        concepts = [
+            {"name": term, "explanation": definition}
+            for term, definition in ACIDS_BASES_SALTS_TERMS[:6]
+        ]
+    elif any(k in topic_low for k in ("acid", "base", "salt")):
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in ACIDS_BASES_SALTS_TERMS:
+            if term.lower() not in have and len(concepts) < 8:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
 
     misconceptions: list[dict[str, str]] = []
     for item in list(clg.get("misconceptions") or []) + list(
