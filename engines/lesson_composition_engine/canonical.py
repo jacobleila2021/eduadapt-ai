@@ -121,9 +121,19 @@ def _point_bank(board: Mapping[str, Any], name: str, claims: list[str]) -> list[
         if canon:
             points.append(canon.rstrip(".") + ".")
         else:
-            # Prefer silence over hollow stubs — caller skips empty banks.
-            return []
+            display = (name[:1].upper() + name[1:]) if name else "This idea"
+            topic = str(board.get("topic") or "this topic")
+            # Safe floor so HOTS/exam assembly never crashes on empty banks.
+            points.append(
+                f"{display} is a main idea in {topic}: say what it means and give one accurate example."
+            )
     return points
+
+
+def _point_first(board: Mapping[str, Any], name: str, claims: list[str]) -> str:
+    """First teaching point — never IndexError."""
+    bank = _point_bank(board, name, claims)
+    return bank[0] if bank else f"{name} is a main idea in the lesson."
 
 
 def _mark_answer(
@@ -328,6 +338,23 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
         for term, _definition in enrich_acids_bases_salts_terms(topic, clean_names):
             _add(term)
         # Lead with curriculum terms already present, then remaining pack order.
+        lead = [t for t in pack if t.lower() in seen]
+        rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
+        return (lead + rest)[:8] or pack[:8]
+
+    # Fractions — seed CBSE maths teaching bank when the topic is fractional number.
+    if any(k in claim_blob for k in ("fraction", "numerator", "denominator", "mixed number")):
+        from engines.lesson_composition_engine.vocab_quality import (
+            FRACTIONS_TERMS,
+            enrich_fractions_terms,
+        )
+
+        pack = [t for t, _ in FRACTIONS_TERMS]
+        clean_names = [n for n in names if not is_junk_term(n)]
+        if len(clean_names) < 3:
+            return pack[:8]
+        for term, _definition in enrich_fractions_terms(topic, clean_names):
+            _add(term)
         lead = [t for t in pack if t.lower() in seen]
         rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
         return (lead + rest)[:8] or pack[:8]
@@ -781,7 +808,7 @@ def build_canonical_lesson(
                     or f"Watch {topic.lower()} at work in nature or at home."
                 ]
                 + [
-                    f"{n[:1].upper() + n[1:]} — {_point_bank(board, n, claims)[0]}"
+                    f"{n[:1].upper() + n[1:]} — {_point_first(board, n, claims)}"
                     for n in (term_names[:4] or [topic])
                 ],
                 topic=topic,

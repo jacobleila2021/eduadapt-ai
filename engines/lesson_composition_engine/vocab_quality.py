@@ -136,6 +136,46 @@ ACIDS_BASES_SALTS_TERMS = (
     ),
 )
 
+# CBSE mathematics — Fractions (Master Lesson teaching bank).
+FRACTIONS_TERMS = (
+    (
+        "Fraction",
+        "A fraction names equal parts of a whole: the numerator (top) counts the parts taken; "
+        "the denominator (bottom) counts how many equal parts make one whole. For example, 3/4 "
+        "means three of four equal parts.",
+    ),
+    (
+        "Numerator",
+        "The numerator is the top number of a fraction. It tells how many equal parts you have.",
+    ),
+    (
+        "Denominator",
+        "The denominator is the bottom number of a fraction. It tells into how many equal parts "
+        "the whole is divided. It cannot be zero.",
+    ),
+    (
+        "Equivalent fractions",
+        "Equivalent fractions name the same amount even when the numbers look different, "
+        "such as 1/2 and 2/4. Multiply or divide the numerator and denominator by the same "
+        "non-zero number to make an equivalent fraction.",
+    ),
+    (
+        "Proper fraction",
+        "A proper fraction has a numerator smaller than its denominator, so its value is less than 1 "
+        "(for example, 2/5).",
+    ),
+    (
+        "Improper fraction",
+        "An improper fraction has a numerator greater than or equal to its denominator, so its value "
+        "is 1 or more (for example, 7/4).",
+    ),
+    (
+        "Mixed number",
+        "A mixed number joins a whole number with a proper fraction, such as 1 3/4. It can be rewritten "
+        "as an improper fraction.",
+    ),
+)
+
 # Sentence fragments that OCR/title scraping wrongly promotes to "concepts".
 _FRAGMENT_JUNK = frozenset(
     {
@@ -361,6 +401,18 @@ def enrich_acids_bases_salts_terms(topic: str, existing: list[str]) -> list[tupl
     return out
 
 
+def enrich_fractions_terms(topic: str, existing: list[str]) -> list[tuple[str, str]]:
+    blob = (topic or "").lower() + " " + " ".join(existing).lower()
+    if not any(k in blob for k in ("fraction", "numerator", "denominator", "mixed number")):
+        return []
+    have = {e.lower() for e in existing}
+    out: list[tuple[str, str]] = []
+    for term, definition in FRACTIONS_TERMS:
+        if term.lower() not in have and not is_junk_term(term):
+            out.append((term, definition))
+    return out
+
+
 def is_teacher_facing_text(text: str) -> bool:
     """True for lesson-plan / objective wording that must never appear as student content."""
     low = (text or "").strip().lower()
@@ -423,7 +475,7 @@ def canonical_definition(term: str) -> str:
         "neutralization": "neutralisation",
     }
     key = aliases.get(key, key)
-    for name, definition in WATER_CYCLE_TERMS + ACIDS_BASES_SALTS_TERMS:
+    for name, definition in WATER_CYCLE_TERMS + ACIDS_BASES_SALTS_TERMS + FRACTIONS_TERMS:
         if name.lower() == key:
             return definition
     return ""
@@ -715,8 +767,10 @@ def normalize_vocab_items(
             }
         )
 
-    for term, definition in enrich_water_cycle_terms(topic, list(seen)) + enrich_acids_bases_salts_terms(
-        topic, list(seen)
+    for term, definition in (
+        enrich_water_cycle_terms(topic, list(seen))
+        + enrich_acids_bases_salts_terms(topic, list(seen))
+        + enrich_fractions_terms(topic, list(seen))
     ):
         if term.lower() in seen:
             continue

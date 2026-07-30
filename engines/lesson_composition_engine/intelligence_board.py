@@ -66,6 +66,7 @@ def build_lesson_intelligence_board(
     )
     from engines.lesson_composition_engine.vocab_quality import (
         ACIDS_BASES_SALTS_TERMS,
+        FRACTIONS_TERMS,
         clean_learner_claim,
         clean_topic,
         is_junk_term,
@@ -174,6 +175,21 @@ def build_lesson_intelligence_board(
     elif any(k in topic_low for k in ("acid", "base", "salt")):
         have = {str(c.get("name") or "").lower() for c in concepts}
         for term, definition in ACIDS_BASES_SALTS_TERMS:
+            if term.lower() not in have and len(concepts) < 8:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
+
+    # CBSE Fractions — seed teachable concepts when maths uploads leave a thin board.
+    if any(k in topic_low for k in ("fraction", "numerator", "denominator")) and (
+        not concepts or all(is_junk_term(str(c.get("name") or "")) for c in concepts)
+    ):
+        concepts = [
+            {"name": term, "explanation": definition}
+            for term, definition in FRACTIONS_TERMS[:6]
+        ]
+    elif any(k in topic_low for k in ("fraction", "numerator", "denominator")):
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in FRACTIONS_TERMS:
             if term.lower() not in have and len(concepts) < 8:
                 concepts.append({"name": term, "explanation": definition})
                 have.add(term.lower())
