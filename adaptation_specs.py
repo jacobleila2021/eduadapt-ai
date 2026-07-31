@@ -1,7 +1,8 @@
 """
 AdaptEd AI–aligned adaptation types for EduAdapt AI output tabs.
-Product set: nine classroom adaptations (generate=True). Extra Section B
-profiles remain registered with generate=False for future opt-in.
+Product set: classroom adaptations (generate=True). Teacher Version is paused
+(generate=False) until a Master-aligned rewrite. Extra Section B profiles remain
+registered with generate=False for future opt-in.
 """
 
 # Shared prompt blocks for rich student-facing output
@@ -201,8 +202,8 @@ ADAPTATION_SPECS = [
         "id": "teacher",
         "tab": "Teacher Version",
         "title": "Teacher Version",
-        "generate": True,
-        "hint": "Full classroom-teachable lesson plus answer_key for every practice/Exam Practice question, differentiation map, grouping, accommodations, assessment ideas, and marking guide.",
+        "generate": False,
+        "hint": "Paused — prior Teacher draft was not classroom-ready. Re-enable only after a top-quality Master-aligned rewrite.",
     },
     {
         "id": "tutor",
@@ -243,14 +244,13 @@ ADAPTATION_SPECS = [
     },
 ]
 
-# Lesson adaptations among the nine generated product set
+# Lesson adaptations among the generated product set
 LESSON_ADAPTATION_IDS = {
     "standard",
     "ld",
     "visual",
     "auditory",
     "ell",
-    "teacher",
     "parent",
 }
 

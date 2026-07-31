@@ -15,7 +15,7 @@ _RE_MATH_EQ = re.compile(
     r"(?:\$([^$]+)\$)|(?:\\\\\[(.+?)\\\\])|(?:([a-zA-Z0-9\(\)\^\+\-\*/\s]{1,40})\s*=\s*([a-zA-Z0-9\(\)\^\+\-\*/\s]{1,40}))"
 )
 _RE_QUESTION = re.compile(
-    r"(?mi)^(?:Q\.?\s*\d+|Question\s+\d+|Exercise\s+\d+\.\d*|\[\d+\s*marks?\]|[A-D]\)|\d+\.\s+).{10,400}$"
+    r"(?mi)^(?:Q\.?\s*\d+[\)\.]?\s*|Question\s+\d+[\)\.]?\s*|Exercise\s+\d+(?:\.\d+)?[\)\.]?\s*|\[\d+\s*marks?\]\s*|[A-D]\)\s*|\d+\.\s+).{8,500}$"
 )
 _RE_MCQ_OPT = re.compile(r"(?m)^\s*[A-D][\).\:]\s+.+$")
 _RE_OBJECTIVE = re.compile(
@@ -51,24 +51,59 @@ def extract_equations(text: str) -> list[dict[str, Any]]:
 def extract_questions(text: str, *, chapter: int = 0, topic: str = "", source: str = "") -> list[dict[str, Any]]:
     qs: list[ExtractedQuestion] = []
     lines = (text or "").splitlines()
-    for i, line in enumerate(lines):
-        if not _RE_QUESTION.search(line.strip()):
+    # Also stitch multi-line numbered exercises (common in NCERT EXERCISES).
+    stitched: list[str] = []
+    buf = ""
+    for line in lines:
+        raw = line.rstrip()
+        if re.match(r"^\s*(?:\d+\.|Q\.?\s*\d+|Question\s+\d+)\s+\S", raw):
+            if buf:
+                stitched.append(buf.strip())
+            buf = raw.strip()
+        elif buf and raw.strip() and not re.match(r"^\s*(?:\d+\.\d+|EXERCISES?|QUESTIONS?)\b", raw, re.I):
+            if len(buf) < 480:
+                buf = f"{buf} {raw.strip()}"
+        else:
+            if buf:
+                stitched.append(buf.strip())
+                buf = ""
+    if buf:
+        stitched.append(buf.strip())
+    candidates = list(dict.fromkeys([ln.strip() for ln in lines if ln.strip()] + stitched))
+    for i, line in enumerate(candidates):
+        if not _RE_QUESTION.search(line.strip()) and not (
+            re.match(r"^\d+\.\s+.{12,}", line.strip())
+            and (
+                "?" in line
+                or re.search(
+                    r"(?i)\b(calculate|determine|find|explain|why|how|what|which|will|use the data)\b",
+                    line,
+                )
+            )
+        ):
             continue
-        qtype = "mcq" if _RE_MCQ_OPT.search("\n".join(lines[i : i + 6])) else "short_answer"
+        window = "\n".join(candidates[i : i + 6])
+        qtype = "mcq" if _RE_MCQ_OPT.search(window) else "short_answer"
         if re.search(r"assertion|reason", line, re.I):
             qtype = "assertion_reason"
         if re.search(r"hots|higher\s+order", line, re.I):
             qtype = "hots"
         if re.search(r"case\s+study", line, re.I):
             qtype = "case_study"
+        if re.search(
+            r"(?i)\b(calculate|determine|find the|how many|what is the (?:power|resistance|current|heat))\b",
+            line,
+        ):
+            qtype = "numerical"
         marks_m = re.search(r"\[(\d+)\s*marks?\]", line, re.I)
+        marks = int(marks_m.group(1)) if marks_m else (3 if qtype == "numerical" else 1)
         qs.append(
             ExtractedQuestion(
                 question=line.strip()[:500],
                 question_type=qtype,
-                marks=int(marks_m.group(1)) if marks_m else 1,
-                bloom="analyze" if qtype in ("hots", "case_study") else "remember",
-                difficulty="hard" if qtype == "hots" else "medium",
+                marks=marks,
+                bloom="analyze" if qtype in ("hots", "case_study", "numerical") else "remember",
+                difficulty="hard" if qtype in {"hots", "numerical"} else "medium",
                 topic=topic,
                 chapter=chapter,
                 source=source,

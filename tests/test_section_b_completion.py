@@ -111,7 +111,7 @@ def test_adaptations_enabled():
         "ell",
         "visual",
         "auditory",
-        "teacher",
         "parent",
         "worksheet",
     }
+    assert "teacher" not in OUTPUT_KEYS

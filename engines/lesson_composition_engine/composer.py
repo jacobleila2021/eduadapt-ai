@@ -526,7 +526,7 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         for c in (clg.get("core_concepts") or [])
         if isinstance(c, dict) and not is_junk_term(str(c.get("name") or ""))
     ]
-    # Seed CBSE Acids/Bases/Salts concepts when OCR left the board empty/junk.
+    # Seed CBSE teaching banks when OCR left the board empty/junk.
     topic_low = topic.lower()
     if any(k in topic_low for k in ("acid", "base", "salt")) and len(concepts) < 3:
         from engines.lesson_composition_engine.vocab_quality import ACIDS_BASES_SALTS_TERMS
@@ -537,6 +537,16 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 concepts.append({"name": term, "explanation": definition})
                 have.add(term.lower())
             if len(concepts) >= 6:
+                break
+    if any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance")) and len(concepts) < 4:
+        from engines.lesson_composition_engine.vocab_quality import ELECTRICITY_TERMS
+
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in ELECTRICITY_TERMS:
+            if term.lower() not in have:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
+            if len(concepts) >= 8:
                 break
     terms = [
         str(w.get("term") or "")
@@ -562,14 +572,32 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         return f"{q.rstrip('.?')} from this lesson on {anchor}."
 
     short = []
-    seed = assessments if len(assessments) >= 4 else (assessments + concepts)
-    for i, outcome in enumerate(seed[:8] or concepts[:8] or [{"name": topic}]):
+    # Prefer textbook assessment prompts; then concept explainers.
+    textbook_assessments = [
+        a
+        for a in assessments
+        if isinstance(a, dict) and str(a.get("prompt") or "").strip()
+    ]
+    seed = textbook_assessments if textbook_assessments else (assessments + concepts)
+    for i, outcome in enumerate(seed[:10] or concepts[:8] or [{"name": topic}]):
         if isinstance(outcome, dict) and outcome.get("prompt"):
-            q = _anchor_to_lesson(str(outcome["prompt"]))
-            name = str((outcome or {}).get("name") or topic)
+            q = str(outcome["prompt"]).strip()
+            # Keep uploaded stems faithful — only lightly anchor empty generics.
+            if len(q.split()) < 6:
+                q = _anchor_to_lesson(q)
+            name = next(
+                (
+                    str(c.get("name") or "")
+                    for c in concepts
+                    if str(c.get("name") or "").lower() in q.lower()
+                ),
+                str((outcome or {}).get("name") or topic),
+            )
+            marks = int(outcome.get("marks") or (3 if str(outcome.get("question_type") or "") == "numerical" else 2))
         else:
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
             q = f"Explain {name} using evidence from the lesson."
+            marks = 2
         # Model answer must TEACH — never echo the question stem or raw OCR fact.
         answer = (
             canonical_definition(name)
@@ -580,14 +608,26 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             answer = canonical_definition(name) or (
                 pool[(i + 1) % len(pool)] if len(pool) > 1 else answer
             )
-        if not answer or "one of the ideas taught" in answer.lower():
-            continue
+        if not answer or "one of the ideas taught" in answer.lower() or "say what it means" in answer.lower() or "is a main idea in" in answer.lower():
+            # Still keep textbook numerical stems with a formula spine answer.
+            if str((outcome or {}).get("question_type") or "") == "numerical" or _re.search(
+                r"(?i)\b(calculate|determine|find)\b", q
+            ):
+                answer = (
+                    canonical_definition("Ohm's law")
+                    or canonical_definition("Electric power")
+                    or canonical_definition(name)
+                    or (pool[i % len(pool)] if pool else "")
+                )
+            if not answer:
+                continue
         short.append(
             {
                 "question": q if not q.lower().startswith("in your own words, explain this idea") else f"Explain {name} using evidence from the lesson.",
-                "marks": 2,
-                "lines": 4,
+                "marks": marks,
+                "lines": 4 if marks <= 2 else 6,
                 "model_answer": answer[:420] if answer.endswith((".", "!", "?")) else (answer[:420].rstrip(".") + "."),
+                "source": str((outcome or {}).get("source") or "lesson"),
             }
         )
     # Guarantee exam breadth — distinct concept prompts, never fact-echo fillers.
@@ -671,7 +711,7 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             }
         )
 
-    # HOTS — higher-order items mapped only to taught concepts.
+    # HOTS — topic-aware higher-order items mapped only to taught concepts.
     hots: list[dict[str, Any]] = []
     concept_names_for_hots = [
         str(c.get("name") or "").strip()
@@ -682,38 +722,119 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
     second = concept_names_for_hots[1] if len(concept_names_for_hots) > 1 else topic
     first_def = canonical_definition(first) or (pool[0] if pool else f"{first} is taught in this lesson.")
     second_def = canonical_definition(second) or (pool[1] if len(pool) > 1 else f"{second} is a different idea.")
-    hots.append(
-        {
-            "question": (
-                f"Predict what would change if an acid were mixed with a base until "
-                f"the solution became neutral. Give a reason from the lesson."
-            ),
-            "marks": 5,
-            "lines": 8,
-            "model_answer": _para(
-                first_def,
-                "When an acid and a base cancel each other's effect, salt and water form (neutralisation).",
-                "The sharp sour or bitter properties become milder as the mixture approaches neutral.",
-            ),
-            "bloom": "hots",
-        }
-    )
-    hots.append(
-        {
-            "question": (
-                f"A classmate confuses {first.lower()} with {second.lower()}. "
-                f"Write the correction using ideas from this lesson."
-            ),
-            "marks": 5,
-            "lines": 8,
-            "model_answer": _para(
-                f"{first} and {second} are different ideas in {topic}.",
-                first_def,
-                second_def,
-            ),
-            "bloom": "hots",
-        }
-    )
+    if any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance")):
+        ohm = canonical_definition("Ohm's law") or first_def
+        series = canonical_definition("Series combination") or first_def
+        parallel = canonical_definition("Parallel combination") or second_def
+        power = canonical_definition("Electric power") or second_def
+        hots.append(
+            {
+                "question": (
+                    "Predict what happens to current if resistance doubles while "
+                    "potential difference stays constant. Reason from Ohm's law."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    ohm,
+                    "From V = IR, if V is constant and R doubles, I becomes half.",
+                ),
+                "bloom": "hots",
+            }
+        )
+        hots.append(
+            {
+                "question": (
+                    "A classmate confuses series combination with parallel combination. "
+                    "Write the correction using ideas from this lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(series, parallel),
+                "bloom": "hots",
+            }
+        )
+        hots.append(
+            {
+                "question": (
+                    "An electric bulb is marked 220 V, 100 W. Explain what this means "
+                    "using electric power from the lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    power,
+                    "At 220 V the bulb is designed to consume 100 J of energy each second (100 W).",
+                ),
+                "bloom": "hots",
+            }
+        )
+    elif any(k in topic_low for k in ("acid", "base", "salt")):
+        hots.append(
+            {
+                "question": (
+                    "Predict what would change if an acid were mixed with a base until "
+                    "the solution became neutral. Give a reason from the lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    first_def,
+                    "When an acid and a base cancel each other's effect, salt and water form (neutralisation).",
+                    "The sharp sour or bitter properties become milder as the mixture approaches neutral.",
+                ),
+                "bloom": "hots",
+            }
+        )
+        hots.append(
+            {
+                "question": (
+                    f"A classmate confuses {first.lower()} with {second.lower()}. "
+                    f"Write the correction using ideas from this lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    f"{first} and {second} are different ideas in {topic}.",
+                    first_def,
+                    second_def,
+                ),
+                "bloom": "hots",
+            }
+        )
+    else:
+        hots.append(
+            {
+                "question": (
+                    f"Predict what would change about {first.lower()} if the conditions "
+                    f"around it were reversed. Give a reason from the lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    first_def,
+                    f"If the conditions that support {first.lower()} reverse, that idea "
+                    f"slows, stops, or changes outcome in {topic}.",
+                ),
+                "bloom": "hots",
+            }
+        )
+        hots.append(
+            {
+                "question": (
+                    f"A classmate confuses {first.lower()} with {second.lower()}. "
+                    f"Write the correction using ideas from this lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    f"{first} and {second} are different ideas in {topic}.",
+                    first_def,
+                    second_def,
+                ),
+                "bloom": "hots",
+            }
+        )
 
     vocab_q = []
     for t in terms[:6]:

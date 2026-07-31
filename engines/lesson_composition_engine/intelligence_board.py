@@ -290,6 +290,25 @@ def build_lesson_intelligence_board(
         "examples": examples[:10],
         "worked_example_seeds": claim_texts[:4],
         "assessment_objectives": assessments[:8],
+        # Full textbook prompts (QUESTIONS / EXERCISES) for Master + exam fidelity.
+        "assessment_outcomes": [
+            row
+            for row in (clg.get("assessment_outcomes") or [])
+            if isinstance(row, dict) and str(row.get("prompt") or "").strip()
+        ][:16],
+        "source_text": "\n".join(
+            [
+                str(clg.get("source_text") or ""),
+                str((clg.get("provenance") or {}).get("source_text") or ""),
+                "\n".join(claim_texts),
+                "\n".join(str(a) for a in assessments[:12]),
+                "\n".join(
+                    str(row.get("prompt") or "")
+                    for row in (clg.get("assessment_outcomes") or [])
+                    if isinstance(row, dict)
+                ),
+            ]
+        ).strip(),
         "visual_opportunities": visuals[:8],
         "experiments": _texts(list(clg.get("experiments") or []), "text", "title")[:4],
         "learning_goals": goals[:4] or [studentize_goal(f"Understand {topic}", topic=topic)],

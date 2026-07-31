@@ -358,12 +358,44 @@ def build_canonical_lesson_graph(
 
     analysis = sif.get("analysis") if isinstance(sif.get("analysis"), dict) else {}
     assessments = []
-    for i, hint in enumerate(((analysis or {}).get("assessment_hints") or [])[:8]):
-        if isinstance(hint, dict):
+    # Prefer QUESTIONS / EXERCISES extracted from the uploaded lesson text.
+    try:
+        from engines.lesson_composition_engine.vocab_quality import (
+            extract_source_assessment_prompts,
+        )
+
+        source_blob = "\n".join(
+            [
+                str(profile.get("source_text") or ""),
+                str(profile.get("document_text") or ""),
+                str((uli or {}).get("source_text") or ""),
+                "\n".join(claim_texts),
+            ]
+        )
+        for row in extract_source_assessment_prompts(source_blob, topic=topic):
             assessments.append(
                 {
-                    "outcome_id": f"assess_{i+1:03d}",
-                    "prompt": str(hint.get("prompt") or hint.get("question") or hint.get("label") or ""),
+                    "outcome_id": str(row.get("outcome_id") or f"assess_{len(assessments)+1:03d}"),
+                    "prompt": str(row.get("prompt") or ""),
+                    "bloom": str(row.get("bloom") or "understand"),
+                    "marks": int(row.get("marks") or 2),
+                    "source": str(row.get("source") or "textbook"),
+                    "question_type": str(row.get("question_type") or "short_answer"),
+                }
+            )
+    except Exception:
+        pass
+    for i, hint in enumerate(((analysis or {}).get("assessment_hints") or [])[:8]):
+        if isinstance(hint, dict):
+            prompt = str(hint.get("prompt") or hint.get("question") or hint.get("label") or "")
+            if not prompt.strip():
+                continue
+            if any(prompt.lower()[:60] == str(a.get("prompt") or "").lower()[:60] for a in assessments):
+                continue
+            assessments.append(
+                {
+                    "outcome_id": f"assess_{len(assessments)+1:03d}",
+                    "prompt": prompt,
                     "bloom": str(hint.get("bloom") or ""),
                 }
             )
@@ -455,6 +487,15 @@ def build_canonical_lesson_graph(
                 ).to_dict()
             )
 
+    source_text = "\n".join(
+        [
+            str(profile.get("source_text") or ""),
+            str(profile.get("document_text") or ""),
+            str((uli or {}).get("source_text") or ""),
+            "\n".join(claim_texts),
+        ]
+    ).strip()
+
     return CanonicalLessonGraph(
         topic=topic,
         subject_key=subject_key,
@@ -469,6 +510,7 @@ def build_canonical_lesson_graph(
         assessment_outcomes=assessments,
         accessibility_notes=a11y,
         claim_texts=claim_texts,
+        source_text=source_text[:20000],
         nodes=nodes,
         edges=edges,
         provenance={

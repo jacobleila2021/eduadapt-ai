@@ -428,8 +428,22 @@ def _rewrite_summary(
             # summary sections instead of appending a new one on each pass.
             if has_summary:
                 continue
-            body = str(row.get("body") or "").lower()
-            if any(m in body for m in GENERIC_SUMMARY_MARKERS) or len(body.split()) < 18:
+            body = str(row.get("body") or "")
+            body_low = body.lower()
+            # Preserve NCERT "What you have learnt" / rich curriculum summaries.
+            preserve = (
+                "what you have learnt" in str(row.get("title") or "").lower()
+                or body.count("•") >= 3
+                or body.count("\n") >= 3
+                or len(body.split()) >= 40
+            )
+            if (
+                not preserve
+                and (
+                    any(m in body_low for m in GENERIC_SUMMARY_MARKERS)
+                    or len(body.split()) < 18
+                )
+            ):
                 row["body"] = summary_body
             if not (row.get("source_refs") or []):
                 row["source_refs"] = list(parent_refs)

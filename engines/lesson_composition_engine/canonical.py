@@ -115,25 +115,48 @@ def _point_bank(board: Mapping[str, Any], name: str, claims: list[str]) -> list[
             if len(points) >= 8:
                 return points
     if not points:
-        from engines.lesson_composition_engine.vocab_quality import canonical_definition
+        from engines.lesson_composition_engine.vocab_quality import (
+            build_student_definition,
+            canonical_definition,
+        )
 
         canon = canonical_definition(name)
         if canon:
             points.append(canon.rstrip(".") + ".")
         else:
-            display = (name[:1].upper() + name[1:]) if name else "This idea"
             topic = str(board.get("topic") or "this topic")
-            # Safe floor so HOTS/exam assembly never crashes on empty banks.
-            points.append(
-                f"{display} is a main idea in {topic}: say what it means and give one accurate example."
-            )
-    return points
+            # Never emit hollow coaching stubs as model answers.
+            built = build_student_definition(name, "", topic=topic)
+            if built and "is a main idea in" not in built.lower():
+                points.append(built.rstrip(".") + ".")
+            elif claims:
+                points.append(str(claims[0]).rstrip(".") + ".")
+            else:
+                display = (name[:1].upper() + name[1:]) if name else "This idea"
+                points.append(
+                    f"{display} is taught in {topic}: use the definition and one example from the lesson."
+                )
+    # Final hygiene — never return prompt-like answer shells.
+    clean = [
+        p
+        for p in points
+        if p
+        and "is a main idea in" not in p.lower()
+        and "say what it means" not in p.lower()
+    ]
+    return clean or points
 
 
 def _point_first(board: Mapping[str, Any], name: str, claims: list[str]) -> str:
     """First teaching point — never IndexError."""
     bank = _point_bank(board, name, claims)
-    return bank[0] if bank else f"{name} is a main idea in the lesson."
+    if bank:
+        return bank[0]
+    from engines.lesson_composition_engine.vocab_quality import canonical_definition
+
+    return canonical_definition(name) or (
+        f"{name} is explained in this lesson with a clear definition and example."
+    )
 
 
 def _mark_answer(
@@ -266,8 +289,10 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
     """
     from engines.lesson_composition_engine.vocab_quality import (
         ACIDS_BASES_SALTS_TERMS,
+        ELECTRICITY_TERMS,
         WATER_CYCLE_TERMS,
         enrich_acids_bases_salts_terms,
+        enrich_electricity_terms,
         enrich_water_cycle_terms,
         is_junk_term,
         repair_ocr_prose,
@@ -358,6 +383,29 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
         lead = [t for t in pack if t.lower() in seen]
         rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
         return (lead + rest)[:8] or pack[:8]
+
+    # Electricity — Class 10 CBSE teaching bank (current, Ohm, series/parallel, power…).
+    if any(
+        k in claim_blob
+        for k in (
+            "electric",
+            "ohm",
+            "resistance",
+            "circuit",
+            "ampere",
+            "kilowatt",
+            "potential difference",
+        )
+    ):
+        pack = [t for t, _ in ELECTRICITY_TERMS]
+        clean_names = [n for n in names if not is_junk_term(n)]
+        if len(clean_names) < 4:
+            return pack[:10]
+        for term, _definition in enrich_electricity_terms(topic, clean_names):
+            _add(term)
+        lead = [t for t in pack if t.lower() in seen]
+        rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
+        return (lead + rest)[:10] or pack[:10]
 
     return names[:8] or [n for n in _textbook_concept_names(board, claims) if not is_junk_term(n)][:8]
 
@@ -597,7 +645,12 @@ def build_canonical_lesson(
         claim_owners[owner].append(claim)
         used_claims.add(claim)
 
-    teach_names = [n for n in term_names[:6]]
+    # Prefer a fuller Master concept spine for STEM chapters (Electricity etc.).
+    teach_cap = 10 if any(
+        k in topic_low
+        for k in ("electric", "ohm", "resistance", "circuit", "acid", "base", "salt")
+    ) else 6
+    teach_names = [n for n in term_names[:teach_cap]]
     for idx, name in enumerate(teach_names):
         explanation = _concept_explanation(board, name, claims)
         if not explanation:
@@ -682,6 +735,28 @@ def build_canonical_lesson(
         walk = " ".join(walk_bits)
         if examples:
             walk += " Example: " + examples[0].rstrip(".") + "."
+    elif any(
+        n.lower()
+        in {
+            "electric current",
+            "ohm's law",
+            "electric power",
+            "resistance",
+            "series combination",
+            "parallel combination",
+        }
+        for n in term_names
+    ) or any(k in topic_low for k in ("electric", "ohm", "circuit")):
+        walk_bits = [
+            "Worked numerical path for Electricity — keep units at every step.",
+            "Given: an electric bulb connected to a 220 V supply draws 0.50 A.",
+            "Find power using P = VI.",
+            "P = 220 V × 0.50 A = 110 W.",
+            "Meaning: the bulb converts electrical energy to light and heat at 110 joules each second.",
+        ]
+        if examples:
+            walk_bits.append("Lesson example: " + examples[0].rstrip(".") + ".")
+        walk = " ".join(walk_bits)
     else:
         walk = (
             "Use a sharp knife or a drawing pin: the same push on a smaller tip "
@@ -704,30 +779,102 @@ def build_canonical_lesson(
         }
     )
 
-    # 4–6) Practice / Exam / HOTS — Bloom progression + mark-depth answers
-    from engines.lesson_composition_engine.vocab_quality import question_what_is
+    # 4–6) Practice / Exam / HOTS — prefer uploaded textbook QUESTIONS when present
+    from engines.lesson_composition_engine.vocab_quality import (
+        extract_source_assessment_prompts,
+        extract_what_you_have_learnt,
+        question_what_is,
+    )
 
     example_line = examples[0].rstrip(".") + "." if examples else ""
+    source_blob = "\n".join(
+        str(x)
+        for x in (
+            [str(board.get("source_text") or "")]
+            + list(board.get("verified_claims") or [])
+            + list(claims)
+            + [str(a) for a in (board.get("assessment_objectives") or [])]
+            + [
+                str(a.get("prompt") or "")
+                for a in (board.get("assessment_outcomes") or [])
+                if isinstance(a, dict)
+            ]
+        )
+        if str(x).strip()
+    )
+    source_prompts = extract_source_assessment_prompts(source_blob, topic=topic)
+    # Also keep any assessment outcomes already on the board (from CLG).
+    for row in board.get("assessment_outcomes") or []:
+        if not isinstance(row, dict):
+            continue
+        prompt = str(row.get("prompt") or "").strip()
+        if len(prompt.split()) < 5:
+            continue
+        if any(prompt.lower()[:60] == str(p.get("prompt") or "").lower()[:60] for p in source_prompts):
+            continue
+        source_prompts.append(
+            {
+                "prompt": prompt[:400],
+                "marks": int(row.get("marks") or 2),
+                "source": "board",
+            }
+        )
+
+    def _answer_for_prompt(prompt: str, marks: int = 2) -> str:
+        hit = next((n for n in term_names if n.lower() in prompt.lower()), "")
+        bank = _point_bank(board, hit or (term_names[0] if term_names else topic), claims)
+        # Calculation / numerical stems: keep lesson formulae as the model answer spine.
+        if re.search(
+            r"(?i)\b(\d+\s*[ΩVAWh]|ohm|ampere|volt|watt|kwh|resist|parallel|series|calculate|determine|find)\b",
+            prompt,
+        ):
+            formula_bits = [
+                p
+                for p in (
+                    _point_bank(board, "Ohm's law", claims)
+                    + _point_bank(board, "Electric power", claims)
+                    + _point_bank(board, "Series combination", claims)
+                    + _point_bank(board, "Parallel combination", claims)
+                    + bank
+                )
+                if p
+            ]
+            return _mark_answer(marks, formula_bits[:6] or bank, topic=topic)
+        return _mark_answer(marks, bank, topic=topic)
 
     practice_pairs: list[tuple[str, str]] = []
-    for name in (term_names[:4] or [topic]):
-        ans = _mark_answer(1, _point_bank(board, name, claims), topic=topic)
-        if not ans or "one of the ideas taught" in ans.lower():
+    # Short textbook questions first (1–2 marks style).
+    for row in source_prompts:
+        prompt = str(row.get("prompt") or "").strip()
+        marks = int(row.get("marks") or 2)
+        if marks > 3:
             continue
-        practice_pairs.append((question_what_is(name, marks=1), ans))
-    if len(term_names) >= 2:
-        practice_pairs.append(
-            (
-                f"How are {term_names[0].lower()} and {term_names[1].lower()} connected "
-                f"in {topic.lower()}? (2 marks)",
-                _mark_answer(
-                    2,
-                    _point_bank(board, term_names[0], claims)
-                    + _point_bank(board, term_names[1], claims),
-                    topic=topic,
-                ),
+        ans = _answer_for_prompt(prompt, marks=marks)
+        if not ans or "say what it means" in ans.lower() or "is a main idea in" in ans.lower():
+            continue
+        stem = prompt if f"({marks} mark" in prompt.lower() else f"{prompt} ({marks} mark{'s' if marks != 1 else ''})"
+        practice_pairs.append((stem, ans))
+        if len(practice_pairs) >= 5:
+            break
+    if len(practice_pairs) < 3:
+        for name in (term_names[:4] or [topic]):
+            ans = _mark_answer(1, _point_bank(board, name, claims), topic=topic)
+            if not ans or "one of the ideas taught" in ans.lower() or "say what it means" in ans.lower():
+                continue
+            practice_pairs.append((question_what_is(name, marks=1), ans))
+        if len(term_names) >= 2:
+            practice_pairs.append(
+                (
+                    f"How are {term_names[0].lower()} and {term_names[1].lower()} connected "
+                    f"in {topic.lower()}? (2 marks)",
+                    _mark_answer(
+                        2,
+                        _point_bank(board, term_names[0], claims)
+                        + _point_bank(board, term_names[1], claims),
+                        topic=topic,
+                    ),
+                )
             )
-        )
     sections.append(
         {
             "title": "Practice Questions",
@@ -737,27 +884,46 @@ def build_canonical_lesson(
     )
 
     exam_pairs: list[tuple[str, str]] = []
-    for name in (term_names[:3] or [topic]):
-        exam_pairs.append(
-            (
-                f"Explain {name.lower()}. Include its meaning and how it connects to "
-                f"{topic.lower()}. (3 marks)",
-                _mark_answer(3, _point_bank(board, name, claims), topic=topic),
+    for row in source_prompts:
+        prompt = str(row.get("prompt") or "").strip()
+        marks = int(row.get("marks") or 3)
+        if marks < 3 and not re.search(
+            r"(?i)\b(calculate|determine|find|advantage|explain why|how would|how to connect)\b",
+            prompt,
+        ):
+            continue
+        if any(prompt.lower()[:50] in q.lower() for q, _ in practice_pairs):
+            continue
+        use_marks = max(marks, 3)
+        ans = _answer_for_prompt(prompt, marks=use_marks)
+        if not ans or "say what it means" in ans.lower():
+            continue
+        stem = prompt if "mark" in prompt.lower() else f"{prompt} ({use_marks} marks)"
+        exam_pairs.append((stem, ans))
+        if len(exam_pairs) >= 5:
+            break
+    if len(exam_pairs) < 3:
+        for name in (term_names[:3] or [topic]):
+            exam_pairs.append(
+                (
+                    f"Explain {name.lower()}. Include its meaning and how it connects to "
+                    f"{topic.lower()}. (3 marks)",
+                    _mark_answer(3, _point_bank(board, name, claims), topic=topic),
+                )
             )
-        )
-    if len(term_names) >= 2:
-        exam_pairs.append(
-            (
-                f"Compare {term_names[0].lower()} and {term_names[1].lower()}. "
-                f"State one similarity and one difference. (4 marks)",
-                _mark_answer(
-                    4,
-                    _point_bank(board, term_names[0], claims)
-                    + _point_bank(board, term_names[1], claims),
-                    topic=topic,
-                ),
+        if len(term_names) >= 2:
+            exam_pairs.append(
+                (
+                    f"Compare {term_names[0].lower()} and {term_names[1].lower()}. "
+                    f"State one similarity and one difference. (4 marks)",
+                    _mark_answer(
+                        4,
+                        _point_bank(board, term_names[0], claims)
+                        + _point_bank(board, term_names[1], claims),
+                        topic=topic,
+                    ),
+                )
             )
-        )
     sections.append(
         {
             "title": "Exam Questions",
@@ -768,55 +934,90 @@ def build_canonical_lesson(
 
     hots_anchor = term_names[0] if term_names else topic
     hots_second = term_names[1] if len(term_names) > 1 else topic
-    hots_pairs = [
-        (
-            f"Predict what would change about {hots_anchor.lower()} if the conditions around it "
-            f"were reversed. Give a reason from the lesson. (5 marks)",
-            _mark_answer(
-                5,
-                [
-                    f"If the conditions that cause {hots_anchor.lower()} were reversed, that stage would slow or stop."
-                ]
-                + _point_bank(board, hots_anchor, claims),
-                topic=topic,
-                lead=f"Begin with what {hots_anchor.lower()} needs in order to happen",
-                example=example_line,
+    electric = any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance"))
+    if electric:
+        hots_pairs = [
+            (
+                "Predict what happens to current in a circuit if resistance doubles "
+                "while potential difference stays the same. Give a reason from Ohm's law. (5 marks)",
+                _mark_answer(
+                    5,
+                    _point_bank(board, "Ohm's law", claims)
+                    + _point_bank(board, "Electric current", claims),
+                    topic=topic,
+                ),
             ),
-        ),
-        (
-            f"A classmate confuses {hots_anchor.lower()} with {hots_second.lower()}. "
-            f"Write the correction using ideas from this lesson. (5 marks)",
-            _mark_answer(
-                5,
-                [
-                    f"{hots_anchor[:1].upper() + hots_anchor[1:]} and "
-                    f"{hots_second[:1].upper() + hots_second[1:]} are different ideas in {topic.lower()}, not the same thing."
-                ]
-                + _point_bank(board, hots_anchor, claims)
-                + _point_bank(board, hots_second, claims),
-                topic=topic,
-                lead="Correct the confusion with the taught meanings",
+            (
+                f"A classmate confuses series combination with parallel combination. "
+                f"Write the correction using ideas from this lesson. (5 marks)",
+                _mark_answer(
+                    5,
+                    _point_bank(board, "Series combination", claims)
+                    + _point_bank(board, "Parallel combination", claims),
+                    topic=topic,
+                ),
             ),
-        ),
-        (
-            f"Describe one everyday situation that shows {topic.lower()} at work, and name each "
-            f"main idea inside it. (6 marks)",
-            _mark_answer(
-                6,
-                [
-                    example_line
-                    or f"Watch {topic.lower()} at work in nature or at home."
-                ]
-                + [
-                    f"{n[:1].upper() + n[1:]} — {_point_first(board, n, claims)}"
-                    for n in (term_names[:4] or [topic])
-                ],
-                topic=topic,
-                lead=f"Choose one clear everyday situation that shows {topic.lower()}",
-                example=example_line,
+            (
+                "An electric bulb is marked 220 V, 100 W. Explain what this means using "
+                "electric power ideas from the lesson. (6 marks)",
+                _mark_answer(
+                    6,
+                    _point_bank(board, "Electric power", claims)
+                    + _point_bank(board, "Kilowatt hour", claims),
+                    topic=topic,
+                ),
             ),
-        ),
-    ]
+        ]
+    else:
+        hots_pairs = [
+            (
+                f"Predict what would change about {hots_anchor.lower()} if the conditions around it "
+                f"were reversed. Give a reason from the lesson. (5 marks)",
+                _mark_answer(
+                    5,
+                    [
+                        f"If the conditions that cause {hots_anchor.lower()} were reversed, that stage would slow or stop."
+                    ]
+                    + _point_bank(board, hots_anchor, claims),
+                    topic=topic,
+                    lead=f"Begin with what {hots_anchor.lower()} needs in order to happen",
+                    example=example_line,
+                ),
+            ),
+            (
+                f"A classmate confuses {hots_anchor.lower()} with {hots_second.lower()}. "
+                f"Write the correction using ideas from this lesson. (5 marks)",
+                _mark_answer(
+                    5,
+                    [
+                        f"{hots_anchor[:1].upper() + hots_anchor[1:]} and "
+                        f"{hots_second[:1].upper() + hots_second[1:]} are different ideas in {topic.lower()}, not the same thing."
+                    ]
+                    + _point_bank(board, hots_anchor, claims)
+                    + _point_bank(board, hots_second, claims),
+                    topic=topic,
+                    lead="Correct the confusion with the taught meanings",
+                ),
+            ),
+            (
+                f"Describe one everyday situation that shows {topic.lower()} at work, and name each "
+                f"main idea inside it. (6 marks)",
+                _mark_answer(
+                    6,
+                    [
+                        example_line
+                        or f"Watch {topic.lower()} at work in nature or at home."
+                    ]
+                    + [
+                        f"{n[:1].upper() + n[1:]} — {_point_first(board, n, claims)}"
+                        for n in (term_names[:4] or [topic])
+                    ],
+                    topic=topic,
+                    lead=f"Choose one clear everyday situation that shows {topic.lower()}",
+                    example=example_line,
+                ),
+            ),
+        ]
     sections.append(
         {
             "title": "HOTS Questions",
@@ -824,6 +1025,26 @@ def build_canonical_lesson(
             "body": _qa_pairs_block(hots_pairs),
         }
     )
+
+    # 7) What you have learnt — prefer NCERT summary bullets as-is.
+    learnt = extract_what_you_have_learnt(source_blob)
+    if not learnt:
+        # Fall back to curriculum bank definitions for the taught spine.
+        from engines.lesson_composition_engine.vocab_quality import canonical_definition
+
+        learnt = []
+        for n in (term_names[:10] or [topic]):
+            d = canonical_definition(n) or _point_first(board, n, claims)
+            if d and "say what it means" not in d.lower():
+                learnt.append(d if d.endswith((".", "!", "?")) else d + ".")
+    if learnt:
+        sections.append(
+            {
+                "title": "What you have learnt",
+                "role": "summary",
+                "body": "\n".join(f"• {line}" for line in learnt[:12]),
+            }
+        )
 
     # Curriculum completeness — uncovered claims ride on the last theory step.
     section_blob = re.sub(
@@ -937,6 +1158,7 @@ def freeze_canonical(canonical: Mapping[str, Any], core: Mapping[str, Any]) -> d
     lce = dict(frozen.get("lce") or {})
     lce["frozen"] = True
     lce["canonical_hash"] = str(core.get("hash") or "")
+    lce["concepts"] = list(core.get("concepts") or [])
     frozen["lce"] = lce
     return frozen
 
@@ -994,6 +1216,20 @@ _LENS_PRESENTATION = {
 
 _COLOUR_MARKERS = ("●", "◆", "▲", "■", "★", "✦", "▀")
 
+# Distinct concept colours for Visual learners (WCAG-friendly on cream).
+_VISUAL_CONCEPT_COLOURS = (
+    "#0B6E4F",  # deep green
+    "#1D4ED8",  # royal blue
+    "#B45309",  # amber
+    "#9F1239",  # rose
+    "#6D28D9",  # violet
+    "#0E7490",  # teal
+    "#C2410C",  # orange
+    "#166534",  # forest
+    "#1E3A8A",  # navy
+    "#86198F",  # magenta
+)
+
 
 def strip_colour_markers(text: str) -> str:
     """Remove decorative emphasis glyphs from learner prose (Visual lens legacy)."""
@@ -1021,13 +1257,35 @@ def _syllabify(term: str) -> str:
 
 
 def _emphasise_terms(body: str, concepts: list[str]) -> str:
-    """Visual emphasis without injecting decorative characters into the text.
+    """Colour-code key concept terms for Visual learners (HTML spans)."""
+    text = strip_colour_markers(body)
+    if not concepts or not text:
+        return text
+    # Longest first so "electric current" wins over "current".
+    ordered = sorted(
+        {str(c).strip() for c in concepts if str(c).strip() and len(str(c).strip()) >= 3},
+        key=len,
+        reverse=True,
+    )
+    for i, name in enumerate(ordered[:10]):
+        colour = _VISUAL_CONCEPT_COLOURS[i % len(_VISUAL_CONCEPT_COLOURS)]
+        pattern = re.compile(rf"\b({re.escape(name)})\b", flags=re.IGNORECASE)
 
-    Diagrams and layout carry the visual load — wrapping terms in ★/●/◆ made
-    the lesson look broken and did not help learners.
-    """
-    del concepts  # reserved for future CSS/HTML highlighting
-    return strip_colour_markers(body)
+        def _wrap(m: re.Match[str], *, _c: str = colour) -> str:
+            # Avoid double-wrapping already coloured spans.
+            return (
+                f'<span class="alora-visual-term" style="color:{_c};font-weight:700;">'
+                f"{m.group(1)}</span>"
+            )
+
+        # Skip replacements inside existing HTML tags.
+        parts = re.split(r"(<[^>]+>)", text)
+        for j, part in enumerate(parts):
+            if part.startswith("<"):
+                continue
+            parts[j] = pattern.sub(_wrap, part, count=3)
+        text = "".join(parts)
+    return text
 
 
 def _ell_present_body(body: str, concepts: list[str]) -> str:
@@ -1164,7 +1422,7 @@ def _present_body(
         return _chunk_paragraphs_by_words("\n".join(strips).rstrip(), 80)
 
     if version_id == "visual":
-        # Visual load is the diagram + cream cards — never decorate the prose.
+        # Colouring is applied at render time (safe HTML). Keep plain curriculum here.
         return strip_colour_markers(body)
 
     if version_id == "auditory":
@@ -1243,8 +1501,8 @@ _PROFILE_FRAMES: dict[str, dict[str, str]] = {
         "body": (
             "See it first. This presentation keeps every Must Know idea from the Master Lesson. "
             "Before each step, look at the diagram, trace the arrow, and label the stage. "
-            "Colour markers highlight examinable terms. Using the diagram is part of learning — "
-            "not decoration."
+            "Each key concept uses its own colour in the text so you can spot ideas quickly. "
+            "Using the diagram is part of learning — not decoration."
         ),
     },
     "auditory": {
@@ -1336,9 +1594,22 @@ def derive_presentation_adaptation(
             "_support"
         ):
             continue
-        # Slim theory: drop Must-Learn / Summary chrome if a post-processor added it.
-        if role in {"concept_primer", "summary", "revision", "exit_ticket", "assessment"}:
+        # Drop Must-Learn / Exit Ticket chrome — keep NCERT "What you have learnt".
+        if role in {"concept_primer", "revision", "exit_ticket", "assessment"}:
             continue
+        if role == "summary":
+            title_low = str(row.get("title") or "").lower()
+            body_low = str(row.get("body") or "").lower()
+            keep_summary = (
+                "what you have learnt" in title_low
+                or "what we learnt" in title_low
+                or str(row.get("body") or "").count("•") >= 3
+                or len(str(row.get("body") or "").split()) >= 40
+            )
+            if not keep_summary and (
+                "in summary" in body_low or len(str(row.get("body") or "").split()) < 18
+            ):
+                continue
         if role == "visual" and str(row.get("title") or "").lower().startswith("using the diagram"):
             continue
         row["body"] = _present_body(
@@ -1347,8 +1618,10 @@ def derive_presentation_adaptation(
             role=role,
             concepts=concepts,
         )
-        if role in title_map:
+        if role in title_map and role != "summary":
             row["title"] = title_map[role]
+        elif role == "summary" and "learnt" not in str(row.get("title") or "").lower():
+            row["title"] = "What you have learnt"
         out_sections.append(row)
 
     # Guarantee a lens-specific presentation marker so HEQ advantage stays honest
@@ -1382,6 +1655,7 @@ def derive_presentation_adaptation(
     lce["textbook_theory"] = True
     lce["master_lesson_inherited"] = True
     lce["learner_theory_only"] = True
+    lce["concepts"] = list(concepts)
     lce.pop("canonical", None)
     page["lce"] = lce
     return page

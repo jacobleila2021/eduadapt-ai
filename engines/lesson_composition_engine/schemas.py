@@ -510,6 +510,7 @@ class CanonicalLessonGraph:
     assessment_outcomes: list[dict[str, Any]] = field(default_factory=list)
     accessibility_notes: list[dict[str, Any]] = field(default_factory=list)
     claim_texts: list[str] = field(default_factory=list)
+    source_text: str = ""
     nodes: list[dict[str, Any]] = field(default_factory=list)
     edges: list[dict[str, Any]] = field(default_factory=list)
     provenance: dict[str, Any] = field(default_factory=dict)

@@ -880,7 +880,7 @@ def _plain_lesson_text(raw: str, *, preserve_lines: bool = False) -> str:
 
 
 def _lesson_map_items(lesson: dict) -> list[dict]:
-    """Build an accurate visual index from the sections actually displayed."""
+    """Build complete concept cards from taught sections (Parent / Visual index)."""
     items: list[dict] = []
     for index, section in enumerate(lesson.get("sections") or []):
         if not isinstance(section, dict):
@@ -889,17 +889,25 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
         if (
             section.get("presentation_only")
             or role.startswith("presentation_")
-            or role.endswith("_support")
+            or role in {"practice_question", "exam_question", "hots_question", "assessment"}
         ):
             continue
-        body = _plain_lesson_text(section.get("body") or "")
+        # Concept cards: taught theory + summary only (not coaching appendices).
+        if role.endswith("_support"):
+            continue
+        if role not in {"", "concept", "introduction", "worked_example", "summary", "revision"}:
+            # Keep unknown teaching roles; skip pure presentation chrome.
+            if role.startswith("presentation"):
+                continue
+        body = _plain_lesson_text(section.get("body") or "", preserve_lines=True)
         raw_title = section.get("title") or f"Section {index + 1}"
         title = normalize_section_title(raw_title, body, index)
         if not body:
             continue
-        first_sentence = re.split(r"(?<=[.!?])\s+", body)[0].strip()
-        if len(first_sentence) > 92:
-            first_sentence = first_sentence[:89].rsplit(" ", 1)[0] + "…"
+        # Full teaching text — never leave concept boxes halfway cut.
+        idea = body.strip()
+        if len(idea) > 520:
+            idea = idea[:517].rsplit(" ", 1)[0] + "…"
         variant = classify_section(
             title, str(section.get("box") or "none").lower(), index
         )
@@ -907,13 +915,37 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
             {
                 "icon": f"{index + 1:02d}",
                 "title": title,
-                "idea": first_sentence,
+                "idea": idea,
                 "hex": accent_for_variant(variant),
             }
         )
-        if len(items) >= 5:
+        if len(items) >= 12:
             break
     return items
+
+
+def _render_parent_concept_cards(lesson: dict) -> None:
+    """Parent view: complete concept cards instead of a thin line-chart overview."""
+    items = _lesson_map_items(lesson)
+    if not items:
+        return
+    st.markdown("#### Key ideas for home")
+    cols = st.columns(2)
+    for i, item in enumerate(items):
+        with cols[i % 2]:
+            hex_colour = html.escape(str(item.get("hex") or ACCENT_INFO))
+            title = html.escape(str(item.get("title") or "Idea"))
+            idea = html.escape(str(item.get("idea") or "")).replace("\n", "<br/>")
+            st.markdown(
+                f'<div style="background:#FFF9EE;border:3px solid {hex_colour};'
+                f'border-radius:14px;padding:1rem 1.1rem;margin:0.55rem 0;'
+                f'min-height:8.5rem;">'
+                f'<h4 style="margin:0 0 0.55rem 0;color:{hex_colour};font-size:1.05rem;">'
+                f'{title}</h4>'
+                f'<div style="color:#111827;font-size:0.95rem;line-height:1.55;">{idea}</div>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
 
 
 def _is_practice_section(title: str) -> bool:
@@ -1101,6 +1133,32 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     bullet_mode = spec_id == "ld"
     is_visual = spec_id == "visual"
     is_ld = spec_id == "ld"
+    is_parent = spec_id == "parent"
+    visual_concepts = [
+        str(c).strip()
+        for c in (
+            (lesson.get("lce") or {}).get("concepts")
+            or lesson.get("revision_points")
+            or []
+        )
+        if str(c).strip()
+    ]
+    if not visual_concepts:
+        # Recover concept names from section titles / Must Know style lists.
+        for sec in sections:
+            if not isinstance(sec, dict):
+                continue
+            if str(sec.get("role") or "") != "concept":
+                continue
+            title = str(sec.get("title") or "")
+            m = re.search(r"(?i)(?:understanding|what are)\s+(.+?)\??$", title.strip())
+            if m:
+                visual_concepts.append(m.group(1).strip().rstrip("?"))
+    visual_concepts = [re.sub(r"(?i)^explain:\s*", "", c).strip() for c in visual_concepts]
+    visual_concepts = [c for c in visual_concepts if c][:10]
+
+    if is_parent:
+        _render_parent_concept_cards(lesson)
 
     verified = lesson.get("verified_visuals") or []
     rendered_verified = False
@@ -1209,14 +1267,20 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
         ):
             continue
         # Teacher-procedure / presentation chrome is not lesson theory.
-        # Student tabs show curriculum sections only; teacher tab keeps extras.
+        # Student tabs show curriculum sections only; Parent keeps home coaching.
         role = str(section.get("role") or "").lower()
-        if spec_id != "teacher" and (
+        allow_support = (spec_id == "teacher" and role.endswith("_support")) or (
+            is_parent and role == "parent_support"
+        )
+        if not allow_support and (
             section.get("presentation_only")
             or role.startswith("presentation_")
             or role.endswith("_support")
             or role == "concept_primer"
         ):
+            continue
+        # Parent view leads with concept cards — avoid duplicating long theory walls.
+        if is_parent and role in {"concept", "introduction", "worked_example"}:
             continue
         raw_title = section.get("title", "") or f"Section {idx + 1}"
         body = section.get("body", "")
@@ -1237,7 +1301,7 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
                 continue
             keep_lines = (is_visual and _is_practice_section(title)) or is_ld or (
                 "Answer:" in str(body)
-            )
+            ) or (role == "summary")
             plain_body = _plain_lesson_text(body, preserve_lines=keep_lines)
             if not plain_body.strip():
                 continue
@@ -1246,6 +1310,13 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
             elif is_ld:
                 card = dyslexia_luxe_section_card_html(
                     title, plain_body, variant, index=idx + 1
+                )
+            elif is_visual:
+                card = section_card_html(
+                    title,
+                    plain_body,
+                    variant,
+                    visual_concepts=visual_concepts,
                 )
             else:
                 card = section_card_html(
@@ -1259,7 +1330,6 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     if spec_id == "teacher":
         _render_teacher_answer_key(lesson)
 
-    # Lesson Map removed — theory + Q/A sections already show the reading path.
     return
 
 

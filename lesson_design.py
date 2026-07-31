@@ -417,6 +417,44 @@ def format_visual_practice_html(body: str) -> str:
     return "\n".join(blocks)
 
 
+_VISUAL_CONCEPT_COLOURS = (
+    "#0B6E4F",
+    "#1D4ED8",
+    "#B45309",
+    "#9F1239",
+    "#6D28D9",
+    "#0E7490",
+    "#C2410C",
+    "#166534",
+    "#1E3A8A",
+    "#86198F",
+)
+
+
+def colour_visual_concept_terms(text: str, concepts: list[str] | None) -> str:
+    """Escape prose, then wrap each concept in a distinct colour for Visual learners."""
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    safe = html.escape(raw)
+    ordered = sorted(
+        {str(c).strip() for c in (concepts or []) if str(c).strip() and len(str(c).strip()) >= 3},
+        key=len,
+        reverse=True,
+    )
+    for i, name in enumerate(ordered[:10]):
+        colour = _VISUAL_CONCEPT_COLOURS[i % len(_VISUAL_CONCEPT_COLOURS)]
+        pattern = re.compile(rf"\b({re.escape(html.escape(name))})\b", flags=re.IGNORECASE)
+        safe = pattern.sub(
+            rf'<span class="alora-visual-term" style="color:{colour};font-weight:700;">\1</span>',
+            safe,
+            count=4,
+        )
+    safe = re.sub(r"\n\n+", "</p><p>", safe)
+    safe = safe.replace("\n", "<br/>")
+    return f'<p style="margin:0 0 1rem 0;">{safe}</p>'
+
+
 def format_lesson_body_html(body: str, *, bullet_mode: bool = False, luxury_mode: bool = False) -> str:
     """Plain-text lesson body as paragraphs or bullet list (ld / auditory)."""
     text = (body or "").strip()
@@ -465,11 +503,21 @@ def format_lesson_body_html(body: str, *, bullet_mode: bool = False, luxury_mode
     return f'<p style="margin:0 0 1rem 0;">{safe_body}</p>'
 
 
-def section_card_html(title: str, body: str, variant: str, *, bullet_mode: bool = False) -> str:
+def section_card_html(
+    title: str,
+    body: str,
+    variant: str,
+    *,
+    bullet_mode: bool = False,
+    visual_concepts: list[str] | None = None,
+) -> str:
     """Themed lesson section card — cream background, coloured accent border."""
     accent = accent_for_variant(variant)
     safe_title = html.escape(title)
-    body_html = format_lesson_body_html(body, bullet_mode=bullet_mode)
+    if visual_concepts:
+        body_html = colour_visual_concept_terms(body, visual_concepts)
+    else:
+        body_html = format_lesson_body_html(body, bullet_mode=bullet_mode)
     return f"""
     <div class="alora-lesson-section" style="
         background:{BG_MAIN};

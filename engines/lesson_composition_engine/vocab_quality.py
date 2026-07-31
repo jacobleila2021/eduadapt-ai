@@ -176,6 +176,65 @@ FRACTIONS_TERMS = (
     ),
 )
 
+# CBSE Class 10 Science — Electricity (Master Lesson teaching bank).
+ELECTRICITY_TERMS = (
+    (
+        "Electric current",
+        "Electric current is the rate of flow of electric charge through a conductor. "
+        "Conventionally, current direction is opposite to electron flow. Its SI unit is the ampere (A).",
+    ),
+    (
+        "Electric circuit",
+        "An electric circuit is a closed path that allows electric current to flow from a source "
+        "(cell or battery) through devices such as bulbs, resistors and a switch, and back.",
+    ),
+    (
+        "Potential difference",
+        "Potential difference (voltage) between two points is the work done to move a unit charge "
+        "from one point to the other. It is measured in volts (V) with a voltmeter.",
+    ),
+    (
+        "Resistance",
+        "Resistance is the property of a conductor that opposes the flow of electric current. "
+        "Its SI unit is the ohm (Ω). Resistance depends on length, area of cross-section and material.",
+    ),
+    (
+        "Ohm's law",
+        "Ohm's law: at constant temperature, the potential difference V across a conductor is "
+        "directly proportional to the current I through it, so V = IR where R is resistance.",
+    ),
+    (
+        "Series combination",
+        "In a series combination, resistors are joined end to end so the same current flows through each. "
+        "Equivalent resistance: R_s = R_1 + R_2 + R_3 + …",
+    ),
+    (
+        "Parallel combination",
+        "In a parallel combination, resistors share the same potential difference. "
+        "Equivalent resistance: 1/R_p = 1/R_1 + 1/R_2 + 1/R_3 + …",
+    ),
+    (
+        "Electric power",
+        "Electric power is the rate of consumption of electrical energy. P = VI = I²R = V²/R. "
+        "The SI unit is the watt (W); 1 kW = 1000 W.",
+    ),
+    (
+        "Heating effect",
+        "When current flows through a resistor, electrical energy converts to heat: H = VIt = I²Rt. "
+        "This heating effect is used in electric irons, toasters and heaters.",
+    ),
+    (
+        "Kilowatt hour",
+        "The commercial unit of electrical energy is the kilowatt hour (kWh). "
+        "1 kWh = 3.6 × 10⁶ J. Household electricity bills charge energy in kWh.",
+    ),
+    (
+        "Conductor",
+        "A conductor allows electric current to pass easily (low resistance), such as copper or aluminium. "
+        "An insulator resists current strongly (very high resistance).",
+    ),
+)
+
 # Sentence fragments that OCR/title scraping wrongly promotes to "concepts".
 _FRAGMENT_JUNK = frozenset(
     {
@@ -323,7 +382,9 @@ def is_ocr_garbage_claim(text: str) -> bool:
         return True
     if "in this chapter" in low or "we will study" in low:
         return True
-    if "you have learnt" in low or "you have learned" in low:
+    # "What you have learnt" is a valuable NCERT summary — not garbage.
+    # Only reject the chapter-intro "you have learnt in previous classes…" line.
+    if ("you have learnt" in low or "you have learned" in low) and "previous classes" in low:
         return True
     if "you already know that" in low or "surely you must have" in low:
         return True
@@ -413,6 +474,107 @@ def enrich_fractions_terms(topic: str, existing: list[str]) -> list[tuple[str, s
     return out
 
 
+def enrich_electricity_terms(topic: str, existing: list[str]) -> list[tuple[str, str]]:
+    blob = (topic or "").lower() + " " + " ".join(existing).lower()
+    if not any(
+        k in blob
+        for k in (
+            "electric",
+            "ohm",
+            "resistance",
+            "current",
+            "circuit",
+            "volt",
+            "watt",
+            "kilowatt",
+        )
+    ):
+        return []
+    have = {e.lower() for e in existing}
+    out: list[tuple[str, str]] = []
+    for term, definition in ELECTRICITY_TERMS:
+        if term.lower() not in have and not is_junk_term(term):
+            out.append((term, definition))
+    return out
+
+
+def extract_what_you_have_learnt(text: str) -> list[str]:
+    """Pull NCERT 'What you have learnt' bullets as-is for Master summary."""
+    raw = str(text or "")
+    if not raw.strip():
+        return []
+    m = re.search(
+        r"(?is)what\s+you\s+have\s+learnt\s*[:\n]+(.+?)(?=\n\s*(?:exercises?|questions?)\b|\Z)",
+        raw,
+    )
+    if not m:
+        return []
+    block = m.group(1)
+    bullets: list[str] = []
+    for line in block.splitlines():
+        line = re.sub(r"^[\s•\-\*\d\.\)\(]+", "", line).strip()
+        if len(line.split()) >= 5 and not is_ocr_garbage_claim(line):
+            bullets.append(line if line.endswith((".", "!", "?")) else line + ".")
+        if len(bullets) >= 14:
+            break
+    return bullets
+
+
+def extract_source_assessment_prompts(text: str, *, topic: str = "") -> list[dict[str, Any]]:
+    """Textbook QUESTIONS / EXERCISES → exam worksheet prompts (platform-wide)."""
+    try:
+        from engines.knowledge_ingestion_engine.stages.extract import extract_questions
+    except Exception:
+        extract_questions = None  # type: ignore
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    if extract_questions:
+        for row in extract_questions(text, topic=topic, source="uploaded_lesson") or []:
+            prompt = str(row.get("question") or "").strip()
+            # Strip leading Q1. / 1. numbering noise for cleaner stems
+            prompt = re.sub(r"^(?:Q\.?\s*\d+[\)\.]?\s*|Question\s+\d+[\)\.]?\s*|\d+\.\s+)", "", prompt)
+            key = prompt.lower()[:80]
+            if len(prompt.split()) < 5 or key in seen:
+                continue
+            seen.add(key)
+            out.append(
+                {
+                    "outcome_id": f"src_{len(out)+1:03d}",
+                    "prompt": prompt[:400],
+                    "bloom": str(row.get("bloom") or "understand"),
+                    "marks": int(row.get("marks") or 2),
+                    "source": "textbook",
+                    "question_type": str(row.get("question_type") or "short_answer"),
+                }
+            )
+            if len(out) >= 16:
+                break
+    # Also catch in-block questions under a QUESTIONS heading
+    if len(out) < 6:
+        for m in re.finditer(
+            r"(?im)^(?:\d+\.|[•\-])\s*(.+\?)\s*$",
+            text or "",
+        ):
+            prompt = m.group(1).strip()
+            key = prompt.lower()[:80]
+            if len(prompt.split()) < 5 or key in seen:
+                continue
+            seen.add(key)
+            out.append(
+                {
+                    "outcome_id": f"src_{len(out)+1:03d}",
+                    "prompt": prompt[:400],
+                    "bloom": "understand",
+                    "marks": 2,
+                    "source": "textbook",
+                    "question_type": "short_answer",
+                }
+            )
+            if len(out) >= 16:
+                break
+    return out
+
+
 def is_teacher_facing_text(text: str) -> bool:
     """True for lesson-plan / objective wording that must never appear as student content."""
     low = (text or "").strip().lower()
@@ -475,7 +637,9 @@ def canonical_definition(term: str) -> str:
         "neutralization": "neutralisation",
     }
     key = aliases.get(key, key)
-    for name, definition in WATER_CYCLE_TERMS + ACIDS_BASES_SALTS_TERMS + FRACTIONS_TERMS:
+    for name, definition in (
+        WATER_CYCLE_TERMS + ACIDS_BASES_SALTS_TERMS + FRACTIONS_TERMS + ELECTRICITY_TERMS
+    ):
         if name.lower() == key:
             return definition
     return ""
@@ -771,6 +935,7 @@ def normalize_vocab_items(
         enrich_water_cycle_terms(topic, list(seen))
         + enrich_acids_bases_salts_terms(topic, list(seen))
         + enrich_fractions_terms(topic, list(seen))
+        + enrich_electricity_terms(topic, list(seen))
     ):
         if term.lower() in seen:
             continue

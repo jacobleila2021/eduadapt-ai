@@ -1,6 +1,6 @@
 """
 Alora AI — adaptation categories and workspace navigation.
-Nine classroom adaptations only (matches generate=True in adaptation_specs).
+Classroom adaptations only (matches generate=True in adaptation_specs).
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ PILL_CATEGORIES = [
     {"id": "ell", "label": "English Language Support", "spec_ids": ["ell"]},
     {"id": "visual", "label": "Visual Learner Support", "spec_ids": ["visual"]},
     {"id": "auditory", "label": "Auditory Learner Support", "spec_ids": ["auditory"]},
-    {"id": "teacher", "label": "Teacher Version", "spec_ids": ["teacher"]},
+    # Teacher Version paused until a Master-aligned classroom pack is ready.
     {"id": "parent", "label": "Parent Version", "spec_ids": ["parent"]},
     {"id": "assessment", "label": "Exam Worksheet", "spec_ids": ["worksheet"]},
 ]
