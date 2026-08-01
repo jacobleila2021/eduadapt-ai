@@ -548,6 +548,18 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 have.add(term.lower())
             if len(concepts) >= 8:
                 break
+    if any(
+        k in topic_low for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil")
+    ) and len(concepts) < 4:
+        from engines.lesson_composition_engine.vocab_quality import METALS_NONMETALS_TERMS
+
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in METALS_NONMETALS_TERMS:
+            if term.lower() not in have:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
+            if len(concepts) >= 8:
+                break
     terms = [
         str(w.get("term") or "")
         for w in ((vocabulary or {}).get("word_wall") or clg.get("vocabulary") or [])
@@ -765,6 +777,41 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 "model_answer": _para(
                     power,
                     "At 220 V the bulb is designed to consume 100 J of energy each second (100 W).",
+                ),
+                "bloom": "hots",
+            }
+        )
+    elif any(k in topic_low for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil")):
+        metal = canonical_definition("Metal") or first_def
+        nonmetal = canonical_definition("Non-metal") or second_def
+        displace = canonical_definition("Displacement reaction") or second_def
+        hots.append(
+            {
+                "question": (
+                    "A classmate says every shiny solid is a metal. Correct the idea "
+                    "using lustre and non-metal exceptions from the lesson."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    metal,
+                    nonmetal,
+                    "Iodine is a non-metal that can look shiny, so lustre alone does not prove a substance is a metal.",
+                ),
+                "bloom": "hots",
+            }
+        )
+        hots.append(
+            {
+                "question": (
+                    "Predict what happens when a more reactive metal is placed in the "
+                    "salt solution of a less reactive metal. Give a reason."
+                ),
+                "marks": 5,
+                "lines": 8,
+                "model_answer": _para(
+                    displace,
+                    "The more reactive metal displaces the less reactive metal from its salt solution.",
                 ),
                 "bloom": "hots",
             }

@@ -290,9 +290,11 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
     from engines.lesson_composition_engine.vocab_quality import (
         ACIDS_BASES_SALTS_TERMS,
         ELECTRICITY_TERMS,
+        METALS_NONMETALS_TERMS,
         WATER_CYCLE_TERMS,
         enrich_acids_bases_salts_terms,
         enrich_electricity_terms,
+        enrich_metals_nonmetals_terms,
         enrich_water_cycle_terms,
         is_junk_term,
         repair_ocr_prose,
@@ -402,6 +404,31 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
         if len(clean_names) < 4:
             return pack[:10]
         for term, _definition in enrich_electricity_terms(topic, clean_names):
+            _add(term)
+        lead = [t for t in pack if t.lower() in seen]
+        rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
+        return (lead + rest)[:10] or pack[:10]
+
+    # Metals and Non-metals — Class 8/10 CBSE teaching bank.
+    if any(
+        k in claim_blob
+        for k in (
+            "metal",
+            "non-metal",
+            "nonmetal",
+            "malleab",
+            "ductil",
+            "lustre",
+            "sonorous",
+            "corrosion",
+            "rusting",
+        )
+    ):
+        pack = [t for t, _ in METALS_NONMETALS_TERMS]
+        clean_names = [n for n in names if not is_junk_term(n)]
+        if len(clean_names) < 4:
+            return pack[:10]
+        for term, _definition in enrich_metals_nonmetals_terms(topic, clean_names):
             _add(term)
         lead = [t for t in pack if t.lower() in seen]
         rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
@@ -648,7 +675,18 @@ def build_canonical_lesson(
     # Prefer a fuller Master concept spine for STEM chapters (Electricity etc.).
     teach_cap = 10 if any(
         k in topic_low
-        for k in ("electric", "ohm", "resistance", "circuit", "acid", "base", "salt")
+        for k in (
+            "electric",
+            "ohm",
+            "resistance",
+            "circuit",
+            "acid",
+            "base",
+            "salt",
+            "metal",
+            "non-metal",
+            "nonmetal",
+        )
     ) else 6
     teach_names = [n for n in term_names[:teach_cap]]
     for idx, name in enumerate(teach_names):

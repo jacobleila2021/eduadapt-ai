@@ -235,6 +235,65 @@ ELECTRICITY_TERMS = (
     ),
 )
 
+# CBSE Metals and Non-metals (Class 8 / 10 Science) — Master Lesson teaching bank.
+METALS_NONMETALS_TERMS = (
+    (
+        "Metal",
+        "Metals are elements that are generally hard, shiny (lustrous), malleable, ductile, "
+        "sonorous and good conductors of heat and electricity. Examples: iron, copper, aluminium.",
+    ),
+    (
+        "Non-metal",
+        "Non-metals are generally dull, brittle (when solid) and poor conductors of heat and electricity. "
+        "Examples: oxygen, sulphur, carbon and nitrogen.",
+    ),
+    (
+        "Malleability",
+        "Malleability is the property of metals by which they can be beaten into thin sheets, "
+        "such as aluminium foil or gold leaf.",
+    ),
+    (
+        "Ductility",
+        "Ductility is the property of metals by which they can be drawn into thin wires, "
+        "such as copper electrical wire.",
+    ),
+    (
+        "Lustre",
+        "Lustre is the shiny appearance of a clean metal surface. Most non-metals are dull, "
+        "except iodine which shows a shiny appearance.",
+    ),
+    (
+        "Sonorous",
+        "Sonorous means a metal produces a ringing sound when struck. School bells and utensils "
+        "show this property; non-metals are not sonorous.",
+    ),
+    (
+        "Conductivity",
+        "Metals are good conductors of heat and electricity. Most non-metals are poor conductors; "
+        "graphite is a non-metal that conducts electricity.",
+    ),
+    (
+        "Basic oxide",
+        "Metals react with oxygen to form metal oxides, which are generally basic. "
+        "Basic oxides turn red litmus blue.",
+    ),
+    (
+        "Acidic oxide",
+        "Non-metals react with oxygen to form non-metal oxides, which are generally acidic "
+        "(or sometimes neutral). Acidic oxides turn blue litmus red.",
+    ),
+    (
+        "Displacement reaction",
+        "A more reactive metal can displace a less reactive metal from its salt solution. "
+        "This helps compare metal reactivity.",
+    ),
+    (
+        "Corrosion",
+        "Corrosion is the gradual damage of a metal surface by air, moisture or chemicals. "
+        "Rusting of iron is a common example; galvanisation helps prevent it.",
+    ),
+)
+
 # Sentence fragments that OCR/title scraping wrongly promotes to "concepts".
 _FRAGMENT_JUNK = frozenset(
     {
@@ -326,10 +385,19 @@ def repair_ocr_prose(text: str) -> str:
     t = str(text or "")
     if not t.strip():
         return ""
-    # Chapter / unit chrome fused into prose
-    t = re.sub(r"\b\d+\s*CHAPTER\b", " ", t, flags=re.I)
-    t = re.sub(r"\bCHAPTER\s*\d*\b", " ", t, flags=re.I)
+    # Chapter / unit chrome fused into prose (including 4CHAPTER / CHAPTER3)
+    t = re.sub(r"(?i)\d{0,2}\s*CHAPTER\s*\d{0,2}", " ", t)
     t = re.sub(r"\bActivity\s+\d+(?:\.\d+)*\b", " ", t, flags=re.I)
+    # Textbook running headers / page crumbs
+    t = re.sub(
+        r"(?i)\bmetals\s+and\s+non[-\s]?metals\s+\d{1,3}\b",
+        " ",
+        t,
+    )
+    t = re.sub(r"(?i)\belectricity\s+\d{1,3}\b", " ", t)
+    t = re.sub(r"(?i)\bscience\s+\d{1,3}\b", " ", t)
+    t = re.sub(r"(?i)\bnot\s+to\s+be\s+republished\b", " ", t)
+    t = re.sub(r"(?i)\b©?\s*ncert\b", " ", t)
     # Collapse runaway repeated chunks ("UNDERSTUNDERST…", "ACIDS AND BASESACIDS…")
     t = re.sub(r"(\b[\w']{4,}\b)(?:\s*\1){1,}", r"\1", t, flags=re.I)
     t = re.sub(r"([A-Za-z]{5,})\1{1,}", r"\1", t)
@@ -498,6 +566,33 @@ def enrich_electricity_terms(topic: str, existing: list[str]) -> list[tuple[str,
     return out
 
 
+def enrich_metals_nonmetals_terms(topic: str, existing: list[str]) -> list[tuple[str, str]]:
+    blob = (topic or "").lower() + " " + " ".join(existing).lower()
+    if not any(
+        k in blob
+        for k in (
+            "metal",
+            "non-metal",
+            "nonmetal",
+            "non metal",
+            "malleab",
+            "ductil",
+            "lustre",
+            "luster",
+            "sonorous",
+            "corrosion",
+            "rust",
+        )
+    ):
+        return []
+    have = {e.lower() for e in existing}
+    out: list[tuple[str, str]] = []
+    for term, definition in METALS_NONMETALS_TERMS:
+        if term.lower() not in have and not is_junk_term(term):
+            out.append((term, definition))
+    return out
+
+
 def extract_what_you_have_learnt(text: str) -> list[str]:
     """Pull NCERT 'What you have learnt' bullets as-is for Master summary."""
     raw = str(text or "")
@@ -638,7 +733,11 @@ def canonical_definition(term: str) -> str:
     }
     key = aliases.get(key, key)
     for name, definition in (
-        WATER_CYCLE_TERMS + ACIDS_BASES_SALTS_TERMS + FRACTIONS_TERMS + ELECTRICITY_TERMS
+        WATER_CYCLE_TERMS
+        + ACIDS_BASES_SALTS_TERMS
+        + FRACTIONS_TERMS
+        + ELECTRICITY_TERMS
+        + METALS_NONMETALS_TERMS
     ):
         if name.lower() == key:
             return definition
@@ -936,6 +1035,7 @@ def normalize_vocab_items(
         + enrich_acids_bases_salts_terms(topic, list(seen))
         + enrich_fractions_terms(topic, list(seen))
         + enrich_electricity_terms(topic, list(seen))
+        + enrich_metals_nonmetals_terms(topic, list(seen))
     ):
         if term.lower() in seen:
             continue

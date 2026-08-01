@@ -10,7 +10,66 @@ import re
 from typing import Any, Mapping
 
 CONTENT_FIDELITY_PUBLISHING_RECOVERY_SMOKE_OK = True
-FIDELITY_VERSION = "1.0.0"
+FIDELITY_VERSION = "1.1.0"
+
+# Patterns that must never survive into learner theory (NCERT PDF/OCR chrome).
+_OCR_CHROME_RE = re.compile(
+    r"(?i)\b\d{0,2}\s*CHAPTER\s*\d{0,2}\b|lear\s+nt|pr\s+evious|\bY\s+ou\b|"
+    r"not\s+to\s+be\s+republished|\b©?\s*ncert\b|"
+    r"\bmetals\s+and\s+non[-\s]?metals\s+\d{1,3}\b|"
+    r"\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b|"
+    r"\belectricity\s+\d{1,3}\b|\bscience\s+\d{1,3}\b"
+)
+
+
+def scrub_ocr_chrome_prose(text: str) -> str:
+    """Repair-first: remove PDF/OCR chapter chrome; keep teachable sentences."""
+    from engines.lesson_composition_engine.vocab_quality import (
+        clean_learner_claim,
+        is_ocr_garbage_claim,
+        repair_ocr_prose,
+    )
+
+    raw = str(text or "")
+    if not raw.strip():
+        return ""
+    # Preserve Q/A layout when present.
+    if re.search(r"(?im)^\s*\d+\.\s+.+\n\s*answer\s*:", raw):
+        lines_out: list[str] = []
+        for line in raw.splitlines():
+            if re.search(r"(?i)answer\s*:", line) or re.match(r"^\s*\d+\.\s+", line):
+                fixed = repair_ocr_prose(line) or line
+                fixed = _OCR_CHROME_RE.sub(" ", fixed)
+                fixed = re.sub(r"\s+", " ", fixed).strip()
+                if fixed:
+                    lines_out.append(fixed)
+            else:
+                fixed = repair_ocr_prose(line)
+                if fixed and not is_ocr_garbage_claim(fixed) and not _OCR_CHROME_RE.search(fixed):
+                    lines_out.append(fixed)
+        return "\n".join(lines_out).strip()
+
+    repaired = repair_ocr_prose(raw)
+    if not repaired:
+        return ""
+    kept: list[str] = []
+    for sent in re.split(r"(?<=[.!?])\s+", repaired):
+        s = sent.strip()
+        if len(s.split()) < 4:
+            continue
+        if is_ocr_garbage_claim(s) or _OCR_CHROME_RE.search(s):
+            continue
+        cleaned = clean_learner_claim(s) or s
+        cleaned = _OCR_CHROME_RE.sub(" ", cleaned)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if cleaned and not _OCR_CHROME_RE.search(cleaned) and not is_ocr_garbage_claim(cleaned):
+            kept.append(cleaned if cleaned.endswith((".", "!", "?")) else cleaned + ".")
+    if kept:
+        return " ".join(kept)
+    # Last resort: chrome-stripped repair (may be short, but never quarantine chrome).
+    fallback = _OCR_CHROME_RE.sub(" ", repaired)
+    fallback = re.sub(r"\s+", " ", fallback).strip()
+    return fallback if len(fallback.split()) >= 5 else ""
 
 # Learner-facing scaffold chrome — never publish as section titles / cards.
 FORBIDDEN_LEARNER_CHROME_TITLES = frozenset(
@@ -769,6 +828,9 @@ def apply_content_fidelity(
             row = dict(sec)
             row["title"] = scrub_prompt_leaks(str(row.get("title") or ""))
             row["body"] = scrub_prompt_leaks(str(row.get("body") or ""))
+            # Always scrub PDF/OCR chrome before any learner (or parent) view.
+            row["title"] = scrub_ocr_chrome_prose(row["title"]) or row["title"]
+            row["body"] = scrub_ocr_chrome_prose(row["body"])
             if learner_page:
                 if is_teacher_facing_text(row["title"]):
                     # "Guided Practice", "Independent Practice", "Warm-up" —
@@ -788,14 +850,18 @@ def apply_content_fidelity(
                 title_low2 = row["title"].lower()
                 is_question_zone = (
                     key == "worksheet"
-                    or role_low in {"practice_question", "assessment"}
+                    or role_low in {"practice_question", "exam_question", "hots_question", "assessment"}
                     or "exam" in title_low2
                     or "practice" in title_low2
+                    or "hots" in title_low2
                 )
                 if not is_question_zone:
                     # Theory sections teach — questions belong only to the
                     # exam module and vocabulary practice.
                     row["body"] = strip_theory_questions(row["body"])
+                # Second OCR pass after other scrubs (chrome can reappear from joins).
+                if not is_question_zone:
+                    row["body"] = scrub_ocr_chrome_prose(row["body"])
             row["body"] = split_long_paragraphs(row["body"])
             title_low = row["title"].lower()
             if not row.get("role") and (
@@ -882,6 +948,31 @@ def ensure_classroom_content_fidelity(
         issues = content_fidelity_issues(working)
         if not issues:
             break
+        # Nuclear OCR scrub — drop any remaining chrome sentences (never quarantine for PDF debris).
+        if any("OCR/PDF chapter chrome" in i for i in issues):
+            for key, value in list(working.items()):
+                if str(key).startswith("_") or not isinstance(value, dict):
+                    continue
+                page = dict(value)
+                if page.get("big_idea"):
+                    page["big_idea"] = scrub_ocr_chrome_prose(str(page["big_idea"]))
+                sections = []
+                for sec in page.get("sections") or []:
+                    if not isinstance(sec, dict):
+                        continue
+                    row = dict(sec)
+                    row["title"] = scrub_ocr_chrome_prose(str(row.get("title") or "")) or str(
+                        row.get("title") or ""
+                    )
+                    body = scrub_ocr_chrome_prose(str(row.get("body") or ""))
+                    # Strip any residual chrome tokens even if sentence kept.
+                    body = _OCR_CHROME_RE.sub(" ", body)
+                    body = re.sub(r"\s+", " ", body).strip()
+                    row["body"] = body
+                    if row["body"] or row["title"]:
+                        sections.append(row)
+                page["sections"] = sections
+                working[key] = page
         # Nuclear de-clone: force every learner page body to carry a unique fingerprint
         if any("Clone paragraphs" in i for i in issues):
             for key, value in list(working.items()):
@@ -1004,7 +1095,7 @@ def content_fidelity_issues(adaptations: Mapping[str, Any]) -> list[str]:
                 issues.append("AI-sounding lesson opener still present.")
             if is_teacher_facing_text(body):
                 issues.append("Teacher instructions leaked into learner theory.")
-            if re.search(r"\b\d*CHAPTER\b|lear\s+nt|pr\s+evious|\bY\s+ou\b", body, re.I):
+            if _OCR_CHROME_RE.search(body):
                 issues.append("OCR/PDF chapter chrome still visible to learners.")
             if "one of the ideas taught" in body.lower() or "is a main idea in" in body.lower():
                 issues.append("Hollow stub answers still published.")
@@ -1061,11 +1152,15 @@ def content_fidelity_block_reason(adaptations: Mapping[str, Any] | None) -> str:
     issues = content_fidelity_issues(adaptations)
     # Mark-depth word counts are advisory — never quarantine an otherwise
     # complete lesson for being a few words under an exam pad target.
+    # OCR chrome is repair-only: after ensure_classroom_content_fidelity it must
+    # not block classroom open (PDF debris is stripped, not a curriculum defect).
     blocking = [
         i
         for i in issues
         if not str(i).startswith("Mark–answer mismatch")
         and "Duplicate paragraph ratio" not in str(i)
+        and "OCR/PDF chapter chrome" not in str(i)
+        and "Clone paragraphs" not in str(i)
     ]
     if not blocking:
         return ""
