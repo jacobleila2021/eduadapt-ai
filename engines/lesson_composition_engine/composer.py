@@ -82,7 +82,10 @@ def _teachable_fact(text: str) -> bool:
     return not _re.search(
         r"(?i)\b(students?|learners?)\s+will\b|\bobjectives?\b|\byou will learn\b"
         r"|\blesson plan\b|\bmarks?\s*:\s*\d|\bgrade\s*level\b|\bsubject\s*:"
-        r"|\btime\s*:|\bduration\b|\bminutes\b|\|",
+        r"|\btime\s*:|\bduration\b|\bminutes\b|\|"
+        r"|\bfor performing activit|\bcollect the samples?\b|\bcaution\s*:"
+        r"|\byou will be learning\b|\bin the next section\b|\beasily available\b"
+        r"|\bin class\s+(ix|9|x|10)\b|\bactivities?\s+\d",
         text,
     )
 
@@ -440,9 +443,27 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 }
             )
 
+    # Prefer curriculum banks over OCR token scraping (Iron/Copper from lab lists).
+    topic_low = topic.lower()
+    if any(k in topic_low for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil")):
+        from engines.lesson_composition_engine.vocab_quality import METALS_NONMETALS_TERMS
+
+        for term, definition in METALS_NONMETALS_TERMS:
+            raw_terms.append({"term": term, "definition": definition, "example": definition})
+    if any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance")):
+        from engines.lesson_composition_engine.vocab_quality import ELECTRICITY_TERMS
+
+        for term, definition in ELECTRICITY_TERMS:
+            raw_terms.append({"term": term, "definition": definition, "example": definition})
+
     normalized = normalize_vocab_items(raw_terms, topic=topic, claims=claims)
-    # Ensure a solid study set from claim-grounded terms (never hardcoded topic banks)
+    # Ensure a solid study set — only claim-grounded terms with teachable definitions
     if len(normalized) < 6:
+        from engines.lesson_composition_engine.vocab_quality import (
+            canonical_definition,
+            student_safe_definition,
+        )
+
         extras: list[dict[str, str]] = []
         seen = {str(n.get("term") or "").strip().lower() for n in normalized}
         stop = {
@@ -451,50 +472,40 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
             "other", "another", "always", "never", "usually", "often", "shows", "makes",
             "keeps", "gives", "needs", "turns", "means", "using", "unit", "same", "some",
             "most", "many", "each", "every", "both", "also", "must", "does",
+            "following", "samples", "collect", "performing", "available",
         }
         for text in claims:
-            for word in str(text).replace(",", " ").split():
+            safe = student_safe_definition(text)
+            if not safe:
+                continue
+            for word in str(safe).replace(",", " ").split():
                 token = word.strip(".:;()[]\"'")
                 key = token.lower()
                 if len(token) < 5 or is_junk_term(token) or key in stop or key in seen:
                     continue
                 if not (token[0].isupper() or token.isalpha()):
                     continue
+                definition = canonical_definition(token) or safe
+                if not student_safe_definition(definition):
+                    continue
+                # Never attach a long lab paragraph as the definition of a short metal name.
+                if key in {
+                    "iron", "copper", "aluminium", "aluminum", "magnesium", "sodium",
+                    "zinc", "lead", "mercury",
+                } and not canonical_definition(token):
+                    continue
                 seen.add(key)
                 extras.append(
                     {
                         "term": token if token[0].isupper() else token.capitalize(),
-                        "definition": str(text),
-                        "example": (
-                            f"Use “{token.lower()}” when you explain {topic.lower()} out loud — "
-                            f"point to it in one real situation you have seen."
-                        ),
-                        "memory_tip": (
-                            f"Link “{token.lower()}” to one thing you can see at home, "
-                            f"in the kitchen, or on the way to school."
-                        ),
+                        "definition": definition,
+                        "example": definition,
                     }
                 )
                 if len(extras) >= 8:
                     break
             if len(extras) >= 8:
                 break
-        # Topic words as last resort when claims yield nothing usable
-        if len(extras) < 3:
-            for word in topic.replace("-", " ").split():
-                token = word.strip()
-                if len(token) >= 4 and not is_junk_term(token) and token.lower() not in seen:
-                    extras.append(
-                        {
-                            "term": token.title(),
-                            "definition": (
-                                claims[0]
-                                if claims
-                                else f"{token} is taught carefully in {topic}."
-                            ),
-                            "example": claims[0] if claims else f"Use {token} accurately in {topic}.",
-                        }
-                    )
         normalized = normalize_vocab_items(
             list(normalized) + extras, topic=topic, claims=claims
         )
@@ -757,8 +768,8 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         hots.append(
             {
                 "question": (
-                    "A classmate confuses series combination with parallel combination. "
-                    "Write the correction using ideas from this lesson."
+                    "Distinguish series combination from parallel combination using "
+                    "ideas from this lesson."
                 ),
                 "marks": 5,
                 "lines": 8,
@@ -785,37 +796,76 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         metal = canonical_definition("Metal") or first_def
         nonmetal = canonical_definition("Non-metal") or second_def
         displace = canonical_definition("Displacement reaction") or second_def
-        hots.append(
-            {
-                "question": (
-                    "A classmate says every shiny solid is a metal. Correct the idea "
-                    "using lustre and non-metal exceptions from the lesson."
-                ),
-                "marks": 5,
-                "lines": 8,
-                "model_answer": _para(
-                    metal,
-                    nonmetal,
-                    "Iodine is a non-metal that can look shiny, so lustre alone does not prove a substance is a metal.",
-                ),
-                "bloom": "hots",
-            }
-        )
-        hots.append(
-            {
-                "question": (
-                    "Predict what happens when a more reactive metal is placed in the "
-                    "salt solution of a less reactive metal. Give a reason."
-                ),
-                "marks": 5,
-                "lines": 8,
-                "model_answer": _para(
-                    displace,
-                    "The more reactive metal displaces the less reactive metal from its salt solution.",
-                ),
-                "bloom": "hots",
-            }
-        )
+        # Prefer uploaded textbook stems when available.
+        metal_src = [
+            a
+            for a in textbook_assessments
+            if _re.search(
+                r"(?i)\b(malleab|ductil|non-?metal|mercury|magnesium|oxide|property|properties)\b",
+                str(a.get("prompt") or ""),
+            )
+        ][:3]
+        if metal_src:
+            for row in metal_src:
+                prompt = str(row.get("prompt") or "").strip()
+                ans = (
+                    canonical_definition("Non-metal")
+                    if _re.search(r"(?i)non-?metal", prompt)
+                    else (
+                        canonical_definition("Malleability")
+                        if _re.search(r"(?i)malleab", prompt)
+                        else (
+                            canonical_definition("Ductility")
+                            if _re.search(r"(?i)ductil", prompt)
+                            else (
+                                canonical_definition("Mercury")
+                                if _re.search(r"(?i)mercury", prompt)
+                                else (
+                                    canonical_definition("Metal oxide")
+                                    if _re.search(r"(?i)oxide|burns", prompt)
+                                    else metal
+                                )
+                            )
+                        )
+                    )
+                )
+                hots.append(
+                    {
+                        "question": prompt,
+                        "marks": 5,
+                        "lines": 8,
+                        "model_answer": _para(ans or metal, nonmetal),
+                        "bloom": "hots",
+                    }
+                )
+        else:
+            hots.append(
+                {
+                    "question": (
+                        "Distinguish metals from non-metals using at least two physical "
+                        "properties from the lesson."
+                    ),
+                    "marks": 5,
+                    "lines": 8,
+                    "model_answer": _para(metal, nonmetal),
+                    "bloom": "hots",
+                }
+            )
+            hots.append(
+                {
+                    "question": (
+                        "What happens when a more reactive metal is placed in the "
+                        "salt solution of a less reactive metal? Give a reason."
+                    ),
+                    "marks": 5,
+                    "lines": 8,
+                    "model_answer": _para(
+                        displace,
+                        "The more reactive metal displaces the less reactive metal from its salt solution.",
+                    ),
+                    "bloom": "hots",
+                }
+            )
     elif any(k in topic_low for k in ("acid", "base", "salt")):
         hots.append(
             {
@@ -836,8 +886,8 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
         hots.append(
             {
                 "question": (
-                    f"A classmate confuses {first.lower()} with {second.lower()}. "
-                    f"Write the correction using ideas from this lesson."
+                    f"Explain how {first.lower()} differs from {second.lower()} "
+                    f"using ideas from this lesson."
                 ),
                 "marks": 5,
                 "lines": 8,
@@ -850,38 +900,65 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             }
         )
     else:
-        hots.append(
-            {
-                "question": (
-                    f"Predict what would change about {first.lower()} if the conditions "
-                    f"around it were reversed. Give a reason from the lesson."
-                ),
-                "marks": 5,
-                "lines": 8,
-                "model_answer": _para(
-                    first_def,
-                    f"If the conditions that support {first.lower()} reverse, that idea "
-                    f"slows, stops, or changes outcome in {topic}.",
-                ),
-                "bloom": "hots",
-            }
-        )
-        hots.append(
-            {
-                "question": (
-                    f"A classmate confuses {first.lower()} with {second.lower()}. "
-                    f"Write the correction using ideas from this lesson."
-                ),
-                "marks": 5,
-                "lines": 8,
-                "model_answer": _para(
-                    f"{first} and {second} are different ideas in {topic}.",
-                    first_def,
-                    second_def,
-                ),
-                "bloom": "hots",
-            }
-        )
+        # Prefer textbook assessment stems when present (never invent classmate prompts).
+        textbook_hots = [
+            a
+            for a in textbook_assessments
+            if _re.search(
+                r"(?i)\b(why|how|compare|predict|distinguish|advantage|explain|list two)\b",
+                str(a.get("prompt") or ""),
+            )
+        ][:3]
+        if textbook_hots:
+            for row in textbook_hots:
+                prompt = str(row.get("prompt") or "").strip()
+                name = next(
+                    (
+                        str(c.get("name") or "")
+                        for c in concepts
+                        if str(c.get("name") or "").lower() in prompt.lower()
+                    ),
+                    first,
+                )
+                ans = canonical_definition(name) or first_def
+                hots.append(
+                    {
+                        "question": prompt,
+                        "marks": 5,
+                        "lines": 8,
+                        "model_answer": _para(ans),
+                        "bloom": "hots",
+                    }
+                )
+        else:
+            hots.append(
+                {
+                    "question": (
+                        f"Explain how {first.lower()} differs from {second.lower()} "
+                        f"using ideas from this lesson."
+                    ),
+                    "marks": 5,
+                    "lines": 8,
+                    "model_answer": _para(
+                        f"{first} and {second} are different ideas in {topic}.",
+                        first_def,
+                        second_def,
+                    ),
+                    "bloom": "hots",
+                }
+            )
+            hots.append(
+                {
+                    "question": (
+                        f"Describe one everyday situation that shows {topic.lower()} "
+                        f"and name the main ideas inside it."
+                    ),
+                    "marks": 5,
+                    "lines": 8,
+                    "model_answer": _para(first_def, second_def),
+                    "bloom": "hots",
+                }
+            )
 
     vocab_q = []
     for t in terms[:6]:

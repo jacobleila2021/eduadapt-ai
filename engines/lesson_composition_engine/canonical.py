@@ -542,16 +542,27 @@ def build_canonical_lesson(
     if ":" in topic and len(topic) > 36:
         topic = topic.split(":", 1)[0].strip() or topic
     topic_low = topic.lower()
+    from engines.lesson_composition_engine.vocab_quality import is_ocr_garbage_claim
+
     raw_claims = [c for c in _claims(dict(board)) if not c.strip().endswith("?")]
     claims = []
     for c in raw_claims:
         fixed = clean_learner_claim(c)
-        if fixed and is_learner_safe_claim(fixed):
+        if (
+            fixed
+            and is_learner_safe_claim(fixed)
+            and not is_ocr_garbage_claim(fixed)
+            and not is_teacher_facing_text(fixed)
+        ):
             claims.append(fixed)
     if not claims:
         for c in raw_claims:
             fixed = clean_learner_claim(c)
-            if fixed and not is_teacher_facing_text(fixed):
+            if (
+                fixed
+                and not is_teacher_facing_text(fixed)
+                and not is_ocr_garbage_claim(fixed)
+            ):
                 claims.append(fixed)
             if len(claims) >= 12:
                 break
@@ -859,7 +870,26 @@ def build_canonical_lesson(
         )
 
     def _answer_for_prompt(prompt: str, marks: int = 2) -> str:
-        hit = next((n for n in term_names if n.lower() in prompt.lower()), "")
+        # Longest concept match first so "non-metal" wins over "metal".
+        prompt_l = prompt.lower()
+        ordered = sorted(term_names, key=lambda n: len(str(n)), reverse=True)
+        hit = next((n for n in ordered if n.lower() in prompt_l), "")
+        # Explicit stem cues when concept list is incomplete.
+        if not hit:
+            if re.search(r"(?i)\bnon[-\s]?metals?\b", prompt):
+                hit = "Non-metal"
+            elif re.search(r"(?i)\bmetals?\b", prompt) and "non" not in prompt_l:
+                hit = "Metal"
+            elif re.search(r"(?i)\bmalleab", prompt):
+                hit = "Malleability"
+            elif re.search(r"(?i)\bductil", prompt):
+                hit = "Ductility"
+            elif re.search(r"(?i)\blustre|luster", prompt):
+                hit = "Lustre"
+            elif re.search(r"(?i)\bmercury\b", prompt):
+                hit = "Mercury"
+            elif re.search(r"(?i)\bmagnesium\b", prompt):
+                hit = "Magnesium"
         bank = _point_bank(board, hit or (term_names[0] if term_names else topic), claims)
         # Calculation / numerical stems: keep lesson formulae as the model answer spine.
         if re.search(
@@ -973,7 +1003,31 @@ def build_canonical_lesson(
     hots_anchor = term_names[0] if term_names else topic
     hots_second = term_names[1] if len(term_names) > 1 else topic
     electric = any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance"))
-    if electric:
+    metals = any(k in topic_low for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil"))
+    # Prefer uploaded textbook questions for HOTS — never invent "classmate confuses…"
+    # when the lesson already contains QUESTIONS / EXERCISES.
+    hots_pairs: list[tuple[str, str]] = []
+    used_stems = {q.lower()[:50] for q, _ in practice_pairs + exam_pairs}
+    for row in source_prompts:
+        prompt = str(row.get("prompt") or "").strip()
+        if len(prompt.split()) < 5 or prompt.lower()[:50] in used_stems:
+            continue
+        # Prefer analytical / multi-part / why / compare stems for HOTS.
+        if not re.search(
+            r"(?i)\b(why|how|compare|predict|advantage|difference|explain|list two|"
+            r"what happens|what is the product|distinguish)\b",
+            prompt,
+        ) and len(hots_pairs) >= 1:
+            continue
+        ans = _answer_for_prompt(prompt, marks=5)
+        if not ans or "say what it means" in ans.lower():
+            continue
+        stem = prompt if "mark" in prompt.lower() else f"{prompt} (5 marks)"
+        hots_pairs.append((stem, ans))
+        used_stems.add(prompt.lower()[:50])
+        if len(hots_pairs) >= 3:
+            break
+    if len(hots_pairs) < 2 and electric:
         hots_pairs = [
             (
                 "Predict what happens to current in a circuit if resistance doubles "
@@ -986,8 +1040,7 @@ def build_canonical_lesson(
                 ),
             ),
             (
-                f"A classmate confuses series combination with parallel combination. "
-                f"Write the correction using ideas from this lesson. (5 marks)",
+                "Distinguish series combination from parallel combination using ideas from the lesson. (5 marks)",
                 _mark_answer(
                     5,
                     _point_bank(board, "Series combination", claims)
@@ -1006,35 +1059,46 @@ def build_canonical_lesson(
                 ),
             ),
         ]
-    else:
+    elif len(hots_pairs) < 2 and metals:
         hots_pairs = [
             (
-                f"Predict what would change about {hots_anchor.lower()} if the conditions around it "
-                f"were reversed. Give a reason from the lesson. (5 marks)",
+                "Distinguish metals from non-metals using at least two physical properties from the lesson. (5 marks)",
                 _mark_answer(
                     5,
-                    [
-                        f"If the conditions that cause {hots_anchor.lower()} were reversed, that stage would slow or stop."
-                    ]
-                    + _point_bank(board, hots_anchor, claims),
+                    _point_bank(board, "Metal", claims)
+                    + _point_bank(board, "Non-metal", claims),
                     topic=topic,
-                    lead=f"Begin with what {hots_anchor.lower()} needs in order to happen",
-                    example=example_line,
                 ),
             ),
             (
-                f"A classmate confuses {hots_anchor.lower()} with {hots_second.lower()}. "
-                f"Write the correction using ideas from this lesson. (5 marks)",
+                "Explain malleability and ductility with one everyday example of each. (5 marks)",
                 _mark_answer(
                     5,
-                    [
-                        f"{hots_anchor[:1].upper() + hots_anchor[1:]} and "
-                        f"{hots_second[:1].upper() + hots_second[1:]} are different ideas in {topic.lower()}, not the same thing."
-                    ]
-                    + _point_bank(board, hots_anchor, claims)
+                    _point_bank(board, "Malleability", claims)
+                    + _point_bank(board, "Ductility", claims),
+                    topic=topic,
+                ),
+            ),
+            (
+                "What happens when a more reactive metal is placed in the salt solution of a "
+                "less reactive metal? Give a reason. (5 marks)",
+                _mark_answer(
+                    5,
+                    _point_bank(board, "Displacement reaction", claims),
+                    topic=topic,
+                ),
+            ),
+        ]
+    elif len(hots_pairs) < 2:
+        hots_pairs = [
+            (
+                f"Explain how {hots_anchor.lower()} and {hots_second.lower()} are different "
+                f"using ideas from this lesson. (5 marks)",
+                _mark_answer(
+                    5,
+                    _point_bank(board, hots_anchor, claims)
                     + _point_bank(board, hots_second, claims),
                     topic=topic,
-                    lead="Correct the confusion with the taught meanings",
                 ),
             ),
             (
@@ -1051,8 +1115,6 @@ def build_canonical_lesson(
                         for n in (term_names[:4] or [topic])
                     ],
                     topic=topic,
-                    lead=f"Choose one clear everyday situation that shows {topic.lower()}",
-                    example=example_line,
                 ),
             ),
         ]
@@ -1060,7 +1122,7 @@ def build_canonical_lesson(
         {
             "title": "HOTS Questions",
             "role": "hots_question",
-            "body": _qa_pairs_block(hots_pairs),
+            "body": _qa_pairs_block(hots_pairs[:3]),
         }
     )
 

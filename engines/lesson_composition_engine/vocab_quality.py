@@ -292,7 +292,25 @@ METALS_NONMETALS_TERMS = (
         "Corrosion is the gradual damage of a metal surface by air, moisture or chemicals. "
         "Rusting of iron is a common example; galvanisation helps prevent it.",
     ),
+    (
+        "Metal oxide",
+        "A metal oxide forms when a metal reacts with oxygen. Metal oxides are generally basic "
+        "and turn red litmus blue. Example: magnesium burns in air to form magnesium oxide.",
+    ),
 )
+
+# Common sample metals — short teachable cards (never lab-instruction text).
+_ELEMENT_METAL_DEFS = {
+    "iron": "Iron is a common metal used for tools and construction. It rusts in moist air (corrosion).",
+    "copper": "Copper is a reddish-brown metal that is an excellent conductor of heat and electricity, used in wires.",
+    "aluminium": "Aluminium is a light, malleable metal used for foil, utensils and aircraft parts.",
+    "aluminum": "Aluminium is a light, malleable metal used for foil, utensils and aircraft parts.",
+    "magnesium": "Magnesium is a reactive metal that burns in air with a bright white flame to form magnesium oxide.",
+    "sodium": "Sodium is a soft, highly reactive metal that must be handled with care; it reacts vigorously with water.",
+    "zinc": "Zinc is a metal used to coat iron (galvanisation) to prevent rusting.",
+    "lead": "Lead is a dense, soft metal that is a poor conductor compared with copper.",
+    "mercury": "Mercury is the only metal that is liquid at room temperature.",
+}
 
 # Sentence fragments that OCR/title scraping wrongly promotes to "concepts".
 _FRAGMENT_JUNK = frozenset(
@@ -368,6 +386,14 @@ _TEACHER_TEXT_PATTERNS = (
     r"\byou have been provided\b",
     r"\btry this point to each part\b",
     r"\bstudy the labelled diagram\b",
+    r"\bfor performing activit",
+    r"\bcollect the samples?\b",
+    r"\bactivities?\s+\d",
+    r"\bcaution\s*:",
+    r"\byou will be learning\b",
+    r"\bin the next section\b",
+    r"\bin class\s+(ix|9|x|10)\b",
+    r"\beasily available\b",
 )
 
 # Isolated planning debris / orphan fragments that must never become learner prose.
@@ -449,6 +475,12 @@ def is_ocr_garbage_claim(text: str) -> bool:
     if re.search(r"\bchapter\b|\bactivity\s+\d", low):
         return True
     if "in this chapter" in low or "we will study" in low:
+        return True
+    if re.search(
+        r"for performing activit|collect the samples|caution\s*:|you will be learning|"
+        r"in the next section|in class\s+(ix|9|x|10)|easily available",
+        low,
+    ):
         return True
     # "What you have learnt" is a valuable NCERT summary — not garbage.
     # Only reject the chapter-intro "you have learnt in previous classes…" line.
@@ -706,7 +738,7 @@ def student_safe_definition(text: str) -> str:
     raw = (text or "").strip()
     if not raw:
         return ""
-    if is_teacher_facing_text(raw):
+    if is_teacher_facing_text(raw) or is_ocr_garbage_claim(raw):
         return ""
     low = raw.lower()
     for bad in (
@@ -715,6 +747,13 @@ def student_safe_definition(text: str) -> str:
         "key word connected",
         "not found in verified glossary",
         "ask ai tutor",
+        "for performing activit",
+        "collect the samples",
+        "you will be learning",
+        "in the next section",
+        "3chapter",
+        "chapter i n",
+        "lear nt",
     ):
         if bad in low:
             return ""
@@ -730,6 +769,13 @@ def canonical_definition(term: str) -> str:
         "salts": "salt",
         "indicators": "indicator",
         "neutralization": "neutralisation",
+        "metals": "metal",
+        "non-metals": "non-metal",
+        "nonmetals": "non-metal",
+        "non metals": "non-metal",
+        "metal oxides": "metal oxide",
+        "metallic lustre": "lustre",
+        "metallic luster": "lustre",
     }
     key = aliases.get(key, key)
     for name, definition in (
@@ -741,6 +787,8 @@ def canonical_definition(term: str) -> str:
     ):
         if name.lower() == key:
             return definition
+    if key in _ELEMENT_METAL_DEFS:
+        return _ELEMENT_METAL_DEFS[key]
     return ""
 
 
@@ -968,6 +1016,10 @@ def normalize_vocab_items(
     chemistryish = any(
         k in topic.lower() for k in ("acid", "base", "salt", "litmus", "neutralis", "neutraliz")
     )
+    metalsish = any(
+        k in topic.lower()
+        for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil", "corrosion")
+    )
 
     for item in terms:
         if isinstance(item, dict):
@@ -998,12 +1050,14 @@ def normalize_vocab_items(
             continue
 
         # Prefer scientific canonical wording for known curriculum packs
-        if (waterish or chemistryish) and canonical_definition(term):
-            definition = canonical_definition(term)
+        canon = canonical_definition(term)
+        if (waterish or chemistryish or metalsish) and canon:
+            definition = canon
         elif not definition or is_ocr_garbage_claim(definition) or "one of the ideas taught" in definition.lower():
-            definition = definition_from_claims(term, claims) or canonical_definition(term)
+            definition = canon or definition_from_claims(term, claims)
         if not definition:
             definition = build_student_definition(term, "", topic=topic)
+        definition = student_safe_definition(definition) or ""
         if (
             not definition
             or "is taught in this lesson" in definition.lower()
@@ -1014,7 +1068,7 @@ def normalize_vocab_items(
 
         seen.add(key)
         if not example or is_teacher_facing_text(example) or is_ocr_garbage_claim(example):
-            example = definition_from_claims(term, claims) or definition
+            example = student_safe_definition(definition_from_claims(term, claims) or "") or definition
 
         picture = picture_cue_for_term(term, definition=definition)
         out.append(

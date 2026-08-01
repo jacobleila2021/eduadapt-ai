@@ -974,26 +974,38 @@ def _parse_qa_pairs(body: str) -> list[dict[str, Any]]:
     text = (body or "").strip()
     if not text:
         return []
+    # Normalize OCR / broken answer markers: "{ Answer", "( Answer", "- Answer"
+    text = re.sub(r"[\{\(\[]\s*(Answer\b\s*:?)", r"\1", text, flags=re.I)
+    text = re.sub(r"(Answer\b\s*:?)\s*[\)\}\]]", r"\1 ", text, flags=re.I)
+    text = re.sub(r"\s*[-–]\s*[\{\(]?\s*(Answer\b\s*:?)", r"\nAnswer: ", text, flags=re.I)
     # Restore structure when whitespace was flattened into one paragraph.
-    text = re.sub(r"\s+(Answer\s*:)", r"\n\1", text, flags=re.I)
+    text = re.sub(r"\s+(Answer\b\s*:?)\s+", r"\nAnswer: ", text, flags=re.I)
     text = re.sub(r"(?<!\n)\s+(\d+)\.\s+", r"\n\1. ", text)
+    text = re.sub(r"(?<!\n)\s+(Question\s+\d+)\.\s*", r"\n\1. ", text, flags=re.I)
     pairs: list[dict[str, Any]] = []
-    chunks = re.split(r"(?m)^\s*(?=\d+\.\s)", text)
+    chunks = re.split(r"(?m)^\s*(?=(?:\d+|Question\s+\d+)\.\s)", text)
     for chunk in chunks:
         chunk = chunk.strip()
         if not chunk:
             continue
-        m = re.match(r"^(\d+)\.\s*(.*)$", chunk, re.S)
+        m = re.match(r"^(?:Question\s+)?(\d+)\.\s*(.*)$", chunk, re.S | re.I)
         if not m:
             continue
         num = int(m.group(1))
         rest = m.group(2).strip()
-        parts = re.split(r"(?im)^answer\s*:\s*", rest, maxsplit=1)
+        parts = re.split(r"(?im)^answer\s*:?\s*", rest, maxsplit=1)
         if len(parts) == 1:
-            parts = re.split(r"(?i)\bAnswer\s*:\s*", rest, maxsplit=1)
-        question = parts[0].strip()
+            parts = re.split(r"(?i)\bAnswer\s*:?\s*", rest, maxsplit=1)
+        question = parts[0].strip(" -–\t")
         answer = parts[1].strip() if len(parts) > 1 else ""
-        if not question:
+        answer = re.sub(r"^[\{\(\[]+|[\}\)\]]+$", "", answer).strip()
+        # Drop glued extra stems after a dash that are separate questions.
+        if " - " in question and not question.rstrip().endswith("?"):
+            # Keep first clear stem when OCR joined several questions.
+            bits = [b.strip() for b in re.split(r"\s+-\s+", question) if b.strip()]
+            if len(bits) >= 2 and any("?" in b or len(b.split()) >= 4 for b in bits):
+                question = bits[0]
+        if not question or question.lower() in {"answer", "{", "("}:
             continue
         marks_m = re.search(r"\((\d+)\s*marks?\)", question, re.I)
         pairs.append(
@@ -1012,21 +1024,24 @@ def _clean_exam_answer(answer: str) -> str:
     text = str(answer or "").strip()
     text = re.sub(r"(?i)^(the\s+answer\s+is|answer\s*:)\s*", "", text).strip()
     text = re.sub(r"(?i)\bthe\s+answer\s+is\s+", "", text).strip()
+    text = re.sub(r"^[\{\(\[]+|[\}\)\]]+$", "", text).strip()
     return text
 
 
 def _render_qa_section(title: str, body: str, *, spec_id: str | None, variant: str) -> None:
-    """Question then exam-ready Answer only — no extra support tabs."""
+    """Show questions; reveal model answers only via Show Answer."""
     del spec_id
     if not (body or "").strip():
         return
     pairs = _parse_qa_pairs(body)
     accent = accent_for_variant(variant)
     if not pairs:
+        # Strip inline answers before falling back to a plain card.
         plain = _plain_lesson_text(body, preserve_lines=True)
+        plain = re.sub(r"(?is)\bAnswer\s*:.*", "", plain).strip()
+        plain = re.sub(r"(?is)[\{\(]\s*Answer\b.*", "", plain).strip()
         if not plain.strip():
             return
-        # Avoid vacant Exam Practice shells with only an intro line.
         if re.match(r"(?i)^board-style practice\b", plain) and "Answer:" not in plain:
             return
         st.markdown(section_card_html(title, plain, variant), unsafe_allow_html=True)
@@ -1040,19 +1055,25 @@ def _render_qa_section(title: str, body: str, *, spec_id: str | None, variant: s
         unsafe_allow_html=True,
     )
     for pair in pairs:
-        q = html.escape(str(pair.get("question") or "").strip())
-        a = html.escape(_clean_exam_answer(str(pair.get("answer") or "")))
+        q = str(pair.get("question") or "").strip()
+        a = _clean_exam_answer(str(pair.get("answer") or ""))
         if not q:
             continue
         st.markdown(
             f'<div style="margin:0 0 1.35rem 0;padding:1rem 1.15rem;background:#FFFDF6;'
             f'border-radius:12px;border-left:5px solid {accent};">'
             f'<p style="font-weight:700;margin:0 0 0.65rem 0;line-height:1.7;color:{TEXT_BODY};">'
-            f'<span style="color:{accent};">Question {pair["n"]}.</span> {q}</p>'
-            f'<p style="margin:0;line-height:1.75;color:{TEXT_BODY};"><strong>Answer</strong><br/>{a}</p>'
+            f'<span style="color:{accent};">Question {pair["n"]}.</span> {html.escape(q)}</p>'
             f"</div>",
             unsafe_allow_html=True,
         )
+        if a:
+            _show_answer_button(
+                f"{title} Q{pair['n']}",
+                a,
+                f"lesson_qa_{re.sub(r'[^a-z0-9]+', '_', (title or '').lower())}_{pair['n']}",
+                exam_style=True,
+            )
     st.markdown("</div>", unsafe_allow_html=True)
 
 
