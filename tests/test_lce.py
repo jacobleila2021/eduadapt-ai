@@ -245,7 +245,13 @@ def test_adaptive_versions_are_distinct():
         or dyslexia.get("presentation") != standard.get("presentation")
     )
     rewritten = compose_adaptive_version(standard, "ell", vocabulary_terms=["force", "pressure"])
-    assert "Key Words" in str(rewritten.get("sections")) or "Important words" in str(rewritten.get("sections"))
+    # ELL must stay distinct without authoring chrome ("key word" / Important words).
+    ell_blob = str(rewritten.get("sections") or "")
+    assert "(key word)" not in ell_blob.lower()
+    assert "important words:" not in ell_blob.lower()
+    assert rewritten.get("sections") != standard.get("sections") or "ell" in str(
+        rewritten.get("title") or ""
+    ).lower()
 
 
 def test_accessibility_does_not_collapse_depth():

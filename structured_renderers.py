@@ -924,12 +924,12 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
     return items
 
 
-def _render_parent_concept_cards(lesson: dict) -> None:
-    """Parent view: complete concept cards instead of a thin line-chart overview."""
+def _render_lesson_wall_cards(lesson: dict, *, heading: str = "Lesson wall") -> None:
+    """Publisher-quality concept cards (Parent 'Key ideas' wall) for any adaptation."""
     items = _lesson_map_items(lesson)
     if not items:
         return
-    st.markdown("#### Key ideas for home")
+    st.markdown(f"#### {html.escape(heading)}")
     cols = st.columns(2)
     for i, item in enumerate(items):
         with cols[i % 2]:
@@ -946,6 +946,22 @@ def _render_parent_concept_cards(lesson: dict) -> None:
                 f"</div>",
                 unsafe_allow_html=True,
             )
+
+
+def _render_parent_concept_cards(lesson: dict) -> None:
+    """Parent view: complete concept cards instead of a thin line-chart overview."""
+    _render_lesson_wall_cards(lesson, heading="Key ideas for home")
+
+
+_LESSON_WALL_HEADINGS = {
+    "standard": "Lesson wall",
+    "ell": "Lesson wall — clear English",
+    "visual": "Lesson wall — see each idea",
+    "auditory": "Lesson wall — listen to each idea",
+    "ld": "Lesson wall — one step at a time",
+    "dyslexia": "Lesson wall — calm reading strips",
+    "parent": "Key ideas for home",
+}
 
 
 def _is_practice_section(title: str) -> bool:
@@ -1178,8 +1194,9 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     visual_concepts = [re.sub(r"(?i)^explain:\s*", "", c).strip() for c in visual_concepts]
     visual_concepts = [c for c in visual_concepts if c][:10]
 
-    if is_parent:
-        _render_parent_concept_cards(lesson)
+    wall_heading = _LESSON_WALL_HEADINGS.get(spec_id or "")
+    if wall_heading:
+        _render_lesson_wall_cards(lesson, heading=wall_heading)
 
     verified = lesson.get("verified_visuals") or []
     rendered_verified = False
@@ -1226,13 +1243,27 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     if not rendered_verified:
         st.markdown("#### Lesson Visual")
         pkg = lesson.get("diagram_package") if isinstance(lesson.get("diagram_package"), dict) else {}
-        svg = str(
-            pkg.get("svg")
-            or lesson.get("flowchart_svg")
-            or lesson.get("svg_diagram")
-            or lesson.get("concept_map_svg")
-            or ""
+        # Prefer domain concept map (water-cycle figure) over a generic vertical stack.
+        try:
+            from engines.lesson_composition_engine.publisher_remediation import (
+                is_generic_subject_flowchart,
+            )
+        except Exception:  # noqa: BLE001
+            def is_generic_subject_flowchart(_svg: str) -> bool:  # type: ignore
+                return False
+
+        candidates = [
+            str(pkg.get("svg") or ""),
+            str(lesson.get("concept_map_svg") or ""),
+            str(lesson.get("svg_diagram") or ""),
+            str(lesson.get("flowchart_svg") or ""),
+        ]
+        svg = next(
+            (c for c in candidates if c and not is_generic_subject_flowchart(c)),
+            "",
         )
+        if not svg:
+            svg = next((c for c in candidates if c), "")
         if _valid_svg_diagram(svg):
             title = html.escape(str(pkg.get("title") or lesson.get("topic") or "Lesson diagram"))
             caption = html.escape(str(pkg.get("caption") or "A labelled teaching diagram for this lesson."))
@@ -1300,8 +1331,9 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
             or role == "concept_primer"
         ):
             continue
-        # Parent view leads with concept cards — avoid duplicating long theory walls.
-        if is_parent and role in {"concept", "introduction", "worked_example"}:
+        # Parent / student lesson walls lead with cards — skip repeating the same
+        # theory paragraphs underneath (questions & summary still show).
+        if wall_heading and role in {"concept", "introduction", "worked_example"}:
             continue
         raw_title = section.get("title", "") or f"Section {idx + 1}"
         body = section.get("body", "")

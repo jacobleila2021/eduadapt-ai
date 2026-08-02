@@ -60,12 +60,19 @@ def _diagram_package(
     concepts: list[str],
 ) -> dict[str, Any]:
     """Ensure every diagram carries title, caption, explanation, callouts, practice."""
-    svg = str(
-        adaptation.get("flowchart_svg")
-        or adaptation.get("svg_diagram")
-        or adaptation.get("concept_map_svg")
-        or ""
+    # Prefer domain concept map (e.g. water-cycle visual) over a generic stack.
+    from engines.lesson_composition_engine.publisher_remediation import (
+        is_generic_subject_flowchart,
     )
+
+    candidates = [
+        str(adaptation.get("concept_map_svg") or ""),
+        str(adaptation.get("svg_diagram") or ""),
+        str(adaptation.get("flowchart_svg") or ""),
+    ]
+    svg = next((c for c in candidates if c and not is_generic_subject_flowchart(c)), "")
+    if not svg:
+        svg = next((c for c in candidates if c), "")
     labels = [c for c in concepts if c][:6] or [topic]
     callouts = [str(lab) for lab in labels[:4]]
     caption = f"Labelled pathway for {topic}"
@@ -212,8 +219,8 @@ def critique_adaptation(
         "routine" in t.lower() or "finished" in t.lower() or "what we will" in t.lower() for t in titles
     ):
         note("accessibility_editor", "Autism edition needs predictable routine structure.")
-    if adaptation_id == "ell" and "key words" not in " ".join(titles).lower():
-        note("accessibility_editor", "ELL edition should open with key words and frames.")
+    if adaptation_id == "ell" and "clear" not in blob.lower() and "short" not in blob.lower():
+        note("accessibility_editor", "ELL edition should keep clearer, shorter English framing.")
 
     if adaptation_id == "parent" and "home" not in low and "child" not in low:
         note("parent_editor", "Parent edition needs clear home coaching voice.")

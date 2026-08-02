@@ -258,8 +258,17 @@ def rewrite_stock_body(body: str, *, title: str = "", claim: str = "", topic: st
         cleaned = re.sub(r"(?i)^checkpoint:\s*", "", cleaned).strip()
         return cleaned or "Pause here. Explain the last step in one sentence."
 
-    if "key words in this section" in low:
-        return re.sub(r"(?i)\*?key words in this section:?\*?\s*", "Important words: ", text).strip()
+    if "key words in this section" in low or "important words:" in low:
+        # Drop authoring chrome entirely — do not rename into another learner-visible label.
+        text = re.sub(
+            r"(?i)\*?key words in this section:?\*?\s*[^\n]*",
+            "",
+            text,
+        )
+        text = re.sub(r"(?i)\bimportant words:\s*[^\n]*", "", text)
+        text = re.sub(r"(?i)\(\s*key\s*words?\s*\)", "", text)
+        text = re.sub(r"(?i)^\s*model\s*[:.]?\s+", "", text, flags=re.M)
+        return re.sub(r"\n{3,}", "\n\n", text).strip()
 
     if has_teacher_objective_leak(text):
         return studentize_goal(text, topic=topic or name)

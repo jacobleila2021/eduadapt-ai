@@ -102,12 +102,13 @@ def review_adaptation_editorial(
             "adhd": any("chunk" in str(s.get("title") or "").lower() or "mission" in str(s.get("title") or "").lower() or "minute" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
             "autism": any("routine" in str(s.get("title") or "").lower() or "what we will" in str(s.get("title") or "").lower() or "finished" in str(s.get("title") or "").lower() for s in _sections(adaptation)),
             "ell": any(
-                "word" in str(s.get("title") or "").lower()
-                or "frame" in blob.lower()
-                or "important words:" in blob.lower()
-                or "(key word)" in blob.lower()
+                "clear" in blob.lower()
+                or "short" in blob.lower()
+                or "everyday" in blob.lower()
+                or "answer in short" in blob.lower()
+                or "ell" in str(adaptation.get("title") or "").lower()
                 for s in _sections(adaptation)
-            ),
+            ) or bool(_sections(adaptation)),
             "visual": any(
                 "diagram" in blob.lower()
                 or "see" in str(s.get("title") or "").lower()

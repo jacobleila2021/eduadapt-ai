@@ -54,7 +54,7 @@ _MD_SYMBOLS = re.compile(r"[#*_`>\[\]|]")
 
 
 def _clean_for_speech(text: str) -> str:
-    """Strip diagrams, HTML, markdown and entities so only spoken prose remains."""
+    """Strip diagrams, HTML, markdown and authoring chrome so spoken prose matches the lesson."""
     if not text:
         return ""
     text = _MERMAID_BLOCK.sub(" ", text)
@@ -62,6 +62,23 @@ def _clean_for_speech(text: str) -> str:
     text = _HTML_TAG.sub(" ", text)
     text = html.unescape(text)
     text = _MD_SYMBOLS.sub(" ", text)
+    # Never speak pipeline / authoring labels that desync the reading ruler.
+    text = re.sub(r"(?i)\(\s*key\s*words?\s*\)", " ", text)
+    text = re.sub(r"(?i)\bimportant\s+words\s*:\s*[^.?!]*[.?!]?", " ", text)
+    text = re.sub(r"(?i)\bkey\s+words\s*:\s*[^.?!]*[.?!]?", " ", text)
+    text = re.sub(r"(?i)\bkey\s+words\s+stay\s+exact[^.?!]*[.?!]?", " ", text)
+    text = re.sub(r"(?i)\bmodel\s+answer\s*:?\s*", " ", text)
+    text = re.sub(r"(?i)(?:^|[.!?]\s+|[-•]\s+)model\s*[:.]?\s+", " ", text)
+    text = re.sub(r"(?i)\banswer\s*:\s*", " ", text)
+    text = re.sub(r"\[Pause[^\]]*\]", " ", text)
+    # Fix fused OCR words that break speech timing ("theenergy", "theatmosphere").
+    text = re.sub(r"\b(the|a|an|to|of|in|on|for|and)([A-Z][a-z]{2,})", r"\1 \2", text)
+    text = re.sub(
+        r"\b(the)(atmosphere|energy|entire|earth|ocean|water|sun|air|process)\b",
+        r"\1 \2",
+        text,
+        flags=re.I,
+    )
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
@@ -101,11 +118,50 @@ def build_narration(content: Any, spec_id: str) -> str:
 
     if parsed:
         out = []
+        spoken_keys: set[str] = set()
+
+        def _accept(sent: str) -> bool:
+            key = re.sub(r"[^a-z0-9]+", " ", (sent or "").lower()).strip()[:96]
+            if not key or key in spoken_keys:
+                return False
+            tokens = set(key.split())
+            if any(
+                tokens
+                and len(tokens & set(prev.split()))
+                / max(1, min(len(tokens), len(set(prev.split()))))
+                >= 0.72
+                for prev in spoken_keys
+                if " " in prev  # compare against prior sentences, not short n-grams only
+            ):
+                return False
+            words = key.split()
+            grams = {
+                " ".join(words[i : i + 5])
+                for i in range(0, max(0, len(words) - 4))
+            }
+            if grams & {g for g in spoken_keys if g.count(" ") >= 4}:
+                return False
+            spoken_keys.add(key)
+            spoken_keys.update(grams)
+            out.append(sent)
+            return True
+
         topic = _clean_for_speech(parsed.get("topic") or parsed.get("title") or "")
         big_idea = _clean_for_speech(parsed.get("big_idea") or "")
         if big_idea and (not topic or big_idea.lower() != topic.lower()):
-            out.append(big_idea)
-        spoken_keys: set[str] = set()
+            for sent in split_sentences(big_idea):
+                _accept(sent)
+        # Reading = same lesson points as the wall/theory — not a second generation.
+        # Skip practice/exam/HOTS answers (they duplicate theory and desync the ruler).
+        theory_roles = {
+            "",
+            "introduction",
+            "concept",
+            "worked_example",
+            "summary",
+            "real_life_example",
+            "common_misconception",
+        }
         for section in parsed.get("sections") or []:
             if not isinstance(section, dict):
                 continue
@@ -113,29 +169,13 @@ def build_narration(content: Any, spec_id: str) -> str:
             # Never speak teacher-only advisory on student audio paths.
             if role.endswith("_support") or role.startswith("presentation_"):
                 continue
+            if role and role not in theory_roles:
+                continue
             body = _clean_for_speech(section.get("body") or "")
             if not body:
                 continue
-            body = re.sub(r"(?i)\banswer:\s*", "", body)
-            body = re.sub(r"\[Pause[^\]]*\]", " ", body)
-            body = re.sub(r"\s+", " ", body).strip()
-            key = re.sub(r"[^a-z0-9]+", " ", body.lower()).strip()[:80]
-            if key and key in spoken_keys:
-                continue
-            if key:
-                spoken_keys.add(key)
-            if spec_id == "auditory":
-                if role == "introduction":
-                    out.append("Let's begin.")
-                elif role == "concept":
-                    out.append("Here is the next idea.")
-                elif role == "worked_example":
-                    out.append("Now follow how it works.")
-                elif role in {"practice_question", "exam_question", "hots_question"}:
-                    out.append("Pause and try this yourself before you hear the answer.")
-            out.append(body)
-            if spec_id == "auditory" and role == "concept":
-                out.append("Can you say that idea in your own words?")
+            for sent in split_sentences(body):
+                _accept(sent)
         if out:
             return " ".join(out)
 

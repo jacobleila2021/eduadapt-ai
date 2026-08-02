@@ -455,6 +455,14 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
 
         for term, definition in ELECTRICITY_TERMS:
             raw_terms.append({"term": term, "definition": definition, "example": definition})
+    if any(
+        k in topic_low
+        for k in ("water cycle", "evaporat", "precipitat", "condens", "transpiration")
+    ):
+        from engines.lesson_composition_engine.vocab_quality import WATER_CYCLE_TERMS
+
+        for term, definition in WATER_CYCLE_TERMS:
+            raw_terms.append({"term": term, "definition": definition, "example": definition})
     # Any subject: seed from dynamic teaching bank on the CLG / board.
     dyn_bank = list(clg.get("teaching_bank") or [])
     if not dyn_bank:
@@ -595,6 +603,19 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 have.add(term.lower())
             if len(concepts) >= 8:
                 break
+    if any(
+        k in topic_low
+        for k in ("water cycle", "evaporat", "precipitat", "condens", "transpiration")
+    ) and len(concepts) < 4:
+        from engines.lesson_composition_engine.vocab_quality import WATER_CYCLE_TERMS
+
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in WATER_CYCLE_TERMS:
+            if term.lower() not in have:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
+            if len(concepts) >= 8:
+                break
     terms = [
         str(w.get("term") or "")
         for w in ((vocabulary or {}).get("word_wall") or clg.get("vocabulary") or [])
@@ -729,10 +750,6 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
                 break
         if not answer_parts and canon:
             answer_parts = [canon]
-        if answer_parts:
-            answer_parts.append(
-                f"These points show what {name} means in {topic} and how it is used in the lesson."
-            )
         # Progressive demand: understanding → application across long answers.
         if i == 0:
             prompt = f"Explain '{name}' in detail with examples from the lesson."
@@ -1111,6 +1128,10 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
 
 
 def _diagrams_from_board(board: Mapping[str, Any], clg: Mapping[str, Any]) -> tuple[str, str]:
+    """Return (primary_svg, secondary_svg). Prefer domain visuals (water cycle) first."""
+    from engines.lesson_composition_engine.publisher_remediation import (
+        is_generic_subject_flowchart,
+    )
     from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
 
     topic = str(board.get("topic") or clg.get("topic") or "Lesson")
@@ -1126,6 +1147,7 @@ def _diagrams_from_board(board: Mapping[str, Any], clg: Mapping[str, Any]) -> tu
         if isinstance(c, str) and c.strip():
             concept_names.append(c.strip())
     stages = filter_diagram_stages(concept_names, topic=topic, claims=claims, limit=6)
+    concept_map = build_concept_map_svg(topic, stages or [topic])
     if len(stages) >= 2:
         flowchart = build_educational_flowchart_svg(
             topic,
@@ -1134,8 +1156,14 @@ def _diagrams_from_board(board: Mapping[str, Any], clg: Mapping[str, Any]) -> tu
         )
     else:
         flowchart = build_subject_flowchart(subject, topic)
-    concept_map = build_concept_map_svg(topic, stages or [topic])
-    return flowchart, concept_map
+    # Domain cycle / water visual wins over a vertical or generic pedagogy stack.
+    primary = concept_map if concept_map and (
+        is_generic_subject_flowchart(flowchart) or "water" in topic.lower() or "cycle" in topic.lower()
+    ) else flowchart
+    if not primary:
+        primary = flowchart or concept_map
+    secondary = flowchart if primary == concept_map else concept_map
+    return primary, secondary
 
 
 def compose_adaptations_from_clg(
@@ -1212,13 +1240,43 @@ def compose_adaptations_from_clg(
             out[vid]["lce"]["composed_from_clg"] = True
             out[vid]["lce"]["not_a_clone"] = True
         # Shared visuals — generated once, reused on every adaptation.
-        if flowchart:
-            out[vid]["flowchart_svg"] = flowchart
-            out[vid]["svg_diagram"] = flowchart
-        if concept_map:
-            out[vid]["concept_map_svg"] = concept_map
+        # `flowchart` here is the preferred primary domain SVG from `_diagrams_from_board`.
+        primary_svg = flowchart or concept_map
+        secondary_svg = concept_map if concept_map and concept_map != primary_svg else flowchart
+        if primary_svg:
+            out[vid]["svg_diagram"] = primary_svg
+            out[vid]["flowchart_svg"] = primary_svg
+        if secondary_svg:
+            out[vid]["concept_map_svg"] = secondary_svg
+        elif primary_svg:
+            out[vid]["concept_map_svg"] = primary_svg
         if frozen.get("diagram_package"):
-            out[vid]["diagram_package"] = copy.deepcopy(frozen["diagram_package"])
+            pkg = copy.deepcopy(frozen["diagram_package"])
+            if isinstance(pkg, dict) and primary_svg:
+                pkg["svg"] = primary_svg
+            out[vid]["diagram_package"] = pkg
+
+    # Vocabulary + Exam Worksheet share the same Master visual.
+    primary_for_special = flowchart or concept_map
+    if primary_for_special:
+        if isinstance(out.get("vocabulary"), dict):
+            out["vocabulary"]["svg_diagram"] = primary_for_special
+            out["vocabulary"]["concept_map_svg"] = primary_for_special
+            out["vocabulary"]["flowchart_svg"] = primary_for_special
+        if isinstance(out.get("worksheet"), dict):
+            dq = out["worksheet"].get("diagram_question")
+            if isinstance(dq, dict):
+                dq["svg_diagram"] = primary_for_special
+            else:
+                out["worksheet"]["diagram_question"] = {
+                    "question": (
+                        f"Study the labelled diagram for {intelligence.get('topic') or 'this lesson'}. "
+                        "Redraw it and label each main idea accurately."
+                    ),
+                    "marks": 5,
+                    "svg_diagram": primary_for_special,
+                }
+            out["worksheet"]["svg_diagram"] = primary_for_special
 
     out["_canonical"] = {
         "core": core,

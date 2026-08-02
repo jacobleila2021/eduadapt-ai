@@ -82,6 +82,14 @@ def _norm_key(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
 
 
+def _token_overlap(a: str, b: str) -> float:
+    wa = {w for w in re.findall(r"[a-z]{3,}", (a or "").lower())}
+    wb = {w for w in re.findall(r"[a-z]{3,}", (b or "").lower())}
+    if not wa or not wb:
+        return 0.0
+    return len(wa & wb) / float(min(len(wa), len(wb)))
+
+
 def _unique_sentences(*chunks: str, seen: set[str] | None = None) -> tuple[list[str], set[str]]:
     """Keep only sentences that add new information (semantic near-dedupe)."""
     seen = seen if seen is not None else set()
@@ -93,6 +101,9 @@ def _unique_sentences(*chunks: str, seen: set[str] | None = None) -> tuple[list[
                 continue
             prefix = key[:56]
             if key in seen or any(prefix == s[:56] for s in seen):
+                continue
+            # Near-paraphrase guard: "Evaporation is when…" vs "Evaporation occurs when…"
+            if any(_token_overlap(key, s) >= 0.72 for s in seen):
                 continue
             seen.add(key)
             out.append(sent.rstrip(".") + ".")
@@ -180,18 +191,22 @@ def _mark_answer(
         key = _norm_key(sent)
         if len(key) < 12 or key in seen or any(key[:56] == s[:56] for s in seen):
             continue
+        if any(_token_overlap(key, s) >= 0.72 for s in seen):
+            continue
         low = sent.lower()
         if any(
             bad in low
             for bad in (
                 "link each point",
                 "altogether, these points",
+                "these points show what",
                 "start from the taught",
                 "choose one clear",
                 "secure understanding",
                 "begin with what",
                 "correct the confusion with the taught",
                 "the answer is",
+                "how it is used in the lesson",
             )
         ):
             continue
@@ -1421,42 +1436,37 @@ def _emphasise_terms(body: str, concepts: list[str]) -> str:
 
 
 def _ell_present_body(body: str, concepts: list[str]) -> str:
-    """Same curriculum in clearer English — add glossary cues, never drop terms."""
+    """Same curriculum in clearer English — shorter sentences, no authoring chrome.
+
+    Never inject '(key word)', 'Important words:', or 'Model' — those leak into
+    reading / TTS and break the lesson wall experience.
+    """
+    del concepts  # kept for call-site compatibility; emphasis is visual/render-only
     lines: list[str] = []
     for line in body.split("\n"):
         raw = line.strip()
         if not raw:
             continue
-        if raw.lstrip().startswith(("-", "•", "☐", "1.", "2.", "3.")):
+        # Strip legacy authoring chrome if it survived from an older pack.
+        raw = re.sub(r"(?i)\s*\(key\s*words?\)", "", raw)
+        raw = re.sub(r"(?i)^\s*(important\s+words|key\s+words)\s*:\s*.+$", "", raw).strip()
+        raw = re.sub(r"(?i)^\s*model\s*[:.]?\s+", "", raw).strip()
+        if not raw:
+            continue
+        if raw.lstrip().startswith(("-", "•", "☐")) or re.match(r"^\d+\.", raw):
             lines.append(raw)
             continue
         for sent in _sentences(raw):
             glossed = sent
-            for name in concepts:
-                low = name.lower()
-                if low in sent.lower() and f"({name}" not in sent:
-                    # Keep the term; add a short everyday cue beside first hit.
-                    glossed = re.sub(
-                        rf"\b({re.escape(name)})\b",
-                        rf"\1 (key word)",
-                        glossed,
-                        count=1,
-                        flags=re.IGNORECASE,
-                    )
-                    break
-            if len(glossed.split()) > 22:
-                # Split long sentences at a mid comma — concepts stay.
-                if "," in glossed:
-                    left, right = glossed.split(",", 1)
-                    lines.append(left.strip().rstrip(".") + ".")
-                    lines.append(right.strip()[:1].upper() + right.strip()[1:])
-                    continue
+            if len(glossed.split()) > 22 and "," in glossed:
+                left, right = glossed.split(",", 1)
+                lines.append(left.strip().rstrip(".") + ".")
+                rest = right.strip()
+                if rest:
+                    lines.append(rest[:1].upper() + rest[1:])
+                continue
             lines.append(glossed)
-    text = "\n".join(lines)
-    clean = [c for c in concepts if str(c).strip()]
-    if clean:
-        text = text.rstrip() + "\n\nImportant words: " + ", ".join(clean[:6]) + "."
-    return text
+    return "\n".join(lines)
 
 
 def _chunk_paragraphs_by_words(body: str, max_words: int = 80) -> str:
@@ -1491,8 +1501,8 @@ def _present_qa_zone(body: str, version_id: str) -> str:
             spaced.append("")
         return "\n".join(spaced).rstrip() + "\n"
     if version_id == "ell":
-        # Keep stems; add a one-line frame before the block.
-        return "Answer in short, clear sentences. Use the key words from the lesson.\n\n" + text
+        # Keep stems; short clear answers — no "key words" authoring chrome.
+        return "Answer in short, clear sentences.\n\n" + text
     if version_id == "visual":
         if "diagram" not in text.lower():
             return "Use the lesson diagram to help you answer.\n\n" + text
@@ -1558,24 +1568,10 @@ def _present_body(
         return strip_colour_markers(body)
 
     if version_id == "auditory":
-        # Conversational teaching cues — content unchanged; never re-read titles.
+        # Same lesson points as the wall — light spacing only (no extra script that
+        # desyncs the reader from the cards below).
         parts = [p.strip() for p in re.split(r"\n+", body) if p.strip()]
-        out: list[str] = []
-        if role == "introduction" and parts:
-            out.append("Let's begin together.")
-        elif role == "concept" and parts:
-            out.append("Here is the next idea — listen carefully.")
-        elif role == "worked_example" and parts:
-            out.append("Now follow how it works, step by step.")
-        for i, part in enumerate(parts):
-            out.append(part)
-            if i < len(parts) - 1 and role in {"concept", "worked_example", "summary"}:
-                out.append("[Pause — listen again]")
-            if role == "concept" and i == 0 and len(parts) > 1:
-                out.append("Think: can you say that idea in your own words?")
-        if role == "concept":
-            out.append("Quick recap: hold that idea before we move on.")
-        return "\n".join(out)
+        return "\n\n".join(parts)
 
     if version_id == "autism":
         # Literal, predictable: one sentence per line, no figurative framing.
@@ -1648,9 +1644,9 @@ _PROFILE_FRAMES: dict[str, dict[str, str]] = {
     "ell": {
         "title": "How you will learn — English Language Support",
         "body": (
-            "Same concepts, clearer English. Key words are glossed, sentence frames help you answer, "
-            "and everyday examples keep meaning clear. Nothing from Must Know is removed — "
-            "you still prepare for the same examination."
+            "Same concepts, clearer English. Short sentences and everyday examples keep "
+            "meaning clear. Nothing from Must Know is removed — you still prepare for the "
+            "same examination."
         ),
     },
     "ld": {
@@ -1761,7 +1757,7 @@ def derive_presentation_adaptation(
     _LENS_CUES = {
         "visual": "See it — match each idea to the lesson diagram as you read.",
         "auditory": "Read each idea aloud, then say it once more in your own words.",
-        "ell": "Key words stay exact — read the plain-words framing beside them.",
+        "ell": "Read each idea in clear English — the science words stay exact.",
         "ld": "One step at a time — finish each idea before the next.",
         "dyslexia": "Calm and clear — one sentence per line as you read.",
         "adhd": "Short steps — finish one idea, then pause.",

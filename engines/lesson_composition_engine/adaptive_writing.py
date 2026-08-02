@@ -186,8 +186,8 @@ def _rewrite_section_body(
         text = _bold_key_terms(text, terms)
 
     if profile.get("glossary_inline") and terms:
-        gloss = ", ".join(terms[:6])
-        text += f"\n\nImportant words: {gloss}."
+        # Keep terms exact in the prose — do not append authoring chrome footers.
+        pass
 
     if profile.get("listen_cues"):
         text = f"{text}\n\nSay the main idea aloud in your own words."

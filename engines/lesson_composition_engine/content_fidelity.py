@@ -115,6 +115,11 @@ PROMPT_LEAK_PHRASES = (
     "openai",
     "streamlit",
     "engine result",
+    "(key word)",
+    "(key words)",
+    "important words:",
+    "key words stay exact",
+    "use the key words from the lesson",
 )
 
 # Authoring labels that leak when used as field headers in student text.
@@ -123,6 +128,8 @@ PROMPT_LEAK_LABELS = (
     r"(?i)(?<![A-Za-z]\s)\b(prompt|instruction|system|user|assistant|metadata|context|json|pipeline|llm)\s*:",
     r"(?i)\b(grade\s*level|learning\s*objectives?|source\s*document)\s*:",
     r"(?i)\busing the uploaded source\b",
+    r"(?i)^\s*model\s*:",
+    r"(?i)\bmodel\s+answer\s*:",
 )
 
 GENERIC_SUMMARY_MARKERS = (
@@ -746,7 +753,7 @@ def _break_clone_paragraphs(adaptations: dict[str, Any]) -> dict[str, Any]:
     signatures = {
         "adhd": "Tick your mission checklist before you move on.",
         "autism": "First, next, then finished — keep the same order.",
-        "ell": "Say the key word aloud, then use it in one short sentence.",
+        "ell": "Say the science word aloud, then use it in one short sentence.",
         "visual": "Trace the diagram with your finger, then explain one label.",
         "auditory": "Cover the page and retell the idea in your own words.",
         "ld": "Read one short step, pause, then write one clear word.",

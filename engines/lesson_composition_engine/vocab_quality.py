@@ -453,6 +453,14 @@ def repair_ocr_prose(text: str) -> str:
     # Bare page-header claims: "Acids, Bases and Salts 19" as whole string
     if re.fullmatch(r"(?i)[\w\s,]{6,50}\s+\d{1,3}", t.strip()):
         return ""
+    # Fused article+word OCR: "theatmosphere", "theenergy", "theentire"
+    t = re.sub(r"\b(the|a|an|to|of|in|on|for|and)([A-Z][a-z]{2,})", r"\1 \2", t)
+    t = re.sub(
+        r"\b(the)(atmosphere|energy|entire|earth|ocean|water|sun|air|process)\b",
+        r"\1 \2",
+        t,
+        flags=re.I,
+    )
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
@@ -1058,8 +1066,38 @@ def normalize_vocab_items(
         if not definition:
             definition = build_student_definition(term, "", topic=topic)
         definition = student_safe_definition(definition) or ""
+        # Reject recycled blurbs: card must define THIS term as the sentence subject.
+        stem = key.rstrip("s")
+
+        def _definition_about(defn: str, needle: str) -> bool:
+            low = (defn or "").lower().strip()
+            n = (needle or "").lower().strip()
+            if not low or not n:
+                return False
+            head = low[: max(48, len(n) + 16)]
+            return (
+                head.startswith(n + " ")
+                or head.startswith(n + " is")
+                or head.startswith(n + " are")
+                or head.startswith("the " + n)
+                or f"{n} is " in low[:90]
+                or f"{n} are " in low[:90]
+                or f"{n} means " in low[:90]
+            )
+
+        teaches_term = bool(canon) or _definition_about(definition, key) or _definition_about(
+            definition, stem
+        )
+        if not teaches_term:
+            rebuilt = definition_from_claims(term, claims) or ""
+            if rebuilt and (
+                _definition_about(rebuilt, key) or _definition_about(rebuilt, stem)
+            ):
+                definition = student_safe_definition(rebuilt) or ""
+                teaches_term = True
         if (
             not definition
+            or not teaches_term
             or "is taught in this lesson" in definition.lower()
             or "one of the ideas taught" in definition.lower()
             or is_ocr_garbage_claim(definition)

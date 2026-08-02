@@ -384,7 +384,7 @@ def _is_textbook_page(page: Mapping[str, Any] | None) -> bool:
 _TEXTBOOK_LENS_MARKERS = {
     "visual": (("see it in the diagram", "see it —", "diagram"), "diagram-anchored theory reading"),
     "auditory": (("aloud",), "read-aloud rehearsal of the same theory"),
-    "ell": (("key word", "plain words"), "key-word framing in plain English"),
+    "ell": (("clear english", "short", "everyday", "means"), "clearer English framing"),
     "ld": (("step by step", "one step at a time", "\n-"), "single-idea steps with reduced load"),
     "dyslexia": (("calm and clear", "decoding support", "\n"), "one sentence per line, calm layout, decoding support"),
     "adhd": (("short", "step", "\n-"), "short-burst reading"),

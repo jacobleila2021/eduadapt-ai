@@ -76,7 +76,12 @@ def _format_profile(blob: str) -> dict[str, float]:
     numbered = sum(1 for ln in lines if re.match(r"^\s*\d+\.\s", ln)) / n
     bold = min(1.0, (blob or "").count("**") / 8.0)
     pause = 1.0 if "pause" in (blob or "").lower() else 0.0
-    gloss = 1.0 if "important words:" in (blob or "").lower() or "(key word)" in (blob or "").lower() else 0.0
+    gloss = 1.0 if (
+        "answer in short" in (blob or "").lower()
+        or "clear english" in (blob or "").lower()
+        or "plain-words" in (blob or "").lower()
+        or "everyday" in (blob or "").lower()
+    ) else 0.0
     return {
         "bullet": bullet,
         "numbered": numbered,
@@ -89,7 +94,7 @@ def _format_profile(blob: str) -> dict[str, float]:
 SIGNATURES: dict[str, tuple[str, ...]] = {
     "adhd": ("chunk", "mission", "minute", "break", "checklist"),
     "autism": ("routine", "finished", "what we will", "first", "next"),
-    "ell": ("key word", "important words", "means"),
+    "ell": ("answer in short", "clear english", "means", "everyday"),
     "visual": ("diagram", "**", "look"),
     "auditory": ("pause", "listen", "say", "hear"),
     "dyslexia": ("1.", "2.", "3.", "**"),
