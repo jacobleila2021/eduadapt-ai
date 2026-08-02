@@ -434,6 +434,27 @@ def _master_concept_names(board: Mapping[str, Any], claims: list[str]) -> list[s
         rest = [n for n in names if n.lower() not in {t.lower() for t in lead}]
         return (lead + rest)[:10] or pack[:10]
 
+    # Any subject: seed from dynamic teaching bank built from this upload.
+    dyn = list(board.get("teaching_bank") or [])
+    if dyn:
+        from engines.lesson_composition_engine.dynamic_teaching_bank import (
+            enrich_from_dynamic_bank,
+        )
+
+        clean_names = [n for n in names if not is_junk_term(n)]
+        for term, _definition in enrich_from_dynamic_bank(topic, clean_names, dyn):
+            _add(term)
+        if len(names) >= 3:
+            return names[:10]
+        # Prefer bank order when OCR left almost nothing usable.
+        pack = [
+            str(r.get("term") or "").strip()
+            for r in dyn
+            if str(r.get("term") or "").strip() and not is_junk_term(str(r.get("term") or ""))
+        ]
+        if len(clean_names) < 3 and pack:
+            return pack[:10]
+
     return names[:8] or [n for n in _textbook_concept_names(board, claims) if not is_junk_term(n)][:8]
 
 
@@ -452,6 +473,17 @@ def _concept_explanation(board: Mapping[str, Any], name: str, claims: list[str])
     canon = canonical_definition(name)
     if canon:
         return canon.rstrip(".") + "."
+    # Upload-specific bank (R10/R11) before generic claim scraping.
+    try:
+        from engines.lesson_composition_engine.dynamic_teaching_bank import (
+            definition_from_dynamic_bank,
+        )
+
+        dyn = definition_from_dynamic_bank(name, board.get("teaching_bank") or [])
+        if dyn:
+            return dyn.rstrip(".") + "."
+    except Exception:
+        pass
     for item in board.get("concepts") or []:
         if isinstance(item, dict):
             item_name = str(item.get("name") or "").strip().lower()

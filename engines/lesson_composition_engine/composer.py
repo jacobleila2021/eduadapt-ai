@@ -455,6 +455,30 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
 
         for term, definition in ELECTRICITY_TERMS:
             raw_terms.append({"term": term, "definition": definition, "example": definition})
+    # Any subject: seed from dynamic teaching bank on the CLG / board.
+    dyn_bank = list(clg.get("teaching_bank") or [])
+    if not dyn_bank:
+        try:
+            from engines.lesson_composition_engine.dynamic_teaching_bank import (
+                build_dynamic_teaching_bank,
+            )
+
+            dyn_bank = build_dynamic_teaching_bank(
+                topic=topic,
+                source_text=str(clg.get("source_text") or ""),
+                claims=claims,
+                concepts=clg.get("core_concepts") or [],
+            )
+        except Exception:
+            dyn_bank = []
+    for row in dyn_bank:
+        raw_terms.append(
+            {
+                "term": str(row.get("term") or ""),
+                "definition": str(row.get("definition") or ""),
+                "example": str(row.get("definition") or ""),
+            }
+        )
 
     normalized = normalize_vocab_items(raw_terms, topic=topic, claims=claims)
     # Ensure a solid study set — only claim-grounded terms with teachable definitions
@@ -1132,8 +1156,12 @@ def compose_adaptations_from_clg(
         board
         or build_lesson_intelligence_board(clg, uli=uli, sif=sif, uvie=uvie)
     )
-    flowchart, concept_map = _diagrams_from_board(intelligence, clg)
-    vocabulary = compose_vocabulary_from_clg(clg)
+    # Carry upload teaching bank onto CLG so vocab/worksheet share Master concepts.
+    clg_work = dict(clg)
+    if intelligence.get("teaching_bank"):
+        clg_work["teaching_bank"] = list(intelligence.get("teaching_bank") or [])
+    flowchart, concept_map = _diagrams_from_board(intelligence, clg_work)
+    vocabulary = compose_vocabulary_from_clg(clg_work)
     out: dict[str, Any] = {
         "_intelligence_board": intelligence,
         "_integration_failures": integration_failures(intelligence),
@@ -1142,7 +1170,7 @@ def compose_adaptations_from_clg(
     if "vocabulary" in ids:
         out["vocabulary"] = vocabulary
     if "worksheet" in ids:
-        out["worksheet"] = compose_worksheet_from_clg(clg, vocabulary)
+        out["worksheet"] = compose_worksheet_from_clg(clg_work, vocabulary)
 
     # ------------------------------------------------------------------
     # Master Lesson Architecture (v3.3):

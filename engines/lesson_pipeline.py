@@ -188,9 +188,17 @@ def process_lesson_stem(lesson_text: str, topic: str = "") -> dict:
                     "stage": "content_classification",
                     "code": "ambiguous_stem_not_routed",
                     "line": classified.line_no,
-                    "message": "Ambiguous STEM notation was omitted from computation.",
-                    "recovery": "Use a complete equation or expression to request verified computation.",
+                    "message": (
+                        "Some STEM-looking text was too incomplete to verify safely "
+                        "(for example a fragment with → or 'solve' without a full equation)."
+                    ),
+                    "recovery": (
+                        "For verified calculation: paste a complete expression "
+                        "(e.g. 2H2 + O2 → , or solve x^2 - 5x + 6 = 0). "
+                        "The reading lesson still uses the source text."
+                    ),
                     "fallback_used": "source_prose",
+                    "learner_visible": True,
                 }
             )
     claims = extract_stem_claims(lesson_text)
@@ -230,14 +238,16 @@ def process_lesson_stem(lesson_text: str, topic: str = "") -> dict:
                     "line": claim.line_no,
                     "task_kind": result.task_kind.value,
                     "message": (
-                        "A source item could not be verified and was omitted from "
-                        "computed answers."
+                        "A calculation or balance step could not be verified by the "
+                        "Subject Tool Router, so no computed answer was added."
                     ),
                     "recovery": (
-                        "Review the source notation or provide a complete equation "
-                        "before requesting a verified result."
+                        "Check the equation/expression is complete and standard "
+                        "(e.g. 2H2 + O2 → , V = IR with numbers, or solve x^2-5x+6=0). "
+                        "Explanations from the source text are still shown."
                     ),
                     "fallback_used": "source_explanation_without_computed_answer",
+                    "learner_visible": True,
                 }
             )
             continue

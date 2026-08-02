@@ -338,6 +338,44 @@ def build_lesson_intelligence_board(
         "engine_contributions": contributions,
         "ready_to_author": bool(claim_texts or concepts),
     }
+    # R10/R11 — dynamic teaching bank from this upload (any subject).
+    try:
+        from engines.lesson_composition_engine.dynamic_teaching_bank import (
+            build_dynamic_teaching_bank,
+        )
+
+        board["teaching_bank"] = build_dynamic_teaching_bank(
+            topic=topic,
+            source_text=str(board.get("source_text") or ""),
+            claims=claim_texts,
+            concepts=concepts,
+        )
+        if board["teaching_bank"]:
+            contributions["dynamic_teaching_bank"] = True
+            board["engine_contributions"] = contributions
+            # Seed missing concepts from the upload bank (never replace curated ones).
+            have = {
+                str(c.get("name") or "").strip().lower()
+                for c in concepts
+                if isinstance(c, dict)
+            }
+            for row in board["teaching_bank"]:
+                name = str(row.get("term") or "").strip()
+                if not name or name.lower() in have:
+                    continue
+                concepts.append(
+                    {
+                        "name": name,
+                        "explanation": str(row.get("definition") or ""),
+                        "provenance": "dynamic_teaching_bank",
+                    }
+                )
+                have.add(name.lower())
+                if len(concepts) >= 12:
+                    break
+            board["concepts"] = concepts
+    except Exception:
+        board["teaching_bank"] = []
     return board
 
 

@@ -305,11 +305,17 @@ def run_generation() -> None:
     )
     if routing_warnings:
         first_warning = routing_warnings[0]
+        stage = str(first_warning.get("stage") or "STEM check").replace("_", " ").title()
+        msg = first_warning.get("message") or (
+            "Some notation could not be verified by the calculation engines."
+        )
+        recovery = first_warning.get("recovery") or (
+            "Paste a complete equation or expression if you need a verified computation."
+        )
         st.info(
-            f"**{str(first_warning.get('stage') or 'Source review').replace('_', ' ').title()}** — "
-            f"{first_warning.get('message') or 'Some source notation was omitted from verified computation.'} "
-            f"Recovery: {first_warning.get('recovery') or 'Review the source notation.'} "
-            "The source-grounded lesson remains available."
+            f"**{stage}** — {msg}\n\n"
+            f"**What to do:** {recovery}\n\n"
+            "Your adapted lesson from the uploaded text is still available below."
         )
     if q.get("publish_blocked"):
         st.error(
