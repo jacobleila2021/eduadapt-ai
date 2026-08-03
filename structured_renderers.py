@@ -713,13 +713,22 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
             ]
         )
 
-    # --- 6. Concept Map (built from Word Wall — does not need AI mermaid) ---
+    # --- 6. Lesson diagram / concept map (Master visual when present) ---
     st.markdown("---")
-    st.markdown("### 6. Concept Map")
-    st.caption("Study how all vocabulary terms connect to the main topic.")
-    from concept_map_builder import render_concept_map_streamlit
+    st.markdown("### 6. Lesson diagram")
+    st.caption("The same teaching diagram used in every adaptation of this lesson.")
+    master_svg = (
+        vocab.get("svg_diagram")
+        or vocab.get("concept_map_svg")
+        or vocab.get("flowchart_svg")
+        or ""
+    )
+    if _valid_svg_diagram(str(master_svg)):
+        _render_svg(str(master_svg))
+    else:
+        from concept_map_builder import render_concept_map_streamlit
 
-    render_concept_map_streamlit(vocab)
+        render_concept_map_streamlit(vocab)
 
 
 def render_worksheet(data: Any, key_prefix: str = "worksheet") -> None:
@@ -880,8 +889,50 @@ def _plain_lesson_text(raw: str, *, preserve_lines: bool = False) -> str:
 
 
 def _lesson_map_items(lesson: dict) -> list[dict]:
-    """Build complete concept cards from taught sections (Parent / Visual index)."""
-    items: list[dict] = []
+    """Lesson Wall cards — prefer Master payload, else build from sections."""
+    attached = lesson.get("lesson_wall") if isinstance(lesson.get("lesson_wall"), list) else []
+    if attached:
+        items: list[dict] = []
+        for index, row in enumerate(attached):
+            if not isinstance(row, dict):
+                continue
+            title = str(row.get("title") or "").strip()
+            idea = str(row.get("idea") or "").strip()
+            if not title or not idea:
+                continue
+            variant = classify_section(title, "none", index)
+            items.append(
+                {
+                    "icon": str(row.get("icon") or f"{index + 1:02d}"),
+                    "title": title,
+                    "idea": idea if len(idea) <= 720 else idea[:717].rsplit(" ", 1)[0] + "…",
+                    "hex": str(row.get("hex") or accent_for_variant(variant)),
+                }
+            )
+        if items:
+            return items[:12]
+    try:
+        from engines.lesson_composition_engine.lesson_wall import extract_lesson_wall
+
+        extracted = extract_lesson_wall(lesson)
+        if extracted:
+            items = []
+            for index, row in enumerate(extracted):
+                title = str(row.get("title") or "")
+                variant = classify_section(title, "none", index)
+                items.append(
+                    {
+                        "icon": str(row.get("icon") or f"{index + 1:02d}"),
+                        "title": title,
+                        "idea": str(row.get("idea") or ""),
+                        "hex": str(row.get("hex") or accent_for_variant(variant)),
+                    }
+                )
+            return items
+    except Exception:  # noqa: BLE001
+        pass
+    # Legacy fallback from sections
+    items = []
     for index, section in enumerate(lesson.get("sections") or []):
         if not isinstance(section, dict):
             continue
@@ -890,13 +941,10 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
             section.get("presentation_only")
             or role.startswith("presentation_")
             or role in {"practice_question", "exam_question", "hots_question", "assessment"}
+            or role.endswith("_support")
         ):
             continue
-        # Concept cards: taught theory + summary only (not coaching appendices).
-        if role.endswith("_support"):
-            continue
         if role not in {"", "concept", "introduction", "worked_example", "summary", "revision"}:
-            # Keep unknown teaching roles; skip pure presentation chrome.
             if role.startswith("presentation"):
                 continue
         body = _plain_lesson_text(section.get("body") or "", preserve_lines=True)
@@ -904,13 +952,10 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
         title = normalize_section_title(raw_title, body, index)
         if not body:
             continue
-        # Full teaching text — never leave concept boxes halfway cut.
         idea = body.strip()
         if len(idea) > 520:
             idea = idea[:517].rsplit(" ", 1)[0] + "…"
-        variant = classify_section(
-            title, str(section.get("box") or "none").lower(), index
-        )
+        variant = classify_section(title, str(section.get("box") or "none").lower(), index)
         items.append(
             {
                 "icon": f"{index + 1:02d}",
@@ -924,8 +969,92 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
     return items
 
 
+def _render_lesson_diagram(lesson: dict) -> bool:
+    """Render the Master Lesson Visual (water cycle etc.). Returns True if shown."""
+    verified = lesson.get("verified_visuals") or []
+    if verified:
+        st.markdown("#### Lesson Visual")
+        from pathlib import Path
+
+        showed_any = False
+        for vis in verified:
+            if not isinstance(vis, dict):
+                continue
+            caption = vis.get("caption") or "Lesson visual"
+            st.markdown(f"**{caption}**")
+            for path in vis.get("asset_paths") or []:
+                p = Path(path)
+                if p.is_file():
+                    st.image(str(p), caption=caption)
+                    showed_any = True
+            if vis.get("iframe_url"):
+                try:
+                    st.components.v1.iframe(vis["iframe_url"], height=360, scrolling=True)
+                    showed_any = True
+                except Exception:
+                    st.markdown(f"[Open interactive]({vis['iframe_url']})")
+                    showed_any = True
+            if not showed_any:
+                svg = vis.get("svg") or vis.get("svg_diagram") or ""
+                if _valid_svg_diagram(svg):
+                    _render_svg(svg)
+                    showed_any = True
+        if showed_any:
+            return True
+
+    pkg = lesson.get("diagram_package") if isinstance(lesson.get("diagram_package"), dict) else {}
+    try:
+        from engines.lesson_composition_engine.publisher_remediation import (
+            is_generic_subject_flowchart,
+        )
+    except Exception:  # noqa: BLE001
+
+        def is_generic_subject_flowchart(_svg: str) -> bool:  # type: ignore
+            return False
+
+    candidates = [
+        str(pkg.get("svg") or ""),
+        str(lesson.get("concept_map_svg") or ""),
+        str(lesson.get("svg_diagram") or ""),
+        str(lesson.get("flowchart_svg") or ""),
+    ]
+    svg = next((c for c in candidates if c and not is_generic_subject_flowchart(c)), "")
+    if not svg:
+        svg = next((c for c in candidates if c), "")
+    if not _valid_svg_diagram(svg):
+        return False
+    st.markdown("#### Lesson Visual")
+    title = html.escape(str(pkg.get("title") or lesson.get("topic") or "Lesson diagram"))
+    caption = html.escape(str(pkg.get("caption") or "A labelled teaching diagram for this lesson."))
+    explain = html.escape(str(pkg.get("explanation") or ""))
+    practice = html.escape(str(pkg.get("practice_question") or ""))
+    callouts = pkg.get("callouts") or []
+    callout_html = "".join(f"<li>{html.escape(str(c))}</li>" for c in callouts[:5])
+    st.markdown(
+        f'<figure class="pmes-diagram-figure">'
+        f"<figcaption><strong>{title}</strong></figcaption>"
+        f"</figure>",
+        unsafe_allow_html=True,
+    )
+    _render_svg(svg)
+    st.markdown(
+        f'<div class="pmes-diagram-figure">'
+        f'<p class="pmes-diagram-explain"><em>{caption}</em></p>'
+        + (f'<p class="pmes-diagram-explain">{explain}</p>' if explain else "")
+        + (f"<ul>{callout_html}</ul>" if callout_html else "")
+        + (
+            f'<p class="pmes-diagram-practice"><strong>Try this</strong> {practice}</p>'
+            if practice
+            else ""
+        )
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+    return True
+
+
 def _render_lesson_wall_cards(lesson: dict, *, heading: str = "Lesson wall") -> None:
-    """Publisher-quality concept cards (Parent 'Key ideas' wall) for any adaptation."""
+    """Publisher-quality concept cards — the content every adaptation must teach."""
     items = _lesson_map_items(lesson)
     if not items:
         return
@@ -941,7 +1070,7 @@ def _render_lesson_wall_cards(lesson: dict, *, heading: str = "Lesson wall") -> 
                 f'border-radius:14px;padding:1rem 1.1rem;margin:0.55rem 0;'
                 f'min-height:8.5rem;">'
                 f'<h4 style="margin:0 0 0.55rem 0;color:{hex_colour};font-size:1.05rem;">'
-                f'{title}</h4>'
+                f"{title}</h4>"
                 f'<div style="color:#111827;font-size:0.95rem;line-height:1.55;">{idea}</div>'
                 f"</div>",
                 unsafe_allow_html=True,
@@ -1194,106 +1323,18 @@ def render_lesson(data: Any, spec_id: str | None = None) -> None:
     visual_concepts = [re.sub(r"(?i)^explain:\s*", "", c).strip() for c in visual_concepts]
     visual_concepts = [c for c in visual_concepts if c][:10]
 
+    # Diagram first (every adaptation), then Lesson Wall — the content to know.
+    rendered_diagram = _render_lesson_diagram(lesson)
+    if not rendered_diagram:
+        from study_diagram_builder import resolve_study_diagram_svg
+
+        st.markdown("#### Lesson Visual")
+        st.caption("A labelled study diagram built directly from this lesson.")
+        _render_svg(resolve_study_diagram_svg(lesson))
+
     wall_heading = _LESSON_WALL_HEADINGS.get(spec_id or "")
     if wall_heading:
         _render_lesson_wall_cards(lesson, heading=wall_heading)
-
-    verified = lesson.get("verified_visuals") or []
-    rendered_verified = False
-    if verified:
-        st.markdown("#### Lesson Visuals")
-        from pathlib import Path
-
-        for vis in verified:
-            if not isinstance(vis, dict):
-                continue
-            caption = vis.get("caption") or "Lesson visual"
-            st.markdown(f"**{caption}**")
-            paths = vis.get("asset_paths") or []
-            showed_asset = False
-            for path in paths:
-                p = Path(path)
-                if p.is_file():
-                    st.image(str(p), caption=caption)
-                    showed_asset = True
-                    rendered_verified = True
-            if vis.get("iframe_url"):
-                try:
-                    st.components.v1.iframe(vis["iframe_url"], height=360, scrolling=True)
-                    showed_asset = True
-                    rendered_verified = True
-                except Exception:
-                    st.markdown(f"[Open interactive]({vis['iframe_url']})")
-                    showed_asset = True
-                    rendered_verified = True
-            # UVIE organisers often ship svg/mermaid without asset_paths — render them.
-            if not showed_asset:
-                svg = vis.get("svg") or vis.get("svg_diagram") or ""
-                if _valid_svg_diagram(svg):
-                    _render_svg(svg)
-                    rendered_verified = True
-                else:
-                    mermaid = (vis.get("mermaid") or vis.get("mermaid_diagram") or "").strip()
-                    if mermaid and _valid_mermaid(mermaid):
-                        _render_mermaid(mermaid)
-                        rendered_verified = True
-
-    # When no subject engine / UVIE visual actually rendered, show Alora's
-    # deterministic, content-labelled study diagram (never an AI sketch).
-    if not rendered_verified:
-        st.markdown("#### Lesson Visual")
-        pkg = lesson.get("diagram_package") if isinstance(lesson.get("diagram_package"), dict) else {}
-        # Prefer domain concept map (water-cycle figure) over a generic vertical stack.
-        try:
-            from engines.lesson_composition_engine.publisher_remediation import (
-                is_generic_subject_flowchart,
-            )
-        except Exception:  # noqa: BLE001
-            def is_generic_subject_flowchart(_svg: str) -> bool:  # type: ignore
-                return False
-
-        candidates = [
-            str(pkg.get("svg") or ""),
-            str(lesson.get("concept_map_svg") or ""),
-            str(lesson.get("svg_diagram") or ""),
-            str(lesson.get("flowchart_svg") or ""),
-        ]
-        svg = next(
-            (c for c in candidates if c and not is_generic_subject_flowchart(c)),
-            "",
-        )
-        if not svg:
-            svg = next((c for c in candidates if c), "")
-        if _valid_svg_diagram(svg):
-            title = html.escape(str(pkg.get("title") or lesson.get("topic") or "Lesson diagram"))
-            caption = html.escape(str(pkg.get("caption") or "A labelled teaching diagram for this lesson."))
-            explain = html.escape(str(pkg.get("explanation") or ""))
-            practice = html.escape(str(pkg.get("practice_question") or ""))
-            callouts = pkg.get("callouts") or []
-            callout_html = "".join(
-                f'<li>{html.escape(str(c))}</li>' for c in callouts[:5]
-            )
-            st.markdown(
-                f'<figure class="pmes-diagram-figure">'
-                f'<figcaption><strong>{title}</strong></figcaption>'
-                f"</figure>",
-                unsafe_allow_html=True,
-            )
-            _render_svg(svg)
-            st.markdown(
-                f'<div class="pmes-diagram-figure">'
-                f'<p class="pmes-diagram-explain"><em>{caption}</em></p>'
-                + (f'<p class="pmes-diagram-explain">{explain}</p>' if explain else "")
-                + (f'<ul>{callout_html}</ul>' if callout_html else "")
-                + (f'<p class="pmes-diagram-practice"><strong>Try this</strong> {practice}</p>' if practice else "")
-                + "</div>",
-                unsafe_allow_html=True,
-            )
-        else:
-            from study_diagram_builder import resolve_study_diagram_svg
-
-            st.caption("A labelled study diagram built directly from this lesson.")
-            _render_svg(resolve_study_diagram_svg(lesson))
 
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):

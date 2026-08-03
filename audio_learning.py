@@ -94,17 +94,31 @@ def build_narration(content: Any, spec_id: str) -> str:
     parsed = _coerce_dict(content) if spec_id != "original" else None
 
     if spec_id == "vocabulary" and parsed:
+        # Prefer Lesson Wall teaching text when present (same cards as Mainstream).
+        wall = parsed.get("lesson_wall") if isinstance(parsed.get("lesson_wall"), list) else []
+        if wall:
+            try:
+                from engines.lesson_composition_engine.lesson_wall import wall_narration_text
+
+                text = _clean_for_speech(wall_narration_text(wall))
+                if text:
+                    return text
+            except Exception:
+                pass
         out: list[str] = []
         for word in parsed.get("word_wall") or []:
             term = (word.get("term") or "").strip()
             definition = _clean_for_speech(word.get("definition") or "")
-            child = _clean_for_speech(word.get("child_friendly") or "")
-            example = _clean_for_speech(word.get("example") or word.get("example_sentence") or "")
+            example = _clean_for_speech(
+                word.get("lesson_context")
+                or word.get("example")
+                or word.get("example_sentence")
+                or ""
+            )
             if term and definition:
                 out.append(f"{term}. {definition}")
-            if child:
-                out.append(child)
-            if example:
+            # Avoid re-reading a near-identical example after the definition.
+            if example and example.lower()[:48] != (definition or "").lower()[:48]:
                 out.append(example)
         return " ".join(out)
 
@@ -146,13 +160,26 @@ def build_narration(content: Any, spec_id: str) -> str:
             out.append(sent)
             return True
 
+        # Prefer Lesson Wall — same square-tab content the learner sees and studies.
+        wall = parsed.get("lesson_wall") if isinstance(parsed.get("lesson_wall"), list) else []
+        if wall:
+            try:
+                from engines.lesson_composition_engine.lesson_wall import wall_narration_text
+
+                wall_speech = _clean_for_speech(wall_narration_text(wall))
+                for sent in split_sentences(wall_speech):
+                    _accept(sent)
+                if out:
+                    return " ".join(out)
+            except Exception:
+                pass
+
         topic = _clean_for_speech(parsed.get("topic") or parsed.get("title") or "")
         big_idea = _clean_for_speech(parsed.get("big_idea") or "")
         if big_idea and (not topic or big_idea.lower() != topic.lower()):
             for sent in split_sentences(big_idea):
                 _accept(sent)
-        # Reading = same lesson points as the wall/theory — not a second generation.
-        # Skip practice/exam/HOTS answers (they duplicate theory and desync the ruler).
+        # Fallback: theory sections only (never practice/exam answer dumps).
         theory_roles = {
             "",
             "introduction",
@@ -166,7 +193,6 @@ def build_narration(content: Any, spec_id: str) -> str:
             if not isinstance(section, dict):
                 continue
             role = str(section.get("role") or "")
-            # Never speak teacher-only advisory on student audio paths.
             if role.endswith("_support") or role.startswith("presentation_"):
                 continue
             if role and role not in theory_roles:

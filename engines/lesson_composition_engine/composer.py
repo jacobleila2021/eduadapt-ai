@@ -1177,7 +1177,8 @@ def compose_adaptations_from_clg(
 ) -> dict[str, Any]:
     """Compose all adaptive versions from the Lesson Intelligence Board (Phase Omega).
 
-    No adaptation is a deep-copy wrap of another. Vocabulary/worksheet remain specialised pages.
+    Lesson Wall (Master concept cards) is the single source of truth for vocabulary,
+    exam long answers, voice reading, and every adaptation — presentation only differs.
     """
     ids = list(lens_ids or DEFAULT_LENS_IDS)
     intelligence = dict(
@@ -1189,22 +1190,18 @@ def compose_adaptations_from_clg(
     if intelligence.get("teaching_bank"):
         clg_work["teaching_bank"] = list(intelligence.get("teaching_bank") or [])
     flowchart, concept_map = _diagrams_from_board(intelligence, clg_work)
-    vocabulary = compose_vocabulary_from_clg(clg_work)
+    primary_svg = flowchart or concept_map
+    secondary_svg = concept_map if concept_map and concept_map != primary_svg else flowchart
+
     out: dict[str, Any] = {
         "_intelligence_board": intelligence,
         "_integration_failures": integration_failures(intelligence),
         "_phase_omega": True,
     }
-    if "vocabulary" in ids:
-        out["vocabulary"] = vocabulary
-    if "worksheet" in ids:
-        out["worksheet"] = compose_worksheet_from_clg(clg_work, vocabulary)
 
     # ------------------------------------------------------------------
-    # Master Lesson Architecture (v3.3):
-    # ONE canonical Mainstream lesson (Gold Standard) is composed first,
-    # frozen, and every adaptation inherits it — presentation only.
-    # No adaptation may bypass the Canonical Lesson.
+    # Master Lesson Architecture:
+    # ONE canonical Mainstream lesson → Lesson Wall → every adaptation.
     # ------------------------------------------------------------------
     from engines.lesson_composition_engine.canonical import (
         PRESENTATION_LENSES,
@@ -1215,12 +1212,91 @@ def compose_adaptations_from_clg(
         freeze_canonical,
         validate_curriculum_fidelity,
     )
+    from engines.lesson_composition_engine.lesson_wall import (
+        extract_lesson_wall,
+        wall_long_answers,
+        wall_vocab_terms,
+    )
 
     canonical = build_canonical_lesson(
-        intelligence, flowchart_svg=flowchart, concept_map_svg=concept_map
+        intelligence, flowchart_svg=primary_svg, concept_map_svg=secondary_svg or primary_svg
     )
     core = extract_essential_learning_core(canonical, intelligence)
     frozen = freeze_canonical(canonical, core)
+
+    # Lesson Wall = what the learner needs to know (square tab boxes).
+    wall = extract_lesson_wall(frozen)
+    frozen["lesson_wall"] = copy.deepcopy(wall)
+    if primary_svg:
+        frozen["svg_diagram"] = primary_svg
+        frozen["flowchart_svg"] = primary_svg
+        frozen["concept_map_svg"] = secondary_svg or primary_svg
+        pkg = dict(frozen.get("diagram_package") or {})
+        pkg["svg"] = primary_svg
+        pkg.setdefault("title", str(frozen.get("topic") or "Lesson diagram"))
+        pkg.setdefault("caption", "A labelled teaching diagram for this lesson.")
+        frozen["diagram_package"] = pkg
+
+    # Vocabulary + Exam built FROM the wall (not a parallel generation).
+    topic = str(intelligence.get("topic") or clg_work.get("topic") or "Lesson")
+    wall_terms = wall_vocab_terms(wall, topic=topic)
+    if wall_terms:
+        clg_for_vocab = dict(clg_work)
+        clg_for_vocab["vocabulary"] = wall_terms + list(clg_work.get("vocabulary") or [])
+        # Prefer wall teaching text as claim seeds for definitions.
+        clg_for_vocab["claim_texts"] = [
+            str(c.get("idea") or "") for c in wall if str(c.get("idea") or "").strip()
+        ] + list(clg_work.get("claim_texts") or [])
+        vocabulary = compose_vocabulary_from_clg(clg_for_vocab)
+    else:
+        vocabulary = compose_vocabulary_from_clg(clg_work)
+    if "vocabulary" in ids:
+        out["vocabulary"] = vocabulary
+        if isinstance(out["vocabulary"], dict):
+            out["vocabulary"]["lesson_wall"] = copy.deepcopy(wall)
+            if primary_svg:
+                out["vocabulary"]["svg_diagram"] = primary_svg
+                out["vocabulary"]["concept_map_svg"] = primary_svg
+                out["vocabulary"]["flowchart_svg"] = primary_svg
+
+    if "worksheet" in ids:
+        worksheet = compose_worksheet_from_clg(clg_work, vocabulary)
+        # Replace Part B (8-mark) answers with Lesson Wall teaching text.
+        wall_long = wall_long_answers(wall, topic=topic, limit=4)
+        if wall_long:
+            worksheet["long_answer"] = wall_long
+            # Keep answer key aligned with wall-sourced long answers.
+            key_rows = [
+                row
+                for row in (worksheet.get("answer_key") or [])
+                if isinstance(row, dict)
+                and not str(row.get("question_ref") or "").startswith("Part B")
+            ]
+            for i, row in enumerate(wall_long):
+                key_rows.append(
+                    {
+                        "question_ref": f"Part B Q{i + 1}",
+                        "model_answer": row.get("model_answer"),
+                        "marks_notes": "8 marks",
+                    }
+                )
+            worksheet["answer_key"] = key_rows
+        worksheet["lesson_wall"] = copy.deepcopy(wall)
+        if primary_svg:
+            dq = worksheet.get("diagram_question")
+            if isinstance(dq, dict):
+                dq["svg_diagram"] = primary_svg
+            else:
+                worksheet["diagram_question"] = {
+                    "question": (
+                        f"Study the labelled diagram for {topic}. "
+                        "Redraw it and label each main idea accurately."
+                    ),
+                    "marks": 5,
+                    "svg_diagram": primary_svg,
+                }
+            worksheet["svg_diagram"] = primary_svg
+        out["worksheet"] = worksheet
 
     for vid in ids:
         if vid in {"vocabulary", "worksheet"}:
@@ -1239,45 +1315,20 @@ def compose_adaptations_from_clg(
             out[vid]["lce"]["intelligence_board_version"] = intelligence.get("version")
             out[vid]["lce"]["composed_from_clg"] = True
             out[vid]["lce"]["not_a_clone"] = True
-        # Shared visuals — generated once, reused on every adaptation.
-        # `flowchart` here is the preferred primary domain SVG from `_diagrams_from_board`.
-        primary_svg = flowchart or concept_map
-        secondary_svg = concept_map if concept_map and concept_map != primary_svg else flowchart
+            out[vid]["lce"]["lesson_wall_source"] = True
+        # Shared wall + domain diagram on every adaptation (including Parent).
+        out[vid]["lesson_wall"] = copy.deepcopy(wall)
         if primary_svg:
             out[vid]["svg_diagram"] = primary_svg
             out[vid]["flowchart_svg"] = primary_svg
-        if secondary_svg:
-            out[vid]["concept_map_svg"] = secondary_svg
-        elif primary_svg:
-            out[vid]["concept_map_svg"] = primary_svg
+            out[vid]["concept_map_svg"] = secondary_svg or primary_svg
         if frozen.get("diagram_package"):
             pkg = copy.deepcopy(frozen["diagram_package"])
             if isinstance(pkg, dict) and primary_svg:
                 pkg["svg"] = primary_svg
             out[vid]["diagram_package"] = pkg
 
-    # Vocabulary + Exam Worksheet share the same Master visual.
-    primary_for_special = flowchart or concept_map
-    if primary_for_special:
-        if isinstance(out.get("vocabulary"), dict):
-            out["vocabulary"]["svg_diagram"] = primary_for_special
-            out["vocabulary"]["concept_map_svg"] = primary_for_special
-            out["vocabulary"]["flowchart_svg"] = primary_for_special
-        if isinstance(out.get("worksheet"), dict):
-            dq = out["worksheet"].get("diagram_question")
-            if isinstance(dq, dict):
-                dq["svg_diagram"] = primary_for_special
-            else:
-                out["worksheet"]["diagram_question"] = {
-                    "question": (
-                        f"Study the labelled diagram for {intelligence.get('topic') or 'this lesson'}. "
-                        "Redraw it and label each main idea accurately."
-                    ),
-                    "marks": 5,
-                    "svg_diagram": primary_for_special,
-                }
-            out["worksheet"]["svg_diagram"] = primary_for_special
-
+    out["_lesson_wall"] = copy.deepcopy(wall)
     out["_canonical"] = {
         "core": core,
         "hash": core.get("hash"),
