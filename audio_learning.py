@@ -133,19 +133,23 @@ def build_narration(content: Any, spec_id: str) -> str:
     if parsed:
         out = []
         spoken_keys: set[str] = set()
+        spoken_grams: set[str] = set()
 
         def _accept(sent: str) -> bool:
             key = re.sub(r"[^a-z0-9]+", " ", (sent or "").lower()).strip()[:96]
             if not key or key in spoken_keys:
                 return False
             tokens = set(key.split())
+            # Compare only to prior full sentences — never to 5-grams stored for
+            # phrase-dedupe (those share glue words like "is the water" and
+            # wrongly drop real concept lines such as Evaporation).
             if any(
                 tokens
                 and len(tokens & set(prev.split()))
                 / max(1, min(len(tokens), len(set(prev.split()))))
                 >= 0.72
                 for prev in spoken_keys
-                if " " in prev  # compare against prior sentences, not short n-grams only
+                if " " in prev
             ):
                 return False
             words = key.split()
@@ -153,10 +157,10 @@ def build_narration(content: Any, spec_id: str) -> str:
                 " ".join(words[i : i + 5])
                 for i in range(0, max(0, len(words) - 4))
             }
-            if grams & {g for g in spoken_keys if g.count(" ") >= 4}:
+            if grams & spoken_grams:
                 return False
             spoken_keys.add(key)
-            spoken_keys.update(grams)
+            spoken_grams.update(grams)
             out.append(sent)
             return True
 

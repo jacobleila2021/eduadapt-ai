@@ -223,3 +223,165 @@ def wall_narration_text(wall: list[Mapping[str, str]]) -> str:
         else:
             chunks.append(idea)
     return " ".join(chunks)
+
+
+def _idea_fingerprint(idea: str) -> str:
+    """Normalise teaching prose for clone detection."""
+    text = re.sub(r"[^a-z0-9\s]", " ", (idea or "").lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:96]
+
+
+def dedupe_lesson_wall(
+    wall: list[Mapping[str, str]] | None,
+    *,
+    min_idea_words: int = 6,
+) -> list[dict[str, str]]:
+    """Drop empty / recycled cards so the wall teaches distinct ideas."""
+    out: list[dict[str, str]] = []
+    seen_titles: set[str] = set()
+    seen_ideas: set[str] = set()
+    for card in wall or []:
+        if not isinstance(card, dict):
+            continue
+        title = str(card.get("title") or "").strip()
+        idea = str(card.get("idea") or card.get("body") or "").strip()
+        if not title or not idea or len(idea.split()) < min_idea_words:
+            continue
+        tkey = title.lower()
+        ikey = _idea_fingerprint(idea)
+        if tkey in seen_titles:
+            continue
+        if ikey and ikey in seen_ideas:
+            continue
+        # Near-clone: share a long common prefix with an existing card.
+        if any(
+            ikey[:48] == prev[:48]
+            for prev in seen_ideas
+            if len(ikey) >= 48 and len(prev) >= 48
+        ):
+            continue
+        seen_titles.add(tkey)
+        if ikey:
+            seen_ideas.add(ikey)
+        row = dict(card)
+        row["title"] = title
+        row["idea"] = idea
+        out.append(row)
+    return out
+
+
+def apply_wall_definitions_to_vocab(
+    vocabulary: Mapping[str, Any] | None,
+    wall: list[Mapping[str, str]] | None,
+) -> dict[str, Any]:
+    """Force word-wall definitions to reuse Lesson Wall teaching text."""
+    page = dict(vocabulary or {})
+    cards = list(wall or [])
+    if not cards:
+        return page
+    wall_rows = wall_vocab_terms(cards)
+    by_term = {
+        str(r.get("term") or "").strip().lower(): r
+        for r in wall_rows
+        if str(r.get("term") or "").strip()
+    }
+    word_wall = []
+    for row in page.get("word_wall") or []:
+        if not isinstance(row, dict):
+            continue
+        item = dict(row)
+        key = str(item.get("term") or "").strip().lower()
+        match = by_term.get(key)
+        if not match:
+            for wkey, wrow in by_term.items():
+                if key and (key in wkey or wkey in key):
+                    match = wrow
+                    break
+        if match:
+            defn = str(match.get("definition") or match.get("lesson_context") or "")
+            ctx = str(match.get("lesson_context") or defn)
+            if defn:
+                item["definition"] = defn
+                item["simple_explanation"] = defn
+                item["academic_definition"] = defn
+                item["lesson_context"] = ctx
+                item["example"] = item.get("example") or ctx
+                item["source"] = "lesson_wall"
+        word_wall.append(item)
+    # Ensure wall terms appear even if vocab composer dropped them.
+    have = {str(r.get("term") or "").strip().lower() for r in word_wall}
+    for wrow in wall_rows:
+        key = str(wrow.get("term") or "").strip().lower()
+        if key and key not in have:
+            word_wall.append(dict(wrow, source="lesson_wall"))
+            have.add(key)
+        if len(word_wall) >= 12:
+            break
+    page["word_wall"] = word_wall[:12]
+    page["lesson_wall"] = [dict(c) for c in cards]
+    return page
+
+
+def wall_surface_parity_issues(
+    wall: list[Mapping[str, str]] | None,
+    *,
+    vocabulary: Mapping[str, Any] | None = None,
+    worksheet: Mapping[str, Any] | None = None,
+    narration: str = "",
+    min_cards: int = 3,
+) -> list[str]:
+    """Phase 1: vocab / exam / voice must say the same science as the wall."""
+    cards = dedupe_lesson_wall(wall)
+    issues: list[str] = []
+    if len(cards) < min_cards:
+        issues.append(
+            f"Lesson Wall is too thin (need at least {min_cards} teachable cards)."
+        )
+    ideas = [str(c.get("idea") or "") for c in cards]
+    # Recycled sentence check on the raw wall (before dedupe would hide it).
+    from collections import Counter
+
+    raw_fps = [
+        _idea_fingerprint(str(c.get("idea") or ""))
+        for c in (wall or [])
+        if isinstance(c, dict) and str(c.get("idea") or "").strip()
+    ]
+    if raw_fps and any(n >= 2 for n in Counter(raw_fps).values()):
+        issues.append("Lesson Wall recycles the same teaching sentence across cards.")
+
+    wall_tok = {t for t in re.findall(r"[a-z]{4,}", " ".join(ideas).lower())}
+    if vocabulary and wall_tok:
+        vocab = vocabulary if isinstance(vocabulary, dict) else {}
+        vblob = " ".join(
+            f"{r.get('term') or ''} {r.get('definition') or ''} {r.get('lesson_context') or ''}"
+            for r in (vocab.get("word_wall") or [])
+            if isinstance(r, dict)
+        )
+        vtok = {t for t in re.findall(r"[a-z]{4,}", vblob.lower())}
+        if vblob and len(wall_tok & vtok) < 2:
+            issues.append("Vocabulary does not reuse Lesson Wall teaching language.")
+
+    if worksheet and wall_tok:
+        sheet = worksheet if isinstance(worksheet, dict) else {}
+        long_blob = " ".join(
+            str(r.get("model_answer") or "")
+            for r in (sheet.get("long_answer") or [])
+            if isinstance(r, dict)
+        )
+        if long_blob:
+            ltok = {t for t in re.findall(r"[a-z]{4,}", long_blob.lower())}
+            if len(wall_tok & ltok) < 2:
+                issues.append("Exam long answers do not reuse Lesson Wall teaching language.")
+            if not any(
+                str(r.get("source") or "") == "lesson_wall"
+                for r in (sheet.get("long_answer") or [])
+                if isinstance(r, dict)
+            ):
+                issues.append("Exam long answers are not sourced from the Lesson Wall.")
+
+    if narration and wall_tok:
+        ntok = {t for t in re.findall(r"[a-z]{4,}", narration.lower())}
+        if len(wall_tok & ntok) < 2:
+            issues.append("Reading narration does not reuse Lesson Wall teaching language.")
+    return issues

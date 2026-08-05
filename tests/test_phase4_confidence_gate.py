@@ -1,4 +1,4 @@
-"""Phase 4 — One-Generate confidence gate."""
+"""Phase 4 — One-Generate confidence gate (includes Phase 1 wall freeze)."""
 
 from __future__ import annotations
 
@@ -9,30 +9,30 @@ from engines.lesson_composition_engine.confidence_gate import (
 from publication_gate import publication_block_reason
 
 
+def _wall_triple():
+    return [
+        {
+            "title": "Evaporation",
+            "idea": "Evaporation is when liquid water turns into water vapour and rises.",
+        },
+        {
+            "title": "Condensation",
+            "idea": "Condensation is when water vapour cools into tiny liquid droplets.",
+        },
+        {
+            "title": "Precipitation",
+            "idea": "Precipitation is water that falls from clouds as rain, snow, sleet, or hail.",
+        },
+    ]
+
+
 def _pkg(**overrides):
+    wall = _wall_triple()
     base = {
-        "_lesson_wall": [
-            {
-                "title": "Evaporation",
-                "idea": "Evaporation is when liquid water turns into water vapour and rises.",
-            },
-            {
-                "title": "Condensation",
-                "idea": "Condensation is when water vapour cools into tiny liquid droplets.",
-            },
-        ],
+        "_lesson_wall": wall,
         "standard": {
             "topic": "The Water Cycle",
-            "lesson_wall": [
-                {
-                    "title": "Evaporation",
-                    "idea": "Evaporation is when liquid water turns into water vapour and rises.",
-                },
-                {
-                    "title": "Condensation",
-                    "idea": "Condensation is when water vapour cools into tiny liquid droplets.",
-                },
-            ],
+            "lesson_wall": list(wall),
             "svg_diagram": (
                 '<svg xmlns="http://www.w3.org/2000/svg"><text>Evaporation</text>'
                 "<text>Collection</text></svg>"
@@ -45,6 +45,8 @@ def _pkg(**overrides):
                 }
             ],
         },
+        "ell": {"lesson_wall": list(wall), "topic": "The Water Cycle"},
+        "parent": {"lesson_wall": list(wall), "topic": "The Water Cycle"},
         "vocabulary": {
             "word_wall": [
                 {
@@ -55,12 +57,25 @@ def _pkg(**overrides):
                     "term": "Condensation",
                     "definition": "Condensation is when water vapour cools into tiny liquid droplets.",
                 },
+                {
+                    "term": "Precipitation",
+                    "definition": "Precipitation is water that falls from clouds as rain, snow, sleet, or hail.",
+                },
             ],
             "svg_diagram": (
                 '<svg xmlns="http://www.w3.org/2000/svg"><text>Evaporation</text></svg>'
             ),
         },
-        "worksheet": {"short_answer": []},
+        "worksheet": {
+            "long_answer": [
+                {
+                    "question": "Explain Evaporation",
+                    "model_answer": "Evaporation is when liquid water turns into water vapour and rises.",
+                    "source": "lesson_wall",
+                }
+            ],
+            "short_answer": [],
+        },
         "_stem_artifacts": [],
         "_meta": {},
     }
@@ -85,10 +100,22 @@ def test_confidence_gate_blocks_thin_wall_without_stem():
     assert any("Lesson Wall" in i for i in issues)
 
 
+def test_confidence_gate_blocks_recycled_wall_sentences():
+    clone = "Evaporation is when liquid water turns into water vapour and rises."
+    pkg = _pkg(
+        _lesson_wall=[
+            {"title": "One", "idea": clone},
+            {"title": "Two", "idea": clone},
+            {"title": "Three", "idea": clone},
+        ]
+    )
+    issues = confidence_gate_issues(pkg)
+    assert any("recycles" in i.lower() for i in issues)
+
+
 def test_publication_gate_uses_confidence_gate():
     pkg = _pkg()
     pkg["standard"]["sections"][0]["body"] = "Important words: foo, bar."
-    # fidelity may scrub first — ensure confidence still sees chrome if present on wall
-    pkg["_lesson_wall"][0]["idea"] = "Evaporation (key word) means vapour rises."
+    pkg["_lesson_wall"][0]["idea"] = "Evaporation (key word) means vapour rises into the open air."
     reason = publication_block_reason(pkg)
     assert reason

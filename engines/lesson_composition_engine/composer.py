@@ -1304,6 +1304,8 @@ def compose_adaptations_from_clg(
         validate_curriculum_fidelity,
     )
     from engines.lesson_composition_engine.lesson_wall import (
+        apply_wall_definitions_to_vocab,
+        dedupe_lesson_wall,
         extract_lesson_wall,
         wall_long_answers,
         wall_vocab_terms,
@@ -1346,6 +1348,8 @@ def compose_adaptations_from_clg(
         topic=str(intelligence.get("topic") or clg_work.get("topic") or ""),
         min_cards=3,
     )
+    # Phase 1: freeze one distinct Lesson Wall (no recycled clone cards).
+    wall = dedupe_lesson_wall(wall)
     frozen["lesson_wall"] = copy.deepcopy(wall)
     frozen["teaching_bank"] = copy.deepcopy(teaching_bank)
     if primary_svg:
@@ -1371,6 +1375,8 @@ def compose_adaptations_from_clg(
         vocabulary = compose_vocabulary_from_clg(clg_for_vocab)
     else:
         vocabulary = compose_vocabulary_from_clg(clg_work)
+    # Phase 1: vocabulary meanings must be the wall's science, not a parallel bank.
+    vocabulary = apply_wall_definitions_to_vocab(vocabulary, wall)
     if "vocabulary" in ids:
         out["vocabulary"] = vocabulary
         if isinstance(out["vocabulary"], dict):
