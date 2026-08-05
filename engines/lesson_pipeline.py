@@ -111,6 +111,178 @@ def _route_claim(claim: StemClaim) -> EngineResult:
     )
 
 
+_COMPUTABLE_KINDS = frozenset(
+    {
+        "balance_equation",
+        "solve_math",
+        "calculate_force",
+        "statistics",
+        "plot_graph",
+    }
+)
+
+_COMPUTABLE_STEM_RE = re.compile(
+    r"(?i)\b("
+    r"balance|equat(?:e|ion)|solve|calculate|determine|find|evaluate|simplify|"
+    r"differentiate|integrate|ohm|ampere|volt|watt|force|pressure|"
+    r"current|resistance|potential"
+    r")\b"
+    r"|[=→⟶]|->"
+    r"|\d\s*[ΩVAW]"
+)
+
+
+def looks_like_computable_stem(text: str) -> bool:
+    """True when a stem should be answered by the Subject Tool Router, not prose."""
+    raw = str(text or "").strip()
+    if len(raw) < 3:
+        return False
+    if _COMPUTABLE_STEM_RE.search(raw):
+        return True
+    if re.search(r"[A-Z][a-z]?\d*.*(?:->|→).*[A-Z][a-z]?\d*", raw):
+        return True
+    if re.search(r"[a-zA-Z0-9)\]]\s*=\s*[a-zA-Z0-9(\-]", raw) and re.search(
+        r"[\d^*/+\-]|x\b|y\b", raw, re.I
+    ):
+        return True
+    return False
+
+
+def format_engine_answer(artifact: dict) -> str:
+    """Learner-facing answer from a verified EngineResult dict — never invent."""
+    if not isinstance(artifact, dict) or not artifact.get("ok"):
+        return ""
+    payload = artifact.get("payload") or {}
+    parts: list[str] = []
+    balanced = payload.get("balanced") or payload.get("balanced_equation")
+    if balanced:
+        parts.append(f"Balanced equation: {balanced}.")
+    exact = payload.get("exact")
+    if exact not in (None, "", [], {}):
+        parts.append(f"Exact result: {exact}.")
+    solutions = payload.get("solutions")
+    if solutions not in (None, "", [], {}):
+        if isinstance(solutions, (list, tuple)):
+            parts.append("Solutions: " + ", ".join(str(s) for s in solutions) + ".")
+        else:
+            parts.append(f"Solutions: {solutions}.")
+    simplified = payload.get("simplified")
+    if simplified not in (None, "") and str(simplified) not in " ".join(parts):
+        parts.append(f"Simplified: {simplified}.")
+    steps = payload.get("steps") or []
+    if isinstance(steps, list) and steps:
+        step_lines = [str(s).strip() for s in steps[:6] if str(s).strip()]
+        if step_lines:
+            parts.append("Steps: " + " ".join(step_lines))
+    if artifact.get("latex") and not parts:
+        parts.append(str(artifact["latex"]))
+    official = payload.get("official_answer")
+    if official and not parts:
+        parts.append(str(official))
+    text = " ".join(parts).strip()
+    if text and not text.endswith((".", "!", "?")):
+        text += "."
+    return text
+
+
+def match_artifact_to_prompt(prompt: str, artifacts: list[dict] | None) -> dict | None:
+    """Best matching verified artifact for a question stem."""
+    stem = str(prompt or "").strip().lower()
+    if not stem or not artifacts:
+        return None
+    stem_compact = re.sub(r"\s+", "", stem)
+    best: dict | None = None
+    best_score = 0
+    for art in artifacts:
+        if not isinstance(art, dict) or not art.get("ok"):
+            continue
+        kind = str(art.get("task_kind") or "")
+        payload = art.get("payload") or {}
+        hay = " ".join(
+            str(x)
+            for x in (
+                payload.get("input"),
+                payload.get("expression"),
+                payload.get("equation"),
+                payload.get("problem"),
+                payload.get("balanced"),
+                payload.get("exact"),
+                art.get("latex"),
+                kind,
+            )
+            if x
+        ).lower()
+        hay_compact = re.sub(r"\s+", "", hay)
+        score = 0
+        if kind in _COMPUTABLE_KINDS:
+            score += 1
+        # Shared tokens of length ≥ 2
+        stem_toks = set(re.findall(r"[a-z0-9]{2,}", stem))
+        hay_toks = set(re.findall(r"[a-z0-9]{2,}", hay))
+        overlap = stem_toks & hay_toks
+        score += min(6, len(overlap))
+        if any(tok in stem_compact for tok in (hay_compact[i : i + 8] for i in range(0, max(0, len(hay_compact) - 7), 4)) if len(tok) >= 6):
+            score += 3
+        # Chemistry: both mention arrow / formula fragments
+        if kind == "balance_equation" and ("->" in stem or "→" in prompt or "balance" in stem):
+            score += 4
+        if kind == "solve_math" and any(k in stem for k in ("solve", "find", "evaluate", "=")):
+            score += 2
+        if score > best_score:
+            best_score = score
+            best = art
+    if best_score < 3:
+        return None
+    return best
+
+
+def verified_or_wall_answer(
+    prompt: str,
+    *,
+    artifacts: list[dict] | None = None,
+    wall_prose: str = "",
+) -> dict:
+    """Answer policy: EngineResult for computable stems, else wall/prose only.
+
+    Returns {source, text, omitted}.
+    """
+    prompt = str(prompt or "").strip()
+    art = match_artifact_to_prompt(prompt, artifacts)
+    if art:
+        text = format_engine_answer(art)
+        if text:
+            return {
+                "source": "engine_result",
+                "text": text,
+                "omitted": False,
+                "task_kind": art.get("task_kind"),
+            }
+    if looks_like_computable_stem(prompt):
+        # Never invent a numerical/balance answer when routing failed.
+        prose = str(wall_prose or "").strip()
+        if prose and not re.search(r"(?i)\b(equals?|is\s+\d|balanced\s+equation)\b", prose):
+            # Conceptual scaffold only — no fake computation.
+            return {
+                "source": "wall_prose_no_computation",
+                "text": prose,
+                "omitted": True,
+                "task_kind": None,
+            }
+        return {
+            "source": "omitted_unverified",
+            "text": "",
+            "omitted": True,
+            "task_kind": None,
+        }
+    prose = str(wall_prose or "").strip()
+    return {
+        "source": "wall_prose" if prose else "empty",
+        "text": prose,
+        "omitted": False,
+        "task_kind": None,
+    }
+
+
 def artifacts_to_prompt_block(artifacts: list[dict]) -> str:
     if not artifacts:
         return ""

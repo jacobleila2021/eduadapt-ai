@@ -83,6 +83,15 @@ class MathValidation:
     reason: str = ""
 
 
+def _insert_implicit_multiplication(expression: str) -> str:
+    """School textbook forms: 5x → 5*x, 2(x+1) → 2*(x+1), )( → )*("""
+    text = expression
+    # digit or ')' directly before a variable or '(' — never rewrite sin(/cos(
+    text = re.sub(r"(\d)([A-Za-z(])", r"\1*\2", text)
+    text = re.sub(r"(\))([A-Za-z(])", r"\1*\2", text)
+    return text
+
+
 def validate_math_expression(
     expression: str,
     *,
@@ -92,6 +101,13 @@ def validate_math_expression(
     raw = re.sub(r"\s+", " ", str(expression or "")).strip()
     normalized = raw.replace("−", "-").replace("×", "*").replace("÷", "/")
     normalized = normalized.replace("^", "**")
+    # Strip common solve verbs so "Solve x^2 - 5x + 6 = 0" validates.
+    normalized = re.sub(
+        r"(?i)^\s*(?:solve|find|evaluate|simplify|calculate|compute)\s*(?:for\s+)?",
+        "",
+        normalized,
+    ).strip()
+    normalized = _insert_implicit_multiplication(normalized)
     if not normalized:
         return MathValidation(False, "", "empty_expression", "No expression supplied")
     if len(normalized) > MAX_EXPRESSION_CHARS:

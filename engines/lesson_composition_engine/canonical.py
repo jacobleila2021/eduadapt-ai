@@ -570,12 +570,15 @@ def build_canonical_lesson(
     *,
     flowchart_svg: str = "",
     concept_map_svg: str = "",
+    stem_artifacts: list | None = None,
 ) -> dict[str, Any]:
     """Compose the ONE complete Master Lesson (Gold Standard / Mainstream).
 
     Master Lesson Contract — every educational component below is mandatory.
     Adaptations inherit this lesson and change presentation only.
+    Numerical / balance answers prefer verified EngineResult payloads.
     """
+    artifacts = list(stem_artifacts or board.get("stem_artifacts") or [])
     from engines.lesson_composition_engine.vocab_quality import (
         clean_learner_claim,
         clean_topic,
@@ -917,6 +920,22 @@ def build_canonical_lesson(
         )
 
     def _answer_for_prompt(prompt: str, marks: int = 2) -> str:
+        # Phase 3 — computable stems: verified EngineResult only (never invent).
+        try:
+            from engines.lesson_pipeline import (
+                looks_like_computable_stem,
+                verified_or_wall_answer,
+            )
+
+            if looks_like_computable_stem(prompt) or artifacts:
+                policy = verified_or_wall_answer(prompt, artifacts=artifacts, wall_prose="")
+                if policy.get("source") == "engine_result" and policy.get("text"):
+                    return str(policy["text"])
+                if policy.get("omitted") and looks_like_computable_stem(prompt):
+                    # Leave blank rather than publish a fake calculation.
+                    return ""
+        except Exception:
+            pass
         # Longest concept match first so "non-metal" wins over "metal".
         prompt_l = prompt.lower()
         ordered = sorted(term_names, key=lambda n: len(str(n)), reverse=True)
@@ -938,7 +957,7 @@ def build_canonical_lesson(
             elif re.search(r"(?i)\bmagnesium\b", prompt):
                 hit = "Magnesium"
         bank = _point_bank(board, hit or (term_names[0] if term_names else topic), claims)
-        # Calculation / numerical stems: keep lesson formulae as the model answer spine.
+        # Non-routed formula vocabulary (Ohm's law definition) — prose only.
         if re.search(
             r"(?i)\b(\d+\s*[ΩVAWh]|ohm|ampere|volt|watt|kwh|resist|parallel|series|calculate|determine|find)\b",
             prompt,
@@ -990,6 +1009,35 @@ def build_canonical_lesson(
                     ),
                 )
             )
+    # Phase 3 — verified STEM computations become Practice items (EngineResult text).
+    try:
+        from engines.lesson_pipeline import format_engine_answer
+
+        for art in artifacts:
+            if not isinstance(art, dict) or not art.get("ok"):
+                continue
+            kind = str(art.get("task_kind") or "")
+            if kind not in {"balance_equation", "solve_math", "calculate_force", "statistics"}:
+                continue
+            ans = format_engine_answer(art)
+            if not ans:
+                continue
+            payload = art.get("payload") or {}
+            stem = (
+                payload.get("input")
+                or payload.get("equation")
+                or payload.get("expression")
+                or payload.get("problem")
+                or kind.replace("_", " ")
+            )
+            practice_pairs.insert(
+                0,
+                (f"Solve / balance: {stem} (3 marks)", ans),
+            )
+            if sum(1 for p in practice_pairs if "Solve / balance:" in p[0]) >= 3:
+                break
+    except Exception:
+        pass
     sections.append(
         {
             "title": "Practice Questions",

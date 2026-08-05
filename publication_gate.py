@@ -63,6 +63,19 @@ def publication_block_reason(
     except Exception:
         pass
 
+    # Phase 4 — One-Generate confidence gate (wall / vocab / STEM honesty).
+    try:
+        from engines.lesson_composition_engine.confidence_gate import (
+            confidence_block_reason,
+        )
+
+        if isinstance(adaptations, dict):
+            confidence_reason = confidence_block_reason(adaptations)
+            if confidence_reason:
+                return confidence_reason
+    except Exception:
+        pass
+
     # Educational Acceptance Testing System (EATS) — post-pipeline editor-in-chief.
     # Soft-pass classroom open whenever the score is not Reject-band (<80).
     # Publisher-ready (≥95) remains the polish target; chemistry uploads often

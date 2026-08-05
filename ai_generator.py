@@ -1556,6 +1556,27 @@ def generate_adaptations(
                 0.30 + (0.65 * done / total),
             )
 
+        # Phase 3/4 — keep Lesson Wall + STEM artifacts on the published package.
+        master_wall = (
+            (lce_adaptations.get("standard") or {}).get("lesson_wall")
+            or (merged.get("standard") or {}).get("lesson_wall")
+            or []
+        )
+        stem_arts = list((merged.get("_meta") or {}).get("engine_artifacts") or [])
+        merged["_lesson_wall"] = list(master_wall) if isinstance(master_wall, list) else []
+        merged["_stem_artifacts"] = stem_arts
+        lce_std = lce_adaptations.get("standard") if isinstance(lce_adaptations.get("standard"), dict) else {}
+        for key in list(LESSON_KEYS) + ["vocabulary", "worksheet"]:
+            page = merged.get(key)
+            if not isinstance(page, dict):
+                continue
+            if master_wall and not page.get("lesson_wall"):
+                page["lesson_wall"] = list(master_wall)
+            # Prefer LCE-stamped domain diagram when derivation dropped it.
+            for field in ("svg_diagram", "flowchart_svg", "concept_map_svg", "diagram_package"):
+                if not page.get(field) and lce_std.get(field):
+                    page[field] = lce_std.get(field)
+
         # Final LCE authorship polish (vocabulary upgrade + distinct adaptive versions)
         try:
             from engines.lesson_composition_engine import attach_lce_to_adaptations

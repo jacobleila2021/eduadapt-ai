@@ -552,14 +552,24 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
     return page
 
 
-def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def compose_worksheet_from_clg(
+    clg: Mapping[str, Any],
+    vocabulary: Mapping[str, Any] | None = None,
+    *,
+    stem_artifacts: list | None = None,
+) -> dict[str, Any]:
     from engines.lesson_composition_engine.vocab_quality import (
         build_student_definition,
         canonical_definition,
         definition_from_claims,
         is_junk_term,
     )
+    from engines.lesson_pipeline import (
+        looks_like_computable_stem,
+        verified_or_wall_answer,
+    )
 
+    artifacts = list(stem_artifacts or clg.get("stem_artifacts") or [])
     topic = str(clg.get("topic") or "Lesson")
     subject = str(clg.get("subject_key") or "Science")
     pool = _fact_pool(clg)
@@ -666,38 +676,98 @@ def compose_worksheet_from_clg(clg: Mapping[str, Any], vocabulary: Mapping[str, 
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
             q = f"Explain {name} using evidence from the lesson."
             marks = 2
-        # Model answer must TEACH — never echo the question stem or raw OCR fact.
-        answer = (
-            canonical_definition(name)
-            or build_student_definition(name, str((outcome or {}).get("explanation") or "") if isinstance(outcome, dict) else "", topic=topic)
-            or (pool[i % len(pool)] if pool else "")
-        )
-        if answer and answer.rstrip(".").lower() in q.lower():
-            answer = canonical_definition(name) or (
-                pool[(i + 1) % len(pool)] if len(pool) > 1 else answer
-            )
-        if not answer or "one of the ideas taught" in answer.lower() or "say what it means" in answer.lower() or "is a main idea in" in answer.lower():
-            # Still keep textbook numerical stems with a formula spine answer.
-            if str((outcome or {}).get("question_type") or "") == "numerical" or _re.search(
-                r"(?i)\b(calculate|determine|find)\b", q
-            ):
-                answer = (
-                    canonical_definition("Ohm's law")
-                    or canonical_definition("Electric power")
-                    or canonical_definition(name)
-                    or (pool[i % len(pool)] if pool else "")
+        # Phase 3 — computable stems use EngineResult; else wall/glossary prose.
+        policy = verified_or_wall_answer(q, artifacts=artifacts, wall_prose="")
+        if policy.get("source") == "engine_result" and policy.get("text"):
+            answer = str(policy["text"])
+            answer_source = "engine_result"
+        elif policy.get("omitted") and looks_like_computable_stem(q):
+            continue  # never invent a calculation on the exam sheet
+        else:
+            answer = (
+                canonical_definition(name)
+                or build_student_definition(
+                    name,
+                    str((outcome or {}).get("explanation") or "")
+                    if isinstance(outcome, dict)
+                    else "",
+                    topic=topic,
                 )
-            if not answer:
-                continue
+                or (pool[i % len(pool)] if pool else "")
+            )
+            answer_source = str((outcome or {}).get("source") or "lesson")
+            if answer and answer.rstrip(".").lower() in q.lower():
+                answer = canonical_definition(name) or (
+                    pool[(i + 1) % len(pool)] if len(pool) > 1 else answer
+                )
+            if (
+                not answer
+                or "one of the ideas taught" in answer.lower()
+                or "say what it means" in answer.lower()
+                or "is a main idea in" in answer.lower()
+            ):
+                if str((outcome or {}).get("question_type") or "") == "numerical" or _re.search(
+                    r"(?i)\b(calculate|determine|find)\b", q
+                ):
+                    engine_again = verified_or_wall_answer(q, artifacts=artifacts)
+                    if engine_again.get("source") == "engine_result" and engine_again.get("text"):
+                        answer = str(engine_again["text"])
+                        answer_source = "engine_result"
+                    else:
+                        answer = (
+                            canonical_definition("Ohm's law")
+                            or canonical_definition("Electric power")
+                            or canonical_definition(name)
+                            or (pool[i % len(pool)] if pool else "")
+                        )
+                if not answer:
+                    continue
         short.append(
             {
-                "question": q if not q.lower().startswith("in your own words, explain this idea") else f"Explain {name} using evidence from the lesson.",
+                "question": q
+                if not q.lower().startswith("in your own words, explain this idea")
+                else f"Explain {name} using evidence from the lesson.",
                 "marks": marks,
                 "lines": 4 if marks <= 2 else 6,
-                "model_answer": answer[:420] if answer.endswith((".", "!", "?")) else (answer[:420].rstrip(".") + "."),
-                "source": str((outcome or {}).get("source") or "lesson"),
+                "model_answer": answer[:420]
+                if answer.endswith((".", "!", "?"))
+                else (answer[:420].rstrip(".") + "."),
+                "source": answer_source,
             }
         )
+    # Surface every verified STEM artifact as Part A when not already covered.
+    from engines.lesson_pipeline import format_engine_answer
+
+    covered = " ".join(str(row.get("model_answer") or "") for row in short).lower()
+    for art in artifacts:
+        if not isinstance(art, dict) or not art.get("ok"):
+            continue
+        kind = str(art.get("task_kind") or "")
+        if kind not in {"balance_equation", "solve_math", "calculate_force", "statistics"}:
+            continue
+        ans = format_engine_answer(art)
+        if not ans or ans.lower()[:40] in covered:
+            continue
+        payload = art.get("payload") or {}
+        stem = (
+            payload.get("input")
+            or payload.get("equation")
+            or payload.get("expression")
+            or payload.get("problem")
+            or kind.replace("_", " ")
+        )
+        short.append(
+            {
+                "question": f"Solve / balance: {stem}",
+                "marks": 3,
+                "lines": 6,
+                "model_answer": ans,
+                "source": "engine_result",
+            }
+        )
+        covered += " " + ans.lower()
+        if len(short) >= 10:
+            break
     # Guarantee exam breadth — distinct concept prompts, never fact-echo fillers.
     while len(short) < 6:
         idx = len(short)
@@ -1174,21 +1244,33 @@ def compose_adaptations_from_clg(
     uli: Mapping[str, Any] | None = None,
     sif: Mapping[str, Any] | None = None,
     uvie: Mapping[str, Any] | None = None,
+    stem_artifacts: list | None = None,
 ) -> dict[str, Any]:
     """Compose all adaptive versions from the Lesson Intelligence Board (Phase Omega).
 
     Lesson Wall (Master concept cards) is the single source of truth for vocabulary,
     exam long answers, voice reading, and every adaptation — presentation only differs.
+    STEM numerical/balance answers come from verified EngineResult artifacts.
     """
     ids = list(lens_ids or DEFAULT_LENS_IDS)
     intelligence = dict(
         board
         or build_lesson_intelligence_board(clg, uli=uli, sif=sif, uvie=uvie)
     )
+    artifacts = list(
+        stem_artifacts
+        or intelligence.get("stem_artifacts")
+        or clg.get("stem_artifacts")
+        or []
+    )
+    if artifacts:
+        intelligence["stem_artifacts"] = artifacts
     # Carry upload teaching bank onto CLG so vocab/worksheet share Master concepts.
     clg_work = dict(clg)
     if intelligence.get("teaching_bank"):
         clg_work["teaching_bank"] = list(intelligence.get("teaching_bank") or [])
+    if artifacts:
+        clg_work["stem_artifacts"] = artifacts
     flowchart, concept_map = _diagrams_from_board(intelligence, clg_work)
     primary_svg = flowchart or concept_map
     secondary_svg = concept_map if concept_map and concept_map != primary_svg else flowchart
@@ -1197,6 +1279,7 @@ def compose_adaptations_from_clg(
         "_intelligence_board": intelligence,
         "_integration_failures": integration_failures(intelligence),
         "_phase_omega": True,
+        "_stem_artifacts": copy.deepcopy(artifacts),
     }
 
     # ------------------------------------------------------------------
@@ -1219,7 +1302,10 @@ def compose_adaptations_from_clg(
     )
 
     canonical = build_canonical_lesson(
-        intelligence, flowchart_svg=primary_svg, concept_map_svg=secondary_svg or primary_svg
+        intelligence,
+        flowchart_svg=primary_svg,
+        concept_map_svg=secondary_svg or primary_svg,
+        stem_artifacts=artifacts,
     )
     core = extract_essential_learning_core(canonical, intelligence)
     frozen = freeze_canonical(canonical, core)
@@ -1260,7 +1346,9 @@ def compose_adaptations_from_clg(
                 out["vocabulary"]["flowchart_svg"] = primary_svg
 
     if "worksheet" in ids:
-        worksheet = compose_worksheet_from_clg(clg_work, vocabulary)
+        worksheet = compose_worksheet_from_clg(
+            clg_work, vocabulary, stem_artifacts=artifacts
+        )
         # Replace Part B (8-mark) answers with Lesson Wall teaching text.
         wall_long = wall_long_answers(wall, topic=topic, limit=4)
         if wall_long:
@@ -1366,9 +1454,12 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
     sif = kwargs.get("sif") or {}
     uvie = kwargs.get("uvie") or {}
     topic_hint = str(kwargs.get("topic_hint") or "")
+    stem_artifacts = list(kwargs.get("stem_artifacts") or [])
 
     clg = build_canonical_lesson_graph(uli, sif=sif, uvie=uvie, topic_hint=topic_hint)
     clg_dict = clg.to_dict()
+    if stem_artifacts:
+        clg_dict["stem_artifacts"] = stem_artifacts
     # Phase Omega — Intelligence Board before any paragraph authorship
     board = build_lesson_intelligence_board(
         clg_dict,
@@ -1376,12 +1467,15 @@ def compose_lesson_package(*args: Any, **kwargs: Any) -> Any:
         sif=sif if isinstance(sif, Mapping) else {},
         uvie=uvie if isinstance(uvie, Mapping) else {},
     )
+    if stem_artifacts:
+        board["stem_artifacts"] = stem_artifacts
     adaptations = compose_adaptations_from_clg(
         clg_dict,
         board=board,
         uli=uli if isinstance(uli, Mapping) else {},
         sif=sif if isinstance(sif, Mapping) else {},
         uvie=uvie if isinstance(uvie, Mapping) else {},
+        stem_artifacts=stem_artifacts,
     )
     import copy
 
@@ -1591,6 +1685,7 @@ def _compose_package_from_meta(
         sif=sif if isinstance(sif, dict) else {},
         uvie=uvie,
         topic_hint=topic_hint,
+        stem_artifacts=list(meta.get("engine_artifacts") or meta.get("stem_artifacts") or []),
     )
     adaptations = dict(result.get("adaptations") or {})
     if existing_vocabulary and existing_vocabulary.get("word_wall"):
@@ -1604,6 +1699,7 @@ def _compose_package_from_meta(
         adaptations = {k: v for k, v in adaptations.items() if k in version_ids}
 
     clg = result.get("clg") or {}
+    stem_arts = list(meta.get("engine_artifacts") or meta.get("stem_artifacts") or [])
     blueprint = CompositionBlueprint(
         topic=str(clg.get("topic") or topic_hint or "Lesson"),
         subject=str(clg.get("subject_key") or "general"),
@@ -1614,6 +1710,7 @@ def _compose_package_from_meta(
         teaching_sequence=subject_arc(str(clg.get("subject_key") or "general")),
         visual_intents=list(clg.get("visual_refs") or []),
         source_excerpt=(lesson_text or "")[:4000],
+        stem_artifacts=stem_arts,
     )
     standard_dict = adaptations.get("standard") or {}
     if allow_mermaid is False and isinstance(standard_dict, dict):
