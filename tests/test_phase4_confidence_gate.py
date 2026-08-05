@@ -119,3 +119,17 @@ def test_publication_gate_uses_confidence_gate():
     pkg["_lesson_wall"][0]["idea"] = "Evaporation (key word) means vapour rises into the open air."
     reason = publication_block_reason(pkg)
     assert reason
+
+
+def test_confidence_gate_repairs_missing_wall_stamps_after_polish():
+    """PQLE can rebuild ell/parent/visual without lesson_wall — must not quarantine."""
+    pkg = _pkg()
+    # Simulate polish dropping wall stamps on lenses (sample-lesson failure mode).
+    for key in ("ell", "parent", "visual"):
+        pkg[key] = {"topic": "The Water Cycle", "sections": [{"role": "concept", "title": "X", "body": "Y" * 40}]}
+    assert confidence_block_reason(pkg) == ""
+    for key in ("ell", "parent", "visual"):
+        assert pkg[key].get("lesson_wall"), f"{key} must be re-stamped"
+    reason = publication_block_reason(pkg)
+    assert "Confidence gate" not in reason
+    assert "missing the shared Lesson Wall" not in reason

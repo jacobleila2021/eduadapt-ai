@@ -1600,6 +1600,15 @@ def generate_adaptations(
             merged = attach_lce_to_adaptations(
                 merged, lesson_text=lesson_text, reject_on_fail=False
             )
+            # PQLE/polish can rebuild lens pages without lesson_wall — re-stamp.
+            try:
+                from engines.lesson_composition_engine.lesson_wall import (
+                    ensure_shared_lesson_wall,
+                )
+
+                ensure_shared_lesson_wall(merged)
+            except Exception:
+                pass
         except Exception as lce_attach_exc:  # noqa: BLE001
             merged.setdefault("_meta", {})
             merged["_meta"]["lce_attach_error"] = str(lce_attach_exc)[:300]

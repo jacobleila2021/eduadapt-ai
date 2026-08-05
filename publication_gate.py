@@ -68,8 +68,13 @@ def publication_block_reason(
         from engines.lesson_composition_engine.confidence_gate import (
             confidence_block_reason,
         )
+        from engines.lesson_composition_engine.lesson_wall import (
+            ensure_shared_lesson_wall,
+        )
 
         if isinstance(adaptations, dict):
+            # Re-stamp Master wall onto lenses that polish dropped (repair-first).
+            ensure_shared_lesson_wall(adaptations)
             confidence_reason = confidence_block_reason(adaptations)
             if confidence_reason:
                 return confidence_reason

@@ -122,6 +122,31 @@ def confidence_gate_issues(adaptations: Mapping[str, Any] | None) -> list[str]:
     if not adaptations:
         return ["No lesson package to validate."]
     issues: list[str] = []
+    # Detect recycled clone cards on the raw wall before repair/dedupe.
+    raw_wall = _wall_items(adaptations)
+    try:
+        from collections import Counter
+        from engines.lesson_composition_engine.lesson_wall import _idea_fingerprint
+
+        fps = [
+            _idea_fingerprint(str(c.get("idea") or ""))
+            for c in raw_wall
+            if str(c.get("idea") or "").strip()
+        ]
+        if fps and any(n >= 2 for n in Counter(fps).values()):
+            issues.append("Lesson Wall recycles the same teaching sentence across cards.")
+    except Exception:
+        pass
+    # Repair missing wall stamps before judging (PQLE may have dropped them).
+    if isinstance(adaptations, dict):
+        try:
+            from engines.lesson_composition_engine.lesson_wall import (
+                ensure_shared_lesson_wall,
+            )
+
+            ensure_shared_lesson_wall(adaptations)
+        except Exception:
+            pass
     wall = _wall_items(adaptations)
 
     vocab = adaptations.get("vocabulary") if isinstance(adaptations.get("vocabulary"), dict) else {}

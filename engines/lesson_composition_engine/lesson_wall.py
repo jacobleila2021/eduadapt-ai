@@ -323,6 +323,40 @@ def apply_wall_definitions_to_vocab(
     return page
 
 
+def ensure_shared_lesson_wall(
+    adaptations: dict[str, Any] | None,
+) -> list[dict[str, str]]:
+    """Repair-first: stamp the Master Lesson Wall onto every adaptation page.
+
+    Downstream polish (PQLE / fidelity) sometimes rebuilds lens pages without
+    copying ``lesson_wall``. Missing stamps must never quarantine a teachable
+    Master — re-attach the shared wall before the confidence gate runs.
+    """
+    if not isinstance(adaptations, dict):
+        return []
+    wall = adaptations.get("_lesson_wall")
+    if not isinstance(wall, list) or not wall:
+        std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
+        wall = std.get("lesson_wall") if isinstance(std.get("lesson_wall"), list) else []
+    if not isinstance(wall, list) or not wall:
+        try:
+            std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
+            wall = extract_lesson_wall(std)
+        except Exception:
+            wall = []
+    wall = dedupe_lesson_wall(wall if isinstance(wall, list) else [])
+    if not wall:
+        return []
+    adaptations["_lesson_wall"] = [dict(c) for c in wall]
+    for key, page in list(adaptations.items()):
+        if str(key).startswith("_") or not isinstance(page, dict):
+            continue
+        page = dict(page)
+        page["lesson_wall"] = [dict(c) for c in wall]
+        adaptations[key] = page
+    return wall
+
+
 def wall_surface_parity_issues(
     wall: list[Mapping[str, str]] | None,
     *,
@@ -339,17 +373,6 @@ def wall_surface_parity_issues(
             f"Lesson Wall is too thin (need at least {min_cards} teachable cards)."
         )
     ideas = [str(c.get("idea") or "") for c in cards]
-    # Recycled sentence check on the raw wall (before dedupe would hide it).
-    from collections import Counter
-
-    raw_fps = [
-        _idea_fingerprint(str(c.get("idea") or ""))
-        for c in (wall or [])
-        if isinstance(c, dict) and str(c.get("idea") or "").strip()
-    ]
-    if raw_fps and any(n >= 2 for n in Counter(raw_fps).values()):
-        issues.append("Lesson Wall recycles the same teaching sentence across cards.")
-
     wall_tok = {t for t in re.findall(r"[a-z]{4,}", " ".join(ideas).lower())}
     if vocabulary and wall_tok:
         vocab = vocabulary if isinstance(vocabulary, dict) else {}
