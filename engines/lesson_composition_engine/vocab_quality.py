@@ -511,13 +511,14 @@ def is_ocr_garbage_claim(text: str) -> bool:
         return True
     if len(re.findall(r"[A-Z]{6,}", original)) >= 3:
         return True
-    # Unrepaired OCR still visible in the original
-    if re.search(r"\b[A-Za-z]\s+[a-z]{2,}\b", original) and len(
-        re.findall(r"\b[a-z]{1,3}\s+[a-z]{2,}\b", original.lower())
-    ) >= 2:
-        # Only garbage if repair did not fully clear the mush
-        if len(re.findall(r"\b[a-z]{1,3}\s+[a-z]{2,}\b", low)) >= 2:
-            return True
+    # Unrepaired OCR letter-splits ("t he", "F orce") — not English "a push" / "is a".
+    lonely_letters = [
+        m.group(1)
+        for m in re.finditer(r"\b([A-Za-z])\s+[a-z]{2,}\b", original)
+        if m.group(1).lower() not in {"a", "i"}
+    ]
+    if len(lonely_letters) >= 2:
+        return True
     # Same 8+ letter token repeated → paste/OCR loop
     tokens = re.findall(r"[A-Za-z]{8,}", raw)
     if tokens and tokens.count(max(set(tokens), key=tokens.count)) >= 3:

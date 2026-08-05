@@ -476,6 +476,8 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
                 source_text=str(clg.get("source_text") or ""),
                 claims=claims,
                 concepts=clg.get("core_concepts") or [],
+                stem_artifacts=list(clg.get("stem_artifacts") or []),
+                assessment_prompts=list(clg.get("assessment_outcomes") or []),
             )
         except Exception:
             dyn_bank = []
@@ -1253,20 +1255,26 @@ def compose_adaptations_from_clg(
     STEM numerical/balance answers come from verified EngineResult artifacts.
     """
     ids = list(lens_ids or DEFAULT_LENS_IDS)
+    clg_seed = dict(clg)
+    artifacts_early = list(
+        stem_artifacts or clg_seed.get("stem_artifacts") or []
+    )
+    if artifacts_early:
+        clg_seed["stem_artifacts"] = artifacts_early
     intelligence = dict(
         board
-        or build_lesson_intelligence_board(clg, uli=uli, sif=sif, uvie=uvie)
+        or build_lesson_intelligence_board(clg_seed, uli=uli, sif=sif, uvie=uvie)
     )
     artifacts = list(
         stem_artifacts
         or intelligence.get("stem_artifacts")
-        or clg.get("stem_artifacts")
+        or clg_seed.get("stem_artifacts")
         or []
     )
     if artifacts:
         intelligence["stem_artifacts"] = artifacts
     # Carry upload teaching bank onto CLG so vocab/worksheet share Master concepts.
-    clg_work = dict(clg)
+    clg_work = dict(clg_seed)
     if intelligence.get("teaching_bank"):
         clg_work["teaching_bank"] = list(intelligence.get("teaching_bank") or [])
     if artifacts:
@@ -1311,8 +1319,35 @@ def compose_adaptations_from_clg(
     frozen = freeze_canonical(canonical, core)
 
     # Lesson Wall = what the learner needs to know (square tab boxes).
+    # Phase 2: fill thin/OCR-weak walls from the dynamic teaching bank.
+    from engines.lesson_composition_engine.dynamic_teaching_bank import (
+        build_dynamic_teaching_bank,
+        ensure_wall_from_bank,
+    )
+
     wall = extract_lesson_wall(frozen)
+    # Always rebuild with stem artifacts so thin PDFs get engine-backed cards.
+    teaching_bank = build_dynamic_teaching_bank(
+        topic=str(intelligence.get("topic") or clg_work.get("topic") or ""),
+        source_text=str(
+            intelligence.get("source_text") or clg_work.get("source_text") or ""
+        ),
+        claims=[str(c) for c in (intelligence.get("verified_claims") or [])],
+        concepts=list(intelligence.get("concepts") or []),
+        stem_artifacts=artifacts,
+        assessment_prompts=list(clg_work.get("assessment_outcomes") or []),
+    )
+    if teaching_bank:
+        intelligence["teaching_bank"] = teaching_bank
+        clg_work["teaching_bank"] = teaching_bank
+    wall = ensure_wall_from_bank(
+        wall,
+        teaching_bank,
+        topic=str(intelligence.get("topic") or clg_work.get("topic") or ""),
+        min_cards=3,
+    )
     frozen["lesson_wall"] = copy.deepcopy(wall)
+    frozen["teaching_bank"] = copy.deepcopy(teaching_bank)
     if primary_svg:
         frozen["svg_diagram"] = primary_svg
         frozen["flowchart_svg"] = primary_svg

@@ -338,20 +338,34 @@ def build_lesson_intelligence_board(
         "engine_contributions": contributions,
         "ready_to_author": bool(claim_texts or concepts),
     }
-    # R10/R11 — dynamic teaching bank from this upload (any subject).
+    # Phase 2 / R10–R11 — dynamic teaching bank from this upload (any subject).
     try:
         from engines.lesson_composition_engine.dynamic_teaching_bank import (
             build_dynamic_teaching_bank,
+            is_thin_source,
         )
 
+        stem_artifacts = list(
+            clg.get("stem_artifacts")
+            or board.get("stem_artifacts")
+            or []
+        )
         board["teaching_bank"] = build_dynamic_teaching_bank(
             topic=topic,
             source_text=str(board.get("source_text") or ""),
             claims=claim_texts,
             concepts=concepts,
+            stem_artifacts=stem_artifacts,
+            assessment_prompts=list(clg.get("assessment_outcomes") or assessments),
+        )
+        board["thin_source"] = is_thin_source(
+            str(board.get("source_text") or ""),
+            claims=claim_texts,
         )
         if board["teaching_bank"]:
             contributions["dynamic_teaching_bank"] = True
+            if board["thin_source"]:
+                contributions["thin_source_bank"] = True
             board["engine_contributions"] = contributions
             # Seed missing concepts from the upload bank (never replace curated ones).
             have = {
@@ -374,8 +388,10 @@ def build_lesson_intelligence_board(
                 if len(concepts) >= 12:
                     break
             board["concepts"] = concepts
+            board["ready_to_author"] = bool(claim_texts or concepts or board["teaching_bank"])
     except Exception:
         board["teaching_bank"] = []
+        board["thin_source"] = False
     return board
 
 

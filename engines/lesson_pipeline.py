@@ -160,6 +160,12 @@ def format_engine_answer(artifact: dict) -> str:
     exact = payload.get("exact")
     if exact not in (None, "", [], {}):
         parts.append(f"Exact result: {exact}.")
+    result = payload.get("result")
+    if result not in (None, "", [], {}) and not parts:
+        parts.append(f"Result: {result}.")
+    answer = payload.get("answer")
+    if answer not in (None, "", [], {}) and not parts:
+        parts.append(f"Answer: {answer}.")
     solutions = payload.get("solutions")
     if solutions not in (None, "", [], {}):
         if isinstance(solutions, (list, tuple)):
