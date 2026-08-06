@@ -404,7 +404,7 @@ def build_canonical_lesson_graph(
             assessments.append(
                 {
                     "outcome_id": f"assess_{i+1:03d}",
-                    "prompt": f"Explain {name} using evidence from the lesson.",
+                    "prompt": f"Explain {name}. Give its meaning and one clear example.",
                     "bloom": "understand",
                 }
             )

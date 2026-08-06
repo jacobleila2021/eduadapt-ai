@@ -690,7 +690,9 @@ def render_vocabulary(data: Any, key_prefix: str = "vocab") -> None:
         blank = _clean_practice_blank(item.get("sentence_blank") or item.get("sentence", ""))
         st.markdown(f"**{index}. {term}**")
         if blank:
-            st.markdown(f"_{blank}_")
+            # Do not wrap in markdown italics (_…_) — trailing "_" looks like
+            # a stray blank character after the sentence period.
+            st.markdown(blank)
 
     # --- 4. Self-Test ---
     st.markdown("### 4. Match & Review (Self-Test)")

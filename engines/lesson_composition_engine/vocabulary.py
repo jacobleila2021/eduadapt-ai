@@ -279,7 +279,7 @@ def compose_vocabulary_page(
             "term": c.term,
             "definition": c.definition,
             "synonym": (c.synonyms[0] if c.synonyms else ""),
-            "exam_tip": f"Define {c.term} and give one example from the lesson.",
+            "exam_tip": f"Define {c.term} and give one clear everyday example.",
         }
         for c in cards
     ]

@@ -21,7 +21,26 @@ _NON_TERM_TITLES = frozenset(
         "what you have learnt",
         "must know",
         "big idea",
+        "introduction",
+        "extend",
+        "stretch",
+        "challenge",
     }
+)
+
+# Question stems / connector chrome must never become wall or vocab titles.
+_JUNK_TITLE_RE = re.compile(
+    r"(?i)^(?:"
+    r"can you|do you|did you|have you|what (?:is|are|do|does)|"
+    r"why (?:do|does|are|is)|how (?:do|does|are|is|can)|"
+    r"name (?:some|the)|think of|look at|observe|"
+    r"for example|this property|that property|reprint|"
+    r"activity|caution|exercise|questions?|objectives?|"
+    r"warm[\s-]?up"
+    r")\b"
+)
+_CHROME_TITLE_RE = re.compile(
+    r"(?i)\b(?:reprint|ncert|cbse|\d{4}\s*[-–]\s*\d{2,4}|page\s*\d+)\b"
 )
 
 _SKIP_ROLES = frozenset(
@@ -57,17 +76,118 @@ def _plain(text: str) -> str:
     return raw
 
 
+def normalize_wall_title(title: str, *, idea: str = "") -> str:
+    """Turn section chrome into a short teachable concept name (or '')."""
+    raw = _plain(title)
+    if not raw:
+        return ""
+    # "Understanding Evaporation" → "Evaporation"
+    raw = re.sub(r"(?i)^(?:understanding|concept|idea|topic|section)\s*[:\-–]?\s*", "", raw).strip()
+    raw = re.sub(r"(?i)^(?:worked example|practice|summary)\s*[:\-–]?\s*", "", raw).strip()
+    # "Gold is Gold" / "X is X is …" titles
+    m = re.match(r"(?i)^([A-Za-z][A-Za-z\- ]{1,40}?)\s+is\s+\1\b", raw)
+    if m:
+        raw = m.group(1).strip()
+    low = raw.lower().rstrip(".?!")
+    if low in _NON_TERM_TITLES or _JUNK_TITLE_RE.match(raw) or _CHROME_TITLE_RE.search(raw):
+        # Try to recover a concept noun from the teaching sentence.
+        idea_l = _plain(idea)
+        cm = re.match(
+            r"(?i)^([A-Z][A-Za-z0-9][A-Za-z0-9\- ]{1,40}?)\s+(?:is|are|means)\b",
+            idea_l,
+        )
+        if cm:
+            raw = cm.group(1).strip()
+        else:
+            return ""
+    if raw.endswith("?"):
+        return ""
+    # Incomplete question cut mid-phrase ("Can you name some metals that")
+    if re.search(r"(?i)\b(that|these|those|which|who)$", raw):
+        return ""
+    words = raw.split()
+    if len(words) > 6 or len(words) < 1:
+        return ""
+    try:
+        from engines.lesson_composition_engine.vocab_quality import is_junk_term
+
+        if is_junk_term(raw):
+            return ""
+    except Exception:
+        pass
+    if raw.isupper() and len(raw) > 2:
+        raw = raw.title()
+    return raw[:1].upper() + raw[1:] if raw else ""
+
+
+def clean_wall_idea(idea: str, *, title: str = "") -> str:
+    """Repair duplicated 'X is X is …' and strip OCR chapter chrome."""
+    text = _plain(idea)
+    if not text:
+        return ""
+    # "Gold is Gold is the most ductile…" / "For example is (i) …"
+    text = re.sub(
+        r"(?i)\b([A-Za-z][A-Za-z\- ]{1,40}?)\s+is\s+\1\s+is\b",
+        r"\1 is",
+        text,
+    )
+    text = re.sub(r"(?i)^for example is\s+", "For example, ", text)
+    text = re.sub(r"(?i)^extend is\s+extend is\s+", "", text)
+    text = re.sub(r"(?i)^extend is\s+", "", text)
+    text = re.sub(r"(?i)\breprint\s+\d{4}.*$", "", text).strip()
+    text = re.sub(r"(?i)\bI\s+n\s+Class\b", "In Class", text)
+    # Drop pure question cards (wall teaches answers, not stems).
+    if text.endswith("?") and len(text.split()) < 18:
+        return ""
+    if title and text.lower().startswith(title.lower()) and text.endswith("?"):
+        return ""
+    try:
+        from engines.lesson_composition_engine.vocab_quality import (
+            is_ocr_garbage_claim,
+            is_teacher_facing_text,
+            student_safe_definition,
+        )
+
+        if is_teacher_facing_text(text) or is_ocr_garbage_claim(text):
+            return ""
+        safe = student_safe_definition(text)
+        if safe:
+            text = safe
+    except Exception:
+        pass
+    if len(text.split()) < 6:
+        return ""
+    if not text.endswith((".", "!", "?")):
+        text += "."
+    return text[:720]
+
+
+def is_teachable_wall_card(card: Mapping[str, Any] | None) -> bool:
+    if not isinstance(card, dict):
+        return False
+    title = normalize_wall_title(
+        str(card.get("title") or ""),
+        idea=str(card.get("idea") or card.get("body") or ""),
+    )
+    idea = clean_wall_idea(
+        str(card.get("idea") or card.get("body") or ""),
+        title=title,
+    )
+    return bool(title and idea)
+
+
 def extract_lesson_wall(lesson: Mapping[str, Any] | None) -> list[dict[str, str]]:
     """Build wall cards from Master lesson sections (title + teaching idea)."""
-    # Prefer a wall already attached (idempotent).
+    # Prefer a wall already attached (idempotent) — still scrub junk titles.
     existing = list((lesson or {}).get("lesson_wall") or [])
     if existing:
         out = []
         for row in existing:
             if not isinstance(row, dict):
                 continue
-            title = str(row.get("title") or "").strip()
-            idea = str(row.get("idea") or row.get("body") or "").strip()
+            idea_raw = str(row.get("idea") or row.get("body") or "").strip()
+            title = normalize_wall_title(str(row.get("title") or ""), idea=idea_raw)
+            idea = clean_wall_idea(idea_raw, title=title)
             if title and idea:
                 out.append(
                     {
@@ -78,7 +198,7 @@ def extract_lesson_wall(lesson: Mapping[str, Any] | None) -> list[dict[str, str]
                     }
                 )
         if out:
-            return out[:12]
+            return dedupe_lesson_wall(out)[:12]
 
     items: list[dict[str, str]] = []
     for index, section in enumerate((lesson or {}).get("sections") or []):
@@ -92,15 +212,15 @@ def extract_lesson_wall(lesson: Mapping[str, Any] | None) -> list[dict[str, str]
         if role not in _KEEP_ROLES and role:
             continue
         body = _plain(section.get("body") or "")
-        title = _plain(section.get("title") or f"Section {index + 1}")
-        # Drop lens cues / chrome titles
-        if title.lower().startswith("how you will learn"):
+        title = normalize_wall_title(
+            _plain(section.get("title") or f"Section {index + 1}"),
+            idea=body,
+        )
+        if not title or title.lower().startswith("how you will learn"):
             continue
-        if not body or len(body.split()) < 8:
+        idea = clean_wall_idea(body, title=title)
+        if not idea:
             continue
-        idea = body
-        if len(idea) > 720:
-            idea = idea[:717].rsplit(" ", 1)[0] + "…"
         items.append(
             {
                 "title": title,
@@ -111,7 +231,7 @@ def extract_lesson_wall(lesson: Mapping[str, Any] | None) -> list[dict[str, str]
         )
         if len(items) >= 12:
             break
-    return items
+    return dedupe_lesson_wall(items)
 
 
 def wall_vocab_terms(wall: list[Mapping[str, str]], *, topic: str = "") -> list[dict[str, str]]:
@@ -120,8 +240,9 @@ def wall_vocab_terms(wall: list[Mapping[str, str]], *, topic: str = "") -> list[
     rows: list[dict[str, str]] = []
     seen: set[str] = set()
     for card in wall:
-        title = str(card.get("title") or "").strip()
-        idea = str(card.get("idea") or "").strip()
+        idea_raw = str(card.get("idea") or "").strip()
+        title = normalize_wall_title(str(card.get("title") or ""), idea=idea_raw)
+        idea = clean_wall_idea(idea_raw, title=title)
         if not title or not idea:
             continue
         low = title.lower().rstrip(".")
@@ -170,30 +291,77 @@ def wall_vocab_terms(wall: list[Mapping[str, str]], *, topic: str = "") -> list[
     return rows[:12]
 
 
+def _mark8_answer(primary: Mapping[str, str], support: list[Mapping[str, str]], *, topic: str) -> str:
+    """Build a multi-sentence 8-mark answer from wall cards (never one-liners)."""
+    parts: list[str] = []
+    seen: set[str] = set()
+    for card in [primary, *support]:
+        title = normalize_wall_title(
+            str(card.get("title") or ""),
+            idea=str(card.get("idea") or ""),
+        )
+        idea = clean_wall_idea(str(card.get("idea") or ""), title=title)
+        if not idea:
+            continue
+        key = idea.lower()[:80]
+        if key in seen:
+            continue
+        seen.add(key)
+        parts.append(idea)
+        if len(parts) >= 4:
+            break
+    if not parts:
+        return ""
+    topic_bit = f" in {topic}" if topic and topic.lower() not in parts[0].lower() else ""
+    if len(parts) == 1:
+        # Expand a single definition into exam-depth prose without inventing facts.
+        core = parts[0]
+        title = normalize_wall_title(str(primary.get("title") or ""), idea=core) or "This idea"
+        parts = [
+            core,
+            f"{title} connects to other ideas{topic_bit}: use the definition above and one clear everyday example when you write.",
+            f"In an exam answer, name {title}, state what it means, give one example, and say why it matters{topic_bit}.",
+        ]
+    return " ".join(parts)
+
+
 def wall_long_answers(
     wall: list[Mapping[str, str]],
     *,
     topic: str = "",
     limit: int = 4,
 ) -> list[dict[str, Any]]:
-    """8-mark exam answers taken verbatim from lesson-wall teaching text."""
-    out: list[dict[str, Any]] = []
-    for i, card in enumerate(wall):
-        title = str(card.get("title") or "").strip()
-        idea = str(card.get("idea") or "").strip()
+    """8-mark exam answers built from teachable Lesson Wall cards."""
+    cards: list[dict[str, str]] = []
+    for card in wall or []:
+        if not isinstance(card, dict):
+            continue
+        idea_raw = str(card.get("idea") or "").strip()
+        title = normalize_wall_title(str(card.get("title") or ""), idea=idea_raw)
+        idea = clean_wall_idea(idea_raw, title=title)
         if not title or not idea:
             continue
-        low = title.lower()
-        if low in {"common mistakes to avoid", "common mistakes", "common misconceptions"}:
+        if title.lower() in _NON_TERM_TITLES:
+            continue
+        cards.append({"title": title, "idea": idea})
+    out: list[dict[str, Any]] = []
+    for i, card in enumerate(cards):
+        title = card["title"]
+        support = [c for j, c in enumerate(cards) if j != i][:3]
+        answer = _mark8_answer(card, support, topic=topic)
+        if not answer or len(answer.split()) < 24:
             continue
         if i == 1:
             prompt = (
-                f"Apply '{title}' to one everyday situation from the lesson and "
-                f"show each step."
+                f"Apply {title} to one everyday situation. "
+                f"State the meaning, give the example, and show each step."
             )
         else:
-            prompt = f"Explain '{title}' in detail with examples from the lesson."
-        answer = idea if idea.endswith((".", "!", "?")) else idea + "."
+            prompt = (
+                f"Explain {title} in detail. "
+                f"Include its meaning, one clear example, and why it matters"
+                f"{f' in {topic}' if topic else ''}."
+            )
         out.append(
             {
                 "question": prompt,
@@ -237,15 +405,16 @@ def dedupe_lesson_wall(
     *,
     min_idea_words: int = 6,
 ) -> list[dict[str, str]]:
-    """Drop empty / recycled cards so the wall teaches distinct ideas."""
+    """Drop empty / recycled / junk-title cards so the wall teaches distinct ideas."""
     out: list[dict[str, str]] = []
     seen_titles: set[str] = set()
     seen_ideas: set[str] = set()
     for card in wall or []:
         if not isinstance(card, dict):
             continue
-        title = str(card.get("title") or "").strip()
-        idea = str(card.get("idea") or card.get("body") or "").strip()
+        idea_raw = str(card.get("idea") or card.get("body") or "").strip()
+        title = normalize_wall_title(str(card.get("title") or ""), idea=idea_raw)
+        idea = clean_wall_idea(idea_raw, title=title)
         if not title or not idea or len(idea.split()) < min_idea_words:
             continue
         tkey = title.lower()

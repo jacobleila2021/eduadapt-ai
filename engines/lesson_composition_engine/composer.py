@@ -349,7 +349,7 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
             q = str(outcome["prompt"])
         else:
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else outcome)
-            q = f"Explain {name} using evidence from the lesson."
+            q = f"Explain {name}. Give its meaning and one clear example."
         practice.append({"question": q, "marks": 2})
         answer_key.append(
             {
@@ -676,7 +676,7 @@ def compose_worksheet_from_clg(
             marks = int(outcome.get("marks") or (3 if str(outcome.get("question_type") or "") == "numerical" else 2))
         else:
             name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
-            q = f"Explain {name} using evidence from the lesson."
+            q = f"Explain {name}. Give its meaning and one clear example."
             marks = 2
         # Phase 3 — computable stems use EngineResult; else wall/glossary prose.
         policy = verified_or_wall_answer(q, artifacts=artifacts, wall_prose="")
@@ -724,11 +724,14 @@ def compose_worksheet_from_clg(
                         )
                 if not answer:
                     continue
+        # Strip scaffold chrome from uploaded stems.
+        q = _re.sub(r"(?i)\s+from (?:the|this) lesson\.?\s*$", ".", q).strip()
+        q = _re.sub(r"(?i)\s+using evidence from (?:the|this) lesson\.?\s*$", ".", q).strip()
         short.append(
             {
                 "question": q
                 if not q.lower().startswith("in your own words, explain this idea")
-                else f"Explain {name} using evidence from the lesson.",
+                else f"Explain {name}. Give its meaning and one clear example.",
                 "marks": marks,
                 "lines": 4 if marks <= 2 else 6,
                 "model_answer": answer[:420]
@@ -751,16 +754,30 @@ def compose_worksheet_from_clg(
         if not ans or ans.lower()[:40] in covered:
             continue
         payload = art.get("payload") or {}
-        stem = (
+        stem = str(
             payload.get("input")
             or payload.get("equation")
             or payload.get("expression")
             or payload.get("problem")
             or kind.replace("_", " ")
-        )
+        ).strip()
+        balanced = str(payload.get("balanced") or payload.get("balanced_equation") or "").strip()
+        stem_compact = _re.sub(r"\s+", "", stem).lower()
+        bal_compact = _re.sub(r"\s+", "", balanced).lower()
+        # Never ask students to "balance" an equation that is already balanced.
+        if kind == "balance_equation" and balanced and stem_compact == bal_compact:
+            question = (
+                f"This equation is balanced: {stem}. "
+                "Name the products and show that the number of atoms of each "
+                "element is the same on both sides."
+            )
+        elif kind == "balance_equation":
+            question = f"Balance the equation: {stem}"
+        else:
+            question = f"Solve: {stem}"
         short.append(
             {
-                "question": f"Solve / balance: {stem}",
+                "question": question,
                 "marks": 3,
                 "lines": 6,
                 "model_answer": ans,
@@ -775,12 +792,19 @@ def compose_worksheet_from_clg(
         idx = len(short)
         concept = concepts[idx % len(concepts)] if concepts else {"name": topic}
         name = str(concept.get("name") or topic)
+        try:
+            from engines.lesson_composition_engine.vocab_quality import is_junk_term
+
+            if is_junk_term(name):
+                break
+        except Exception:
+            pass
         answer = canonical_definition(name) or (pool[idx % len(pool)] if pool else "")
         if not answer:
             break
         short.append(
             {
-                "question": f"Explain {name} using evidence from the lesson.",
+                "question": f"Explain {name}. Give its meaning and one clear example.",
                 "marks": 2,
                 "lines": 4,
                 "model_answer": answer if answer.endswith((".", "!", "?")) else answer + ".",
@@ -823,41 +847,59 @@ def compose_worksheet_from_clg(
         if not answer_parts and canon:
             answer_parts = [canon]
         # Progressive demand: understanding → application across long answers.
-        if i == 0:
-            prompt = f"Explain '{name}' in detail with examples from the lesson."
-        elif i == 1:
+        if i == 1:
             prompt = (
-                f"Apply '{name}' to one everyday situation from the lesson and "
-                f"show each step."
+                f"Apply {name} to one everyday situation. "
+                f"State the meaning, give the example, and show each step."
             )
         else:
-            prompt = f"Explain '{name}' in detail with examples from the lesson."
+            prompt = (
+                f"Explain {name} in detail. "
+                f"Include its meaning, one clear example, and why it matters in {topic}."
+            )
+        model = _para(*answer_parts) if answer_parts else (canonical_definition(name) or "")
+        if not model or len(model.split()) < 24:
+            # Pad thin answers with related pool facts — never invent science.
+            extras = [p for p in pool if name.lower() in str(p).lower() and p not in answer_parts]
+            model = _para(*(answer_parts + extras[:3])) if (answer_parts or extras) else model
+        if not model:
+            continue
         long_q.append(
             {
                 "question": prompt,
                 "marks": 8,
                 "lines": 10,
-                "model_answer": _para(*answer_parts)
-                if answer_parts
-                else (
-                    canonical_definition(name)
-                    or f"{name} is a key idea in {topic}."
-                ),
+                "model_answer": model,
                 "bloom": "application" if i == 1 else "understanding",
             }
         )
 
     # HOTS — topic-aware higher-order items mapped only to taught concepts.
     hots: list[dict[str, Any]] = []
+    try:
+        from engines.lesson_composition_engine.vocab_quality import is_junk_term as _junk_hots
+    except Exception:
+
+        def _junk_hots(_t: str) -> bool:  # type: ignore
+            return False
+
     concept_names_for_hots = [
         str(c.get("name") or "").strip()
         for c in (concepts or [])
-        if isinstance(c, dict) and str(c.get("name") or "").strip()
+        if isinstance(c, dict)
+        and str(c.get("name") or "").strip()
+        and not _junk_hots(str(c.get("name") or ""))
     ] or [topic]
     first = concept_names_for_hots[0]
     second = concept_names_for_hots[1] if len(concept_names_for_hots) > 1 else topic
-    first_def = canonical_definition(first) or (pool[0] if pool else f"{first} is taught in this lesson.")
-    second_def = canonical_definition(second) or (pool[1] if len(pool) > 1 else f"{second} is a different idea.")
+    first_def = canonical_definition(first) or next(
+        (p for p in pool if first.lower() in str(p).lower()),
+        f"{first} is an important idea in {topic}.",
+    )
+    second_def = canonical_definition(second) or next(
+        (p for p in pool if second.lower() in str(p).lower() and str(p) != first_def),
+        f"{second} is a different idea in {topic}.",
+    )
     if any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance")):
         ohm = canonical_definition("Ohm's law") or first_def
         series = canonical_definition("Series combination") or first_def
@@ -956,7 +998,7 @@ def compose_worksheet_from_clg(
                 {
                     "question": (
                         "Distinguish metals from non-metals using at least two physical "
-                        "properties from the lesson."
+                        "properties."
                     ),
                     "marks": 5,
                     "lines": 8,
@@ -999,8 +1041,8 @@ def compose_worksheet_from_clg(
         hots.append(
             {
                 "question": (
-                    f"Explain how {first.lower()} differs from {second.lower()} "
-                    f"using ideas from this lesson."
+                    f"Explain how {first} differs from {second}. "
+                    f"Give one clear point for each."
                 ),
                 "marks": 5,
                 "lines": 8,
@@ -1025,6 +1067,9 @@ def compose_worksheet_from_clg(
         if textbook_hots:
             for row in textbook_hots:
                 prompt = str(row.get("prompt") or "").strip()
+                prompt = _re.sub(
+                    r"(?i)\s+from (?:the|this) lesson\.?\s*$", ".", prompt
+                ).strip()
                 name = next(
                     (
                         str(c.get("name") or "")
@@ -1047,8 +1092,8 @@ def compose_worksheet_from_clg(
             hots.append(
                 {
                     "question": (
-                        f"Explain how {first.lower()} differs from {second.lower()} "
-                        f"using ideas from this lesson."
+                        f"Explain how {first} differs from {second}. "
+                        f"Give one clear point for each."
                     ),
                     "marks": 5,
                     "lines": 8,
@@ -1063,7 +1108,7 @@ def compose_worksheet_from_clg(
             hots.append(
                 {
                     "question": (
-                        f"Describe one everyday situation that shows {topic.lower()} "
+                        f"Describe one everyday situation that shows {topic} "
                         f"and name the main ideas inside it."
                     ),
                     "marks": 5,
@@ -1091,7 +1136,7 @@ def compose_worksheet_from_clg(
             continue
         vocab_q.append(
             {
-                "question": f"Use the term '{t}' correctly in an exam-style sentence.",
+                "question": f"Write one correct sentence that uses the term {t}.",
                 "marks": 2,
                 "model_answer": str(answer).rstrip(".") + ".",
                 "bloom": "recall",

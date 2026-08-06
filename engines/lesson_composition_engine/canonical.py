@@ -1023,18 +1023,29 @@ def build_canonical_lesson(
             if not ans:
                 continue
             payload = art.get("payload") or {}
-            stem = (
+            stem = str(
                 payload.get("input")
                 or payload.get("equation")
                 or payload.get("expression")
                 or payload.get("problem")
                 or kind.replace("_", " ")
-            )
-            practice_pairs.insert(
-                0,
-                (f"Solve / balance: {stem} (3 marks)", ans),
-            )
-            if sum(1 for p in practice_pairs if "Solve / balance:" in p[0]) >= 3:
+            ).strip()
+            balanced = str(
+                payload.get("balanced") or payload.get("balanced_equation") or ""
+            ).strip()
+            stem_c = re.sub(r"\s+", "", stem).lower()
+            bal_c = re.sub(r"\s+", "", balanced).lower()
+            if kind == "balance_equation" and balanced and stem_c == bal_c:
+                prompt = (
+                    f"This equation is balanced: {stem}. "
+                    "Name the products and show that atoms match on both sides. (3 marks)"
+                )
+            elif kind == "balance_equation":
+                prompt = f"Balance the equation: {stem} (3 marks)"
+            else:
+                prompt = f"Solve: {stem} (3 marks)"
+            practice_pairs.insert(0, (prompt, ans))
+            if sum(1 for p in practice_pairs if p[0].startswith(("Balance", "Solve", "This equation")) ) >= 3:
                 break
     except Exception:
         pass
@@ -1135,7 +1146,7 @@ def build_canonical_lesson(
                 ),
             ),
             (
-                "Distinguish series combination from parallel combination using ideas from the lesson. (5 marks)",
+                "Distinguish series combination from parallel combination. Give one clear difference. (5 marks)",
                 _mark_answer(
                     5,
                     _point_bank(board, "Series combination", claims)
@@ -1145,7 +1156,7 @@ def build_canonical_lesson(
             ),
             (
                 "An electric bulb is marked 220 V, 100 W. Explain what this means using "
-                "electric power ideas from the lesson. (6 marks)",
+                "electric power. (6 marks)",
                 _mark_answer(
                     6,
                     _point_bank(board, "Electric power", claims)
@@ -1157,7 +1168,7 @@ def build_canonical_lesson(
     elif len(hots_pairs) < 2 and metals:
         hots_pairs = [
             (
-                "Distinguish metals from non-metals using at least two physical properties from the lesson. (5 marks)",
+                "Distinguish metals from non-metals using at least two physical properties. (5 marks)",
                 _mark_answer(
                     5,
                     _point_bank(board, "Metal", claims)
@@ -1187,8 +1198,8 @@ def build_canonical_lesson(
     elif len(hots_pairs) < 2:
         hots_pairs = [
             (
-                f"Explain how {hots_anchor.lower()} and {hots_second.lower()} are different "
-                f"using ideas from this lesson. (5 marks)",
+                f"Explain how {hots_anchor} and {hots_second} are different. "
+                f"Give one clear point for each. (5 marks)",
                 _mark_answer(
                     5,
                     _point_bank(board, hots_anchor, claims)

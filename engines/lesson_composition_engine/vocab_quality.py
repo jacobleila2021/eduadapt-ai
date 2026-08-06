@@ -838,6 +838,7 @@ def filter_diagram_stages(
 ) -> list[str]:
     """Semantic filter for diagram nodes — drop unrelated / hallucinated labels."""
     blob = " ".join(str(c) for c in (claims or []))
+    topic_blob = f"{topic} {blob}".lower()
     out: list[str] = []
     seen: set[str] = set()
     for raw in stages:
@@ -845,20 +846,41 @@ def filter_diagram_stages(
         key = text.lower()
         if not text or key in seen or not is_diagram_stage(text, topic=topic, claim_blob=blob):
             continue
+        # Question stems / connector chrome never become diagram nodes.
+        if re.match(
+            r"(?i)^(can you|do you|for example|this property|reprint|gold is gold)\b",
+            text,
+        ):
+            continue
         seen.add(key)
         out.append(text)
         if len(out) >= limit:
             break
     # Prefer canonical water-cycle order when teaching that topic.
-    if any(k in f"{topic} {blob}".lower() for k in ("water cycle", "evaporat")):
+    if any(k in topic_blob for k in ("water cycle", "evaporat")):
         order = [t for t, _ in WATER_CYCLE_TERMS if t.lower() != "water cycle"]
         by = {n.lower(): n for n in out}
         ordered = [by[o.lower()] for o in order if o.lower() in by]
         rest = [n for n in out if n.lower() not in {x.lower() for x in ordered}]
         out = (ordered + rest)[:limit]
-    # Acids / Bases / Salts — seed CBSE teaching nodes when OCR left junk stages.
-    chem_blob = f"{topic} {blob}".lower()
-    if any(k in chem_blob for k in ("acid", "base", "salt", "litmus", "neutralis")):
+        return out
+    # Metals / non-metals — never seed Acid/Base taxonomy into this chapter.
+    if any(k in topic_blob for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil", "lustre", "luster")):
+        order = [t for t, _ in METALS_NONMETALS_TERMS][:limit]
+        by = {n.lower(): n for n in out}
+        ordered = [by[o.lower()] for o in order if o.lower() in by]
+        if len(ordered) < 3:
+            ordered = order
+        # Drop acid/base/salt nodes that leaked from neighbouring chapters.
+        rest = [
+            n
+            for n in out
+            if n.lower() not in {x.lower() for x in ordered}
+            and not re.search(r"(?i)\b(acid|base|salt|litmus|neutral)\b", n)
+        ]
+        return (ordered + rest)[:limit]
+    # Acids / Bases / Salts — only when this lesson is actually about them.
+    if any(k in topic.lower() for k in ("acid", "base", "salt", "litmus", "neutralis")):
         order = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:limit]
         by = {n.lower(): n for n in out}
         ordered = [by[o.lower()] for o in order if o.lower() in by]
@@ -879,6 +901,33 @@ def is_junk_term(term: str) -> bool:
     if key.endswith("'s") and key[:-2] in VOCAB_STOPWORDS:
         return True
     if re.fullmatch(r"\d+", key):
+        return True
+    # Question stems / connector chrome as "terms"
+    if re.match(
+        r"(?i)^(can you|do you|did you|what |why |how |name some|for example|"
+        r"this property|that property|reprint|gold is gold|extend|stretch)\b",
+        key,
+    ):
+        return True
+    if key in {
+        "for example",
+        "this property",
+        "that property",
+        "gold is gold",
+        "extend",
+        "stretch",
+        "challenge",
+        "cold",
+        "reprint",
+    }:
+        return True
+    if " is " in key and key.split(" is ", 1)[0].strip() == key.split(" is ", 1)[-1].strip():
+        return True  # "gold is gold"
+    if re.search(r"(?i)\breprint\b|\b\d{4}\s*[-–]\s*\d{2,4}\b", key):
+        return True
+    if key.endswith("?") or re.search(r"(?i)\b(that|these|those|which)$", key):
+        return True
+    if len(key.split()) > 6:
         return True
     # OCR crumbs: leading vowel missing ("evious"), or ALLCAPS fragment under 8 with no curriculum meaning
     if key in {"evious", "nderstanding", "hemical", "roperties"}:
