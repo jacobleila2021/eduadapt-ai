@@ -9,6 +9,7 @@ LLM (when used) is Educational Editor only — never curriculum author.
 from __future__ import annotations
 
 import copy
+import re
 from typing import Any, Mapping
 
 from engines.lesson_composition_engine.board_adaptations import compose_adaptation_from_board
@@ -554,6 +555,116 @@ def compose_vocabulary_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
     return page
 
 
+def _exam_display_term(name: str) -> str:
+    """Learner-facing term with natural article where needed."""
+    raw = str(name or "").strip()
+    if not raw:
+        return "this idea"
+    low = raw.lower()
+    if low.startswith(("a ", "an ", "the ")):
+        return raw
+    needs_the = {
+        "water cycle",
+        "water vapour",
+        "water vapor",
+        "electric current",
+        "electric circuit",
+        "potential difference",
+        "electric power",
+        "ohms law",
+        "ohm's law",
+    }
+    if low in needs_the or low.endswith(" cycle"):
+        return f"the {raw}"
+    return raw
+
+
+def _answer_mentions_term(answer: str, name: str) -> bool:
+    """True when the model answer is about the asked term (not a random pool fact)."""
+    ans = str(answer or "").lower()
+    term = str(name or "").strip().lower()
+    if not ans or not term:
+        return False
+    if term in ans:
+        return True
+    # Allow plural/singular light match on the head noun.
+    head = term.split()[-1]
+    return len(head) >= 4 and head in ans
+
+
+def _matched_answer_for_term(
+    name: str,
+    *,
+    explanation: str = "",
+    pool: list[str] | None = None,
+    topic: str = "",
+    want_example: bool = False,
+) -> str:
+    """Return a definition that belongs to ``name`` — never an unrelated pool line."""
+    from engines.lesson_composition_engine.vocab_quality import (
+        build_student_definition,
+        canonical_definition,
+        definition_from_claims,
+    )
+
+    pool = list(pool or [])
+    answer = (
+        canonical_definition(name)
+        or build_student_definition(name, explanation, topic=topic)
+        or definition_from_claims(name, pool)
+    )
+    if not answer:
+        answer = next(
+            (
+                str(p).strip()
+                for p in pool
+                if _answer_mentions_term(str(p), name) and len(str(p).split()) >= 5
+            ),
+            "",
+        )
+    if not answer or not _answer_mentions_term(answer, name):
+        return ""
+    if not answer.endswith((".", "!", "?")):
+        answer += "."
+    if want_example and not re.search(
+        r"(?i)\b(for example|e\.g\.|such as|like |everyday|puddle|rain|wire|foil)\b",
+        answer,
+    ):
+        # Deterministic everyday cues for common CBSE stages — never invent science.
+        examples = {
+            "evaporation": "For example, a puddle dries up on a sunny day.",
+            "condensation": "For example, tiny droplets form on a cold glass of water.",
+            "precipitation": "For example, rain falls from clouds onto the ground.",
+            "collection": "For example, rainwater gathers in a lake or river.",
+            "transpiration": "For example, water vapour leaves plant leaves into the air.",
+            "water cycle": "For example, ocean water evaporates, forms clouds, then returns as rain.",
+            "malleability": "For example, aluminium can be beaten into foil sheets.",
+            "ductility": "For example, copper can be drawn into electrical wire.",
+            "metal": "For example, iron and copper are used for tools and wires.",
+            "non-metal": "For example, oxygen and sulphur are non-metals.",
+            "resistance": "For example, a longer wire has more resistance than a shorter one of the same material.",
+            "ohm's law": "For example, if resistance doubles at constant voltage, current halves.",
+        }
+        cue = examples.get(str(name or "").strip().lower(), "")
+        if cue:
+            answer = f"{answer} {cue}"
+    return answer
+
+
+def _short_answer_prompt(name: str, *, index: int) -> tuple[str, int, bool]:
+    """CBSE-style Part A stem: (prompt, marks, wants_example)."""
+    display = _exam_display_term(name)
+    # Rotate forms so the sheet is not one cloned template.
+    form = index % 4
+    if form == 0:
+        return f"What is {display}?", 1, False
+    if form == 1:
+        return f"Define {display}.", 2, False
+    if form == 2:
+        return f"What is {display}? Give one example.", 2, True
+    return f"State the meaning of {display}.", 2, False
+
+
 def compose_worksheet_from_clg(
     clg: Mapping[str, Any],
     vocabulary: Mapping[str, Any] | None = None,
@@ -634,51 +745,93 @@ def compose_worksheet_from_clg(
         if isinstance(w, dict) and str(w.get("term") or "").strip() and not is_junk_term(str(w.get("term") or ""))
     ][:8]
 
-    # v3.3: every worksheet question must map back to a taught concept —
-    # anchor generic official hints ("Give one everyday example.") to the lesson.
-    import re as _re
-
+    # v3.3: every worksheet question must map back to a taught concept.
     concept_tokens: set[str] = set()
     for c in concepts:
-        concept_tokens.update(_re.findall(r"[a-z]{4,}", str((c or {}).get("name") or "").lower()))
-    concept_tokens.update(_re.findall(r"[a-z]{4,}", topic.lower()))
+        concept_tokens.update(re.findall(r"[a-z]{4,}", str((c or {}).get("name") or "").lower()))
+    concept_tokens.update(re.findall(r"[a-z]{4,}", topic.lower()))
     for fact in pool:
-        concept_tokens.update(_re.findall(r"[a-z]{4,}", str(fact).lower()))
+        concept_tokens.update(re.findall(r"[a-z]{4,}", str(fact).lower()))
 
     def _anchor_to_lesson(q: str) -> str:
-        if set(_re.findall(r"[a-z]{4,}", q.lower())) & concept_tokens:
+        if set(re.findall(r"[a-z]{4,}", q.lower())) & concept_tokens:
             return q
         anchor = str((concepts[0] or {}).get("name") or topic) if concepts else topic
-        return f"{q.rstrip('.?')} from this lesson on {anchor}."
+        return f"{q.rstrip('.?')} (use ideas about {anchor})."
 
     short = []
-    # Prefer textbook assessment prompts; then concept explainers.
+    # Prefer textbook assessment prompts; else CBSE-style What is / Define stems.
     textbook_assessments = [
         a
         for a in assessments
         if isinstance(a, dict) and str(a.get("prompt") or "").strip()
     ]
-    seed = textbook_assessments if textbook_assessments else (assessments + concepts)
-    for i, outcome in enumerate(seed[:10] or concepts[:8] or [{"name": topic}]):
+    # Teachable concept names we can answer honestly (definition must match the term).
+    teachable: list[dict[str, Any]] = []
+    for c in concepts:
+        nm = str(c.get("name") or "").strip()
+        if not nm or is_junk_term(nm):
+            continue
+        expl = str(c.get("explanation") or "")
+        if _matched_answer_for_term(nm, explanation=expl, pool=pool, topic=topic):
+            teachable.append(c)
+    if not teachable and terms:
+        for t in terms:
+            if is_junk_term(t):
+                continue
+            if _matched_answer_for_term(t, pool=pool, topic=topic):
+                teachable.append({"name": t, "explanation": ""})
+
+    seed: list[Any] = list(textbook_assessments[:8]) if textbook_assessments else []
+    if len(seed) < 6:
+        for c in teachable:
+            if len(seed) >= 8:
+                break
+            seed.append(c)
+
+    for i, outcome in enumerate(seed[:10] or [{"name": topic}]):
+        want_example = False
         if isinstance(outcome, dict) and outcome.get("prompt"):
             q = str(outcome["prompt"]).strip()
-            # Keep uploaded stems faithful — only lightly anchor empty generics.
             if len(q.split()) < 6:
                 q = _anchor_to_lesson(q)
             name = next(
                 (
                     str(c.get("name") or "")
-                    for c in concepts
+                    for c in (teachable or concepts)
                     if str(c.get("name") or "").lower() in q.lower()
                 ),
-                str((outcome or {}).get("name") or topic),
+                str((outcome or {}).get("name") or ""),
             )
-            marks = int(outcome.get("marks") or (3 if str(outcome.get("question_type") or "") == "numerical" else 2))
+            # Reject vague stems that name the wrong subject (clouds/plants as "explain X").
+            if not name or is_junk_term(name):
+                # Recover a teachable term from the stem, else skip.
+                name = next(
+                    (
+                        str(c.get("name") or "")
+                        for c in teachable
+                        if str(c.get("name") or "").lower() in q.lower()
+                    ),
+                    "",
+                )
+            if not name:
+                continue
+            marks = int(
+                outcome.get("marks")
+                or (3 if str(outcome.get("question_type") or "") == "numerical" else 2)
+            )
+            want_example = bool(
+                re.search(r"(?i)\b(example|everyday|one use|one instance)\b", q)
+            )
+            # Rewrite clone "Explain X. Give its meaning…" into CBSE forms.
+            if re.match(r"(?i)^explain\b", q) and "meaning" in q.lower():
+                q, marks, want_example = _short_answer_prompt(name, index=i)
         else:
-            name = str((outcome or {}).get("name") if isinstance(outcome, dict) else f"idea {i+1}")
-            q = f"Explain {name}. Give its meaning and one clear example."
-            marks = 2
-        # Phase 3 — computable stems use EngineResult; else wall/glossary prose.
+            name = str((outcome or {}).get("name") if isinstance(outcome, dict) else "")
+            if not name or is_junk_term(name):
+                continue
+            q, marks, want_example = _short_answer_prompt(name, index=i)
+        # Phase 3 — computable stems use EngineResult; else matched prose only.
         policy = verified_or_wall_answer(q, artifacts=artifacts, wall_prose="")
         if policy.get("source") == "engine_result" and policy.get("text"):
             answer = str(policy["text"])
@@ -686,52 +839,34 @@ def compose_worksheet_from_clg(
         elif policy.get("omitted") and looks_like_computable_stem(q):
             continue  # never invent a calculation on the exam sheet
         else:
-            answer = (
-                canonical_definition(name)
-                or build_student_definition(
-                    name,
-                    str((outcome or {}).get("explanation") or "")
-                    if isinstance(outcome, dict)
-                    else "",
-                    topic=topic,
-                )
-                or (pool[i % len(pool)] if pool else "")
+            expl = (
+                str((outcome or {}).get("explanation") or "")
+                if isinstance(outcome, dict)
+                else ""
+            )
+            answer = _matched_answer_for_term(
+                name,
+                explanation=expl,
+                pool=pool,
+                topic=topic,
+                want_example=want_example,
             )
             answer_source = str((outcome or {}).get("source") or "lesson")
-            if answer and answer.rstrip(".").lower() in q.lower():
-                answer = canonical_definition(name) or (
-                    pool[(i + 1) % len(pool)] if len(pool) > 1 else answer
-                )
-            if (
-                not answer
-                or "one of the ideas taught" in answer.lower()
-                or "say what it means" in answer.lower()
-                or "is a main idea in" in answer.lower()
+            if not answer and (
+                str((outcome or {}).get("question_type") or "") == "numerical"
+                or re.search(r"(?i)\b(calculate|determine|find|balance)\b", q)
             ):
-                if str((outcome or {}).get("question_type") or "") == "numerical" or _re.search(
-                    r"(?i)\b(calculate|determine|find)\b", q
-                ):
-                    engine_again = verified_or_wall_answer(q, artifacts=artifacts)
-                    if engine_again.get("source") == "engine_result" and engine_again.get("text"):
-                        answer = str(engine_again["text"])
-                        answer_source = "engine_result"
-                    else:
-                        answer = (
-                            canonical_definition("Ohm's law")
-                            or canonical_definition("Electric power")
-                            or canonical_definition(name)
-                            or (pool[i % len(pool)] if pool else "")
-                        )
-                if not answer:
-                    continue
-        # Strip scaffold chrome from uploaded stems.
-        q = _re.sub(r"(?i)\s+from (?:the|this) lesson\.?\s*$", ".", q).strip()
-        q = _re.sub(r"(?i)\s+using evidence from (?:the|this) lesson\.?\s*$", ".", q).strip()
+                engine_again = verified_or_wall_answer(q, artifacts=artifacts)
+                if engine_again.get("source") == "engine_result" and engine_again.get("text"):
+                    answer = str(engine_again["text"])
+                    answer_source = "engine_result"
+            if not answer:
+                continue
+        q = re.sub(r"(?i)\s+from (?:the|this) lesson\.?\s*$", ".", q).strip()
+        q = re.sub(r"(?i)\s+using evidence from (?:the|this) lesson\.?\s*$", ".", q).strip()
         short.append(
             {
-                "question": q
-                if not q.lower().startswith("in your own words, explain this idea")
-                else f"Explain {name}. Give its meaning and one clear example.",
+                "question": q,
                 "marks": marks,
                 "lines": 4 if marks <= 2 else 6,
                 "model_answer": answer[:420]
@@ -762,8 +897,8 @@ def compose_worksheet_from_clg(
             or kind.replace("_", " ")
         ).strip()
         balanced = str(payload.get("balanced") or payload.get("balanced_equation") or "").strip()
-        stem_compact = _re.sub(r"\s+", "", stem).lower()
-        bal_compact = _re.sub(r"\s+", "", balanced).lower()
+        stem_compact = re.sub(r"\s+", "", stem).lower()
+        bal_compact = re.sub(r"\s+", "", balanced).lower()
         # Never ask students to "balance" an equation that is already balanced.
         if kind == "balance_equation" and balanced and stem_compact == bal_compact:
             question = (
@@ -787,32 +922,46 @@ def compose_worksheet_from_clg(
         covered += " " + ans.lower()
         if len(short) >= 10:
             break
-    # Guarantee exam breadth — distinct concept prompts, never fact-echo fillers.
-    while len(short) < 6:
-        idx = len(short)
-        concept = concepts[idx % len(concepts)] if concepts else {"name": topic}
-        name = str(concept.get("name") or topic)
-        try:
-            from engines.lesson_composition_engine.vocab_quality import is_junk_term
-
-            if is_junk_term(name):
-                break
-        except Exception:
-            pass
-        answer = canonical_definition(name) or (pool[idx % len(pool)] if pool else "")
-        if not answer:
+    # Guarantee exam breadth from teachable terms only (matched answers).
+    used_names = {
+        str(row.get("question") or "").lower() for row in short
+    }
+    fill_idx = 0
+    while len(short) < 6 and teachable:
+        concept = teachable[fill_idx % len(teachable)]
+        fill_idx += 1
+        if fill_idx > len(teachable) * 2:
             break
+        name = str(concept.get("name") or "").strip()
+        if not name or is_junk_term(name):
+            continue
+        q, marks, want_example = _short_answer_prompt(name, index=len(short))
+        if q.lower() in used_names:
+            continue
+        answer = _matched_answer_for_term(
+            name,
+            explanation=str(concept.get("explanation") or ""),
+            pool=pool,
+            topic=topic,
+            want_example=want_example,
+        )
+        if not answer or not _answer_mentions_term(answer, name):
+            continue
+        used_names.add(q.lower())
         short.append(
             {
-                "question": f"Explain {name}. Give its meaning and one clear example.",
-                "marks": 2,
-                "lines": 4,
+                "question": q,
+                "marks": marks,
+                "lines": 4 if marks <= 2 else 6,
                 "model_answer": answer if answer.endswith((".", "!", "?")) else answer + ".",
+                "source": "lesson",
             }
         )
     long_q = []
-    for i, concept in enumerate(concepts[:4] or [{"name": topic}]):
+    for i, concept in enumerate((teachable or concepts)[:4] or [{"name": topic}]):
         name = str(concept.get("name") or topic)
+        if is_junk_term(name):
+            continue
         # Prefer deterministic curriculum definitions over OCR mush.
         canon = canonical_definition(name) or build_student_definition(
             name, str(concept.get("explanation") or ""), topic=topic
@@ -838,7 +987,10 @@ def compose_worksheet_from_clg(
                 continue
             if "one of the ideas taught" in key or "in this chapter" in key:
                 continue
-            if _re.search(r"(?i)\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b", cleaned):
+            if re.search(r"(?i)\bacids,\s*bases\s+and\s+salts\s+\d{1,3}\b", cleaned):
+                continue
+            if not _answer_mentions_term(cleaned, name) and cleaned != explanation:
+                # Keep only sentences that stay on this concept (plus the lead definition).
                 continue
             seen_parts.add(key)
             answer_parts.append(cleaned if cleaned.endswith((".", "!", "?")) else cleaned + ".")
@@ -847,14 +999,15 @@ def compose_worksheet_from_clg(
         if not answer_parts and canon:
             answer_parts = [canon]
         # Progressive demand: understanding → application across long answers.
+        display = _exam_display_term(name)
         if i == 1:
             prompt = (
-                f"Apply {name} to one everyday situation. "
+                f"Apply {display} to one everyday situation. "
                 f"State the meaning, give the example, and show each step."
             )
         else:
             prompt = (
-                f"Explain {name} in detail. "
+                f"Explain {display} in detail. "
                 f"Include its meaning, one clear example, and why it matters in {topic}."
             )
         model = _para(*answer_parts) if answer_parts else (canonical_definition(name) or "")
@@ -936,7 +1089,7 @@ def compose_worksheet_from_clg(
             {
                 "question": (
                     "An electric bulb is marked 220 V, 100 W. Explain what this means "
-                    "using electric power from the lesson."
+                    "using electric power."
                 ),
                 "marks": 5,
                 "lines": 8,
@@ -955,7 +1108,7 @@ def compose_worksheet_from_clg(
         metal_src = [
             a
             for a in textbook_assessments
-            if _re.search(
+            if re.search(
                 r"(?i)\b(malleab|ductil|non-?metal|mercury|magnesium|oxide|property|properties)\b",
                 str(a.get("prompt") or ""),
             )
@@ -965,19 +1118,19 @@ def compose_worksheet_from_clg(
                 prompt = str(row.get("prompt") or "").strip()
                 ans = (
                     canonical_definition("Non-metal")
-                    if _re.search(r"(?i)non-?metal", prompt)
+                    if re.search(r"(?i)non-?metal", prompt)
                     else (
                         canonical_definition("Malleability")
-                        if _re.search(r"(?i)malleab", prompt)
+                        if re.search(r"(?i)malleab", prompt)
                         else (
                             canonical_definition("Ductility")
-                            if _re.search(r"(?i)ductil", prompt)
+                            if re.search(r"(?i)ductil", prompt)
                             else (
                                 canonical_definition("Mercury")
-                                if _re.search(r"(?i)mercury", prompt)
+                                if re.search(r"(?i)mercury", prompt)
                                 else (
                                     canonical_definition("Metal oxide")
-                                    if _re.search(r"(?i)oxide|burns", prompt)
+                                    if re.search(r"(?i)oxide|burns", prompt)
                                     else metal
                                 )
                             )
@@ -1059,7 +1212,7 @@ def compose_worksheet_from_clg(
         textbook_hots = [
             a
             for a in textbook_assessments
-            if _re.search(
+            if re.search(
                 r"(?i)\b(why|how|compare|predict|distinguish|advantage|explain|list two)\b",
                 str(a.get("prompt") or ""),
             )
@@ -1067,7 +1220,7 @@ def compose_worksheet_from_clg(
         if textbook_hots:
             for row in textbook_hots:
                 prompt = str(row.get("prompt") or "").strip()
-                prompt = _re.sub(
+                prompt = re.sub(
                     r"(?i)\s+from (?:the|this) lesson\.?\s*$", ".", prompt
                 ).strip()
                 name = next(
@@ -1119,38 +1272,45 @@ def compose_worksheet_from_clg(
             )
 
     vocab_q = []
-    for t in terms[:6]:
-        if is_junk_term(t):
-            continue
-        answer = (
-            canonical_definition(t)
-            or definition_from_claims(t, pool)
-            or build_student_definition(t, "", topic=topic)
-        )
-        if not answer or "key idea" in answer.lower() or "is taught in this lesson" in answer.lower():
-            answer = next(
-                (p for p in pool if t.lower() in str(p).lower() and len(str(p).split()) >= 5),
-                "",
-            )
+    vocab_terms = [
+        t for t in terms[:8] if t and not is_junk_term(t)
+    ] or [
+        str(c.get("name") or "")
+        for c in teachable[:6]
+        if str(c.get("name") or "").strip()
+    ]
+    for i, t in enumerate(vocab_terms[:6]):
+        answer = _matched_answer_for_term(t, pool=pool, topic=topic, want_example=False)
         if not answer:
             continue
+        display = _exam_display_term(t)
+        # Part D = definition recall (What is / Define), not sentence-writing drills.
+        if i % 2 == 0:
+            prompt = f"What is {display}?"
+            marks = 1
+        else:
+            prompt = f"Define {display}."
+            marks = 2
         vocab_q.append(
             {
-                "question": f"Write one correct sentence that uses the term {t}.",
-                "marks": 2,
+                "question": prompt,
+                "marks": marks,
                 "model_answer": str(answer).rstrip(".") + ".",
                 "bloom": "recall",
             }
         )
-    if not vocab_q:
-        vocab_q = [
-            {
-                "question": f"Define a key term from {topic}.",
-                "marks": 2,
-                "model_answer": pool[0] if pool else f"State the lesson definition of a key term in {topic}.",
-                "bloom": "recall",
-            }
-        ]
+    if not vocab_q and teachable:
+        t = str(teachable[0].get("name") or topic)
+        answer = _matched_answer_for_term(t, pool=pool, topic=topic)
+        if answer:
+            vocab_q = [
+                {
+                    "question": f"What is {_exam_display_term(t)}?",
+                    "marks": 1,
+                    "model_answer": answer,
+                    "bloom": "recall",
+                }
+            ]
 
     from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
     from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
