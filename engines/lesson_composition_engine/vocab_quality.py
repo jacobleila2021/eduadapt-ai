@@ -856,14 +856,31 @@ def filter_diagram_stages(
         out.append(text)
         if len(out) >= limit:
             break
-    # Prefer canonical water-cycle order when teaching that topic.
-    if any(k in topic_blob for k in ("water cycle", "evaporat")):
-        order = [t for t, _ in WATER_CYCLE_TERMS if t.lower() != "water cycle"]
+    # Water cycle — canonical process stages only (never topic name / clouds / plants).
+    if any(k in topic_blob for k in ("water cycle", "evaporat", "condens", "precipitat")):
+        order = [
+            "Evaporation",
+            "Condensation",
+            "Precipitation",
+            "Collection",
+            "Transpiration",
+        ]
         by = {n.lower(): n for n in out}
         ordered = [by[o.lower()] for o in order if o.lower() in by]
-        rest = [n for n in out if n.lower() not in {x.lower() for x in ordered}]
-        out = (ordered + rest)[:limit]
-        return out
+        if len(ordered) < 3:
+            ordered = order
+        return ordered[:limit]
+    # Electricity — canonical circuit concepts only.
+    if any(
+        k in topic_blob
+        for k in ("electric", "ohm", "circuit", "resistance", "potential difference", "ampere")
+    ):
+        order = [t for t, _ in ELECTRICITY_TERMS][:limit]
+        by = {n.lower(): n for n in out}
+        ordered = [by[o.lower()] for o in order if o.lower() in by]
+        if len(ordered) < 3:
+            ordered = order
+        return ordered[:limit]
     # Metals / non-metals — never seed Acid/Base taxonomy into this chapter.
     if any(k in topic_blob for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil", "lustre", "luster")):
         order = [t for t, _ in METALS_NONMETALS_TERMS][:limit]
@@ -871,14 +888,7 @@ def filter_diagram_stages(
         ordered = [by[o.lower()] for o in order if o.lower() in by]
         if len(ordered) < 3:
             ordered = order
-        # Drop acid/base/salt nodes that leaked from neighbouring chapters.
-        rest = [
-            n
-            for n in out
-            if n.lower() not in {x.lower() for x in ordered}
-            and not re.search(r"(?i)\b(acid|base|salt|litmus|neutral)\b", n)
-        ]
-        return (ordered + rest)[:limit]
+        return ordered[:limit]
     # Acids / Bases / Salts — only when this lesson is actually about them.
     if any(k in topic.lower() for k in ("acid", "base", "salt", "litmus", "neutralis")):
         order = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:limit]
@@ -886,8 +896,7 @@ def filter_diagram_stages(
         ordered = [by[o.lower()] for o in order if o.lower() in by]
         if len(ordered) < 3:
             ordered = order
-        rest = [n for n in out if n.lower() not in {x.lower() for x in ordered}]
-        out = (ordered + rest)[:limit]
+        return ordered[:limit]
     return out
 
 
@@ -902,10 +911,14 @@ def is_junk_term(term: str) -> bool:
         return True
     if re.fullmatch(r"\d+", key):
         return True
-    # Question stems / connector chrome as "terms"
+    # Question stems / connector chrome / OCR sentence fragments as "terms"
     if re.match(
         r"(?i)^(can you|do you|did you|what |why |how |name some|for example|"
-        r"this property|that property|reprint|gold is gold|extend|stretch)\b",
+        r"this property|that property|reprint|gold is gold|extend|stretch|"
+        r"in other words|in many practical|if one end|if the|if a|"
+        r"when the|when a|when we|its si|its unit|solution we|"
+        r"we are given|small quantities|one end of|as shown|as follows|"
+        r"consider|suppose|let us|that is|therefore|hence)\b",
         key,
     ):
         return True
@@ -919,8 +932,31 @@ def is_junk_term(term: str) -> bool:
         "challenge",
         "cold",
         "reprint",
+        "in other words",
+        "solution we",
+        "its si unit",
+        "clouds",
+        "plants",
     }:
         return True
+    if re.search(r"(?i)\b(it|the|a|an|of|to|for|and|or|we|is|are)$", key) and len(key.split()) <= 5:
+        # Sentence-opening fragments used as titles ("If one end of the tube")
+        if key.split()[0] in {
+            "if",
+            "when",
+            "while",
+            "because",
+            "although",
+            "since",
+            "as",
+            "in",
+            "its",
+            "this",
+            "that",
+            "these",
+            "those",
+        }:
+            return True
     if " is " in key and key.split(" is ", 1)[0].strip() == key.split(" is ", 1)[-1].strip():
         return True  # "gold is gold"
     if re.search(r"(?i)\breprint\b|\b\d{4}\s*[-–]\s*\d{2,4}\b", key):

@@ -151,8 +151,15 @@ def _lookup_answer(answer_key: list, ref: str) -> str:
 def _show_answer_button(label: str, answer: str, key: str, *, exam_style: bool = False) -> None:
     if not answer:
         return
-    reveal_key = f"revealed_{key}"
-    if st.button(f"Show Answer — {label}", key=f"btn_{key}", type="secondary"):
+    import hashlib
+
+    # Streamlit forbids duplicate widget keys across Parts A–D / adaptations.
+    digest = hashlib.sha1(
+        f"{key}|{label}|{answer[:80]}".encode("utf-8", errors="ignore")
+    ).hexdigest()[:12]
+    widget_key = f"btn_{digest}"
+    reveal_key = f"revealed_{digest}"
+    if st.button(f"Show Answer — {label}", key=widget_key, type="secondary"):
         st.session_state[reveal_key] = True
     if st.session_state.get(reveal_key):
         if exam_style:

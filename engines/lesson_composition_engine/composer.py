@@ -875,9 +875,25 @@ def compose_worksheet_from_clg(
                 "source": answer_source,
             }
         )
-    # Surface every verified STEM artifact as Part A when not already covered.
+    # Surface verified STEM artifacts as Part A only when they match this lesson.
     from engines.lesson_pipeline import format_engine_answer
 
+    topic_l = (topic or "").lower()
+    lesson_blob = " ".join(
+        [
+            topic_l,
+            " ".join(str(c.get("name") or "") for c in teachable),
+            " ".join(str(row.get("question") or "") for row in short),
+        ]
+    ).lower()
+    # Word boundaries — never treat "meaning" as a statistics cue.
+    stats_ok = bool(
+        re.search(
+            r"(?i)\b(median|quartile|statistics|data\s*set|standard\s+deviation|"
+            r"mean\b|mode\b)\b",
+            lesson_blob,
+        )
+    )
     covered = " ".join(str(row.get("model_answer") or "") for row in short).lower()
     for art in artifacts:
         if not isinstance(art, dict) or not art.get("ok"):
@@ -885,6 +901,16 @@ def compose_worksheet_from_clg(
         kind = str(art.get("task_kind") or "")
         if kind not in {"balance_equation", "solve_math", "calculate_force", "statistics"}:
             continue
+        # Never inject unrelated statistics EngineResults into science lessons.
+        if kind == "statistics" and not stats_ok:
+            continue
+        if kind == "solve_math" and any(
+            k in topic_l for k in ("electric", "water cycle", "metal", "acid", "circuit", "ohm")
+        ):
+            # Math solver noise (random data sets) must not appear in science exams.
+            payload_preview = str(art.get("payload") or {}).lower()
+            if any(k in payload_preview for k in ("mean", "median", "mode", "std", "variance", "iqr")):
+                continue
         ans = format_engine_answer(art)
         if not ans or ans.lower()[:40] in covered:
             continue

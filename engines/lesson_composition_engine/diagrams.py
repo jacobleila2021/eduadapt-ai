@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import html
 import math
+import re
 from typing import Any
 
 NAVY = "#0B3C5D"
@@ -67,6 +68,25 @@ def _text_block(x: float, y: float, lines: list[str], *, fill: str = INK, size: 
     return "".join(parts)
 
 
+def _display_topic(topic: str, stages: list[str] | None = None) -> str:
+    """Reject truncated OCR titles like 'Lesson — Ld' for diagram headers."""
+    raw = re.sub(r"\s+", " ", str(topic or "").strip())
+    if not raw or len(raw) < 4:
+        raw = ""
+    # Cut-off chapter crumbs ("Lesson — Ld", "Chapter 1 — El")
+    if re.search(r"(?i)\b(lesson|chapter|unit)\b.*[-–—]\s*[A-Za-z]{1,3}$", raw):
+        raw = ""
+    if re.fullmatch(r"(?i)lesson|chapter|untitled|topic", raw or ""):
+        raw = ""
+    if raw:
+        return raw[:72]
+    for stage in stages or []:
+        label = str(stage or "").strip()
+        if label and len(label) > 3:
+            return label
+    return "Key ideas"
+
+
 def build_educational_flowchart_svg(
     topic: str,
     stages: list[str],
@@ -77,6 +97,7 @@ def build_educational_flowchart_svg(
     nodes = [str(s).strip() for s in stages if str(s).strip()][:8]
     if not nodes:
         nodes = ["Explore", "Explain", "Practise", "Apply"]
+    title = _display_topic(topic, nodes)
     width = 420
     top = 56
     gap = 78
@@ -86,10 +107,10 @@ def build_educational_flowchart_svg(
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'viewBox="0 0 {width} {height}" role="img" '
-        f'aria-label="{_esc(topic)} flowchart">'
+        f'aria-label="{_esc(title)} flowchart">'
         f'<rect width="100%" height="100%" fill="#FFF9EE"/>'
         f'<text x="{cx}" y="28" text-anchor="middle" font-family="{FONT}" '
-        f'font-size="18" font-weight="700" fill="{NAVY}">{_esc(topic)}</text>'
+        f'font-size="18" font-weight="700" fill="{NAVY}">{_esc(title)}</text>'
         f'<text x="{cx}" y="46" text-anchor="middle" font-family="{UI_FONT}" '
         f'font-size="11" fill="{MUTED}">{_esc(subtitle)}</text>'
     ]

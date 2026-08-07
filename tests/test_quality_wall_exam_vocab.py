@@ -25,10 +25,26 @@ def test_junk_question_titles_rejected():
         "GOLD IS GOLD", idea="Gold is Gold is the most ductile metal."
     ) == "Gold"
     assert normalize_wall_title("Understanding Evaporation") == "Evaporation"
+    # OCR sentence fragments must never become Lesson Wall titles
+    assert normalize_wall_title("IN OTHER WORDS", idea="In other words is V = IR.") == ""
+    assert normalize_wall_title("SOLUTION WE", idea="Solution We are given, I = 0.") == ""
+    assert normalize_wall_title(
+        "IF ONE END OF THE TUBE",
+        idea="If one end of the tube is connected to a tank of water…",
+    ) == ""
+    assert normalize_wall_title("ITS SI UNIT", idea="Its SI unit is ohm.") == ""
+    assert normalize_wall_title(
+        "IN MANY PRACTICAL CASES IT",
+        idea="In many practical cases it is necessary to increase current.",
+    ) == ""
     assert is_junk_term("Can you name some metals that")
     assert is_junk_term("GOLD IS GOLD")
     assert is_junk_term("For example")
     assert is_junk_term("Extend")
+    assert is_junk_term("In other words")
+    assert is_junk_term("Solution We")
+    assert is_junk_term("clouds")
+    assert is_junk_term("plants")
 
 
 def test_clean_wall_idea_fixes_gold_is_gold():
@@ -84,6 +100,41 @@ def test_eight_mark_answers_are_multi_sentence():
         assert "from the lesson" not in row["question"].lower()
         assert len(str(row["model_answer"]).split()) >= 24
         assert row["marks"] == 8
+        ans = str(row["model_answer"]).lower()
+        # Focused: answer must centre on the asked concept, not dump the whole cycle.
+        title = ""
+        for card in wall:
+            if card["title"].lower() in str(row["question"]).lower():
+                title = card["title"].lower()
+                break
+        if title:
+            assert title in ans
+            # Near-duplicate vapour/vapor lines must not appear twice.
+            assert ans.count("liquid water") <= 1
+
+
+def test_water_cycle_diagram_is_canonical_only():
+    stages = filter_diagram_stages(
+        [
+            "water cycle",
+            "condensation",
+            "precipitation",
+            "collection",
+            "clouds",
+            "plants",
+            "evaporation",
+        ],
+        topic="The Water Cycle",
+        claims=["The water cycle moves water through evaporation and precipitation."],
+        limit=6,
+    )
+    blob = " ".join(stages).lower()
+    assert "clouds" not in blob
+    assert "plants" not in blob
+    assert "water cycle" not in blob
+    assert stages[0].lower() == "evaporation"
+    assert "condensation" in blob
+    assert "precipitation" in blob
 
 
 def test_vocab_terms_skip_junk_wall_titles():
@@ -114,4 +165,29 @@ def test_metals_diagram_does_not_seed_acid_base():
     blob = " ".join(stages).lower()
     assert "acid" not in blob
     assert "base" not in blob
-    assert any(k in blob for k in ("metal", "malleab", "ductil", "lustre", "non-metal", "gold"))
+    assert any(k in blob for k in ("metal", "malleab", "ductil", "lustre", "non-metal"))
+
+
+def test_electricity_wall_rejects_ocr_fragments_and_seeds_bank():
+    from engines.lesson_composition_engine.dynamic_teaching_bank import ensure_wall_from_bank
+
+    junk_wall = [
+        {
+            "title": "IN OTHER WORDS",
+            "idea": "In other words is V ∝ I (11.4) or V/I = constant = Ror V = IR (11.",
+        },
+        {
+            "title": "SOLUTION WE",
+            "idea": "Solution We are given, I = 0.",
+        },
+        {
+            "title": "IF ONE END OF THE TUBE",
+            "idea": "If one end of the tube is connected to a tank of water kept at a higher level.",
+        },
+    ]
+    filled = ensure_wall_from_bank(junk_wall, [], topic="Electricity", min_cards=3)
+    titles = {c["title"].lower() for c in filled}
+    assert "in other words" not in titles
+    assert "solution we" not in titles
+    assert len(filled) >= 3
+    assert any("current" in t or "ohm" in t or "resistance" in t or "circuit" in t for t in titles)

@@ -586,6 +586,8 @@ _WEAK_WALL_BITS = (
 
 
 def _wall_card_is_weak(card: Mapping[str, str]) -> bool:
+    from engines.lesson_composition_engine.lesson_wall import is_teachable_wall_card
+
     idea = str(card.get("idea") or card.get("body") or "").strip().lower()
     title = str(card.get("title") or "").strip().lower()
     if not idea or len(idea.split()) < 6:
@@ -593,6 +595,8 @@ def _wall_card_is_weak(card: Mapping[str, str]) -> bool:
     if any(k in idea for k in _WEAK_WALL_BITS) or any(k in title for k in _WEAK_WALL_BITS):
         return True
     if is_ocr_garbage_claim(idea) or is_teacher_facing_text(idea):
+        return True
+    if not is_teachable_wall_card(card):
         return True
     return False
 
@@ -605,10 +609,16 @@ def ensure_wall_from_bank(
     min_cards: int = 3,
 ) -> list[dict[str, str]]:
     """Prefer teachable wall cards; replace OCR chrome / fill gaps from bank."""
+    from engines.lesson_composition_engine.lesson_wall import (
+        dedupe_lesson_wall,
+        seed_curriculum_wall_cards,
+    )
+
     current = [dict(c) for c in (wall or []) if str(c.get("title") or "").strip()]
+    current = dedupe_lesson_wall(current)
     bank_cards = wall_cards_from_bank(bank, topic=topic, limit=12)
     if not bank_cards:
-        return current[:12]
+        bank_cards = seed_curriculum_wall_cards(topic, limit=12)
 
     # Drop weak / chrome clones; keep strong Master cards.
     strong = [c for c in current if not _wall_card_is_weak(c)]
@@ -629,11 +639,19 @@ def ensure_wall_from_bank(
         return strong[:12]
 
     # Thin or chrome-heavy wall — bank leads; keep leftover strong cards.
-    filled = list(bank_cards)
+    filled = list(bank_cards) if bank_cards else seed_curriculum_wall_cards(topic, limit=12)
     have = {c["title"].lower() for c in filled}
     for card in strong:
         key = str(card.get("title") or "").lower()
         if key and key not in have:
             filled.append(card)
             have.add(key)
+    if len(filled) < min_cards:
+        for card in seed_curriculum_wall_cards(topic, limit=12):
+            key = card["title"].lower()
+            if key not in have:
+                filled.append(card)
+                have.add(key)
+            if len(filled) >= min_cards:
+                break
     return filled[:12]

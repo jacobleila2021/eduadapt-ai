@@ -36,12 +36,22 @@ _JUNK_TITLE_RE = re.compile(
     r"name (?:some|the)|think of|look at|observe|"
     r"for example|this property|that property|reprint|"
     r"activity|caution|exercise|questions?|objectives?|"
-    r"warm[\s-]?up"
+    r"warm[\s-]?up|"
+    # Textbook sentence fragments that OCR turns into "concept" titles
+    r"in other words|in many practical|if one end|if the|if a|"
+    r"when the|when a|when we|its si|its unit|solution we|"
+    r"we are given|small quantities|one end of|as shown|as follows|"
+    r"consider|suppose|let us|that is|therefore|hence|"
+    r"in the next|on the other|to summarise|to summarize"
     r")\b"
 )
 _CHROME_TITLE_RE = re.compile(
     r"(?i)\b(?:reprint|ncert|cbse|\d{4}\s*[-–]\s*\d{2,4}|page\s*\d+)\b"
 )
+_FRAGMENT_TAIL_RE = re.compile(
+    r"(?i)\b(it|the|a|an|of|to|for|and|or|we|is|are|that|this|these|those)$"
+)
+_PRONOUN_TITLE_RE = re.compile(r"(?i)^(its|this|that|these|those|our|their)\b")
 
 _SKIP_ROLES = frozenset(
     {
@@ -76,6 +86,26 @@ def _plain(text: str) -> str:
     return raw
 
 
+def _recover_concept_from_idea(idea: str) -> str:
+    """Best short concept name from a teaching sentence (definitional opener only)."""
+    idea_l = _plain(idea)
+    if not idea_l:
+        return ""
+    cm = re.match(
+        r"(?i)^([A-Z][A-Za-z0-9][A-Za-z0-9'/\- ]{1,40}?)\s+(?:is|are|means)\b",
+        idea_l,
+    )
+    if not cm:
+        return ""
+    cand = cm.group(1).strip()
+    # Reject recovered fragments too ("In other words is…")
+    if _JUNK_TITLE_RE.match(cand) or _PRONOUN_TITLE_RE.match(cand) or _FRAGMENT_TAIL_RE.search(cand):
+        return ""
+    if len(cand.split()) > 4:
+        return ""
+    return cand
+
+
 def normalize_wall_title(title: str, *, idea: str = "") -> str:
     """Turn section chrome into a short teachable concept name (or '')."""
     raw = _plain(title)
@@ -89,16 +119,18 @@ def normalize_wall_title(title: str, *, idea: str = "") -> str:
     if m:
         raw = m.group(1).strip()
     low = raw.lower().rstrip(".?!")
-    if low in _NON_TERM_TITLES or _JUNK_TITLE_RE.match(raw) or _CHROME_TITLE_RE.search(raw):
-        # Try to recover a concept noun from the teaching sentence.
-        idea_l = _plain(idea)
-        cm = re.match(
-            r"(?i)^([A-Z][A-Za-z0-9][A-Za-z0-9\- ]{1,40}?)\s+(?:is|are|means)\b",
-            idea_l,
-        )
-        if cm:
-            raw = cm.group(1).strip()
-        else:
+    bad = (
+        low in _NON_TERM_TITLES
+        or bool(_JUNK_TITLE_RE.match(raw))
+        or bool(_CHROME_TITLE_RE.search(raw))
+        or bool(_PRONOUN_TITLE_RE.match(raw))
+        or bool(_FRAGMENT_TAIL_RE.search(raw))
+        or raw.endswith(("…", "..."))
+        or bool(re.search(r"(?i)\b(ror|∝|\d+\.\d+)\b", raw))  # OCR maths debris
+    )
+    if bad:
+        raw = _recover_concept_from_idea(idea)
+        if not raw:
             return ""
     if raw.endswith("?"):
         return ""
@@ -106,8 +138,13 @@ def normalize_wall_title(title: str, *, idea: str = "") -> str:
     if re.search(r"(?i)\b(that|these|those|which|who)$", raw):
         return ""
     words = raw.split()
-    if len(words) > 6 or len(words) < 1:
+    # Real concept names are short noun phrases — not sentence openings.
+    if len(words) > 5 or len(words) < 1:
         return ""
+    # Reject titles that are clearly the start of a clause (capitalised mid-sentence OCR).
+    if words[0].lower() in {"if", "when", "while", "because", "although", "since", "as"}:
+        recovered = _recover_concept_from_idea(idea)
+        return normalize_wall_title(recovered, idea="") if recovered else ""
     try:
         from engines.lesson_composition_engine.vocab_quality import is_junk_term
 
@@ -131,11 +168,21 @@ def clean_wall_idea(idea: str, *, title: str = "") -> str:
         r"\1 is",
         text,
     )
+    text = re.sub(r"(?i)^in other words is\s+", "", text)
     text = re.sub(r"(?i)^for example is\s+", "For example, ", text)
     text = re.sub(r"(?i)^extend is\s+extend is\s+", "", text)
     text = re.sub(r"(?i)^extend is\s+", "", text)
+    text = re.sub(r"(?i)^solution we\b", "We", text)
+    text = re.sub(r"(?i)\bRor\b", "R or", text)
     text = re.sub(r"(?i)\breprint\s+\d{4}.*$", "", text).strip()
     text = re.sub(r"(?i)\bI\s+n\s+Class\b", "In Class", text)
+    # Drop unfinished equation debris / cut-off parentheses from OCR.
+    if re.search(r"\(\d+\.\s*$", text) or re.search(r"(?i)=\s*ror\b", text):
+        text = re.sub(r"\s*\(\d+\.?\s*$", "", text).strip()
+        text = re.sub(r"(?i)\bror\b", "R or", text)
+    # Incomplete worked-solution crumbs are not teaching cards.
+    if re.match(r"(?i)^we are given\b", text) and len(text.split()) < 12:
+        return ""
     # Drop pure question cards (wall teaches answers, not stems).
     if text.endswith("?") and len(text.split()) < 18:
         return ""
@@ -291,38 +338,87 @@ def wall_vocab_terms(wall: list[Mapping[str, str]], *, topic: str = "") -> list[
     return rows[:12]
 
 
-def _mark8_answer(primary: Mapping[str, str], support: list[Mapping[str, str]], *, topic: str) -> str:
-    """Build a multi-sentence 8-mark answer from wall cards (never one-liners)."""
-    parts: list[str] = []
+_MARK8_EXAMPLES = {
+    "evaporation": "For example, a puddle dries up on a sunny day.",
+    "condensation": "For example, tiny water droplets form on a cold glass.",
+    "precipitation": "For example, rain falls from clouds onto the ground.",
+    "collection": "For example, rainwater gathers in a lake, river, or ocean.",
+    "transpiration": "For example, water vapour leaves a plant's leaves into the air.",
+    "water cycle": "For example, ocean water evaporates, forms clouds, then returns as rain.",
+    "electric current": "For example, current flows through a torch bulb when the switch is on.",
+    "potential difference": "For example, a 1.5 V cell provides potential difference across a circuit.",
+    "resistance": "For example, a longer wire has more resistance than a shorter wire of the same material.",
+    "ohm's law": "For example, if resistance doubles at constant voltage, current halves.",
+    "malleability": "For example, aluminium can be beaten into thin foil sheets.",
+    "ductility": "For example, copper can be drawn into thin electrical wire.",
+}
+
+_MARK8_WHY = {
+    "evaporation": "It puts water into the air as vapour so condensation and clouds can form later.",
+    "condensation": "It forms tiny cloud droplets that can later fall as precipitation.",
+    "precipitation": "It returns water from clouds to the Earth's surface so the cycle can continue.",
+    "collection": "It stores water in rivers, lakes, and oceans so evaporation can start again.",
+    "transpiration": "It adds water vapour from plants into the air, feeding the water cycle.",
+    "electric current": "It is the flow that makes bulbs, heaters, and motors work in a circuit.",
+    "potential difference": "It is the driving 'push' that sets charges in motion in a conductor.",
+    "resistance": "It controls how much current flows for a given potential difference.",
+    "ohm's law": "It links voltage, current, and resistance so circuit values can be calculated.",
+}
+
+
+def _dedupe_answer_sentences(parts: list[str]) -> list[str]:
+    """Drop near-duplicate lines (vapour/vapor clones, bullet repeats)."""
+    out: list[str] = []
     seen: set[str] = set()
-    for card in [primary, *support]:
-        title = normalize_wall_title(
-            str(card.get("title") or ""),
-            idea=str(card.get("idea") or ""),
-        )
-        idea = clean_wall_idea(str(card.get("idea") or ""), title=title)
-        if not idea:
+    for part in parts:
+        text = re.sub(r"^[\s•\-]+", "", str(part or "")).strip()
+        if not text:
             continue
-        key = idea.lower()[:80]
-        if key in seen:
+        key = re.sub(r"[^a-z0-9]+", " ", text.lower())
+        key = key.replace("vapor", "vapour")
+        key = re.sub(r"\s+", " ", key).strip()[:90]
+        if not key or key in seen:
+            continue
+        # Near-clone: high token overlap with an existing sentence.
+        toks = set(key.split())
+        if any(
+            toks
+            and len(toks & set(prev.split())) / max(1, min(len(toks), len(set(prev.split()))))
+            >= 0.78
+            for prev in seen
+        ):
             continue
         seen.add(key)
-        parts.append(idea)
-        if len(parts) >= 4:
-            break
-    if not parts:
+        if not text.endswith((".", "!", "?")):
+            text += "."
+        out.append(text)
+    return out
+
+
+def _mark8_answer(primary: Mapping[str, str], support: list[Mapping[str, str]], *, topic: str) -> str:
+    """Focused 8-mark answer for ONE concept — never a dump of the whole wall."""
+    del support  # other wall cards must not pollute this answer
+    title = normalize_wall_title(
+        str(primary.get("title") or ""),
+        idea=str(primary.get("idea") or ""),
+    )
+    core = clean_wall_idea(str(primary.get("idea") or ""), title=title)
+    if not title or not core:
         return ""
-    topic_bit = f" in {topic}" if topic and topic.lower() not in parts[0].lower() else ""
-    if len(parts) == 1:
-        # Expand a single definition into exam-depth prose without inventing facts.
-        core = parts[0]
-        title = normalize_wall_title(str(primary.get("title") or ""), idea=core) or "This idea"
-        parts = [
-            core,
-            f"{title} connects to other ideas{topic_bit}: use the definition above and one clear everyday example when you write.",
-            f"In an exam answer, name {title}, state what it means, give one example, and say why it matters{topic_bit}.",
-        ]
-    return " ".join(parts)
+    key = title.lower()
+    example = _MARK8_EXAMPLES.get(key, "")
+    why = _MARK8_WHY.get(key, "")
+    topic_bit = topic.strip() if topic else "this topic"
+    parts = [
+        core,
+        example,
+        why
+        or (
+            f"{title} matters in {topic_bit} because it is one of the key ideas "
+            f"learners must explain with meaning and an everyday link."
+        ),
+    ]
+    return " ".join(_dedupe_answer_sentences(parts))
 
 
 def wall_long_answers(
@@ -347,19 +443,21 @@ def wall_long_answers(
     out: list[dict[str, Any]] = []
     for i, card in enumerate(cards):
         title = card["title"]
-        support = [c for j, c in enumerate(cards) if j != i][:3]
-        answer = _mark8_answer(card, support, topic=topic)
-        if not answer or len(answer.split()) < 24:
+        answer = _mark8_answer(card, [], topic=topic)
+        if not answer or len(answer.split()) < 20:
             continue
+        display = title
+        if title.lower() in {"water cycle", "electric current", "potential difference", "ohm's law"}:
+            display = f"the {title}"
         if i == 1:
             prompt = (
-                f"Apply {title} to one everyday situation. "
-                f"State the meaning, give the example, and show each step."
+                f"Apply {display} to one everyday situation. "
+                f"State the meaning, give one example, and show each step."
             )
         else:
             prompt = (
-                f"Explain {title} in detail. "
-                f"Include its meaning, one clear example, and why it matters"
+                f"Explain {display}. "
+                f"Give its meaning, one clear example, and why it matters"
                 f"{f' in {topic}' if topic else ''}."
             )
         out.append(
@@ -490,6 +588,40 @@ def apply_wall_definitions_to_vocab(
     page["word_wall"] = word_wall[:12]
     page["lesson_wall"] = [dict(c) for c in cards]
     return page
+
+
+def seed_curriculum_wall_cards(topic: str = "", *, limit: int = 6) -> list[dict[str, str]]:
+    """Fallback teachable cards from curated CBSE banks when OCR wall is junk."""
+    from engines.lesson_composition_engine.vocab_quality import (
+        ELECTRICITY_TERMS,
+        METALS_NONMETALS_TERMS,
+        WATER_CYCLE_TERMS,
+    )
+
+    topic_l = (topic or "").lower()
+    bank: list[tuple[str, str]] = []
+    if any(k in topic_l for k in ("water cycle", "evaporat", "precipitat", "condens")):
+        bank = [(t, d) for t, d in WATER_CYCLE_TERMS if t.lower() != "water cycle"]
+    elif any(k in topic_l for k in ("electric", "ohm", "circuit", "resistance", "current")):
+        bank = list(ELECTRICITY_TERMS)
+    elif any(k in topic_l for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil")):
+        bank = list(METALS_NONMETALS_TERMS)
+    out: list[dict[str, str]] = []
+    for i, (term, definition) in enumerate(bank[:limit]):
+        title = normalize_wall_title(term, idea=definition)
+        idea = clean_wall_idea(definition, title=title)
+        if not title or not idea:
+            continue
+        out.append(
+            {
+                "title": title,
+                "idea": idea,
+                "hex": "#2563EB",
+                "icon": f"{i + 1:02d}",
+                "source": "curriculum_bank",
+            }
+        )
+    return out
 
 
 def ensure_shared_lesson_wall(

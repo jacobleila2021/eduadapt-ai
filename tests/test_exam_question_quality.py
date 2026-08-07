@@ -122,3 +122,75 @@ def test_worksheet_part_a_and_d_quality():
             .replace("the ", "")
             .strip(" ?."),
         ) or len(str(row.get("model_answer") or "").split()) >= 5
+
+
+def test_statistics_artifact_not_injected_into_electricity_exam():
+    """STEM statistics noise must never appear as Show Answer in science lessons."""
+    sheet = compose_worksheet_from_clg(
+        {
+            "topic": "Electricity",
+            "subject_key": "science",
+            "claim_texts": [
+                "Electric current is the rate of flow of electric charge through a conductor.",
+                "Resistance is the property of a conductor that opposes current. Its SI unit is ohm.",
+            ],
+            "core_concepts": [
+                {
+                    "name": "Electric current",
+                    "explanation": "Electric current is the rate of flow of charge.",
+                },
+                {
+                    "name": "Resistance",
+                    "explanation": "Resistance opposes current; SI unit is ohm.",
+                },
+                {
+                    "name": "Ohm's law",
+                    "explanation": "Ohm's law: V = IR at constant temperature.",
+                },
+            ],
+            "assessment_outcomes": [],
+            "vocabulary": [{"term": "Electric current"}, {"term": "Resistance"}],
+            "stem_artifacts": [
+                {
+                    "ok": True,
+                    "task_kind": "statistics",
+                    "payload": {
+                        "input": "[12, 15, 14, 10, 18, 15, 11]",
+                        "result": {
+                            "mean": 13.57,
+                            "median": 14.0,
+                            "mode": 15.0,
+                        },
+                    },
+                }
+            ],
+        },
+        vocabulary={
+            "word_wall": [
+                {
+                    "term": "Electric current",
+                    "definition": "Electric current is the rate of flow of charge.",
+                }
+            ]
+        },
+        stem_artifacts=[
+            {
+                "ok": True,
+                "task_kind": "statistics",
+                "payload": {
+                    "input": "[12, 15, 14, 10, 18, 15, 11]",
+                    "result": {"mean": 13.57, "median": 14.0, "mode": 15.0},
+                },
+            }
+        ],
+    )
+    blob = " ".join(
+        f"{r.get('question')} {r.get('model_answer')}"
+        for r in (sheet.get("short_answer") or [])
+    ).lower()
+    assert "median" not in blob
+    assert "13.57" not in blob
+    assert "iqr" not in blob
+    assert "exact result" not in blob
+    assert "standard deviation" not in blob
+    assert "solve:" not in blob or "ohm" in blob  # no stats Solve: stems
