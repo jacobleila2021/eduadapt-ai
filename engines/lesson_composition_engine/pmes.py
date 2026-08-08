@@ -262,14 +262,21 @@ def _rewrite_from_comments(
         educational_meaning_preserved,
     )
 
+    from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
+
     topic = str(board.get("topic") or adaptation.get("topic") or "Lesson")
     subject = str(board.get("subject") or "general")
-    concepts = [
-        str(c.get("name") or "")
-        for c in (board.get("concepts") or [])
-        if isinstance(c, dict) and c.get("name")
-    ]
     claims = list(board.get("verified_claims") or [])
+    concepts = filter_diagram_stages(
+        [
+            str(c.get("name") or "")
+            for c in (board.get("concepts") or [])
+            if isinstance(c, dict) and c.get("name")
+        ],
+        topic=topic,
+        claims=[str(c) for c in claims],
+        limit=6,
+    )
     before = dict(adaptation)
     out = clarity_edit_adaptation(dict(adaptation), topic=topic)
 

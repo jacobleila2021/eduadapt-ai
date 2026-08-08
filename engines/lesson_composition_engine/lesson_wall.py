@@ -37,12 +37,14 @@ _JUNK_TITLE_RE = re.compile(
     r"for example|this property|that property|reprint|"
     r"activity|caution|exercise|questions?|objectives?|"
     r"warm[\s-]?up|"
-    # Textbook sentence fragments that OCR turns into "concept" titles
+    # Textbook / lab-manual fragments that OCR turns into "concept" titles
     r"in other words|in many practical|if one end|if the|if a|"
     r"when the|when a|when we|its si|its unit|solution we|"
     r"we are given|small quantities|one end of|as shown|as follows|"
     r"consider|suppose|let us|that is|therefore|hence|"
-    r"in the next|on the other|to summarise|to summarize"
+    r"in the next|on the other|to summarise|to summarize|"
+    r"take care|thus the|thus |no two|the wire|the field|the end|theend|"
+    r"see fig|cardboard|pointing towards"
     r")\b"
 )
 _CHROME_TITLE_RE = re.compile(
@@ -174,14 +176,21 @@ def clean_wall_idea(idea: str, *, title: str = "") -> str:
     text = re.sub(r"(?i)^extend is\s+", "", text)
     text = re.sub(r"(?i)^solution we\b", "We", text)
     text = re.sub(r"(?i)\bRor\b", "R or", text)
+    text = re.sub(r"(?i)\btheend\b", "The end", text)
     text = re.sub(r"(?i)\breprint\s+\d{4}.*$", "", text).strip()
     text = re.sub(r"(?i)\bI\s+n\s+Class\b", "In Class", text)
-    # Drop unfinished equation debris / cut-off parentheses from OCR.
+    # Drop unfinished equation debris / cut-off figure callouts from OCR.
+    text = re.sub(r"(?i)\s*\(see\s*fig\.?[^)]*$", "", text).strip()
     if re.search(r"\(\d+\.\s*$", text) or re.search(r"(?i)=\s*ror\b", text):
         text = re.sub(r"\s*\(\d+\.?\s*$", "", text).strip()
         text = re.sub(r"(?i)\bror\b", "R or", text)
+    # Lab-manual instructions are not teachable concept cards.
+    if re.match(r"(?i)^(take care|caution|note that|see fig)\b", text):
+        return ""
     # Incomplete worked-solution crumbs are not teaching cards.
     if re.match(r"(?i)^we are given\b", text) and len(text.split()) < 12:
+        return ""
+    if text.rstrip().endswith(("(see", "(see Fig", "(see fig")):
         return ""
     # Drop pure question cards (wall teaches answers, not stems).
     if text.endswith("?") and len(text.split()) < 18:
@@ -593,19 +602,27 @@ def apply_wall_definitions_to_vocab(
 def seed_curriculum_wall_cards(topic: str = "", *, limit: int = 6) -> list[dict[str, str]]:
     """Fallback teachable cards from curated CBSE banks when OCR wall is junk."""
     from engines.lesson_composition_engine.vocab_quality import (
+        ACIDS_BASES_SALTS_TERMS,
         ELECTRICITY_TERMS,
+        MAGNETISM_TERMS,
         METALS_NONMETALS_TERMS,
         WATER_CYCLE_TERMS,
+        is_electricity_topic,
+        is_magnetism_topic,
     )
 
     topic_l = (topic or "").lower()
     bank: list[tuple[str, str]] = []
     if any(k in topic_l for k in ("water cycle", "evaporat", "precipitat", "condens")):
         bank = [(t, d) for t, d in WATER_CYCLE_TERMS if t.lower() != "water cycle"]
-    elif any(k in topic_l for k in ("electric", "ohm", "circuit", "resistance", "current")):
+    elif is_magnetism_topic(topic):
+        bank = list(MAGNETISM_TERMS)
+    elif is_electricity_topic(topic):
         bank = list(ELECTRICITY_TERMS)
     elif any(k in topic_l for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil")):
         bank = list(METALS_NONMETALS_TERMS)
+    elif any(k in topic_l for k in ("acid", "base", "salt", "litmus")):
+        bank = list(ACIDS_BASES_SALTS_TERMS)
     out: list[dict[str, str]] = []
     for i, (term, definition) in enumerate(bank[:limit]):
         title = normalize_wall_title(term, idea=definition)

@@ -360,8 +360,13 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
         )
 
     from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+    from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
 
-    concept_names = [str(c.get("name") or "").strip() for c in concepts if str(c.get("name") or "").strip()]
+    concept_names = filter_diagram_stages(
+        [str(c.get("name") or "").strip() for c in concepts if str(c.get("name") or "").strip()],
+        topic=topic,
+        limit=6,
+    )
     # Prefer domain concept nodes over generic pedagogy stages (Concept→Phenomenon→…)
     if len(concept_names) >= 2:
         flowchart = build_educational_flowchart_svg(
@@ -371,7 +376,7 @@ def compose_standard_from_clg(clg: Mapping[str, Any]) -> dict[str, Any]:
         )
     else:
         flowchart = build_subject_flowchart(subject, topic)
-    concept_map = build_concept_map_svg(topic, concept_names or [str(c.get("name") or "") for c in concepts])
+    concept_map = build_concept_map_svg(topic, concept_names or [topic])
     visual_summary = [
         {"icon": "*", "color_name": "Teal", "idea": "Core concept"},
         {"icon": "*", "color_name": "Navy", "idea": "Practice"},
@@ -704,7 +709,22 @@ def compose_worksheet_from_clg(
                 have.add(term.lower())
             if len(concepts) >= 6:
                 break
-    if any(k in topic_low for k in ("electric", "ohm", "circuit", "resistance")) and len(concepts) < 4:
+    from engines.lesson_composition_engine.vocab_quality import (
+        is_electricity_topic,
+        is_magnetism_topic,
+    )
+
+    if is_magnetism_topic(topic) and len(concepts) < 4:
+        from engines.lesson_composition_engine.vocab_quality import MAGNETISM_TERMS
+
+        have = {str(c.get("name") or "").lower() for c in concepts}
+        for term, definition in MAGNETISM_TERMS:
+            if term.lower() not in have:
+                concepts.append({"name": term, "explanation": definition})
+                have.add(term.lower())
+            if len(concepts) >= 8:
+                break
+    elif is_electricity_topic(topic) and len(concepts) < 4:
         from engines.lesson_composition_engine.vocab_quality import ELECTRICITY_TERMS
 
         have = {str(c.get("name") or "").lower() for c in concepts}

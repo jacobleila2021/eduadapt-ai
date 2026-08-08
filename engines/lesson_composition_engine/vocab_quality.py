@@ -235,6 +235,50 @@ ELECTRICITY_TERMS = (
     ),
 )
 
+# CBSE Class 10 Science — Magnetic Effects of Electric Current.
+MAGNETISM_TERMS = (
+    (
+        "Magnetic field",
+        "A magnetic field is the region around a magnet or a current-carrying conductor "
+        "where a magnetic force can be detected.",
+    ),
+    (
+        "Magnetic field lines",
+        "Magnetic field lines are closed curves that show the direction of a magnetic field. "
+        "They leave the north pole and enter the south pole, and no two field lines cross.",
+    ),
+    (
+        "Magnetic poles",
+        "Every magnet has a north-seeking (north) pole and a south-seeking (south) pole. "
+        "Like poles repel and unlike poles attract.",
+    ),
+    (
+        "Compass",
+        "A magnetic compass needle aligns with Earth's magnetic field and points roughly "
+        "toward geographic north.",
+    ),
+    (
+        "Electromagnet",
+        "An electromagnet is made by passing current through a coil of wire on a soft iron core. "
+        "It behaves like a magnet only while the current flows.",
+    ),
+    (
+        "Solenoid",
+        "A solenoid is a long coil of many turns of insulated copper wire. "
+        "The field inside a current-carrying solenoid is nearly uniform and strong.",
+    ),
+    (
+        "Oersted's experiment",
+        "Oersted showed that a current-carrying wire deflects a nearby compass needle, "
+        "proving that electricity and magnetism are linked.",
+    ),
+    (
+        "Right-hand thumb rule",
+        "If the right-hand thumb points along the current in a straight conductor, "
+        "the curled fingers show the direction of the magnetic field around the wire.",
+    ),
+)
+
 # CBSE Metals and Non-metals (Class 8 / 10 Science) — Master Lesson teaching bank.
 METALS_NONMETALS_TERMS = (
     (
@@ -811,6 +855,46 @@ def picture_cue_for_term(term: str, *, definition: str = "") -> str:
     return f"Draw a simple classroom sketch that helps you remember what {display} means."
 
 
+def is_magnetism_topic(topic: str = "", claim_blob: str = "") -> bool:
+    blob = f"{topic} {claim_blob}".lower()
+    return any(
+        k in blob
+        for k in (
+            "magnetic",
+            "magnetism",
+            "magnet ",
+            "magnets",
+            "electromagnet",
+            "solenoid",
+            "field line",
+            "oersted",
+        )
+    )
+
+
+def is_electricity_topic(topic: str = "", claim_blob: str = "") -> bool:
+    """True for circuit/Ohm chapters — not Magnetic Effects of Electric Current."""
+    if is_magnetism_topic(topic, claim_blob):
+        return False
+    blob = f"{topic} {claim_blob}".lower()
+    return any(
+        k in blob
+        for k in (
+            "electricity",
+            "ohm",
+            "electric circuit",
+            "electric current",
+            "resistance",
+            "potential difference",
+            "kilowatt",
+            "heating effect",
+        )
+    ) or (
+        "electric" in blob
+        and not any(k in blob for k in ("magnetic", "magnetism", "magnet"))
+    )
+
+
 def is_diagram_stage(term: str, *, topic: str = "", claim_blob: str = "") -> bool:
     """True only for concepts safe to put on a flowchart / concept map."""
     raw = (term or "").strip()
@@ -820,10 +904,24 @@ def is_diagram_stage(term: str, *, topic: str = "", claim_blob: str = "") -> boo
     low = raw.lower()
     topic_l = (topic or "").lower()
     blob = f"{claim_blob} {topic_l}".lower()
-    # Water-cycle lessons: only scientific stages (never warm-up nouns).
+    # Water-cycle lessons: only scientific stages (never place nouns / topic name).
     if any(k in blob for k in ("water cycle", "evaporat", "condens", "precipitat")):
-        allowed = {t.lower() for t, _ in WATER_CYCLE_TERMS}
-        allowed |= {"runoff", "infiltration", "groundwater"}
+        allowed = {
+            "evaporation",
+            "condensation",
+            "precipitation",
+            "collection",
+            "transpiration",
+            "runoff",
+            "infiltration",
+            "groundwater",
+            "water vapour",
+            "water vapor",
+        }
+        if low not in allowed and not any(a in low or low in a for a in allowed):
+            return False
+    if is_magnetism_topic(topic, claim_blob):
+        allowed = {t.lower() for t, _ in MAGNETISM_TERMS}
         if low not in allowed and not any(a in low or low in a for a in allowed):
             return False
     return True
@@ -848,7 +946,8 @@ def filter_diagram_stages(
             continue
         # Question stems / connector chrome never become diagram nodes.
         if re.match(
-            r"(?i)^(can you|do you|for example|this property|reprint|gold is gold)\b",
+            r"(?i)^(can you|do you|for example|this property|reprint|gold is gold|"
+            r"take care|thus |the wire|no two|the field|the end)\b",
             text,
         ):
             continue
@@ -856,47 +955,27 @@ def filter_diagram_stages(
         out.append(text)
         if len(out) >= limit:
             break
-    # Water cycle — canonical process stages only (never topic name / clouds / plants).
+    # Water cycle — always publish the full scientific sequence (OCR never wins).
     if any(k in topic_blob for k in ("water cycle", "evaporat", "condens", "precipitat")):
-        order = [
+        return [
             "Evaporation",
             "Condensation",
             "Precipitation",
             "Collection",
             "Transpiration",
-        ]
-        by = {n.lower(): n for n in out}
-        ordered = [by[o.lower()] for o in order if o.lower() in by]
-        if len(ordered) < 3:
-            ordered = order
-        return ordered[:limit]
+        ][:limit]
+    # Magnetism — before electricity (topic often contains "electric current").
+    if is_magnetism_topic(topic, blob):
+        return [t for t, _ in MAGNETISM_TERMS][:limit]
     # Electricity — canonical circuit concepts only.
-    if any(
-        k in topic_blob
-        for k in ("electric", "ohm", "circuit", "resistance", "potential difference", "ampere")
-    ):
-        order = [t for t, _ in ELECTRICITY_TERMS][:limit]
-        by = {n.lower(): n for n in out}
-        ordered = [by[o.lower()] for o in order if o.lower() in by]
-        if len(ordered) < 3:
-            ordered = order
-        return ordered[:limit]
+    if is_electricity_topic(topic, blob):
+        return [t for t, _ in ELECTRICITY_TERMS][:limit]
     # Metals / non-metals — never seed Acid/Base taxonomy into this chapter.
     if any(k in topic_blob for k in ("metal", "non-metal", "nonmetal", "malleab", "ductil", "lustre", "luster")):
-        order = [t for t, _ in METALS_NONMETALS_TERMS][:limit]
-        by = {n.lower(): n for n in out}
-        ordered = [by[o.lower()] for o in order if o.lower() in by]
-        if len(ordered) < 3:
-            ordered = order
-        return ordered[:limit]
+        return [t for t, _ in METALS_NONMETALS_TERMS][:limit]
     # Acids / Bases / Salts — only when this lesson is actually about them.
     if any(k in topic.lower() for k in ("acid", "base", "salt", "litmus", "neutralis")):
-        order = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:limit]
-        by = {n.lower(): n for n in out}
-        ordered = [by[o.lower()] for o in order if o.lower() in by]
-        if len(ordered) < 3:
-            ordered = order
-        return ordered[:limit]
+        return [t for t, _ in ACIDS_BASES_SALTS_TERMS][:limit]
     return out
 
 
@@ -918,7 +997,9 @@ def is_junk_term(term: str) -> bool:
         r"in other words|in many practical|if one end|if the|if a|"
         r"when the|when a|when we|its si|its unit|solution we|"
         r"we are given|small quantities|one end of|as shown|as follows|"
-        r"consider|suppose|let us|that is|therefore|hence)\b",
+        r"consider|suppose|let us|that is|therefore|hence|"
+        r"take care|thus |hence |no two|the wire|the field|the end|theend|"
+        r"see fig|cardboard|pointing towards|field-lines)\b",
         key,
     ):
         return True
@@ -937,7 +1018,20 @@ def is_junk_term(term: str) -> bool:
         "its si unit",
         "clouds",
         "plants",
+        "atmosphere",
+        "oceans",
+        "the field",
+        "the wire xy",
+        "theend pointing towards north",
+        "no two field-lines",
+        "thus the magnetic field lines",
+        "take care that the cardboard",
     }:
+        return True
+    # Lab-manual crumbs / figure callouts are never vocabulary terms.
+    if re.search(r"(?i)\b(see fig|fig\.|cardboard|wire xy|take care)\b", key):
+        return True
+    if re.search(r"(?i)theend|field-lines$", key):
         return True
     if re.search(r"(?i)\b(it|the|a|an|of|to|for|and|or|we|is|are)$", key) and len(key.split()) <= 5:
         # Sentence-opening fragments used as titles ("If one end of the tube")
@@ -1011,6 +1105,12 @@ def clean_topic(topic: str, *, fallback: str = "Lesson Topic") -> str:
         head = t.split(":", 1)[0].strip()
         if len(head) >= 8:
             t = head
+    # Truncated OCR titles ("Magnetic Effects of", "Lesson — Ld")
+    t = re.sub(r"(?i)\s+\b(of|and|or|the|a|an|to|for|with|from)$", "", t).strip()
+    if re.search(r"(?i)\b(lesson|chapter|unit)\b.*[-–—]\s*[A-Za-z]{1,3}$", t):
+        return fallback
+    if len(t) < 6:
+        return fallback
     return t[:120]
 
 

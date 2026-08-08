@@ -194,10 +194,17 @@ def build_concept_map_svg(
     relationships: list[tuple[str, str, str]] | None = None,
 ) -> str:
     """Hierarchical radial concept map — or process cycle when the topic is cyclic."""
-    from engines.lesson_composition_engine.vocab_quality import clean_topic, is_junk_term
+    from engines.lesson_composition_engine.vocab_quality import (
+        clean_topic,
+        filter_diagram_stages,
+        is_junk_term,
+    )
 
     topic = clean_topic(topic, fallback="Lesson Topic")
-    nodes = [str(c).strip() for c in concepts if str(c).strip() and not is_junk_term(str(c))][:8]
+    raw_nodes = [str(c).strip() for c in concepts if str(c).strip() and not is_junk_term(str(c))]
+    nodes = filter_diagram_stages(raw_nodes, topic=topic, limit=8)
+    if not nodes:
+        nodes = filter_diagram_stages([], topic=topic, limit=8)
     low = topic.lower()
     node_keys = {n.lower() for n in nodes}
     waterish = any(
@@ -210,14 +217,22 @@ def build_concept_map_svg(
             return _water_cycle_visual_svg(topic)
         except Exception:  # noqa: BLE001
             pass
-    if any(k in low for k in ("cycle", "circulat", "life cycle")) or waterish:
+        return build_process_cycle_svg(
+            topic,
+            ["Evaporation", "Condensation", "Precipitation", "Collection", "Transpiration"][:6],
+        )
+    if any(k in low for k in ("cycle", "circulat", "life cycle")):
         cycle_nodes = nodes or ["Evaporation", "Condensation", "Precipitation", "Collection"]
-        # Prefer canonical order when present
-        preferred = ["Evaporation", "Condensation", "Precipitation", "Collection", "Runoff", "Transpiration"]
+        preferred = [
+            "Evaporation",
+            "Condensation",
+            "Precipitation",
+            "Collection",
+            "Transpiration",
+        ]
         ordered = [p for p in preferred if any(p.lower() == n.lower() for n in cycle_nodes)]
-        for n in cycle_nodes:
-            if not any(n.lower() == o.lower() for o in ordered):
-                ordered.append(n)
+        if len(ordered) < 3:
+            ordered = preferred
         return build_process_cycle_svg(topic, ordered[:6])
 
     if not nodes:

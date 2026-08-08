@@ -122,19 +122,71 @@ def test_water_cycle_diagram_is_canonical_only():
             "collection",
             "clouds",
             "plants",
-            "evaporation",
+            "atmosphere",
+            "oceans",
         ],
         topic="The Water Cycle",
         claims=["The water cycle moves water through evaporation and precipitation."],
         limit=6,
     )
     blob = " ".join(stages).lower()
+    assert stages == [
+        "Evaporation",
+        "Condensation",
+        "Precipitation",
+        "Collection",
+        "Transpiration",
+    ]
     assert "clouds" not in blob
     assert "plants" not in blob
+    assert "atmosphere" not in blob
+    assert "oceans" not in blob
     assert "water cycle" not in blob
-    assert stages[0].lower() == "evaporation"
-    assert "condensation" in blob
-    assert "precipitation" in blob
+
+
+def test_magnetism_wall_and_wheel_reject_lab_ocr():
+    from engines.lesson_composition_engine.dynamic_teaching_bank import ensure_wall_from_bank
+    from engines.lesson_composition_engine.diagrams import build_concept_map_svg
+
+    topic = "Magnetic Effects of Electric Current"
+    junk = [
+        {
+            "title": "Take care that the cardboard",
+            "idea": "Take care that the cardboard is fixed and does not slide up or down.",
+        },
+        {
+            "title": "The wire XY",
+            "idea": "The wire XY is kept perpendicular to the plane of paper.",
+        },
+        {
+            "title": "Thus the magnetic field lines",
+            "idea": "Thus the magnetic field lines are closed curves.",
+        },
+        {
+            "title": "Theend pointing towards north",
+            "idea": "Theend pointing towards north is called north seeking or north pole.",
+        },
+    ]
+    wall = ensure_wall_from_bank(junk, [], topic=topic, min_cards=3)
+    titles = " ".join(c["title"].lower() for c in wall)
+    assert "cardboard" not in titles
+    assert "wire xy" not in titles
+    assert "thus the" not in titles
+    assert any("magnetic" in c["title"].lower() or "field" in c["title"].lower() for c in wall)
+    # Wheel must not orbit lab crumbs; hub must not be truncated "Magnetic Effects of"
+    stages = filter_diagram_stages(
+        ["Take care that the cardboard", "The wire XY", "Electric circuit", "Potential difference"],
+        topic=topic,
+        limit=6,
+    )
+    assert all("cardboard" not in s.lower() and "wire" not in s.lower() for s in stages)
+    assert any("magnetic" in s.lower() or "solenoid" in s.lower() or "electromagnet" in s.lower() for s in stages)
+    svg = build_concept_map_svg(topic, ["Take care that the cardboard", "The field", "Electric circuit"])
+    low = svg.lower()
+    assert "cardboard" not in low
+    assert "the wire" not in low
+    assert "magnetic field" in low
+    assert "potential difference" not in low
 
 
 def test_vocab_terms_skip_junk_wall_titles():

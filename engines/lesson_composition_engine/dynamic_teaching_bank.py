@@ -616,9 +616,14 @@ def ensure_wall_from_bank(
 
     current = [dict(c) for c in (wall or []) if str(c.get("title") or "").strip()]
     current = dedupe_lesson_wall(current)
+    # Known CBSE chapters: curated bank is the Lesson Wall — OCR lab crumbs never win.
+    curriculum = seed_curriculum_wall_cards(topic, limit=12)
+    if len(curriculum) >= min_cards:
+        return curriculum[:12]
+
     bank_cards = wall_cards_from_bank(bank, topic=topic, limit=12)
     if not bank_cards:
-        bank_cards = seed_curriculum_wall_cards(topic, limit=12)
+        bank_cards = curriculum
 
     # Drop weak / chrome clones; keep strong Master cards.
     strong = [c for c in current if not _wall_card_is_weak(c)]
