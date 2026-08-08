@@ -81,11 +81,10 @@ def render_sidebar(version: str, build_id: str = "") -> None:
         """,
         unsafe_allow_html=True,
     )
-    build_line = f'<p class="sidebar-meta">Build: {build_id}</p>' if build_id else ""
+    del build_id  # kept for call-site compatibility; not shown to learners
     st.sidebar.markdown(
         f"""
         <p class="sidebar-meta">Version: v{version}</p>
-        {build_line}
         <div class="sidebar-creator">
           <span class="sidebar-creator-label">Creator</span>
           <span class="sidebar-creator-name">Leila Jacob</span>

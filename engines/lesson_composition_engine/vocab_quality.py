@@ -1026,12 +1026,34 @@ def is_junk_term(term: str) -> bool:
         "no two field-lines",
         "thus the magnetic field lines",
         "take care that the cardboard",
+        "straight",
+        "long",
+        "short",
+        "previous",
+        "deflection",
+        "needle",
+        "cardboard",
+        "reprint",
+    }:
+        return True
+    # Bare adjectives / OCR crumbs that are not curriculum concepts.
+    if key in {
+        "straight",
+        "long",
+        "short",
+        "strong",
+        "weak",
+        "greater",
+        "smaller",
+        "previous",
     }:
         return True
     # Lab-manual crumbs / figure callouts are never vocabulary terms.
-    if re.search(r"(?i)\b(see fig|fig\.|cardboard|wire xy|take care)\b", key):
+    if re.search(r"(?i)\b(see fig|fig\.|cardboard|wire xy|take care|reprint|deflection increases)\b", key):
         return True
     if re.search(r"(?i)theend|field-lines$", key):
+        return True
+    if re.match(r"(?i)^(the deflection|deflection increases|i n the|in the previous)\b", key):
         return True
     if re.search(r"(?i)\b(it|the|a|an|of|to|for|and|or|we|is|are)$", key) and len(key.split()) <= 5:
         # Sentence-opening fragments used as titles ("If one end of the tube")

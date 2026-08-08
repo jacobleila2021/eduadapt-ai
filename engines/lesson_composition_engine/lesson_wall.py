@@ -44,7 +44,9 @@ _JUNK_TITLE_RE = re.compile(
     r"consider|suppose|let us|that is|therefore|hence|"
     r"in the next|on the other|to summarise|to summarize|"
     r"take care|thus the|thus |no two|the wire|the field|the end|theend|"
-    r"see fig|cardboard|pointing towards"
+    r"see fig|cardboard|pointing towards|the deflection|"
+    r"deflection increases|i n the|in the previous|resistor long|"
+    r"reprint|magnetic effects of electric current i"
     r")\b"
 )
 _CHROME_TITLE_RE = re.compile(
@@ -177,8 +179,15 @@ def clean_wall_idea(idea: str, *, title: str = "") -> str:
     text = re.sub(r"(?i)^solution we\b", "We", text)
     text = re.sub(r"(?i)\bRor\b", "R or", text)
     text = re.sub(r"(?i)\btheend\b", "The end", text)
+    text = re.sub(r"(?i)\bI\s+n\b", "In", text)
     text = re.sub(r"(?i)\breprint\s+\d{4}.*$", "", text).strip()
+    text = re.sub(r"(?i)\breprint\b.*$", "", text).strip()
     text = re.sub(r"(?i)\bI\s+n\s+Class\b", "In Class", text)
+    # Drop chapter-bridge OCR crumbs that are not teachable cards.
+    if re.search(r"(?i)\bin the previous\b|\breprint\b", text):
+        return ""
+    if re.match(r"(?i)^the deflection increases\b", text):
+        return ""
     # Drop unfinished equation debris / cut-off figure callouts from OCR.
     text = re.sub(r"(?i)\s*\(see\s*fig\.?[^)]*$", "", text).strip()
     if re.search(r"\(\d+\.\s*$", text) or re.search(r"(?i)=\s*ror\b", text):
@@ -652,17 +661,25 @@ def ensure_shared_lesson_wall(
     """
     if not isinstance(adaptations, dict):
         return []
+    std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
+    topic = str(
+        (std.get("topic") if isinstance(std, dict) else "")
+        or adaptations.get("topic")
+        or ""
+    )
+    # Known CBSE chapters: curriculum bank always wins over OCR / polish drift.
+    curriculum = seed_curriculum_wall_cards(topic, limit=12)
     wall = adaptations.get("_lesson_wall")
     if not isinstance(wall, list) or not wall:
-        std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
         wall = std.get("lesson_wall") if isinstance(std.get("lesson_wall"), list) else []
     if not isinstance(wall, list) or not wall:
         try:
-            std = adaptations.get("standard") if isinstance(adaptations.get("standard"), dict) else {}
             wall = extract_lesson_wall(std)
         except Exception:
             wall = []
     wall = dedupe_lesson_wall(wall if isinstance(wall, list) else [])
+    if len(curriculum) >= 3:
+        wall = curriculum
     if not wall:
         return []
     adaptations["_lesson_wall"] = [dict(c) for c in wall]

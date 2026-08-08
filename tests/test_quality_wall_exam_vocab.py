@@ -144,6 +144,37 @@ def test_water_cycle_diagram_is_canonical_only():
     assert "water cycle" not in blob
 
 
+def test_parent_coaching_uses_complete_sentences_not_must_know():
+    from engines.lesson_composition_engine.canonical import augment_support_version
+
+    page = augment_support_version(
+        {
+            "topic": "Magnetic Effects of Electric Current",
+            "sections": [
+                {
+                    "title": "Understanding Magnetic field",
+                    "role": "concept",
+                    "body": "A magnetic field is the region around a magnet where force can be felt.",
+                }
+            ],
+        },
+        {"concepts": ["Magnetic field", "straight", "Electromagnet"]},
+        {"topic": "Magnetic Effects of Electric Current"},
+        "parent",
+    )
+    blob = " ".join(
+        f"{s.get('title')} {s.get('body')}"
+        for s in (page.get("sections") or [])
+        if isinstance(s, dict) and s.get("role") == "parent_support"
+    )
+    assert "Must Know" not in blob
+    assert "Your child is learning Magnetic Effects of Electric Current" in blob
+    wall = page.get("lesson_wall") or []
+    assert wall
+    assert all(str(c.get("idea") or "").endswith((".", "!", "?")) for c in wall)
+    assert not any("straight" in str(c.get("title") or "").lower() for c in wall)
+
+
 def test_magnetism_wall_and_wheel_reject_lab_ocr():
     from engines.lesson_composition_engine.dynamic_teaching_bank import ensure_wall_from_bank
     from engines.lesson_composition_engine.diagrams import build_concept_map_svg

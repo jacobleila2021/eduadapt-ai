@@ -1030,6 +1030,13 @@ def build_canonical_lesson(
                 or payload.get("problem")
                 or kind.replace("_", " ")
             ).strip()
+            # Reject OCR option crumbs: "Solve: (a)" / "Solve: (b)".
+            if len(stem) < 8 or re.fullmatch(r"\(?[a-dA-D]\)?", stem):
+                continue
+            if re.search(r"(?i)\breprint\b", stem) or re.search(r"(?i)\breprint\b", ans):
+                continue
+            if kind == "solve_math" and not re.search(r"[=→]|\d", stem):
+                continue
             balanced = str(
                 payload.get("balanced") or payload.get("balanced_equation") or ""
             ).strip()
@@ -1963,19 +1970,33 @@ def augment_support_version(
                 }
             )
     elif version_id == "parent":
-        if concepts:
+        from engines.lesson_composition_engine.lesson_wall import seed_curriculum_wall_cards
+        from engines.lesson_composition_engine.vocab_quality import is_junk_term
+
+        home_cards = seed_curriculum_wall_cards(topic, limit=6)
+        if home_cards:
+            page["lesson_wall"] = [dict(c) for c in home_cards]
+        teach_names = [
+            str(c.get("title") or "").strip()
+            for c in home_cards
+            if str(c.get("title") or "").strip()
+        ] or [
+            str(c).strip()
+            for c in concepts
+            if str(c).strip() and not is_junk_term(str(c))
+        ][:4]
+        topic_label = topic.strip() or "this lesson"
+        if teach_names:
+            first = teach_names[0]
+            listed = ", ".join(teach_names[:4])
             sections.append(
                 {
                     "title": "Home Explanation",
                     "role": "parent_support",
                     "body": (
-                        f"Your child is learning {topic.lower()} with the family tonight. "
-                        f"Talk about the lesson the same way the class does. The Master Lesson "
-                        f"above is exactly what they study — every Must Know idea is required "
-                        f"for the same examination. Ask them to explain "
-                        + ", ".join(c.lower() for c in concepts[:4])
-                        + " in their own words — one each evening is enough. Praise clear "
-                        f"wording and effort, not only the perfect answer."
+                        f"Your child is learning {topic_label} with the family tonight. "
+                        f"Ask them to explain {first} in their own words, then talk through "
+                        f"{listed}. Praise clear wording and effort, not only a perfect answer."
                     ),
                 }
             )
@@ -1984,11 +2005,10 @@ def augment_support_version(
                     "title": "Conversation Starters",
                     "role": "parent_support",
                     "body": "\n".join(
-                        f"- Talk about this at home with your family: can you teach me "
-                        f"{c.lower()} the way your lesson taught you?"
-                        for c in concepts[:4]
+                        f"- Can you teach me what {c.lower()} means, using one everyday example?"
+                        for c in teach_names[:4]
                     )
-                    + f"\n- Family challenge: who can retell {topic.lower()} in under one minute?",
+                    + f"\n- Who can retell {topic_label} in under one minute?",
                 }
             )
             sections.append(
@@ -1996,11 +2016,10 @@ def augment_support_version(
                     "title": "Home Activities",
                     "role": "parent_support",
                     "body": (
-                        f"Family activity for homework support: point to one everyday example of "
-                        f"{topic.lower()}, match it to a Must Know idea, then check the diagram "
-                        f"together. Sit with Practice Questions first, then one Exam Question. "
-                        f"Do not skip concepts to make homework shorter — accessibility at home "
-                        f"means patience and talk, not less curriculum."
+                        f"Point to one everyday example linked to {topic_label}. "
+                        f"Match it to {first}, then look at the lesson diagram together. "
+                        f"Try two short practice questions first, then one longer question. "
+                        f"Keep the full set of ideas — shorter sessions, not fewer ideas."
                     ),
                 }
             )
@@ -2009,9 +2028,9 @@ def augment_support_version(
                     "title": "Parent encouragement",
                     "role": "parent_support",
                     "body": (
-                        f"If your child feels stuck, talk about one Must Know idea only, then "
-                        f"return tomorrow. Keep the family tone calm. The examination is the "
-                        f"same for every learner — your support is the bridge, not a shortcut."
+                        f"If your child feels stuck, talk about only one idea — for example "
+                        f"{first} — and return to the rest tomorrow. Keep the tone calm. "
+                        f"Your support is a bridge, not a shortcut."
                     ),
                 }
             )
@@ -2020,11 +2039,10 @@ def augment_support_version(
                     "title": "Family study plan",
                     "role": "parent_support",
                     "body": (
-                        f"Suggested home rhythm for {topic.lower()}: Monday talk about the "
+                        f"Suggested home rhythm for {topic_label}: Monday talk about the "
                         f"diagram, Wednesday practise two short questions together, Friday "
                         f"celebrate one clear explanation. Keep sessions short. Invite siblings "
-                        f"to listen. Never replace classwork with a lighter version — coach "
-                        f"the same Master Lesson with warmth and patience."
+                        f"to listen. Coach the same lesson with warmth and patience."
                     ),
                 }
             )
@@ -2033,8 +2051,8 @@ def augment_support_version(
                     "title": "What success looks like at home",
                     "role": "parent_support",
                     "body": (
-                        f"Success is when your child can teach the family every Must Know idea "
-                        f"for {topic.lower()} without fear. Listen more than you correct. "
+                        f"Success is when your child can teach the family the main ideas of "
+                        f"{topic_label} without fear. Listen more than you correct. "
                         f"Talk about mistakes kindly. Homework support means sitting nearby, "
                         f"not rewriting answers for them."
                     ),
@@ -2045,11 +2063,10 @@ def augment_support_version(
                     "title": "Parent toolkit",
                     "role": "parent_support",
                     "body": (
-                        f"Parent toolkit for {topic.lower()}: sticky-note Must Know wall, "
-                        f"kitchen-table diagram redraw, evening teach-back, weekend verbal "
-                        f"quiz while walking, and a praise jar for clear explanations. "
-                        f"Use the toolkit to coach the Master Lesson — never to replace it "
-                        f"with a thinner home version."
+                        f"Simple tools for {topic_label}: sticky notes for key words, "
+                        f"a kitchen-table diagram redraw, an evening teach-back, a weekend verbal "
+                        f"quiz while walking, and praise for clear explanations. "
+                        f"Use these tools to coach the same classroom lesson — not a thinner home version."
                     ),
                 }
             )

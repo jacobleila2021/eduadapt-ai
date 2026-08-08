@@ -124,6 +124,25 @@ def test_worksheet_part_a_and_d_quality():
         ) or len(str(row.get("model_answer") or "").split()) >= 5
 
 
+def test_option_letter_stems_never_become_solve_questions():
+    from engines.lesson_composition_engine.composer import _is_usable_exam_stem
+
+    assert not _is_usable_exam_stem("(a)")
+    assert not _is_usable_exam_stem("(b)")
+    assert not _is_usable_exam_stem("a")
+    assert _is_usable_exam_stem("V = IR when V = 12 V and R = 4 ohm")
+
+
+def test_junk_terms_straight_rejected_magnet_gets_article():
+    from engines.lesson_composition_engine.composer import _exam_display_term
+    from engines.lesson_composition_engine.vocab_quality import is_junk_term
+
+    assert is_junk_term("straight")
+    assert is_junk_term("The deflection increases as the needle")
+    assert _exam_display_term("magnet") == "a magnet"
+    assert _exam_display_term("Magnetic field") == "the Magnetic field"
+
+
 def test_statistics_artifact_not_injected_into_electricity_exam():
     """STEM statistics noise must never appear as Show Answer in science lessons."""
     sheet = compose_worksheet_from_clg(

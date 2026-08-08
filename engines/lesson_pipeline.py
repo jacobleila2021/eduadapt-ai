@@ -425,7 +425,7 @@ def process_lesson_stem(lesson_text: str, topic: str = "") -> dict:
                         "Explanations from the source text are still shown."
                     ),
                     "fallback_used": "source_explanation_without_computed_answer",
-                    "learner_visible": True,
+                    "learner_visible": False,
                 }
             )
             continue

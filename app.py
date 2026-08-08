@@ -298,25 +298,7 @@ def run_generation() -> None:
             status.empty()
 
     q = st.session_state.get("quality") or {}
-    routing_warnings = (
-        (st.session_state.get("adaptations") or {})
-        .get("_meta", {})
-        .get("routing_warnings", [])
-    )
-    if routing_warnings:
-        first_warning = routing_warnings[0]
-        stage = str(first_warning.get("stage") or "STEM check").replace("_", " ").title()
-        msg = first_warning.get("message") or (
-            "Some notation could not be verified by the calculation engines."
-        )
-        recovery = first_warning.get("recovery") or (
-            "Paste a complete equation or expression if you need a verified computation."
-        )
-        st.info(
-            f"**{stage}** — {msg}\n\n"
-            f"**What to do:** {recovery}\n\n"
-            "Your adapted lesson from the uploaded text is still available below."
-        )
+    # Do not surface deterministic-router chrome on the learner landing page.
     if q.get("publish_blocked"):
         st.error(
             "Publish blocked by hard QA gate"

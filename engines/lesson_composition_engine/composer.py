@@ -576,12 +576,44 @@ def _exam_display_term(name: str) -> str:
         "electric circuit",
         "potential difference",
         "electric power",
+        "magnetic field",
         "ohms law",
         "ohm's law",
     }
-    if low in needs_the or low.endswith(" cycle"):
+    if low in needs_the or low.endswith(" cycle") or low.endswith(" field"):
         return f"the {raw}"
+    needs_a = {
+        "magnet",
+        "compass",
+        "solenoid",
+        "electromagnet",
+        "conductor",
+        "resistor",
+        "circuit",
+    }
+    if low in needs_a:
+        return f"a {raw}"
+    if low.startswith(("a", "e", "i", "o", "u")) and len(low.split()) == 1:
+        # Avoid "What is ampere?" → prefer "an ampere" for vowel-start units/terms.
+        if low in {"ampere", "electromagnet"}:
+            return f"an {raw}"
     return raw
+
+
+def _is_usable_exam_stem(stem: str) -> bool:
+    """Reject OCR option markers and incomplete worksheet crumbs as exam stems."""
+    s = re.sub(r"\s+", " ", str(stem or "").strip())
+    if len(s) < 8:
+        return False
+    if re.fullmatch(r"\(?[a-dA-D]\)?", s):
+        return False
+    if re.fullmatch(r"\([ivx]+\)|\d+[\.)]", s, flags=re.I):
+        return False
+    if re.search(r"(?i)\breprint\b|\bfig\.?\b", s):
+        return False
+    if re.match(r"(?i)^(solve|balance|calculate)\s*:?\s*\(?[a-d]\)?\s*$", s):
+        return False
+    return True
 
 
 def _answer_mentions_term(answer: str, name: str) -> bool:
@@ -882,8 +914,14 @@ def compose_worksheet_from_clg(
                     answer_source = "engine_result"
             if not answer:
                 continue
+        if re.search(r"(?i)\breprint\b|\bi\s+n\s+the\s+previous\b", answer):
+            continue
+        if re.search(r"(?i)\breprint\b|\bsolve:\s*\(?[a-d]\)?\s*$", q):
+            continue
         q = re.sub(r"(?i)\s+from (?:the|this) lesson\.?\s*$", ".", q).strip()
         q = re.sub(r"(?i)\s+using evidence from (?:the|this) lesson\.?\s*$", ".", q).strip()
+        if any(str(row.get("question") or "").lower() == q.lower() for row in short):
+            continue
         short.append(
             {
                 "question": q,
@@ -924,15 +962,28 @@ def compose_worksheet_from_clg(
         # Never inject unrelated statistics EngineResults into science lessons.
         if kind == "statistics" and not stats_ok:
             continue
-        if kind == "solve_math" and any(
-            k in topic_l for k in ("electric", "water cycle", "metal", "acid", "circuit", "ohm")
-        ):
-            # Math solver noise (random data sets) must not appear in science exams.
+        science_topic = any(
+            k in topic_l
+            for k in (
+                "electric",
+                "magnetic",
+                "magnet",
+                "water cycle",
+                "metal",
+                "acid",
+                "circuit",
+                "ohm",
+            )
+        )
+        if kind == "solve_math" and science_topic:
+            # Math solver noise (option letters / random data) must not appear in science exams.
             payload_preview = str(art.get("payload") or {}).lower()
             if any(k in payload_preview for k in ("mean", "median", "mode", "std", "variance", "iqr")):
                 continue
         ans = format_engine_answer(art)
         if not ans or ans.lower()[:40] in covered:
+            continue
+        if re.search(r"(?i)\breprint\b|\bi\s+n\s+the\s+previous\b", ans):
             continue
         payload = art.get("payload") or {}
         stem = str(
@@ -942,6 +993,11 @@ def compose_worksheet_from_clg(
             or payload.get("problem")
             or kind.replace("_", " ")
         ).strip()
+        if not _is_usable_exam_stem(stem):
+            continue
+        # Science lessons only accept real equations — never "Solve: (a)".
+        if science_topic and kind == "solve_math" and not re.search(r"[=→]|\d", stem):
+            continue
         balanced = str(payload.get("balanced") or payload.get("balanced_equation") or "").strip()
         stem_compact = re.sub(r"\s+", "", stem).lower()
         bal_compact = re.sub(r"\s+", "", balanced).lower()
@@ -956,6 +1012,8 @@ def compose_worksheet_from_clg(
             question = f"Balance the equation: {stem}"
         else:
             question = f"Solve: {stem}"
+        if any(str(row.get("question") or "").lower() == question.lower() for row in short):
+            continue
         short.append(
             {
                 "question": question,
