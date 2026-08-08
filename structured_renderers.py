@@ -909,17 +909,23 @@ def _lesson_map_items(lesson: dict) -> list[dict]:
             idea = str(row.get("idea") or "").strip()
             if not title or not idea:
                 continue
-            # Never publish unfinished OCR crumbs on the wall.
-            if idea.endswith(("…", "...")) and len(idea.split()) < 12:
-                continue
-            if not idea.endswith((".", "!", "?")) and len(idea.split()) < 8:
+            try:
+                from engines.lesson_composition_engine.complete_sentences import (
+                    ensure_complete_teaching_sentence,
+                )
+
+                idea = ensure_complete_teaching_sentence(idea)
+            except Exception:
+                if "…" in idea or "..." in idea or idea.endswith((",", ";", ":")):
+                    idea = ""
+            if not idea:
                 continue
             variant = classify_section(title, "none", index)
             items.append(
                 {
                     "icon": str(row.get("icon") or f"{index + 1:02d}"),
                     "title": title,
-                    "idea": idea if len(idea) <= 720 else idea[:717].rsplit(" ", 1)[0] + ".",
+                    "idea": idea[:720],
                     "hex": str(row.get("hex") or accent_for_variant(variant)),
                 }
             )

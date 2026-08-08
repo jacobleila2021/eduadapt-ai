@@ -1,6 +1,7 @@
 """
-Labelled Study Diagram SVG builder — lesson-accurate diagrams from section content.
-Produces grouped/classification layouts with fact labels extracted from lesson bodies.
+Labelled Study Diagram SVG builder — complete sentences only.
+
+Prefer curriculum flowcharts / Lesson Wall ideas. Never publish mid-phrase OCR scraps.
 """
 
 from __future__ import annotations
@@ -28,27 +29,34 @@ SKIP_SECTIONS = {
     "overview",
     "examples",
     "assessment",
+    "home explanation",
+    "conversation starters",
+    "home activities",
+    "parent encouragement",
+    "family study plan",
+    "parent toolkit",
+    "what success looks like at home",
+    "common mistakes to avoid",
+    "exam practice",
+    "practice questions",
 }
 
-GROUP_HINTS: list[tuple[str, str]] = [
-    ("plant", "Plant"),
-    ("animal", "Animal"),
-    ("vertebrate", "Vertebrates"),
-    ("invertebrate", "Invertebrates"),
-    ("xylem", "Transport"),
-    ("phloem", "Transport"),
-    ("evaporation", "Water cycle"),
-    ("condensation", "Water cycle"),
-    ("precipitation", "Water cycle"),
-    ("solid", "States of matter"),
-    ("liquid", "States of matter"),
-    ("gas", "States of matter"),
-]
+SKIP_ROLES = {
+    "parent_support",
+    "teacher_support",
+    "practice_question",
+    "exam_question",
+    "hots_question",
+    "assessment",
+    "exit_ticket",
+    "concept_primer",
+    "common_misconception",
+}
 
 PANEL_FILLS = [LIGHT_TEAL, LIGHT_BLUE, LIGHT_GREEN, LIGHT_AMBER]
 
 
-def _wrap_label(text: str, max_len: int = 22) -> list[str]:
+def _wrap_label(text: str, max_len: int = 28) -> list[str]:
     words = (text or "").split()
     if not words:
         return [""]
@@ -61,113 +69,163 @@ def _wrap_label(text: str, max_len: int = 22) -> list[str]:
             lines.append(current)
             current = word
     lines.append(current)
-    return lines[:3]
+    return lines[:6]
 
 
 def _lesson_topic(lesson: dict) -> str:
+    from engines.lesson_composition_engine.complete_sentences import strip_adaptation_suffix
+    from engines.lesson_composition_engine.vocab_quality import clean_topic
+
     for key in ("topic", "title"):
-        value = (lesson.get(key) or "").strip()
-        if value and value.lower() not in {"lesson", "lesson topic", "topic"}:
-            return value
+        value = strip_adaptation_suffix(str(lesson.get(key) or ""))
+        if value and value.lower() not in {"lesson", "lesson topic", "topic", "key ideas"}:
+            return clean_topic(value, fallback=value)
     header = lesson.get("header") if isinstance(lesson.get("header"), dict) else {}
-    header_topic = str(header.get("topic") or "").strip()
+    header_topic = strip_adaptation_suffix(str(header.get("topic") or ""))
     if header_topic and header_topic.lower() not in {"lesson", "lesson topic"}:
-        return header_topic
-    # Infer from chemistry diagram stages / section titles
+        return clean_topic(header_topic, fallback=header_topic)
     blob = " ".join(
         str(s.get("title") or "") for s in (lesson.get("sections") or []) if isinstance(s, dict)
     ).lower()
+    if any(k in blob for k in ("water cycle", "evaporat", "precipitat")):
+        return "The Water Cycle"
+    if any(k in blob for k in ("magnetic", "magnetism", "solenoid", "electromagnet")):
+        return "Magnetic Effects of Electric Current"
+    if any(k in blob for k in ("metal", "non-metal", "nonmetal", "malleab")):
+        return "Metals and Non-metals"
     if any(k in blob for k in ("acid", "base", "salt")):
         return "Acids, Bases and Salts"
-    big = (lesson.get("big_idea") or "").strip()
-    return big[:60] if big else "Lesson Topic"
+    if any(k in blob for k in ("electric", "ohm", "circuit", "resistance")):
+        return "Electricity"
+    return "Key ideas"
 
 
-def _infer_group(title: str, body: str) -> str:
-    combined = f"{title} {body[:160]}".lower()
-    for keyword, group in GROUP_HINTS:
-        if keyword in combined:
-            return group
-    title_lower = title.lower()
-    if any(word in title_lower for word in ("tissue", "cell", "organ")):
-        if "plant" in combined:
-            return "Plant"
-        if "animal" in combined:
-            return "Animal"
-        return "Structure"
-    return "Core concepts"
+def _complete_labels_from_text(body: str, title: str, *, max_labels: int = 2) -> list[str]:
+    """Only full sentences — never mid-phrase truncations."""
+    from engines.lesson_composition_engine.complete_sentences import (
+        ensure_complete_teaching_sentence,
+        is_complete_teaching_sentence,
+    )
+
+    text = re.sub(r"\s+", " ", (body or "").strip())
+    labels: list[str] = []
+    for sent in re.split(r"(?<=[.!?])\s+", text):
+        fixed = ensure_complete_teaching_sentence(sent)
+        if fixed and is_complete_teaching_sentence(fixed) and fixed not in labels:
+            labels.append(fixed)
+        if len(labels) >= max_labels:
+            break
+    if labels:
+        return labels
+    # List phrases → one complete sentence (never bare truncated tokens).
+    list_match = re.search(
+        r"(?i)(?:including|includes|such as|like|examples?(?: are)?|types?(?: are)?|"
+        r"divided into|classified as)[:\s]+(.+?)(?:\.|;|$)",
+        text,
+    )
+    if list_match:
+        chunk = list_match.group(1).strip(" .:-")
+        fixed = ensure_complete_teaching_sentence(
+            f"{title} includes {chunk}."
+        )
+        if fixed:
+            return [fixed]
+    title_sent = ensure_complete_teaching_sentence(
+        f"{title} is one of the main ideas in this lesson."
+    )
+    return [title_sent] if title_sent else []
 
 
 def _extract_fact_labels(body: str, title: str, max_labels: int = 3) -> list[str]:
-    """Pull short, label-worthy facts from section body text."""
-    text = re.sub(r"\s+", " ", (body or "").strip())
-    if not text:
-        return [f"Study: {title}"]
+    """Compatibility wrapper — complete sentences only."""
+    return _complete_labels_from_text(body, title, max_labels=max_labels)
 
-    labels: list[str] = []
 
-    list_match = re.search(
-        r"(?:including|includes|such as|like|examples?(?: are)?|types?(?: are)?|"
-        r"divided into|classified as)[:\s]+(.+?)(?:\.|;|$)",
-        text,
-        re.IGNORECASE,
+def _curriculum_flowchart(topic: str) -> str:
+    from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+    from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
+
+    stages = filter_diagram_stages([], topic=topic, limit=6)
+    if len(stages) < 3:
+        return ""
+    return build_educational_flowchart_svg(
+        topic,
+        stages,
+        subtitle="Key ideas in order",
     )
-    if list_match:
-        chunk = list_match.group(1)
-        parts = re.split(r",|\band\b|\bor\b", chunk)
-        for part in parts:
-            cleaned = part.strip(" .:-")[:48]
-            if len(cleaned) > 3:
-                labels.append(cleaned)
-            if len(labels) >= max_labels:
-                break
 
-    if len(labels) < max_labels:
-        first_sentence = re.split(r"(?<=[.!?])\s+", text)[0].strip()
-        if first_sentence and len(first_sentence) > 12:
-            snippet = first_sentence[:55]
-            if len(first_sentence) > 55:
-                snippet = snippet.rsplit(" ", 1)[0] + "…"
-            if snippet not in labels:
-                labels.insert(0, snippet)
 
-    if not labels:
-        from section_titles import normalize_section_title
+def _wall_flowchart(lesson: dict, topic: str) -> str:
+    from engines.lesson_composition_engine.complete_sentences import (
+        ensure_complete_teaching_sentence,
+    )
+    from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
+    from engines.lesson_composition_engine.vocab_quality import filter_diagram_stages
 
-        labels.append(normalize_section_title(title, body))
-
-    return labels[:max_labels]
+    wall = lesson.get("lesson_wall") if isinstance(lesson.get("lesson_wall"), list) else []
+    titles: list[str] = []
+    for row in wall:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("title") or "").strip()
+        idea = ensure_complete_teaching_sentence(str(row.get("idea") or ""))
+        if title and idea:
+            titles.append(title)
+    stages = filter_diagram_stages(titles, topic=topic, limit=6)
+    if len(stages) < 2:
+        return ""
+    return build_educational_flowchart_svg(
+        topic,
+        stages,
+        subtitle="Key ideas from the Lesson Wall",
+    )
 
 
 def _study_nodes(lesson: dict) -> tuple[str, list[dict]]:
     topic = _lesson_topic(lesson)
     nodes: list[dict] = []
     for section in lesson.get("sections") or []:
+        if not isinstance(section, dict):
+            continue
+        role = str(section.get("role") or "").lower()
+        if role in SKIP_ROLES or role.endswith("_support"):
+            continue
         title = (section.get("title") or "").strip()
         if not title or title.lower() in SKIP_SECTIONS:
+            continue
+        if any(k in title.lower() for k in SKIP_SECTIONS):
             continue
         body = (section.get("body") or section.get("content") or "").strip()
         from section_titles import normalize_section_title
 
         display_title = normalize_section_title(title, body, len(nodes))
+        labels = _complete_labels_from_text(body, display_title)
+        if not labels:
+            continue
         nodes.append(
             {
                 "title": display_title,
-                "group": _infer_group(display_title, body),
-                "labels": _extract_fact_labels(body, display_title),
+                "group": "Core concepts",
+                "labels": labels,
             }
         )
-    if not nodes:
-        for point in lesson.get("key_points") or lesson.get("objectives") or []:
-            if isinstance(point, str) and point.strip():
-                nodes.append(
-                    {
-                        "title": point.strip()[:40],
-                        "group": "Core concepts",
-                        "labels": [point.strip()[:70]],
-                    }
-                )
-    return topic, nodes[:10]
+    # Prefer Lesson Wall complete ideas when sections are thin/OCR.
+    if len(nodes) < 3:
+        from engines.lesson_composition_engine.complete_sentences import (
+            ensure_complete_teaching_sentence,
+        )
+
+        for row in lesson.get("lesson_wall") or []:
+            if not isinstance(row, dict):
+                continue
+            title = str(row.get("title") or "").strip()
+            idea = ensure_complete_teaching_sentence(str(row.get("idea") or ""))
+            if not title or not idea:
+                continue
+            nodes.append({"title": title, "group": "Core concepts", "labels": [idea]})
+            if len(nodes) >= 8:
+                break
+    return topic, nodes[:8]
 
 
 def svg_text_label_count(svg: str) -> int:
@@ -205,84 +263,34 @@ def _draw_panel(
         f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="10" '
         f'fill="{fill}" stroke="{TEAL}" stroke-width="2"/>'
     )
-    title_lines = _wrap_label(title, 18)
+    title_lines = _wrap_label(title, 22)
     ty = y + 22
-    for line in title_lines:
+    for line in title_lines[:2]:
         parts.append(
             f'<text x="{x + w / 2:.1f}" y="{ty:.1f}" text-anchor="middle" '
             f'font-family="{FONT}" font-size="13" font-weight="700" fill="{NAVY}">'
             f"{html.escape(line)}</text>"
         )
         ty += 18
-    ly = ty + 6
-    for label in labels:
-        for sub in _wrap_label(f"• {label}", 26):
+    ly = ty + 4
+    for label in labels[:2]:
+        for sub in _wrap_label(label, 34):
             parts.append(
                 f'<text x="{x + 12:.1f}" y="{ly:.1f}" font-family="{FONT}" '
                 f'font-size="11" fill="#334155">{html.escape(sub)}</text>'
             )
-            ly += 15
+            ly += 14
             if ly > y + h - 8:
                 return
 
 
-def _build_grouped_svg(topic: str, nodes: list[dict], groups: dict[str, list[dict]]) -> str:
-    """Two-or-more-column grouped study diagram (e.g. Plant vs Animal)."""
-    width = 920
-    group_names = list(groups.keys())[:3]
-    col_count = len(group_names)
-    col_w = (width - 80) // col_count
-    max_items = max(len(groups[g]) for g in group_names)
-    panel_h = 118
-    header_h = 44
-    height = 96 + header_h + max_items * (panel_h + 16) + 40
-
-    parts = _svg_header(topic, width, height)
-    top_y = 88
-
-    for col_index, group_name in enumerate(group_names):
-        col_x = 40 + col_index * col_w
-        parts.append(
-            f'<rect x="{col_x + 8:.1f}" y="{top_y:.1f}" width="{col_w - 16:.1f}" '
-            f'height="{header_h:.1f}" rx="10" fill="{NAVY}" stroke="{TEAL}" stroke-width="2"/>'
-        )
-        parts.append(
-            f'<text x="{col_x + col_w / 2:.1f}" y="{top_y + 28:.1f}" text-anchor="middle" '
-            f'font-family="{FONT}" font-size="14" font-weight="700" fill="#ffffff">'
-            f"{html.escape(group_name)}</text>"
-        )
-        item_y = top_y + header_h + 14
-        for item_index, item in enumerate(groups[group_name]):
-            fill = PANEL_FILLS[item_index % len(PANEL_FILLS)]
-            _draw_panel(
-                parts,
-                col_x + 10,
-                item_y,
-                col_w - 20,
-                panel_h,
-                item["title"],
-                item["labels"],
-                fill,
-            )
-            if item_index == 0:
-                parts.append(
-                    f'<line x1="{col_x + col_w / 2:.1f}" y1="{top_y + header_h:.1f}" '
-                    f'x2="{col_x + col_w / 2:.1f}" y2="{item_y:.1f}" stroke="{TEAL}" '
-                    f'stroke-width="2" marker-end="url(#study-arrow)"/>'
-                )
-            item_y += panel_h + 16
-
-    parts.append("</svg>")
-    return "\n".join(parts)
-
-
 def _build_grid_svg(topic: str, nodes: list[dict]) -> str:
-    """Labelled grid — each lesson section as a panel with fact bullets."""
-    width = 920
-    columns = 3 if len(nodes) > 4 else 2
-    rows = math.ceil(len(nodes) / columns)
+    """Labelled grid — each card holds a complete teaching sentence."""
+    width = 960
+    columns = 2 if len(nodes) <= 4 else 3
+    rows = math.ceil(len(nodes) / columns) if nodes else 1
     panel_w = (width - 60) / columns
-    panel_h = 132
+    panel_h = 168
     height = 96 + rows * (panel_h + 18) + 24
 
     parts = _svg_header(topic, width, height)
@@ -301,9 +309,8 @@ def _build_grid_svg(topic: str, nodes: list[dict]) -> str:
 
 
 def _build_flow_svg(topic: str, nodes: list[dict]) -> str:
-    """Vertical flow when sections follow a process sequence."""
     width = 720
-    panel_h = 96
+    panel_h = 120
     gap = 22
     height = 96 + len(nodes) * (panel_h + gap) + 20
     cx = width // 2
@@ -335,46 +342,48 @@ def _is_process_lesson(topic: str, nodes: list[dict]) -> bool:
 
 
 def build_study_diagram_svg(lesson: Any) -> str:
-    """Build a labelled, lesson-specific study diagram SVG from section content."""
+    """Build a labelled study diagram — complete sentences / curriculum stages only."""
     data = lesson if isinstance(lesson, dict) else {}
-    topic, nodes = _study_nodes(data)
-    blob = topic.lower() + " ".join(n.get("title", "").lower() for n in nodes)
-    if any(
-        k in blob
-        for k in ("water cycle", "earth's water", "evaporat", "condens", "precipitat")
-    ):
+    topic = _lesson_topic(data)
+
+    # Prefer an already-composed domain SVG when it has no ellipsis scraps.
+    for field in ("flowchart_svg", "concept_map_svg", "svg_diagram"):
+        svg = str(data.get(field) or "")
+        if svg.startswith("<svg") and "…" not in svg and "..." not in svg:
+            low = svg.lower()
+            if "lesson — ld" in low or "lesson — parent" in low:
+                continue
+            return svg
+
+    # Water cycle: pictorial closed loop before a vertical stage stack.
+    if any(k in topic.lower() for k in ("water cycle", "evaporat", "condens", "precipitat")):
         from flowchart_builder import _water_cycle_visual_svg
 
         return _water_cycle_visual_svg(topic)
-    if any(k in blob for k in ("acid", "base", "salt", "litmus", "neutralis")):
-        from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
-        from engines.lesson_composition_engine.vocab_quality import ACIDS_BASES_SALTS_TERMS
 
-        stages = [t for t, _ in ACIDS_BASES_SALTS_TERMS][:5]
-        return build_educational_flowchart_svg(
-            topic or "Acids, Bases and Salts",
-            stages,
-            subtitle="Label each idea in order",
-        )
+    curriculum = _curriculum_flowchart(topic)
+    if curriculum:
+        return curriculum
+
+    wall_flow = _wall_flowchart(data, topic)
+    if wall_flow:
+        return wall_flow
+
+    topic, nodes = _study_nodes(data)
     if not nodes:
-        from concept_map_builder import build_vocabulary_concept_map_svg
+        curriculum = _curriculum_flowchart(topic)
+        if curriculum:
+            return curriculum
+        from engines.lesson_composition_engine.diagrams import build_educational_flowchart_svg
 
-        return build_vocabulary_concept_map_svg(
-            {"topic": topic, "word_wall": [{"term": "Key idea 1"}, {"term": "Key idea 2"}]}
+        return build_educational_flowchart_svg(
+            topic,
+            ["Key idea", "Example", "Practice"],
+            subtitle="Study pathway",
         )
-
-    groups: dict[str, list[dict]] = {}
-    for node in nodes:
-        groups.setdefault(node["group"], []).append(node)
-
-    distinct_groups = [g for g in groups if g != "Core concepts"]
-    if len(distinct_groups) >= 2 and len(groups) <= 4:
-        ordered = sorted(groups.items(), key=lambda item: item[0])
-        return _build_grouped_svg(topic, nodes, dict(ordered))
 
     if _is_process_lesson(topic, nodes) and len(nodes) >= 3:
         return _build_flow_svg(topic, nodes)
-
     return _build_grid_svg(topic, nodes)
 
 

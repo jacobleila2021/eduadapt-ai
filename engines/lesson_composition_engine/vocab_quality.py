@@ -284,12 +284,13 @@ METALS_NONMETALS_TERMS = (
     (
         "Metal",
         "Metals are elements that are generally hard, shiny (lustrous), malleable, ductile, "
-        "sonorous and good conductors of heat and electricity. Examples: iron, copper, aluminium.",
+        "sonorous and good conductors of heat and electricity. "
+        "Everyday examples include iron, copper and aluminium.",
     ),
     (
         "Non-metal",
-        "Non-metals are generally dull, brittle (when solid) and poor conductors of heat and electricity. "
-        "Examples: oxygen, sulphur, carbon and nitrogen.",
+        "Non-metals are generally dull, brittle when solid, and poor conductors of heat and electricity. "
+        "Everyday examples include oxygen, sulphur, carbon and nitrogen.",
     ),
     (
         "Malleability",

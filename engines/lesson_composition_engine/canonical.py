@@ -1864,7 +1864,17 @@ def augment_support_version(
     """Teacher / Parent versions: the SAME Master Lesson plus additive
     guidance appended after the curriculum. Curriculum is never altered."""
     page = copy.deepcopy(dict(frozen))
-    topic = str(page.get("topic") or "Lesson")
+    from engines.lesson_composition_engine.complete_sentences import strip_adaptation_suffix
+    from engines.lesson_composition_engine.vocab_quality import clean_topic
+
+    topic = clean_topic(
+        strip_adaptation_suffix(
+            str(page.get("topic") or board.get("topic") or "")
+        ),
+        fallback="",
+    )
+    if not topic or topic.lower() in {"lesson", "lesson topic", "key ideas"}:
+        topic = strip_adaptation_suffix(str(board.get("topic") or page.get("topic") or "this science topic"))
     concepts = [str(c) for c in (core.get("concepts") or [])]
     misc = _misc(dict(board))
     sections = [dict(s) for s in (page.get("sections") or []) if isinstance(s, dict)]
@@ -1985,7 +1995,9 @@ def augment_support_version(
             for c in concepts
             if str(c).strip() and not is_junk_term(str(c))
         ][:4]
-        topic_label = topic.strip() or "this lesson"
+        topic_label = topic.strip()
+        if not topic_label or topic_label.lower() in {"lesson", "lesson topic", "key ideas"}:
+            topic_label = "this science topic"
         if teach_names:
             first = teach_names[0]
             listed = ", ".join(teach_names[:4])

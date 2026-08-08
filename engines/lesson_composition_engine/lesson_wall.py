@@ -224,6 +224,17 @@ def clean_wall_idea(idea: str, *, title: str = "") -> str:
         return ""
     if not text.endswith((".", "!", "?")):
         text += "."
+    try:
+        from engines.lesson_composition_engine.complete_sentences import (
+            ensure_complete_teaching_sentence,
+        )
+
+        text = ensure_complete_teaching_sentence(text)
+    except Exception:
+        if text.endswith((",", ";", ":")) or "…" in text or "..." in text:
+            return ""
+    if not text:
+        return ""
     return text[:720]
 
 
@@ -632,10 +643,16 @@ def seed_curriculum_wall_cards(topic: str = "", *, limit: int = 6) -> list[dict[
         bank = list(METALS_NONMETALS_TERMS)
     elif any(k in topic_l for k in ("acid", "base", "salt", "litmus")):
         bank = list(ACIDS_BASES_SALTS_TERMS)
+    from engines.lesson_composition_engine.complete_sentences import (
+        ensure_complete_teaching_sentence,
+    )
+
     out: list[dict[str, str]] = []
     for i, (term, definition) in enumerate(bank[:limit]):
         title = normalize_wall_title(term, idea=definition)
-        idea = clean_wall_idea(definition, title=title)
+        idea = ensure_complete_teaching_sentence(definition) or clean_wall_idea(
+            definition, title=title
+        )
         if not title or not idea:
             continue
         out.append(
